@@ -57,6 +57,7 @@
       "node_modules/xlsx/**",
       "node_modules/exceljs/**"
     ],
+    "electronDist": "node_modules/electron/dist",
     "compression": "maximum"
   },
   "publish": {
@@ -70,7 +71,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "electron": "^28.0.0",
-    "electron-builder": "^24.0.0"
+    "electron": "42.4.0",
+    "electron-builder": "^24.13.3"
   }
 }
