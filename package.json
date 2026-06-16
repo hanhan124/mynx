@@ -62,7 +62,7 @@
   "publish": {
     "provider": "github",
     "owner": "hanhan124",
-    "repo": "Toolbox"
+    "repo": "toolbox"
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
