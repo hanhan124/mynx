@@ -1,0 +1,75 @@
+{
+  "name": "toolbox",
+  "version": "1.0.0",
+  "description": "ToolBox - 万能工具箱",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --publish never",
+    "build:portable": "electron-builder --win portable --publish never",
+    "build:dir": "electron-builder --win --dir --publish never"
+  },
+  "author": "fanguanghan",
+  "homepage": "https://www.fanguanghan.homes",
+  "build": {
+    "appId": "com.fanguanghan.toolbox",
+    "productName": "ToolBox",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.ico",
+      "artifactName": "ToolBox-${version}-setup.exe"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": false,
+      "shortcutName": "ToolBox",
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "installerHeaderIcon": "icon.ico",
+      "deleteAppDataOnUninstall": false,
+      "unicode": true,
+      "runAfterFinish": true
+    },
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/xlsx/**",
+      "node_modules/exceljs/**"
+    ],
+    "files": [
+      "main.js",
+      "renderer.js",
+      "index.html",
+      "styles.css",
+      "icon.png",
+      "icon.svg",
+      "node_modules/xlsx/**",
+      "node_modules/exceljs/**"
+    ],
+    "compression": "maximum"
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "fanguanghan",
+    "repo": "electron-toolbox"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "exceljs": "^4.4.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}
