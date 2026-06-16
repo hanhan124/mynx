@@ -3,6 +3,7 @@ const { ipcRenderer, shell } = require('electron');
 const LANG = {
   zh: {
     appTitle: 'ToolBox', appDesc: '你的万能工具箱',
+    homeName: '主页', homeDesc: '返回主页',
     qpcrName: 'qPCR Tools', qpcrDesc: 'qPCR 数据分析',
     tiffName: 'TIFF 转 JPG', tiffDesc: '批量转换 TIFF 图片',
     file: '文件', selectFile: '未选择文件',支持格式: '支持 .xlsx 格式',
@@ -26,10 +27,12 @@ const LANG = {
     saveSuccess: '保存成功', folderSelected: '文件夹已选择',
     updateChecking: '检查更新中...', updateAvailable: '有新版本 v{v}', updateDownloaded: '更新已下载，重启生效',
     updateDownloading: '下载中 {p}%', updateError: '更新失败', updateUpToDate: '已是最新版本',
-    updateDownload: '下载更新', updateRestart: '立即重启', updateLater: '稍后', updateTitle: '应用更新'
+    updateDownload: '下载更新', updateRestart: '立即重启', updateLater: '稍后', updateTitle: '应用更新',
+    themeLabel: '主题', homepage: '主页'
   },
   en: {
     appTitle: 'ToolBox', appDesc: 'Your All-in-One Toolbox',
+    homeName: 'Home', homeDesc: 'Back to home',
     qpcrName: 'qPCR Tools', qpcrDesc: 'qPCR Data Analysis',
     tiffName: 'TIFF to JPG', tiffDesc: 'Batch Convert TIFF Images',
     file: 'File', selectFile: 'No file selected', '支持 .xlsx 格式': 'Supports .xlsx format',
@@ -53,7 +56,8 @@ const LANG = {
     saveSuccess: 'Saved', folderSelected: 'Folder selected',
     updateChecking: 'Checking for updates...', updateAvailable: 'New version v{v} available', updateDownloaded: 'Update downloaded, restart to apply',
     updateDownloading: 'Downloading {p}%', updateError: 'Update failed', updateUpToDate: 'Already up to date',
-    updateDownload: 'Download', updateRestart: 'Restart Now', updateLater: 'Later', updateTitle: 'Update'
+    updateDownload: 'Download', updateRestart: 'Restart Now', updateLater: 'Later', updateTitle: 'Update',
+    themeLabel: 'Theme', homepage: 'Homepage'
   }
 };
 
@@ -67,6 +71,8 @@ function setLang(l) {
   lang = l;
   localStorage.setItem('lang', l);
   updateAllText();
+  const langLabel = document.getElementById('langLabel');
+  if (langLabel) langLabel.textContent = l === 'zh' ? '中 / EN' : 'EN / 中';
   renderToolList();
 }
 
@@ -82,6 +88,9 @@ function updateAllText() {
 }
 
 const tools = [
+  { id: 'home', nameKey: 'homeName', descKey: 'homeDesc',
+    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+    panel: 'welcomePanel' },
   { id: 'qpcr', nameKey: 'qpcrName', descKey: 'qpcrDesc',
     icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6v4H9z"/><path d="M9 7v14"/><path d="M15 7v14"/><path d="M5 21h14"/></svg>`,
     panel: 'qpcrPanel' },
@@ -92,6 +101,7 @@ const tools = [
 
 document.addEventListener('DOMContentLoaded', async () => {
   renderToolList();
+  selectTool('home');
   isAlwaysOnTop = await ipcRenderer.invoke('get-always-on-top');
   currentTheme = await ipcRenderer.invoke('get-theme');
   updatePinButton();
@@ -296,6 +306,7 @@ async function runTiffConvert() {
 }
 
 let updateModal = null;
+let forceUpdate = false;
 function ensureUpdateModal() {
   if (updateModal) return updateModal;
   updateModal = document.createElement('div');
@@ -313,15 +324,17 @@ function ensureUpdateModal() {
       </div>
     </div>`;
   document.body.appendChild(updateModal);
-  updateModal.querySelector('#closeUpdateModal').onclick = () => { updateModal.style.display = 'none'; };
-  updateModal.onclick = (e) => { if (e.target === updateModal) updateModal.style.display = 'none'; };
+  updateModal.querySelector('#closeUpdateModal').onclick = () => { if (!forceUpdate) updateModal.style.display = 'none'; };
+  updateModal.onclick = (e) => { if (e.target === updateModal && !forceUpdate) updateModal.style.display = 'none'; };
   return updateModal;
 }
 
-function showUpdateModal(content, btns) {
+function showUpdateModal(content, btns, forced = false) {
   const modal = ensureUpdateModal();
+  forceUpdate = forced;
   modal.querySelector('#updateModalContent').innerHTML = content;
   modal.querySelector('#updateModalBtns').innerHTML = btns;
+  modal.querySelector('#closeUpdateModal').style.display = forced ? 'none' : '';
   modal.style.display = 'flex';
 }
 
@@ -334,9 +347,8 @@ ipcRenderer.on('update-status', (e, data) => {
   switch (data.status) {
     case 'available':
       showUpdateModal(
-        `<div style="font-size:32px;margin-bottom:12px">&#127381;</div><p style="font-weight:600">${t('updateAvailable').replace('{v}', data.version)}</p>`,
-        `<button class="btn btn-primary" onclick="downloadUpdate()">${t('updateDownload')}</button>
-         <button class="btn" onclick="document.getElementById('updateModal').style.display='none'">${t('updateLater')}</button>`
+        `<div style="font-size:32px;margin-bottom:12px">&#127381;</div><p style="font-weight:600">${t('updateAvailable').replace('{v}', data.version)}</p><p style="margin-top:8px;color:var(--text-secondary)">${t('updateDownloading').replace('{p}', '0')}</p>`,
+        '', true
       );
       break;
     case 'downloading':
@@ -345,14 +357,13 @@ ipcRenderer.on('update-status', (e, data) => {
          <div style="width:100%;height:6px;background:var(--border);border-radius:3px;margin-top:12px;overflow:hidden">
            <div style="width:${data.percent}%;height:100%;background:var(--accent);border-radius:3px;transition:width 0.3s"></div>
          </div>`,
-        ''
+        '', true
       );
       break;
     case 'downloaded':
       showUpdateModal(
         `<div style="font-size:32px;margin-bottom:12px">&#9989;</div><p>${t('updateDownloaded')}</p>`,
-        `<button class="btn btn-primary" onclick="installUpdate()">${t('updateRestart')}</button>
-         <button class="btn" onclick="document.getElementById('updateModal').style.display='none'">${t('updateLater')}</button>`
+        `<button class="btn btn-primary" onclick="installUpdate()">${t('updateRestart')}</button>`, true
       );
       break;
     case 'up-to-date':

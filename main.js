@@ -7,7 +7,7 @@ let mainWindow;
 let isAlwaysOnTop = false;
 const configPath = path.join(app.getPath('userData'), 'config.json');
 
-autoUpdater.autoDownload = false;
+autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 autoUpdater.logger = { info: () => {}, warn: () => {}, error: () => {} };
 
@@ -21,7 +21,7 @@ function createWindow() {
   const config = loadConfig();
   isAlwaysOnTop = config.alwaysOnTop || false;
   mainWindow = new BrowserWindow({
-    width: 420, height: 700, minWidth: 360, minHeight: 500,
+    width: 960, height: 680, minWidth: 720, minHeight: 480,
     frame: false, transparent: false, backgroundColor: '#1c1c1e',
     show: false,
     alwaysOnTop: isAlwaysOnTop,

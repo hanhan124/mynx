@@ -6,6 +6,7 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win --publish never",
+    "build:publish": "electron-builder --win --publish always",
     "build:portable": "electron-builder --win portable --publish never",
     "build:dir": "electron-builder --win --dir --publish never"
   },
@@ -60,8 +61,8 @@
   },
   "publish": {
     "provider": "github",
-    "owner": "fanguanghan",
-    "repo": "electron-toolbox"
+    "owner": "hanhan124",
+    "repo": "Toolbox"
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
