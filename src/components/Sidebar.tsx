@@ -81,7 +81,7 @@ export default function Sidebar() {
       </div>
 
       <div className="sidebar-bottom">
-        <button className="sidebar-bottom-btn" title="Website" onClick={() => open("https://github.com/fanguanghan/mynx")}>
+        <button className="sidebar-bottom-btn" title="Website" onClick={() => open("https://www.fanguanghan.homes")}>
           <Globe size={16} strokeWidth={1.8} />
         </button>
         <button className="sidebar-bottom-btn" title="Theme" onClick={toggleTheme}>
