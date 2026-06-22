@@ -26,10 +26,9 @@ export function calculateQpcr(
     if (name && name !== refGene) geneNames.push(name);
   }
 
-  for (const ws of workbook.worksheets) {
-    if (!PROTECTED_SHEETS.has(ws.name)) {
-      workbook.removeWorksheet(ws.id);
-    }
+  const toRemove = workbook.worksheets.filter(ws => !PROTECTED_SHEETS.has(ws.name));
+  for (const ws of toRemove) {
+    workbook.removeWorksheet(ws.id);
   }
 
   let summarySheet = workbook.getWorksheet('Summary_All_Genes');
@@ -56,7 +55,8 @@ export function calculateQpcr(
   const totalRows = sourceSheet.rowCount;
 
   for (const gene of geneNames) {
-    const sheetName = gene.length > 31 ? gene.substring(0, 31) : gene;
+    let sheetName = gene.length > 31 ? gene.substring(0, 31) : gene;
+    if (PROTECTED_SHEETS.has(sheetName)) sheetName = sheetName + '_gene';
     let geneSheet = workbook.getWorksheet(sheetName);
     if (!geneSheet) {
       geneSheet = workbook.addWorksheet(sheetName);

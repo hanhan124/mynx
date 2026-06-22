@@ -29,7 +29,7 @@ export default function TiffPage() {
         showToast(`全部转换成功: ${result.ok} 个文件`, "success");
       }
     } catch (e) {
-      showToast(`转换失败: ${e}`, "error");
+      showToast(`转换失败: ${e instanceof Error ? e.message : String(e)}`, "error");
     } finally {
       setLoading(false);
     }

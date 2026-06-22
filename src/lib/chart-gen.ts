@@ -10,7 +10,7 @@ export async function generateVbsCharts(
   geneNames: string[],
   repeatCount: number
 ): Promise<ChartGenResult> {
-  const escapedPath = excelPath.replace(/\\/g, "\\\\");
+  const escapedPath = excelPath.replace(/\\/g, "\\\\").replace(/"/g, '""');
 
   const chartBlocks: string[] = [];
   let yPos = 20;
@@ -49,10 +49,7 @@ export async function generateVbsCharts(
       chartBlocks.push(`
       ' Error bars from Stdev column
       cs.HasErrorBars = True
-      cs.ErrorBar Direction = xlY
-      cs.ErrorBar Include = xlBoth
-      cs.ErrorBar EndStyle = xlNoCap
-      cs.ErrorBar Amount = ws.Range("E2:E" & lastRow)`);
+      cs.ErrorBar Include:=xlBoth, EndStyle:=xlNoCap, Amount:=ws.Range("E2:E" & lastRow)`);
     }
 
     chartBlocks.push(`

@@ -14,7 +14,7 @@ export default function QpcrPage() {
       <FileSelect
         file={file}
         sheetName={sheetName}
-        onFileChange={setFile}
+        onFileChange={(f) => { setFile(f); setGeneNames([]); }}
         onSheetChange={setSheetName}
       />
       {file && sheetName && (

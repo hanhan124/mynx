@@ -46,7 +46,7 @@ $brush = New-Object System.Drawing.SolidBrush([System.Drawing.FromArgb]::FromArg
   const drawWatermark = options.watermark
     ? `
     $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-    $graphics.DrawString("Mynx", $watermarkFont, $brush, $bitmap.Width - $margin, $bitmap.Height - $margin - $fontSize)
+    $graphics.DrawString("Mynx", $watermarkFont, $brush, ${options.margin}, ${options.margin})
     $graphics.Dispose()
     `
     : "";
@@ -55,8 +55,8 @@ $brush = New-Object System.Drawing.SolidBrush([System.Drawing.FromArgb]::FromArg
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Drawing.Imaging
 
-$inputDir = "${folderPath.replace(/\\/g, "\\\\")}"
-$outputDir = "${outputDir.replace(/\\/g, "\\\\")}"
+$inputDir = "${folderPath.replace(/\\/g, "\\\\").replace(/"/g, '`"')}"
+$outputDir = "${outputDir.replace(/\\/g, "\\\\").replace(/"/g, '`"')}"
 New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
 
 $files = Get-ChildItem -Path $inputDir -Include *.tif,*.tiff -File
