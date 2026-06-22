@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../hooks/useTheme";
 import Modal from "./Modal";
+import { showToast } from "./Toast";
 import {
   Home,
   FlaskConical,
@@ -98,7 +99,7 @@ export default function Sidebar() {
           <div style={{ fontSize: 13, opacity: 0.6 }}>v1.0.0</div>
           <div style={{ fontSize: 13, opacity: 0.6 }}>效率工具集</div>
           <div style={{ fontSize: 13, opacity: 0.6 }}>作者: Fang Guanghan</div>
-          <button className="btn btn-accent" style={{ marginTop: 8, width: "100%" }} onClick={() => alert("当前已是最新版本")}>
+          <button className="btn btn-accent" style={{ marginTop: 8, width: "100%" }} onClick={() => showToast("当前已是最新版本", "success")}>
             检查更新
           </button>
         </div>

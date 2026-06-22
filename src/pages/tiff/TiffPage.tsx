@@ -3,6 +3,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { convertTiff, type TiffOptions } from "../../lib/tiff-convert";
 import ConvertOptions from "./ConvertOptions";
 import { FolderOpen, Folder } from "lucide-react";
+import { showToast } from "../../components/Toast";
 
 export default function TiffPage() {
   const [folder, setFolder] = useState<{ name: string; path: string } | null>(null);
@@ -22,12 +23,13 @@ export default function TiffPage() {
     setLoading(true);
     try {
       const result = await convertTiff(folder.path, options);
-      const msg = result.failed > 0
-        ? `转换完成: ${result.ok} 成功, ${result.failed} 失败\n输出目录: ${result.outputDir}`
-        : `全部转换成功: ${result.ok} 个文件\n输出目录: ${result.outputDir}`;
-      alert(msg);
+      if (result.failed > 0) {
+        showToast(`转换完成: ${result.ok} 成功, ${result.failed} 失败`, "info");
+      } else {
+        showToast(`全部转换成功: ${result.ok} 个文件`, "success");
+      }
     } catch (e) {
-      alert(`转换失败: ${e}`);
+      showToast(`转换失败: ${e}`, "error");
     } finally {
       setLoading(false);
     }

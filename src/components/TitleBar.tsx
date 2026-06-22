@@ -41,10 +41,17 @@ export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
 
   return (
     <div className="title-bar">
-      <div className="title-bar-drag" data-tauri-drag-region>
+      <div
+        className="title-bar-drag"
+        data-tauri-drag-region
+        style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+      >
         <span className="title-bar-text">{title}</span>
       </div>
-      <div className="title-bar-controls">
+      <div
+        className="title-bar-controls"
+        style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+      >
         <button
           className={`title-bar-btn ${pinned ? "title-bar-btn--active" : ""}`}
           onClick={handlePin}
