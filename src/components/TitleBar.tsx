@@ -1,4 +1,4 @@
-import { useState, useEffect, type MouseEvent } from "react";
+import { useState, useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { loadConfig, saveAlwaysOnTop } from "../lib/config";
 
@@ -10,48 +10,37 @@ export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
   const [pinned, setPinned] = useState(false);
 
   useEffect(() => {
-    loadConfig().then(cfg => {
+    loadConfig().then((cfg) => {
       setPinned(cfg.alwaysOnTop);
       getCurrentWindow().setAlwaysOnTop(cfg.alwaysOnTop);
     });
   }, []);
 
-  const handlePin = async (e: MouseEvent) => {
-    e.stopPropagation();
+  const handlePin = async () => {
     const next = !pinned;
     setPinned(next);
     await getCurrentWindow().setAlwaysOnTop(next);
     await saveAlwaysOnTop(next);
   };
 
-  const handleMinimize = (e: MouseEvent) => {
-    e.stopPropagation();
+  const handleMinimize = () => {
     getCurrentWindow().minimize();
   };
 
-  const handleMaximize = (e: MouseEvent) => {
-    e.stopPropagation();
+  const handleMaximize = () => {
     getCurrentWindow().toggleMaximize();
   };
 
-  const handleClose = (e: MouseEvent) => {
-    e.stopPropagation();
+  const handleClose = () => {
     getCurrentWindow().close();
   };
 
   return (
     <div className="title-bar">
-      <div
-        className="title-bar-drag"
-        data-tauri-drag-region
-        style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
-      >
+      <div className="title-bar-drag" data-tauri-drag-region>
         <span className="title-bar-text">{title}</span>
       </div>
-      <div
-        className="title-bar-controls"
-        style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-      >
+      <div className="title-bar-controls">
         <button
           className={`title-bar-btn ${pinned ? "title-bar-btn--active" : ""}`}
           onClick={handlePin}

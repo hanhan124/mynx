@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { open } from "@tauri-apps/plugin-shell";
 import { useTheme } from "../hooks/useTheme";
 import Modal from "./Modal";
 import { showToast } from "./Toast";
@@ -80,7 +81,7 @@ export default function Sidebar() {
       </div>
 
       <div className="sidebar-bottom">
-        <button className="sidebar-bottom-btn" title="Website">
+        <button className="sidebar-bottom-btn" title="Website" onClick={() => open("https://github.com/fanguanghan/mynx")}>
           <Globe size={16} strokeWidth={1.8} />
         </button>
         <button className="sidebar-bottom-btn" title="Theme" onClick={toggleTheme}>
