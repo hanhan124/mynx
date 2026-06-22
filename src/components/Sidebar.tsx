@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../hooks/useTheme";
+import Modal from "./Modal";
 
 interface NavItem {
   icon: string;
@@ -17,6 +19,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const [showAbout, setShowAbout] = useState(false);
 
   return (
     <div className="sidebar">
@@ -69,10 +72,32 @@ export default function Sidebar() {
         <button className="sidebar-bottom-btn" title="Theme" onClick={toggleTheme}>
           <span>{theme === "dark" ? "☀️" : "🌙"}</span>
         </button>
-        <button className="sidebar-bottom-btn" title="About">
+        <button className="sidebar-bottom-btn" title="About" onClick={() => setShowAbout(true)}>
           <span>ℹ️</span>
         </button>
       </div>
+
+      <Modal open={showAbout} onClose={() => setShowAbout(false)}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, minWidth: 220 }}>
+          <svg width="52" height="52" viewBox="0 0 52 52">
+            <defs>
+              <linearGradient id="aboutGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#8AB4F8" />
+                <stop offset="100%" stopColor="#81C995" />
+              </linearGradient>
+            </defs>
+            <rect width="52" height="52" rx="12" fill="url(#aboutGrad)" />
+            <text x="26" y="36" textAnchor="middle" fill="white" fontSize="26" fontWeight="bold" fontFamily="Segoe UI, system-ui, sans-serif">M</text>
+          </svg>
+          <div style={{ fontSize: 16, fontWeight: "bold" }}>Mynx</div>
+          <div style={{ fontSize: 13, opacity: 0.6 }}>v1.0.0</div>
+          <div style={{ fontSize: 13, opacity: 0.6 }}>效率工具集</div>
+          <div style={{ fontSize: 13, opacity: 0.6 }}>作者: Fang Guanghan</div>
+          <button className="btn btn-accent" style={{ marginTop: 8, width: "100%" }} onClick={() => alert("当前已是最新版本")}>
+            检查更新
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
