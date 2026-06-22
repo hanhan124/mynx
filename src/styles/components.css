@@ -29,15 +29,8 @@
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   user-select: none;
-}
-
-.title-bar-drag {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  height: 100%;
   padding-left: 12px;
-  pointer-events: auto;
+  padding-right: 6px;
 }
 
 .title-bar-text {
@@ -50,10 +43,9 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  padding-right: 6px;
   height: 100%;
   position: relative;
-  z-index: 10;
+  z-index: 9999;
 }
 
 .title-bar-btn {
