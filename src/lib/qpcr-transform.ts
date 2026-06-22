@@ -115,9 +115,5 @@ export function transformQpcrData(sourceSheet: ExcelJS.Worksheet): TransformResu
     }
   }
 
-  sheet.columns.forEach(col => {
-    if (!col.header) return;
-  });
-
   return { sheet, geneNames };
 }
