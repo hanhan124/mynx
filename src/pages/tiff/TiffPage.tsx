@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { Image, Folder, Settings } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
-import { convertTiff, type TiffOptions } from "../../lib/tiff-convert";
+import { convertTiff, type TiffOptions } from "@/lib/tiff-convert";
 import ConvertOptions from "./ConvertOptions";
-import { FolderOpen, Folder } from "lucide-react";
-import { showToast } from "../../components/Toast";
+import LoadingOverlay from "@/components/LoadingOverlay";
+import { showToast } from "@/components/Toast";
 
 export default function TiffPage() {
   const [folder, setFolder] = useState<{ name: string; path: string } | null>(null);
@@ -24,39 +25,61 @@ export default function TiffPage() {
     try {
       const result = await convertTiff(folder.path, options);
       if (result.failed > 0) {
-        showToast(`转换完成: ${result.ok} 成功, ${result.failed} 失败`, "info");
+        showToast(`转换完成：${result.ok} 成功，${result.failed} 失败`, "info");
       } else {
-        showToast(`全部转换成功: ${result.ok} 个文件`, "success");
+        showToast(`全部转换成功：${result.ok} 个文件`, "success");
       }
     } catch (e) {
-      showToast(`转换失败: ${e instanceof Error ? e.message : String(e)}`, "error");
+      showToast(`转换失败：${e instanceof Error ? e.message : String(e)}`, "error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="tiff-page">
-      {!folder ? (
-        <div className="tiff-empty">
-          <button className="pick-folder-btn" onClick={handlePick}>
-            <span className="pick-folder-icon"><FolderOpen size={20} strokeWidth={1.5} /></span>
-            <span>选择包含 TIFF 文件的文件夹</span>
+    <div className="page-shell">
+      <LoadingOverlay visible={loading} text="转换中..." />
+
+      <div className="panel-header">
+        <div className="panel-icon" style={{ background: '#34c759' }}>
+          <Image size={18} color="white" strokeWidth={1.8} />
+        </div>
+        <div className="panel-title">
+          <h2>TIFF 转 JPG</h2>
+          <p>批量转换 TIFF 图片为 JPG 格式</p>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-title">
+          <Folder size={14} strokeWidth={1.8} />
+          <span>源文件夹</span>
+        </div>
+        <div className="card-body">
+          <div className="file-display">
+            <div className="file-icon" style={{ background: '#34c759' }}>
+              <Folder size={20} color="white" strokeWidth={1.5} />
+            </div>
+            <div className="file-info">
+              <div className="file-name">{folder ? folder.name : '未选择文件夹'}</div>
+              <div className="file-path">{folder ? folder.path : '包含 .tif/.tiff 文件的目录'}</div>
+            </div>
+          </div>
+          <button className="btn btn-primary btn-full" onClick={handlePick}>
+            {folder ? '更换文件夹' : '选择文件夹'}
           </button>
         </div>
-      ) : (
-        <>
-          <div className="folder-card">
-            <span className="folder-card-icon"><Folder size={24} strokeWidth={1.5} /></span>
-            <div className="folder-card-info">
-              <span className="folder-card-name">{folder.name}</span>
-              <span className="folder-card-path">{folder.path}</span>
-            </div>
-            <button className="folder-card-change" onClick={handlePick}>更换</button>
-          </div>
-          <ConvertOptions onConvert={handleConvert} loading={loading} />
-        </>
-      )}
+      </div>
+
+      <div className="card">
+        <div className="card-title">
+          <Settings size={14} strokeWidth={1.8} />
+          <span>转换选项</span>
+        </div>
+        <div className="card-body">
+          <ConvertOptions onConvert={handleConvert} loading={loading} disabled={!folder} />
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,12 +1,14 @@
 import { useEffect, type ReactNode } from "react";
+import { X } from "lucide-react";
 
 interface ModalProps {
   open: boolean;
   onClose: () => void;
+  title?: string;
   children: ReactNode;
 }
 
-export default function Modal({ open, onClose, children }: ModalProps) {
+export default function Modal({ open, onClose, title, children }: ModalProps) {
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -20,8 +22,18 @@ export default function Modal({ open, onClose, children }: ModalProps) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        {children}
+      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+        {title && (
+          <div className="modal-header">
+            <h3>{title}</h3>
+            <button className="modal-close-btn" onClick={onClose}>
+              <X size={16} strokeWidth={2} />
+            </button>
+          </div>
+        )}
+        <div className="modal-body">
+          {children}
+        </div>
       </div>
     </div>
   );

@@ -1,14 +1,14 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import TitleBar from "./components/TitleBar";
-import Sidebar from "./components/Sidebar";
-import Home from "./components/Home";
-import ToastContainer from "./components/Toast";
-import TiffPage from "./pages/tiff/TiffPage";
-import QpcrPage from "./pages/qPCR/QpcrPage";
+import TitleBar from "@/components/TitleBar";
+import Sidebar from "@/components/Sidebar";
+import Home from "@/pages/Home";
+import ToastContainer from "@/components/Toast";
+import TiffPage from "@/pages/tiff/TiffPage";
+import QpcrPage from "@/pages/qpcr/QpcrPage";
 
 const pageTitles: Record<string, string> = {
-  "/": "主页",
-  "/qpcr": "qPCR Tools",
+  "/": "Mynx",
+  "/qpcr": "qPCR 分析",
   "/tiff": "TIFF 转 JPG",
 };
 

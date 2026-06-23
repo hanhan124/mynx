@@ -21,11 +21,10 @@ function detectColumn(headers: string[], keywords: string[]): number {
 }
 
 export interface TransformResult {
-  sheet: ExcelJS.Worksheet;
   geneNames: string[];
 }
 
-export function transformQpcrData(sourceSheet: ExcelJS.Worksheet): TransformResult {
+export function transformQpcrData(sourceSheet: ExcelJS.Worksheet, targetWorkbook: ExcelJS.Workbook): TransformResult {
   const headerRow = sourceSheet.getRow(1);
   const colCount = sourceSheet.columnCount;
 
@@ -38,44 +37,71 @@ export function transformQpcrData(sourceSheet: ExcelJS.Worksheet): TransformResu
   let sampleCol = detectColumn(headers, SAMPLE_HEADERS);
   let ctCol = detectColumn(headers, CT_HEADERS);
 
-  if (targetCol === -1) targetCol = 1;
-  if (sampleCol === -1) sampleCol = 3;
-  if (ctCol === -1) ctCol = 4;
+  if (targetCol === -1 && headers.length >= 6) {
+    const fallbackTarget = headers[2]?.toLowerCase() ?? '';
+    if (
+      fallbackTarget.includes('target') ||
+      fallbackTarget.includes('gene') ||
+      fallbackTarget.includes('基因')
+    ) {
+      targetCol = 2;
+      sampleCol = 4;
+      ctCol = 5;
+    }
+  }
 
-  const sampleMap = new Map<string, Map<string, number[]>>();
+  if (targetCol === -1) throw new Error('未找到 Target/Gene/基因 列');
+  if (sampleCol === -1) throw new Error('未找到 Sample/Group/样本/分组 列');
+  if (ctCol === -1) throw new Error('未找到 Cq/Ct 列');
+
+  // 转换为 ExcelJS 的列号（1 基）
+  const targetColIndex = targetCol + 1;
+  const sampleColIndex = sampleCol + 1;
+  const ctColIndex = ctCol + 1;
+
+  // 创建数据结构：sample -> gene -> Cq 值数组
+  const sampleMap = new Map<string, Map<string, Array<{ value: number | null; missing: boolean }>>>();
   const geneSet = new Set<string>();
 
   const rowCount = sourceSheet.rowCount;
   for (let r = 2; r <= rowCount; r++) {
     const row = sourceSheet.getRow(r);
-    const gene = String(row.getCell(targetCol + 1).value ?? '').trim();
-    const sample = String(row.getCell(sampleCol + 1).value ?? '').trim();
-    const ctVal = row.getCell(ctCol + 1).value;
+    const gene = String(row.getCell(targetColIndex).value ?? '').trim();
+    const sample = String(row.getCell(sampleColIndex).value ?? '').trim();
+    const ctVal = row.getCell(ctColIndex).value;
 
     if (!gene || !sample) continue;
 
-    const ct = typeof ctVal === 'number' ? ctVal : parseFloat(String(ctVal));
-    if (isNaN(ct)) continue;
+    let ct: number | null = null;
+    let missing = false;
+    if (typeof ctVal === 'number') {
+      ct = ctVal;
+    } else {
+      const parsed = parseFloat(String(ctVal));
+      if (isNaN(parsed) || ctVal === '' || ctVal === null) {
+        missing = true;
+      } else {
+        ct = parsed;
+      }
+    }
 
     geneSet.add(gene);
     if (!sampleMap.has(sample)) sampleMap.set(sample, new Map());
     const geneMap = sampleMap.get(sample)!;
     if (!geneMap.has(gene)) geneMap.set(gene, []);
-    geneMap.get(gene)!.push(ct);
+    geneMap.get(gene)!.push({ value: ct, missing });
   }
 
   const geneNames = Array.from(geneSet);
 
-  const maxReps = Math.max(
-    1,
-    ...Array.from(sampleMap.values()).flatMap(gm =>
-      Array.from(gm.values()).map(v => v.length)
-    )
-  );
+  // 删除已存在的转换表
+  const existing = targetWorkbook.getWorksheet('Transformed Data');
+  if (existing) targetWorkbook.removeWorksheet(existing.id);
 
-  const wb = new ExcelJS.Workbook();
-  const sheet = wb.addWorksheet('Transformed Data');
+  // 创建新的转换表
+  const sheet = targetWorkbook.addWorksheet('Transformed Data');
 
+  // 写入表头
   const headerCells = ['Num', 'Group'];
   for (const g of geneNames) headerCells.push(g);
 
@@ -86,15 +112,19 @@ export function transformQpcrData(sourceSheet: ExcelJS.Worksheet): TransformResu
     cell.font = BOLD_FONT;
   }
 
-  const samples = Array.from(sampleMap.keys()).sort();
+  // 写入数据
+  const samples = Array.from(sampleMap.keys());
   let rowNum = 1;
 
   for (const sample of samples) {
     const geneMap = sampleMap.get(sample)!;
 
-    for (let rep = 0; rep < maxReps; rep++) {
+    const sampleMaxReps = Math.max(...Array.from(geneMap.values()).map(vals => vals.length));
+
+    for (let rep = 0; rep < sampleMaxReps; rep++) {
       rowNum++;
       const rowOut = sheet.getRow(rowNum);
+
       rowOut.getCell(1).value = rowNum - 1;
       rowOut.getCell(2).value = sample;
 
@@ -102,10 +132,18 @@ export function transformQpcrData(sourceSheet: ExcelJS.Worksheet): TransformResu
         const cell = rowOut.getCell(g + 3);
         const vals = geneMap.get(geneNames[g]);
 
-        if (vals && vals.length > rep) {
-          cell.value = vals[rep];
-        } else if (vals && vals.length > 0) {
-          cell.value = vals[0];
+        if (!vals || vals.length === 0) {
+          cell.value = 50;
+          cell.fill = YELLOW_FILL;
+          continue;
+        }
+
+        const valid = vals.find(v => !v.missing && v.value !== null);
+        const item = vals[rep];
+        if (item && !item.missing && item.value !== null) {
+          cell.value = item.value;
+        } else if (valid) {
+          cell.value = valid.value;
           cell.fill = YELLOW_FILL;
         } else {
           cell.value = 50;
@@ -115,5 +153,17 @@ export function transformQpcrData(sourceSheet: ExcelJS.Worksheet): TransformResu
     }
   }
 
-  return { sheet, geneNames };
+  // 自动调整列宽
+  sheet.columns.forEach((column) => {
+    let maxLength = 0;
+    if (column.eachCell) {
+      column.eachCell({ includeEmpty: true }, (cell) => {
+        const length = cell.value ? String(cell.value).length : 10;
+        if (length > maxLength) maxLength = length;
+      });
+    }
+    column.width = Math.min(maxLength + 2, 30);
+  });
+
+  return { geneNames };
 }

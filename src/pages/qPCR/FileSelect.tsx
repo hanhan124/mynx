@@ -1,6 +1,7 @@
-import { open, save } from '@tauri-apps/plugin-dialog';
-import { readExcelFile, getSheetNames, saveExcelFile, type ExcelFile } from '../../lib/excel-io';
+import { open } from '@tauri-apps/plugin-dialog';
 import { FileSpreadsheet } from 'lucide-react';
+import { readExcelFile, getSheetNames, type ExcelFile } from '@/lib/excel-io';
+import { showToast } from '@/components/Toast';
 
 interface FileSelectProps {
   file: ExcelFile | null;
@@ -13,73 +14,55 @@ export default function FileSelect({ file, sheetName, onFileChange, onSheetChang
   const sheets = file ? getSheetNames(file.workbook) : [];
 
   async function handleOpen() {
-    const selected = await open({
-      multiple: false,
-      filters: [{ name: 'Excel', extensions: ['xlsx', 'xls'] }],
-    });
-    if (!selected) return;
-    const filePath = Array.isArray(selected) ? selected[0] : selected;
-    const name = filePath.split(/[/\\]/).pop() ?? filePath;
-    const excelFile = await readExcelFile(filePath, name);
-    onFileChange(excelFile);
-    const names = getSheetNames(excelFile.workbook);
-    onSheetChange(names[0] ?? '');
-  }
-
-  async function handleSave() {
-    if (!file) return;
-    const path = await save({
-      filters: [{ name: 'Excel', extensions: ['xlsx'] }],
-      defaultPath: file.name,
-    });
-    if (!path) return;
-    await saveExcelFile(file.workbook, path);
-  }
-
-  function handleClear() {
-    onFileChange(null);
-    onSheetChange('');
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: 'Excel', extensions: ['xlsx', 'xls'] }],
+      });
+      if (!selected) return;
+      const filePath = Array.isArray(selected) ? selected[0] : selected;
+      const name = filePath.split(/[/\\]/).pop() ?? filePath;
+      const excelFile = await readExcelFile(filePath, name);
+      onFileChange(excelFile);
+      const names = getSheetNames(excelFile.workbook);
+      onSheetChange(names[0] ?? '');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      showToast(`文件打开失败: ${msg}`, 'error');
+    }
   }
 
   return (
-    <div className="file-select">
-      <div className="file-select-header">
-        <h2 className="file-select-title">数据文件</h2>
-        <div className="file-select-actions">
-          <button className="btn btn-accent" onClick={handleOpen}>打开</button>
-          <button className="btn" onClick={handleSave} disabled={!file}>保存</button>
-          <button className="btn" onClick={handleClear} disabled={!file}>清空</button>
+    <>
+      <div className="file-display">
+        <div className="file-icon" style={{ background: '#34c759' }}>
+          <FileSpreadsheet size={20} color="white" strokeWidth={1.5} />
+        </div>
+        <div className="file-info">
+          <div className="file-name">{file ? file.name : '未选择文件'}</div>
+          <div className="file-path">{file ? file.path : '支持 .xlsx 格式'}</div>
         </div>
       </div>
 
-      {file ? (
-        <div className="file-card">
-          <div className="file-card-icon"><FileSpreadsheet size={24} strokeWidth={1.5} /></div>
-          <div className="file-card-info">
-            <span className="file-card-name">{file.name}</span>
-            <span className="file-card-path">{file.path}</span>
-          </div>
-        </div>
-      ) : (
-        <div className="file-card file-card--empty">
-          <span className="file-card-hint">点击「打开」选择 Excel 文件</span>
-        </div>
-      )}
+      <div className="btn-row">
+        <button className="btn btn-primary" onClick={handleOpen}>打开</button>
+        {file && (
+          <button className="btn" style={{ marginLeft: 'auto', color: 'var(--red)' }} onClick={() => onFileChange(null)}>
+            清空
+          </button>
+        )}
+      </div>
 
       {file && sheets.length > 0 && (
-        <div className="sheet-select">
-          <label className="sheet-select-label">工作表</label>
-          <select
-            className="sheet-select-dropdown"
-            value={sheetName}
-            onChange={(e) => onSheetChange(e.target.value)}
-          >
+        <div className="form-group">
+          <label>工作表</label>
+          <select value={sheetName} onChange={(e) => onSheetChange(e.target.value)}>
             {sheets.map((name) => (
               <option key={name} value={name}>{name}</option>
             ))}
           </select>
         </div>
       )}
-    </div>
+    </>
   );
 }

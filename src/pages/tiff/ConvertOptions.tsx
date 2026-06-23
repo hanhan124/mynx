@@ -1,148 +1,152 @@
 import { useState } from "react";
-import type { TiffOptions } from "../../lib/tiff-convert";
+import { Info } from "lucide-react";
+import type { TiffOptions } from "@/lib/tiff-convert";
 
 const FONTS = ["Arial", "Calibri", "Times New Roman", "微软雅黑", "黑体", "宋体"];
 const SIZES = [36, 48, 60, 72, 96, 120];
 const TRANSPARENCY = [
-  { label: "不透明", value: 1.0 },
-  { label: "半透明", value: 0.6 },
-  { label: "较透明", value: 0.3 },
-  { label: "全透明", value: 0.1 },
+  { label: "不透明", value: 255 },
+  { label: "半透明", value: 210 },
+  { label: "较透明", value: 128 },
+  { label: "全透明", value: 0 },
 ];
 const QUALITIES = [80, 85, 90, 95, 98];
 
 interface ConvertOptionsProps {
   onConvert: (options: TiffOptions) => void;
   loading: boolean;
+  disabled?: boolean;
 }
 
-export default function ConvertOptions({ onConvert, loading }: ConvertOptionsProps) {
-  const [watermark, setWatermark] = useState(false);
+export default function ConvertOptions({ onConvert, loading, disabled }: ConvertOptionsProps) {
+  const [addLabel, setAddLabel] = useState("1");
   const [font, setFont] = useState("Arial");
   const [fontSize, setFontSize] = useState(72);
-  const [bold, setBold] = useState(false);
-  const [italic, setItalic] = useState(false);
-  const [margin, setMargin] = useState(20);
-  const [padding, setPadding] = useState(10);
-  const [transparency, setTransparency] = useState(0.6);
+  const [bold, setBold] = useState("true");
+  const [italic, setItalic] = useState("false");
+  const [marginX, setMarginX] = useState("18");
+  const [marginY, setMarginY] = useState("18");
+  const [paddingX, setPaddingX] = useState("12");
+  const [paddingY, setPaddingY] = useState("8");
+  const [bgAlpha, setBgAlpha] = useState("210");
   const [quality, setQuality] = useState(95);
 
   const handleConvert = () => {
     onConvert({
-      watermark,
+      watermark: addLabel === "1",
       font,
       fontSize,
-      bold,
-      italic,
-      margin,
-      padding,
-      transparency,
+      bold: bold === "true",
+      italic: italic === "true",
+      marginX: Number(marginX),
+      marginY: Number(marginY),
+      paddingX: Number(paddingX),
+      paddingY: Number(paddingY),
+      transparency: Number(bgAlpha) / 255,
       quality,
     });
   };
 
+  const showTextOpts = addLabel === "1";
+
   return (
-    <div className="convert-options">
-      <div className="opt-row">
-        <span className="opt-label">水印</span>
-        <button
-          className={`toggle-btn ${watermark ? "toggle-btn--on" : ""}`}
-          onClick={() => setWatermark(!watermark)}
-        >
-          <span className="toggle-thumb" />
-        </button>
+    <>
+      <div className="notice">
+        <Info size={14} strokeWidth={1.8} />
+        <span>配置文字水印和输出质量</span>
       </div>
 
-      {watermark && (
-        <div className="opt-grid">
-          <div className="opt-field">
-            <span className="opt-label-sm">字体</span>
-            <select value={font} onChange={(e) => setFont(e.target.value)}>
-              {FONTS.map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="opt-field">
-            <span className="opt-label-sm">字号</span>
-            <select value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))}>
-              {SIZES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="opt-field">
-            <span className="opt-label-sm">样式</span>
-            <div className="style-btns">
-              <button
-                className={`style-btn ${bold ? "style-btn--active" : ""}`}
-                onClick={() => setBold(!bold)}
-              >
-                <b>B</b>
-              </button>
-              <button
-                className={`style-btn ${italic ? "style-btn--active" : ""}`}
-                onClick={() => setItalic(!italic)}
-              >
-                <i>I</i>
-              </button>
-            </div>
-          </div>
-
-          <div className="opt-field">
-            <span className="opt-label-sm">透明度</span>
-            <select
-              value={transparency}
-              onChange={(e) => setTransparency(Number(e.target.value))}
-            >
-              {TRANSPARENCY.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="opt-field">
-            <span className="opt-label-sm">边距</span>
-            <input
-              type="number"
-              value={margin}
-              onChange={(e) => setMargin(Number(e.target.value))}
-              min={0}
-              max={200}
-            />
-          </div>
-
-          <div className="opt-field">
-            <span className="opt-label-sm">内距</span>
-            <input
-              type="number"
-              value={padding}
-              onChange={(e) => setPadding(Number(e.target.value))}
-              min={0}
-              max={100}
-            />
-          </div>
-        </div>
-      )}
-
-      <div className="opt-row" style={{ marginTop: 12 }}>
-        <span className="opt-label">JPG 质量</span>
-        <select value={quality} onChange={(e) => setQuality(Number(e.target.value))}>
-          {QUALITIES.map((q) => (
-            <option key={q} value={q}>{q}</option>
-          ))}
+      <div className="form-group">
+        <label>添加文件名水印</label>
+        <select value={addLabel} onChange={(e) => setAddLabel(e.target.value)}>
+          <option value="1">是 — 添加文件名</option>
+          <option value="0">否 — 纯转换</option>
         </select>
       </div>
 
+      {showTextOpts && (
+        <>
+          <div className="form-row">
+            <div className="form-group">
+              <label>字体</label>
+              <select value={font} onChange={(e) => setFont(e.target.value)}>
+                {FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>字号</label>
+              <select value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))}>
+                {SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>粗体</label>
+              <select value={bold} onChange={(e) => setBold(e.target.value)}>
+                <option value="true">是</option>
+                <option value="false">否</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>斜体</label>
+              <select value={italic} onChange={(e) => setItalic(e.target.value)}>
+                <option value="false">否</option>
+                <option value="true">是</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>左边距</label>
+              <input type="number" value={marginX} onChange={(e) => setMarginX(e.target.value)} min={0} max={200} />
+            </div>
+            <div className="form-group">
+              <label>上边距</label>
+              <input type="number" value={marginY} onChange={(e) => setMarginY(e.target.value)} min={0} max={200} />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>内边距 X</label>
+              <input type="number" value={paddingX} onChange={(e) => setPaddingX(e.target.value)} min={0} max={50} />
+            </div>
+            <div className="form-group">
+              <label>内边距 Y</label>
+              <input type="number" value={paddingY} onChange={(e) => setPaddingY(e.target.value)} min={0} max={50} />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>背景透明度</label>
+              <select value={bgAlpha} onChange={(e) => setBgAlpha(e.target.value)}>
+                {TRANSPARENCY.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>JPG 质量</label>
+              <select value={quality} onChange={(e) => setQuality(Number(e.target.value))}>
+                {QUALITIES.map((q) => <option key={q} value={q}>{q}</option>)}
+              </select>
+            </div>
+          </div>
+        </>
+      )}
+
       <button
-        className="convert-btn"
+        className="btn btn-primary btn-full"
         onClick={handleConvert}
-        disabled={loading}
+        disabled={loading || disabled}
+        style={{ marginTop: 4 }}
       >
-        {loading ? "转换中..." : "开始转换"}
+        {loading ? "转换中..." : disabled ? "请先选择文件夹" : "开始转换"}
       </button>
-    </div>
+    </>
   );
 }

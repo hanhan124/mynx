@@ -19,5 +19,13 @@ Thumbs.db
 .env
 .env.local
 
+# Signing keys
+*.key
+*.key.pub
+
 # Tauri
 src-tauri/target/
+src-tauri/gen/
+
+# Cargo (local build target redirect)
+.cargo/

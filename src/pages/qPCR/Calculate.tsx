@@ -1,106 +1,110 @@
 import { useState } from 'react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import type ExcelJS from 'exceljs';
-import { calculateQpcr } from '../../lib/qpcr-calculate';
+import { calculateQpcr } from '@/lib/qpcr-calculate';
 
 interface CalculateProps {
   workbook: ExcelJS.Workbook | null;
   geneNames: string[];
+  onComplete: (repeatCount: number) => void;
 }
 
 type Status = 'ready' | 'processing' | 'success' | 'error';
 
-export default function Calculate({ workbook, geneNames }: CalculateProps) {
+export default function Calculate({ workbook, geneNames, onComplete }: CalculateProps) {
   const [repeatCount, setRepeatCount] = useState(2);
   const [refGene, setRefGene] = useState('');
   const [status, setStatus] = useState<Status>('ready');
   const [errorMsg, setErrorMsg] = useState('');
+  const [resultMsg, setResultMsg] = useState('');
 
-  const canExecute = workbook && geneNames.length > 0 && refGene && status !== 'processing';
+  const canExecute = workbook !== null && geneNames.length > 0 && refGene !== '' && status !== 'processing';
 
   async function handleExecute() {
     if (!workbook || !refGene) return;
-
     try {
       setStatus('processing');
       setErrorMsg('');
       calculateQpcr(workbook, repeatCount, refGene);
       setStatus('success');
+      setResultMsg(`处理了 ${geneNames.length} 个基因，重复数 = ${repeatCount}`);
+      onComplete(repeatCount);
     } catch (e) {
       setStatus('error');
       setErrorMsg(e instanceof Error ? e.message : '计算出错');
     }
   }
 
-  const statusLabels: Record<Status, string> = {
-    ready: '待执行',
-    processing: '处理中...',
-    success: '完成',
-    error: '出错',
-  };
-
-  const statusColors: Record<Status, string> = {
-    ready: 'var(--text-secondary)',
-    processing: 'var(--accent)',
-    success: '#22c55e',
-    error: 'var(--red)',
-  };
-
-  const badgeColor = status === 'success' ? '#22c55e' : 'var(--accent)';
+  const disabled = !workbook;
 
   return (
-    <div className="transform-step">
-      <div className="transform-header">
-        <div className="step-badge" style={{ background: badgeColor }}>2</div>
-        <div className="transform-info">
-          <h3 className="transform-title">qPCR 计算</h3>
-          <span className="transform-desc">
-            2^(-ΔCt) 相对表达量计算，按重复次数分组
-          </span>
+    <>
+      {disabled ? (
+        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '4px 0' }}>
+          请先打开并转换数据文件
         </div>
-        <span className="transform-status" style={{ color: statusColors[status] }}>
-          {statusLabels[status]}
-        </span>
-      </div>
-
-      <div className="opt-grid">
-        <div className="opt-field">
-          <label className="opt-label-sm">重复次数</label>
-          <select
-            value={repeatCount}
-            onChange={(e) => setRepeatCount(Number(e.target.value))}
-            disabled={status === 'processing'}
-          >
-            {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
+      ) : geneNames.length === 0 ? (
+        <div className="form-row">
+          <div className="form-group">
+            <label>重复次数</label>
+            <select value={repeatCount} onChange={(e) => setRepeatCount(Number(e.target.value))} disabled={status === 'processing'}>
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>参考基因</label>
+            <select disabled>
+              <option value="">请先执行数据转换</option>
+            </select>
+          </div>
         </div>
-        <div className="opt-field">
-          <label className="opt-label-sm">参考基因</label>
-          <select
-            value={refGene}
-            onChange={(e) => setRefGene(e.target.value)}
-            disabled={status === 'processing'}
-          >
-            <option value="">选择参考基因</option>
-            {geneNames.map((g) => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
+      ) : (
+        <div className="form-row">
+          <div className="form-group">
+            <label>重复次数</label>
+            <select value={repeatCount} onChange={(e) => setRepeatCount(Number(e.target.value))} disabled={status === 'processing'}>
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>参考基因</label>
+            <select value={refGene} onChange={(e) => setRefGene(e.target.value)} disabled={status === 'processing'}>
+              <option value="">请选择参考基因</option>
+              {geneNames.map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
-
-      {status === 'error' && (
-        <div style={{ fontSize: 12, color: 'var(--red)' }}>{errorMsg}</div>
       )}
 
-      <button
-        className="btn btn-accent transform-execute"
-        onClick={handleExecute}
-        disabled={!canExecute}
-      >
-        执行计算
-      </button>
-    </div>
+      {!disabled && (
+        <button
+          className="btn btn-primary btn-full"
+          onClick={handleExecute}
+          disabled={!canExecute}
+        >
+          {status === 'processing' ? '计算中...' : '执行计算'}
+        </button>
+      )}
+
+      {status === 'success' && resultMsg && (
+        <div className="result-success">
+          <CheckCircle2 size={14} strokeWidth={2} />
+          <div>{resultMsg}</div>
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="result-success" style={{ color: '#ff453a', background: 'rgba(255,69,58,0.08)' }}>
+          <XCircle size={14} strokeWidth={2} />
+          <div>{errorMsg}</div>
+        </div>
+      )}
+    </>
   );
 }

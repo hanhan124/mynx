@@ -5,28 +5,116 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "core:window:allow-close",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-unmaximize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-start-dragging",
     "dialog:default",
     "dialog:allow-open",
     "dialog:allow-save",
     "dialog:allow-message",
     "dialog:allow-ask",
     "dialog:allow-confirm",
-    "fs:default",
-    "fs:allow-read-text-file",
-    "fs:allow-read-file",
-    "fs:allow-write-text-file",
-    "fs:allow-write-file",
-    "fs:allow-exists",
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$DOCUMENTS/**" },
+        { "path": "$DOWNLOADS/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$APPDATA/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$TEMP/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-write-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$DOCUMENTS/**" },
+        { "path": "$DOWNLOADS/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$APPDATA/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$TEMP/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$DOCUMENTS/**" },
+        { "path": "$DOWNLOADS/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$APPDATA/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$TEMP/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-read-dir",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$DOCUMENTS/**" },
+        { "path": "$DOWNLOADS/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$APPDATA/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$TEMP/**" }
+      ]
+    },
     "fs:allow-mkdir",
-    "fs:allow-read-dir",
     "fs:allow-rename",
     "fs:allow-copy-file",
     "fs:allow-remove",
     "shell:default",
     "shell:allow-open",
-    "shell:allow-execute",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "powershell",
+          "cmd": "powershell.exe",
+          "args": true
+        },
+        {
+          "name": "cmd",
+          "cmd": "cmd.exe",
+          "args": true
+        },
+        {
+          "name": "cscript",
+          "cmd": "cscript.exe",
+          "args": true
+        },
+        {
+          "name": "python3",
+          "cmd": "python3",
+          "args": true
+        },
+        {
+          "name": "python",
+          "cmd": "python",
+          "args": true
+        },
+        {
+          "name": "py",
+          "cmd": "py",
+          "args": true
+        },
+        {
+          "name": "osascript",
+          "cmd": "osascript",
+          "args": true
+        }
+      ]
+    },
     "shell:allow-spawn",
     "store:default",
-    "updater:default"
+    "updater:default",
+    "os:default"
   ]
 }

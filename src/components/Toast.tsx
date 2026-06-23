@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { CheckCircle2, XCircle, Info } from "lucide-react";
 
 export type ToastType = "success" | "error" | "info";
 
@@ -15,6 +16,12 @@ export function showToast(text: string, type: ToastType = "info") {
   const msg: ToastMessage = { id: ++toastId, text, type };
   listeners.forEach((fn) => fn(msg));
 }
+
+const ICONS: Record<ToastType, typeof CheckCircle2> = {
+  success: CheckCircle2,
+  error: XCircle,
+  info: Info,
+};
 
 export default function ToastContainer() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -37,11 +44,15 @@ export default function ToastContainer() {
 
   return (
     <div className="toast-container">
-      {toasts.map((toast) => (
-        <div key={toast.id} className={`toast toast--${toast.type}`}>
-          <span className="toast-text">{toast.text}</span>
-        </div>
-      ))}
+      {toasts.map((toast) => {
+        const Icon = ICONS[toast.type];
+        return (
+          <div key={toast.id} className={`toast ${toast.type}`}>
+            <Icon size={15} strokeWidth={2} className="toast-icon" />
+            <span>{toast.text}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
