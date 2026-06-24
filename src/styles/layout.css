@@ -21,7 +21,7 @@
   overflow-x: hidden;
 }
 
-/* ========= 标题栏 ========= */
+/* ========= 标题�?========= */
 .title-bar {
   display: flex;
   align-items: center;
@@ -66,7 +66,7 @@
   height: 28px;
   border-radius: 6px;
   background: transparent;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   border: none;
   transition: background 160ms var(--ease-smooth), color 160ms var(--ease-smooth);
 }
@@ -90,7 +90,7 @@
   color: white;
 }
 
-/* ========= 侧边栏 ========= */
+/* ========= 侧边�?========= */
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -123,7 +123,7 @@
   align-items: center;
   justify-content: center;
   background: transparent;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   border: none;
   transition: background 180ms var(--ease-smooth), color 180ms var(--ease-smooth);
   position: relative;

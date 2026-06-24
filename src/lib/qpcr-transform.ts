@@ -24,6 +24,25 @@ export interface TransformResult {
   geneNames: string[];
 }
 
+/**
+ * Detects gene names from an existing "Transformed Data" sheet.
+ * Returns empty array if the sheet doesn't exist (file not yet transformed).
+ * Columns: 1=Num, 2=Group, 3+=gene names
+ */
+export function detectTransformedGenes(workbook: ExcelJS.Workbook): string[] {
+  const sheet = workbook.getWorksheet('Transformed Data');
+  if (!sheet) return [];
+
+  const headerRow = sheet.getRow(1);
+  const colCount = sheet.columnCount;
+  const genes: string[] = [];
+  for (let c = 3; c <= colCount; c++) {
+    const name = String(headerRow.getCell(c).value ?? '').trim();
+    if (name) genes.push(name);
+  }
+  return genes;
+}
+
 export function transformQpcrData(sourceSheet: ExcelJS.Worksheet, targetWorkbook: ExcelJS.Workbook): TransformResult {
   const headerRow = sourceSheet.getRow(1);
   const colCount = sourceSheet.columnCount;

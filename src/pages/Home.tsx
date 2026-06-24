@@ -1,31 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { FlaskConical, Image, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import AppMark from "@/components/AppMark";
-
-interface ToolCard {
-  title: string;
-  description: string;
-  path: string;
-  accent: string;
-  icon: typeof FlaskConical;
-}
-
-const tools: ToolCard[] = [
-  {
-    title: "qPCR 分析",
-    description: "数据转换 · 相对定量计算 · 结果可视化",
-    path: "/qpcr",
-    accent: "#007aff",
-    icon: FlaskConical,
-  },
-  {
-    title: "TIFF 转 JPG",
-    description: "批量转换 TIFF 图片为 JPG 格式",
-    path: "/tiff",
-    accent: "#34c759",
-    icon: Image,
-  },
-];
+import { tools } from "@/lib/tools";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -36,7 +12,7 @@ export default function Home() {
         <AppMark size={40} />
         <div>
           <div className="home-title">Mynx</div>
-          <div className="home-subtitle">桌面效率工具集</div>
+          <div className="home-subtitle">好用的工具，都在这里</div>
         </div>
       </div>
 
@@ -60,6 +36,10 @@ export default function Home() {
             </button>
           );
         })}
+      </div>
+
+      <div className="home-footer">
+        <span className="home-footer-line">© 2026 Han</span>
       </div>
     </div>
   );

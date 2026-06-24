@@ -1,20 +1,15 @@
+import { Suspense } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import TitleBar from "@/components/TitleBar";
 import Sidebar from "@/components/Sidebar";
 import Home from "@/pages/Home";
 import ToastContainer from "@/components/Toast";
-import TiffPage from "@/pages/tiff/TiffPage";
-import QpcrPage from "@/pages/qpcr/QpcrPage";
-
-const pageTitles: Record<string, string> = {
-  "/": "Mynx",
-  "/qpcr": "qPCR 分析",
-  "/tiff": "TIFF 转 JPG",
-};
+import UpdateNotification from "@/components/UpdateNotification";
+import { tools, getpageTitle } from "@/lib/tools";
 
 function Layout() {
   const location = useLocation();
-  const title = pageTitles[location.pathname] ?? "Mynx";
+  const title = getpageTitle(location.pathname);
 
   return (
     <div className="app-layout">
@@ -24,12 +19,22 @@ function Layout() {
         <main className="app-main">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/qpcr" element={<QpcrPage />} />
-            <Route path="/tiff" element={<TiffPage />} />
+            {tools.map((tool) => (
+              <Route
+                key={tool.path}
+                path={tool.path}
+                element={
+                  <Suspense fallback={null}>
+                    <tool.component />
+                  </Suspense>
+                }
+              />
+            ))}
           </Routes>
         </main>
       </div>
       <ToastContainer />
+      <UpdateNotification />
     </div>
   );
 }

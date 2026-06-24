@@ -1,115 +1,106 @@
 import ExcelJS from 'exceljs';
 
 /**
- * qPCR 计算逻辑 — 参照 VBA 参考文件 (2.caculate.txt)
- *
- * 输入: "Transformed Data" 工作表
- *   Col A: Num, Col B: Group, Col C+: 基因(Ct 值)
- *
- * 输出:
- *   - 每个基因一个独立工作表: refGene | targetGene | RE | Avg | Stdev | Group
- *   - "Summary_All_Genes" 汇总表: Gene | Group | Repeat1..N | Average | Stdev
+ * qPCR 相对定量计算 — 完全参照 VBA 宏 (2.caculate.txt)
  */
 
 const PROTECTED_SHEETS = new Set(['Transformed Data', 'Summary_All_Genes', 'Sheet1']);
 const BOLD_FONT: Partial<ExcelJS.Font> = { bold: true };
 
-export function calculateQpcr(
-  workbook: ExcelJS.Workbook,
-  repeatCount: number,
-  refGene: string
-): void {
-  const sourceSheet = workbook.getWorksheet('Transformed Data');
-  if (!sourceSheet) throw new Error('Transformed Data 工作表未找到');
+function sampleStdev(values: number[]): number {
+  if (values.length <= 1) return 0;
+  const avg = values.reduce((a, b) => a + b, 0) / values.length;
+  const variance = values.reduce((sum, v) => sum + (v - avg) ** 2, 0) / (values.length - 1);
+  return Math.sqrt(variance);
+}
 
+function parseNumber(val: unknown): number {
+  if (val == null) return NaN;
+  if (typeof val === 'number') return val;
+  const parsed = parseFloat(String(val).trim());
+  return isNaN(parsed) ? NaN : parsed;
+}
+
+function findColumn(sheet: ExcelJS.Worksheet, name: string): number {
+  const headerRow = sheet.getRow(1);
+  for (let c = 1; c <= sheet.columnCount; c++) {
+    if (String(headerRow.getCell(c).value ?? '').trim() === name) return c;
+  }
+  throw new Error('Column ' + name + ' not found');
+}
+
+export function calculateQpcr(workbook: ExcelJS.Workbook, repeatCount: number, refGene: string): void {
+  const sourceSheet = workbook.getWorksheet('Transformed Data');
+  if (!sourceSheet) throw new Error('Transformed Data sheet not found');
   const colCount = sourceSheet.columnCount;
   const headerRow = sourceSheet.getRow(1);
 
-  // 收集待计算基因（排除参考基因）
-  const geneNames: string[] = [];
-  for (let c = 3; c <= colCount; c++) {
+  // VBA: Start from col 4 (D), skip A=Num, B=Group, C=RefGene
+  const geneNames = [];
+  for (let c = 4; c <= colCount; c++) {
     const name = String(headerRow.getCell(c).value ?? '').trim();
     if (name && name !== refGene) geneNames.push(name);
   }
 
-  // 清理旧的基因工作表（保留保护表）
-  const toRemove = workbook.worksheets.filter(ws => !PROTECTED_SHEETS.has(ws.name));
+  // Clean old gene sheets
+  const toRemove = workbook.worksheets.filter((ws: ExcelJS.Worksheet) => !PROTECTED_SHEETS.has(ws.name));
   for (const ws of toRemove) workbook.removeWorksheet(ws.id);
 
-  // 创建 / 清空 Summary_All_Genes 汇总表
+  // Create/clear Summary_All_Genes
   let summarySheet = workbook.getWorksheet('Summary_All_Genes');
-  if (!summarySheet) {
-    summarySheet = workbook.addWorksheet('Summary_All_Genes');
-  } else {
-    summarySheet.spliceRows(1, summarySheet.rowCount);
-  }
+  if (!summarySheet) { summarySheet = workbook.addWorksheet('Summary_All_Genes'); }
+  else { for (let r = summarySheet.rowCount; r >= 1; r--) summarySheet.spliceRows(r, 1); }
 
   const summaryHeaders = ['Gene', 'Group_Name'];
-  for (let i = 1; i <= repeatCount; i++) summaryHeaders.push(`Repeat${i}`);
+  for (let i = 1; i <= repeatCount; i++) summaryHeaders.push('Repeat' + i);
   summaryHeaders.push('Average', 'Stdev');
+  const shRow = summarySheet.getRow(1);
+  summaryHeaders.forEach((h, i) => { const cell = shRow.getCell(i + 1); cell.value = h; cell.font = BOLD_FONT; });
 
-  const summaryHeaderRow = summarySheet.getRow(1);
-  summaryHeaders.forEach((h, i) => {
-    const cell = summaryHeaderRow.getCell(i + 1);
-    cell.value = h;
-    cell.font = BOLD_FONT;
-  });
-
-  const totalRows = sourceSheet.rowCount;
   const refCol = findColumn(sourceSheet, refGene);
-  let summaryRowNum = 1;
+  let summaryDataRow = 2;
 
-  for (const gene of geneNames) {
-    // 创建基因工作表
-    let sheetName = gene.length > 31 ? gene.substring(0, 31) : gene;
+  for (const targetGene of geneNames) {
+    const targetCol = findColumn(sourceSheet, targetGene);
+    let sheetName = targetGene.length > 31 ? targetGene.substring(0, 31) : targetGene;
     if (PROTECTED_SHEETS.has(sheetName)) sheetName += '_gene';
+
     let geneSheet = workbook.getWorksheet(sheetName);
-    if (!geneSheet) {
-      geneSheet = workbook.addWorksheet(sheetName);
-    } else {
-      geneSheet.spliceRows(1, geneSheet.rowCount);
+    if (!geneSheet) { geneSheet = workbook.addWorksheet(sheetName); }
+    else { for (let r = geneSheet.rowCount; r >= 1; r--) geneSheet.spliceRows(r, 1); }
+
+    const headers = [refGene, targetGene, 'Relative Expression', 'Average', 'Stdev', 'Group_Name'];
+    const hRow = geneSheet.getRow(1);
+    headers.forEach((h, i) => { const cell = hRow.getCell(i + 1); cell.value = h; cell.font = BOLD_FONT; });
+
+    let outputRow = 2;
+    const groupMap = new Map();
+
+    let lastDataRow = 1;
+    for (let r = sourceSheet.rowCount; r >= 2; r--) {
+      const g = String(sourceSheet.getRow(r).getCell(2).value ?? '').trim();
+      if (g) { lastDataRow = r; break; }
     }
 
-    // 表头 (VBA 列序: TBP | targetGene | RE | Average | Stdev | Group_Name)
-    const headers = [refGene, gene, 'Relative Expression', 'Average', 'Stdev', 'Group_Name'];
-    const hRow = geneSheet.getRow(1);
-    headers.forEach((h, i) => {
-      const cell = hRow.getCell(i + 1);
-      cell.value = h;
-      cell.font = BOLD_FONT;
-    });
-
-    const geneCol = findColumn(sourceSheet, gene);
-    let geneRowNum = 1;
-    const groupData = new Map<string, { avg: number; stdev: number; repeats: number[] }>();
-
-    // === 按 repeatCount 步长遍历 === (VBA: Step NUM_REPEATS)
-    for (let startRow = 2; startRow <= totalRows; startRow += repeatCount) {
+    for (let startRow = 2; startRow <= lastDataRow; startRow += repeatCount) {
       const groupName = String(sourceSheet.getRow(startRow).getCell(2).value ?? '').trim();
       if (!groupName) break;
-
-      const reValues: number[] = [];
+      const reValues = [];
       let allValid = true;
 
       for (let r = 0; r < repeatCount; r++) {
-        const currentRow = startRow + r;
-        if (currentRow > totalRows) break;
+        const currRow = startRow + r;
+        if (currRow > lastDataRow) { allValid = false; break; }
+        const row = sourceSheet.getRow(currRow);
+        const tVal = parseNumber(row.getCell(targetCol).value);
+        const rVal = parseNumber(row.getCell(refCol).value);
 
-        const row = sourceSheet.getRow(currentRow);
-        const targetCt = row.getCell(geneCol).value;
-        const refCt = row.getCell(refCol).value;
-
-        const tVal = typeof targetCt === 'number' ? targetCt : parseFloat(String(targetCt));
-        const rVal = typeof refCt === 'number' ? refCt : parseFloat(String(refCt));
-
-        geneRowNum++;
-        const outRow = geneSheet.getRow(geneRowNum);
-        outRow.getCell(1).value = rVal;   // TBP Ct
-        outRow.getCell(2).value = tVal;   // Target Ct
+        const outRow = geneSheet.getRow(outputRow + r);
+        outRow.getCell(1).value = rVal;
+        outRow.getCell(2).value = tVal;
         outRow.getCell(6).value = groupName;
 
         if (!isNaN(tVal) && !isNaN(rVal)) {
-          // Relative Expression = 2^-(Target_Ct - Ref_Ct)  (VBA 一致)
           const re = Math.pow(2, -(tVal - rVal));
           outRow.getCell(3).value = re;
           reValues.push(re);
@@ -120,42 +111,31 @@ export function calculateQpcr(
       }
 
       if (allValid && reValues.length === repeatCount) {
-        // 统计: Average + Stdev (sample stdev, n-1)
         const avg = reValues.reduce((a, b) => a + b, 0) / reValues.length;
-        const variance = reValues.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / (reValues.length - 1 || 1);
-        const stdev = Math.sqrt(variance);
+        const stdev = sampleStdev(reValues);
+        geneSheet.getRow(outputRow).getCell(4).value = avg;
+        geneSheet.getRow(outputRow).getCell(5).value = stdev;
+        groupMap.set(groupName, { repeats: [...reValues], avg, stdev });
 
-        // 平均值/标准差仅在第一行写入 (与 VBA 一致)
-        const firstRow = geneSheet.getRow(geneRowNum - reValues.length + 1);
-        firstRow.getCell(4).value = avg;
-        firstRow.getCell(5).value = stdev;
-
-        groupData.set(groupName, { avg, stdev, repeats: [...reValues] });
-
-        // === 写入 Summary_All_Genes ===
-        summaryRowNum++;
-        const sRow = summarySheet.getRow(summaryRowNum);
-        sRow.getCell(1).value = gene;
+        const sRow = summarySheet.getRow(summaryDataRow++);
+        sRow.getCell(1).value = targetGene;
         sRow.getCell(2).value = groupName;
-        for (let i = 0; i < reValues.length; i++) {
-          sRow.getCell(3 + i).value = reValues[i];
-        }
+        for (let i = 0; i < reValues.length; i++) sRow.getCell(3 + i).value = reValues[i];
         sRow.getCell(3 + repeatCount).value = avg;
         sRow.getCell(4 + repeatCount).value = stdev;
       }
+      outputRow += repeatCount;
     }
 
-    // === 基因表底部汇总区 (用于图表数据源) ===
-    if (groupData.size > 0) {
-      const summaryStart = geneRowNum + 3;
-      const chartHeader = geneSheet.getRow(summaryStart);
+    if (groupMap.size > 0) {
+      const summaryTableStart = outputRow + 2;
+      const chartHeader = geneSheet.getRow(summaryTableStart);
       chartHeader.getCell(1).value = 'Group_Name';
       chartHeader.getCell(2).value = 'Average';
       chartHeader.getCell(3).value = 'Stdev';
-      [1, 2, 3].forEach(c => { chartHeader.getCell(c).font = BOLD_FONT; });
-
-      let row = summaryStart + 1;
-      for (const [name, data] of groupData) {
+      [1, 2, 3].forEach(c => chartHeader.getCell(c).font = BOLD_FONT);
+      let row = summaryTableStart + 1;
+      for (const [name, data] of groupMap) {
         const r = geneSheet.getRow(row++);
         r.getCell(1).value = name;
         r.getCell(2).value = data.avg;
@@ -163,12 +143,4 @@ export function calculateQpcr(
       }
     }
   }
-}
-
-function findColumn(sheet: ExcelJS.Worksheet, name: string): number {
-  const headerRow = sheet.getRow(1);
-  for (let c = 1; c <= sheet.columnCount; c++) {
-    if (String(headerRow.getCell(c).value ?? '').trim() === name) return c;
-  }
-  throw new Error(`列 "${name}" 未找到`);
 }

@@ -7,19 +7,14 @@ import Modal from "@/components/Modal";
 import ThemePicker from "@/components/ThemePicker";
 import AppMark from "@/components/AppMark";
 import { showToast } from "@/components/Toast";
-import {
-  Home,
-  FlaskConical,
-  Image,
-  Globe,
-  Palette,
-  Info,
-} from "lucide-react";
+import { Home, Globe, Palette, Info } from "lucide-react";
+import { tools } from "@/lib/tools";
 
 const navItems = [
   { icon: Home, label: "主页", path: "/" },
-  { icon: FlaskConical, label: "qPCR", path: "/qpcr" },
-  { icon: Image, label: "TIFF", path: "/tiff" },
+  ...tools
+    .filter((t) => t.showInSidebar)
+    .map((t) => ({ icon: t.icon, label: t.navLabel, path: t.path })),
 ];
 
 export default function Sidebar() {
@@ -45,7 +40,7 @@ export default function Sidebar() {
         showToast("当前已是最新版本", "success");
       }
     } catch {
-      showToast("检查更新失败（请配置更新端点）", "info");
+      showToast("检查更新失败", "info");
     } finally {
       setCheckingUpdate(false);
     }
@@ -102,7 +97,7 @@ export default function Sidebar() {
 
       <Modal open={showThemes} onClose={() => setShowThemes(false)} title="主题设置">
         <div style={{ marginBottom: 12, fontSize: 12, color: 'var(--text-secondary)' }}>
-          选择界面配色风格
+          选择配色风格
         </div>
         <ThemePicker
           value={theme}
@@ -114,9 +109,14 @@ export default function Sidebar() {
       </Modal>
 
       <Modal open={showAbout} onClose={() => setShowAbout(false)} title="关于">
-        <div style={{ textAlign: 'center', marginBottom: 12 }}>
+        <div className="about-header">
           <AppMark size={48} />
+          <div className="about-header-text">
+            <div className="about-app-name">Mynx</div>
+            <div className="about-app-desc">让工作更简单</div>
+          </div>
         </div>
+
         <div className="about-info">
           <div className="about-row">
             <span>版本</span>
@@ -124,9 +124,28 @@ export default function Sidebar() {
           </div>
           <div className="about-row">
             <span>作者</span>
-            <span>Fang Guanghan</span>
+            <span>Han</span>
+          </div>
+          <div className="about-row">
+            <span>技术栈</span>
+            <span>Tauri · React · Rust</span>
           </div>
         </div>
+
+        <div className="about-links">
+          <button
+            className="btn btn-full"
+            onClick={() => {
+              import("@tauri-apps/plugin-shell").then(({ open }) =>
+                open("https://github.com/hanhan124/mynx")
+              );
+            }}
+          >
+            <Globe size={14} strokeWidth={1.8} />
+            GitHub
+          </button>
+        </div>
+
         <button
           className="btn btn-primary about-check"
           onClick={handleCheckUpdate}
@@ -134,6 +153,10 @@ export default function Sidebar() {
         >
           {checkingUpdate ? "检查中..." : "检查更新"}
         </button>
+
+        <div className="about-copyright">
+          © 2026 Han · MIT License
+        </div>
       </Modal>
     </>
   );

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import type ExcelJS from 'exceljs';
 import { calculateQpcr } from '@/lib/qpcr-calculate';
+import { detectTransformedGenes } from '@/lib/qpcr-transform';
 
 interface CalculateProps {
   workbook: ExcelJS.Workbook | null;
@@ -18,7 +19,23 @@ export default function Calculate({ workbook, geneNames, onComplete }: Calculate
   const [errorMsg, setErrorMsg] = useState('');
   const [resultMsg, setResultMsg] = useState('');
 
-  const canExecute = workbook !== null && geneNames.length > 0 && refGene !== '' && status !== 'processing';
+  // Auto-detect gene names from workbook's Transformed Data sheet
+  // if not already provided (e.g. file was already transformed)
+  const effectiveGeneNames = useMemo(() => {
+    if (geneNames.length > 0) return geneNames;
+    if (!workbook) return [];
+    return detectTransformedGenes(workbook);
+  }, [geneNames, workbook]);
+
+  // Auto-select first gene as reference gene
+  useEffect(() => {
+    if (effectiveGeneNames.length > 0 && !refGene) {
+      setRefGene(effectiveGeneNames[0]);
+    }
+  }, [effectiveGeneNames, refGene]);
+
+  // Button is enabled whenever a workbook is loaded and a ref gene is selected
+  const canExecute = workbook !== null && refGene !== '' && status !== 'processing';
 
   async function handleExecute() {
     if (!workbook || !refGene) return;
@@ -27,7 +44,7 @@ export default function Calculate({ workbook, geneNames, onComplete }: Calculate
       setErrorMsg('');
       calculateQpcr(workbook, repeatCount, refGene);
       setStatus('success');
-      setResultMsg(`处理了 ${geneNames.length} 个基因，重复数 = ${repeatCount}`);
+      setResultMsg(`计算完成，${effectiveGeneNames.length} 个基因`);
       onComplete(repeatCount);
     } catch (e) {
       setStatus('error');
@@ -35,62 +52,52 @@ export default function Calculate({ workbook, geneNames, onComplete }: Calculate
     }
   }
 
-  const disabled = !workbook;
+  if (!workbook) {
+    return (
+      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '4px 0' }}>
+        请先选择数据文件
+      </div>
+    );
+  }
+
+  const hasGenes = effectiveGeneNames.length > 0;
 
   return (
     <>
-      {disabled ? (
-        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '4px 0' }}>
-          请先打开并转换数据文件
+      <div className="form-row">
+        <div className="form-group">
+          <label>重复次数</label>
+          <select value={repeatCount} onChange={(e) => setRepeatCount(Number(e.target.value))} disabled={status === 'processing'}>
+            {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
         </div>
-      ) : geneNames.length === 0 ? (
-        <div className="form-row">
-          <div className="form-group">
-            <label>重复次数</label>
-            <select value={repeatCount} onChange={(e) => setRepeatCount(Number(e.target.value))} disabled={status === 'processing'}>
-              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>参考基因</label>
-            <select disabled>
-              <option value="">请先执行数据转换</option>
-            </select>
-          </div>
-        </div>
-      ) : (
-        <div className="form-row">
-          <div className="form-group">
-            <label>重复次数</label>
-            <select value={repeatCount} onChange={(e) => setRepeatCount(Number(e.target.value))} disabled={status === 'processing'}>
-              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>参考基因</label>
-            <select value={refGene} onChange={(e) => setRefGene(e.target.value)} disabled={status === 'processing'}>
-              <option value="">请选择参考基因</option>
-              {geneNames.map((g) => (
+        <div className="form-group">
+          <label>参考基因</label>
+          <select
+            value={refGene}
+            onChange={(e) => setRefGene(e.target.value)}
+            disabled={status === 'processing' || !hasGenes}
+          >
+            {hasGenes ? (
+              effectiveGeneNames.map((g) => (
                 <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-          </div>
+              ))
+            ) : (
+              <option value="">请先转换数据</option>
+            )}
+          </select>
         </div>
-      )}
+      </div>
 
-      {!disabled && (
-        <button
-          className="btn btn-primary btn-full"
-          onClick={handleExecute}
-          disabled={!canExecute}
-        >
-          {status === 'processing' ? '计算中...' : '执行计算'}
-        </button>
-      )}
+      <button
+        className="btn btn-primary btn-full"
+        onClick={handleExecute}
+        disabled={!canExecute}
+      >
+        {status === 'processing' ? '正在计算...' : '执行计算'}
+      </button>
 
       {status === 'success' && resultMsg && (
         <div className="result-success">

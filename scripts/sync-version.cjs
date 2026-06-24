@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const root = __dirname;
+const root = path.join(__dirname, "..");
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf-8"));
 const ver = pkg.version;
 

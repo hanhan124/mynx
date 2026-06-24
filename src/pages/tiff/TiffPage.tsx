@@ -25,9 +25,9 @@ export default function TiffPage() {
     try {
       const result = await convertTiff(folder.path, options);
       if (result.failed > 0) {
-        showToast(`转换完成：${result.ok} 成功，${result.failed} 失败`, "info");
+        showToast(`${result.ok} 个成功，${result.failed} 个失败`, "info");
       } else {
-        showToast(`全部转换成功：${result.ok} 个文件`, "success");
+        showToast(`转换完成，${result.ok} 个文件`, "success");
       }
     } catch (e) {
       showToast(`转换失败：${e instanceof Error ? e.message : String(e)}`, "error");
@@ -46,7 +46,7 @@ export default function TiffPage() {
         </div>
         <div className="panel-title">
           <h2>TIFF 转 JPG</h2>
-          <p>批量转换 TIFF 图片为 JPG 格式</p>
+          <p>批量将 TIFF 转为 JPG</p>
         </div>
       </div>
 
@@ -62,7 +62,7 @@ export default function TiffPage() {
             </div>
             <div className="file-info">
               <div className="file-name">{folder ? folder.name : '未选择文件夹'}</div>
-              <div className="file-path">{folder ? folder.path : '包含 .tif/.tiff 文件的目录'}</div>
+              <div className="file-path">{folder ? folder.path : '.tif / .tiff 文件目录'}</div>
             </div>
           </div>
           <button className="btn btn-primary btn-full" onClick={handlePick}>

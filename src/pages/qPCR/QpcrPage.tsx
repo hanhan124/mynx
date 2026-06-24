@@ -7,6 +7,7 @@ import LoadingOverlay from '@/components/LoadingOverlay';
 import type { ExcelFile } from '@/lib/excel-io';
 import { saveExcelFile } from '@/lib/excel-io';
 import { generateVbsCharts } from '@/lib/chart-gen';
+import { detectTransformedGenes } from '@/lib/qpcr-transform';
 import { showToast } from '@/components/Toast';
 
 export default function QpcrPage() {
@@ -32,30 +33,25 @@ export default function QpcrPage() {
     setGeneNames(names);
     setLoading(true);
     setLoadingText('转换中...');
-    await autoSave('数据转换完成，已自动保存');
+    await autoSave('转换完成，已保存');
     setLoading(false);
   }, [autoSave]);
 
   const handleCalculateComplete = useCallback(async (repeatCount: number) => {
     setLoading(true);
-    setLoadingText('计算中，正在生成 Excel 图表...');
-    await autoSave('qPCR 计算完成');
+    setLoadingText('计算中...');
+    await autoSave('计算完成，已保存');
     if (file) {
       try {
         const result = await generateVbsCharts(file.path, repeatCount);
-        if (result.ok) {
+        if (result.success) {
           const created = result.chartsCreated ?? 0;
-          const failed = result.failedCount ?? 0;
-          if (failed > 0) {
-            showToast(`已生成 ${created} 个图表（${failed} 个工作表跳过）`, 'success');
-          } else {
-            showToast(`已生成 ${created} 个 Excel 图表`, 'success');
-          }
+          showToast(`已生成 ${created} 个图表`, 'success');
         } else {
-          showToast(`图表生成失败: ${result.error ?? '未知错误'}`, 'error');
+          showToast(`图表生成失败：${result.reason ?? '未知错误'}`, 'error');
         }
       } catch (e) {
-        showToast(`图表生成出错: ${String(e)}`, 'error');
+        showToast(`图表生成出错：${String(e)}`, 'error');
       }
     }
     setLoading(false);
@@ -71,7 +67,7 @@ export default function QpcrPage() {
         </div>
         <div className="panel-title">
           <h2>qPCR 分析</h2>
-          <p>数据转换 · 相对定量计算 · 结果可视化</p>
+          <p>转换数据，计算相对表达量</p>
         </div>
       </div>
 
@@ -87,7 +83,13 @@ export default function QpcrPage() {
             sheetName={sheetName}
             onFileChange={(f) => {
               setFile(f);
-              setGeneNames([]);
+              if (f) {
+                // Auto-detect gene names if file already has Transformed Data sheet
+                const genes = detectTransformedGenes(f.workbook);
+                setGeneNames(genes);
+              } else {
+                setGeneNames([]);
+              }
             }}
             onSheetChange={setSheetName}
           />

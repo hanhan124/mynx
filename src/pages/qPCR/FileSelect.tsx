@@ -40,7 +40,7 @@ export default function FileSelect({ file, sheetName, onFileChange, onSheetChang
         </div>
         <div className="file-info">
           <div className="file-name">{file ? file.name : '未选择文件'}</div>
-          <div className="file-path">{file ? file.path : '支持 .xlsx 格式'}</div>
+          <div className="file-path">{file ? file.path : 'xlsx / xls'}</div>
         </div>
       </div>
 
