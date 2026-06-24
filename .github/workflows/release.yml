@@ -48,13 +48,29 @@ jobs:
         shell: pwsh
         run: |
           $nsisDir = "src-tauri\target\release\bundle\nsis"
+          $releaseDir = "src-tauri\target\release"
+          $pkg = Get-Content "package.json" | ConvertFrom-Json
+
+          # NSIS 安装包 + 签名 + latest.json
           $exe = Get-ChildItem "$nsisDir\*.exe" | Select-Object -First 1
           $sig  = Get-ChildItem "$nsisDir\*.sig" | Select-Object -First 1
           $json = Get-ChildItem "$nsisDir\latest.json" -ErrorAction SilentlyContinue
-          $assets = @($exe.FullName)
-          if ($sig)  { $assets += $sig.FullName }
-          if ($json) { $assets += $json.FullName }
-          echo "files=$($assets -join ',')" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII
+
+          # 便携版 exe（直接复制并重命名）
+          $portable = Get-ChildItem "$releaseDir\mynx.exe" -ErrorAction SilentlyContinue
+          if ($portable) {
+            $portableNewName = "$releaseDir\Mynx_$($pkg.version)_portable.exe"
+            Copy-Item $portable.FullName $portableNewName -Force
+          }
+
+          $assets = @()
+          if ($exe)    { $assets += $exe.FullName }
+          if ($sig)    { $assets += $sig.FullName }
+          if ($json)   { $assets += $json.FullName }
+          if ($portableNewName -and (Test-Path $portableNewName)) { $assets += $portableNewName }
+
+          $joined = $assets -join ','
+          echo "files=$joined" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

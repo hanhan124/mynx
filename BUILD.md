@@ -40,20 +40,29 @@ npm run portable
 
 **第二步：推送代码**
 
-```powershell
+```bash
 git add -A
-git commit -m "ci: add GitHub Actions release workflow"
-git push --set-upstream origin master
+git commit -m "ci: add release workflow"
+git push origin main
 ```
 
 **第三步：打 tag 发版**
 
-```powershell
+```bash
 git tag v1.8.0
 git push origin v1.8.0
 ```
 
-打开 https://github.com/hanhan124/mynx/actions 查看构建进度。
+打开 https://github.com/hanhanck/mynx/actions 查看构建进度。
+
+每个 Release 会自动包含以下文件：
+
+| 文件 | 说明 |
+|------|------|
+| `Mynx_x.x.x_x64-setup.exe` | NSIS 安装包 |
+| `Mynx_x.x.x_x64-setup.exe.sig` | 签名文件 |
+| `Mynx_x.x.x_portable.exe` | 便携版 exe（免安装） |
+| `latest.json` | 自动更新清单 |
 
 ---
 
@@ -61,33 +70,32 @@ git push origin v1.8.0
 
 如果不想用 GitHub Actions，可以在本地构建。
 
-### 构建便携版
-
 ```bash
 npm run portable
 ```
 
 产物：`src-tauri/target/release/mynx.exe`，双击即可运行。
 
-### 环境要求
+---
+
+## 五、环境要求
 
 | 工具 | 说明 |
 |------|------|
 | Node.js 18+ | 前端构建 |
 | Rust 1.75+ | 后端编译 |
-| Windows 10/11 | 目标平台 |
 
 缺 Rust 去 https://rustup.rs 下载安装。
 
 ---
 
-## 五、常见问题
+## 六、常见问题
 
-**Q: GitHub Actions 报签名失败？**
+**GitHub Actions 报签名失败？**
 
-检查 Secrets 里 `TAURI_SIGNING_PRIVATE_KEY` 是否包含完整内容（必须是 `-----BEGIN RSA PRIVATE KEY-----` 开头、`-----END RSA PRIVATE KEY-----` 结尾的整段文本，不能有多余空格或换行）。
+检查 Secrets 里 `TAURI_SIGNING_PRIVATE_KEY` 是否包含完整内容。必须是 `-----BEGIN RSA PRIVATE KEY-----` 开头、`-----END RSA PRIVATE KEY-----` 结尾的整段文本。
 
-**Q: 本地 `npm run portable` 报拒绝访问？**
+**本地 `npm run portable` 报拒绝访问？**
 
 Windows Defender 拦截了新编译的 exe。管理员 PowerShell 运行：
 
@@ -96,14 +104,10 @@ Add-MpPreference -ExclusionPath "C:\Users\HAN\Desktop\mynx-tauri"
 Add-MpPreference -ExclusionPath "C:\Users\HAN\.cargo"
 ```
 
-**Q: `latest.json` 没有生成？**
-
-签名成功后才会有 latest.json。没有签名时 exe 可以正常运行，但自动更新功能不可用。
-
-**Q: 想测试 workflow 先不发正式版？**
+**想测试 workflow 不发正式版？**
 
 打预发布 tag：
-```powershell
+```bash
 git tag v1.8.0-beta.1
 git push origin v1.8.0-beta.1
 ```
