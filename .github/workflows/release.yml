@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
           cache: 'npm'
 
       - name: Setup Rust
@@ -45,42 +45,57 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri build
 
-      - name: Generate latest.json with both targets
-        id: latest-json
+      - name: Prepare portable build & latest.json
         shell: pwsh
+        env:
+          KEY_PATH: ${{ env.key_path }}
+          SIGN_PWD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
+          $ErrorActionPreference = 'Continue'
+          $InformationPreference = 'Continue'
+
           $pkg = Get-Content "package.json" | ConvertFrom-Json
           $version = $pkg.version
           $nsisDir = "src-tauri\target\release\bundle\nsis"
           $releaseDir = "src-tauri\target\release"
 
-          # Find NSIS installer and its signature
+          Write-Host "==> Version: $version"
+          Write-Host "==> NSIS bundle contents:"
+          if (Test-Path $nsisDir) {
+            Get-ChildItem $nsisDir | ForEach-Object { Write-Host "    $($_.Name)" }
+          } else {
+            Write-Host "    (nsis dir missing)"
+          }
+          Write-Host "==> Release exe files:"
+          Get-ChildItem $releaseDir -Filter "*.exe" -ErrorAction SilentlyContinue |
+            ForEach-Object { Write-Host "    $($_.Name)" }
+
+          # --- NSIS installer + signature ---
           $nsisExe = Get-ChildItem "$nsisDir\Mynx*_setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           $nsisSig = Get-ChildItem "$nsisDir\Mynx*_setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
 
-          # Find portable exe and sign it
+          # --- Portable exe: copy + sign (non-fatal) ---
           $portableSrc = Get-ChildItem "$releaseDir\mynx.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           $portableDest = "$releaseDir\Mynx_${version}_portable.exe"
-          $portableSigPath = "$portableDest.sig"
 
           if ($portableSrc) {
             Copy-Item $portableSrc.FullName $portableDest -Force
-            # Sign the portable exe
-            npx tauri signer sign -k "$env:key_path" -p "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" "$portableDest" 2>$null | Out-Null
+            Write-Host "==> Signing portable exe..."
+            & npx tauri signer sign -k "$env:KEY_PATH" -p "$env:SIGN_PWD" "$portableDest"
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "    ! portable signing returned exit code $LASTEXITCODE (ignored)"
+            }
+          } else {
+            Write-Host "==> No portable source exe found, skipping portable target"
           }
 
-          # Get file sizes
+          # --- Sizes ---
           $nsisSize = if ($nsisExe) { (Get-Item $nsisExe.FullName).Length } else { 0 }
           $portableSize = if (Test-Path $portableDest) { (Get-Item $portableDest).Length } else { 0 }
 
-          # Build latest.json with both download entries
+          # --- latest.json (two download entries) ---
           $today = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
           $ghBase = "https://github.com/hanhan124/mynx/releases/download/v${version}"
-
-          $nsisUrl = "$ghBase/Mynx_${version}_x64-setup.exe"
-          $nsisSigUrl = "$ghBase/Mynx_${version}_x64-setup.exe.sig"
-          $portableUrl = "$ghBase/Mynx_${version}_portable.exe"
-          $portableSigUrl = "$ghBase/Mynx_${version}_portable.exe.sig"
 
           $jsonObj = [ordered]@{
             version = $version
@@ -90,14 +105,14 @@ jobs:
             downloads = @(
               [ordered]@{
                 name = "Mynx_${version}_x64-setup.exe"
-                signature = $nsisSigUrl
-                url = $nsisUrl
+                signature = "$ghBase/Mynx_${version}_x64-setup.exe.sig"
+                url = "$ghBase/Mynx_${version}_x64-setup.exe"
                 size = $nsisSize
               },
               [ordered]@{
                 name = "Mynx_${version}_portable.exe"
-                signature = $portableSigUrl
-                url = $portableUrl
+                signature = "$ghBase/Mynx_${version}_portable.exe.sig"
+                url = "$ghBase/Mynx_${version}_portable.exe"
                 size = $portableSize
               }
             )
@@ -106,33 +121,33 @@ jobs:
           $jsonStr = $jsonObj | ConvertTo-Json -Depth 4 -Compress
           $latestJsonPath = "$releaseDir\latest.json"
           $jsonStr | Out-File -FilePath $latestJsonPath -Encoding UTF8
+          Write-Host "==> latest.json written:"
+          Write-Host $jsonStr
 
-          echo "latest_json_path=$latestJsonPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII
-          echo "portable_dest=$portableDest" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII
+          # --- Persist paths for next step ---
+          "latest_json_path=$latestJsonPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII -Append
+          "portable_dest=$portableDest" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII -Append
 
       - name: Collect release assets
-        id: assets
         shell: pwsh
         run: |
           $nsisDir = "src-tauri\target\release\bundle\nsis"
-          $releaseDir = "src-tauri\target\release"
-          $pkg = Get-Content "package.json" | ConvertFrom-Json
-          $version = $pkg.version
+          $assets = New-Object System.Collections.Generic.List[string]
 
-          # NSIS installer + signature
-          $exe = Get-ChildItem "$nsisDir\Mynx*_setup.exe" | Select-Object -First 1
-          $sig = Get-ChildItem "$nsisDir\Mynx*_setup.exe.sig" | Select-Object -First 1
-
-          $assets = @()
-          if ($exe)    { $assets += $exe.FullName }
-          if ($sig)    { $assets += $sig.FullName }
-          if (Test-Path $env:latest_json_path) { $assets += $env:latest_json_path }
-          if (Test-Path $env:portable_dest) { $assets += $env:portable_dest }
+          $exe = Get-ChildItem "$nsisDir\Mynx*_setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $sig = Get-ChildItem "$nsisDir\Mynx*_setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($exe) { $assets.Add($exe.FullName) }
+          if ($sig) { $assets.Add($sig.FullName) }
+          if ($env:latest_json_path -and (Test-Path $env:latest_json_path)) { $assets.Add($env:latest_json_path) }
+          if ($env:portable_dest -and (Test-Path $env:portable_dest)) { $assets.Add($env:portable_dest) }
           $portableSig = "$env:portable_dest.sig"
-          if (Test-Path $portableSig) { $assets += $portableSig }
+          if (Test-Path $portableSig) { $assets.Add($portableSig) }
 
-          $joined = $assets -join ','
-          echo "files=$joined" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII
+          Write-Host "==> Assets to upload:"
+          $assets | ForEach-Object { Write-Host "    $_" }
+
+          $joined = ($assets -join ',')
+          "files=$joined" | Out-File -FilePath $env:GITHUB_ENV -Encoding ASCII -Append
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
