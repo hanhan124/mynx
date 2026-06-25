@@ -48,6 +48,7 @@ run("npm run tauri build");
 const bundleDir = path.join(ROOT, "src-tauri", "target", "release", "bundle");
 const nsisDir = path.join(bundleDir, "nsis");
 const msiDir = path.join(bundleDir, "msi");
+const releaseDir = path.join(ROOT, "src-tauri", "target", "release");
 
 const assets = [];
 if (fs.existsSync(nsisDir)) {
@@ -69,6 +70,20 @@ if (fs.existsSync(msiDir)) {
 const latestJsonPath = path.join(nsisDir, "latest.json");
 if (fs.existsSync(latestJsonPath)) {
   assets.push(latestJsonPath);
+}
+
+// 便携版 exe
+const portableExe = path.join(releaseDir, "mynx.exe");
+const portableDest = path.join(releaseDir, `Mynx_${pkg.version}_portable.exe`);
+if (fs.existsSync(portableExe)) {
+  fs.copyFileSync(portableExe, portableDest);
+  assets.push(portableDest);
+  
+  // 便携版签名
+  const portableSig = portableDest + ".sig";
+  if (fs.existsSync(portableSig)) {
+    assets.push(portableSig);
+  }
 }
 
 console.log(`\n📁 构建产物 (${assets.length} 个文件):`);
