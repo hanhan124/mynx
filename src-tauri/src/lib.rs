@@ -5,7 +5,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// Maximum allowed VBS script size (512 KB).
 const MAX_VBS_SIZE: usize = 512 * 1024;
 
-/// Validates VBS script content before execution.
 fn validate_vbs_content(content: &str) -> Result<(), String> {
     if content.len() > MAX_VBS_SIZE {
         return Err(format!(
@@ -101,6 +100,63 @@ fn is_portable() -> Result<bool, String> {
     Ok(!path_str.contains("program files"))
 }
 
+/// Portable self-update: rename old exe as .bak, move new exe in, spawn new, exit.
+/// The new process will clean up the .bak file on next startup.
+#[tauri::command]
+fn portable_self_update(new_exe_path: String) -> Result<(), String> {
+    let current = std::env::current_exe()
+        .map_err(|e| format!("Failed to get current exe: {}", e))?;
+
+    let new_path = std::path::Path::new(&new_exe_path);
+    if !new_path.exists() {
+        return Err(format!("New exe not found: {}", new_exe_path));
+    }
+
+    if !new_path.is_file() {
+        return Err(format!("Not a file: {}", new_exe_path));
+    }
+
+    let bak_path = current.with_extension("exe.bak");
+
+    // 1. Rename current exe → .bak
+    if current.exists() {
+        let _ = fs::remove_file(&bak_path);
+        fs::rename(&current, &bak_path)
+            .map_err(|e| format!("Failed to rename current exe: {}", e))?;
+    }
+
+    // 2. Move new exe to current exe's location
+    fs::rename(new_path, &current)
+        .map_err(|e| {
+            // Rollback: try to restore old exe
+            let _ = fs::rename(&bak_path, &current);
+            format!("Failed to move new exe: {}", e)
+        })?;
+
+    // 3. Clean up .bak
+    let _ = fs::remove_file(&bak_path);
+
+    // 4. Spawn new exe and exit
+    Command::new(&current)
+        .spawn()
+        .map_err(|e| format!("Failed to spawn new exe: {}", e))?;
+
+    std::process::exit(0);
+}
+
+/// Clean up leftover .bak file from a previous portable self-update.
+#[tauri::command]
+fn cleanup_update_bak() -> Result<(), String> {
+    let current = std::env::current_exe()
+        .map_err(|e| format!("Failed to get exe path: {}", e))?;
+    let bak_path = current.with_extension("exe.bak");
+    if bak_path.exists() {
+        fs::remove_file(&bak_path)
+            .map_err(|e| format!("Failed to remove bak file: {}", e))?;
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -114,7 +170,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             run_vbs_script,
             app_exe_path,
-            is_portable
+            is_portable,
+            portable_self_update,
+            cleanup_update_bak
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

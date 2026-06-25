@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { check } from "@tauri-apps/plugin-updater";
 import { getVersion } from "@tauri-apps/api/app";
+import { invoke } from "@tauri-apps/api/core";
 import { useTheme } from "@/hooks/useTheme";
 import Modal from "@/components/Modal";
 import ThemePicker from "@/components/ThemePicker";
@@ -33,11 +34,27 @@ export default function Sidebar() {
   const handleCheckUpdate = async () => {
     setCheckingUpdate(true);
     try {
-      const update = await check();
-      if (update) {
-        showToast(`发现新版本: ${update.version}`, "info");
+      const portable = await invoke<boolean>("is_portable").catch(() => false);
+      if (portable) {
+        const resp = await fetch("https://github.com/hanhan124/mynx/releases/latest/download/latest.json");
+        if (resp.ok) {
+          const latest: { version: string } = await resp.json();
+          const current = await getVersion();
+          if (latest.version.replace(/^v/, "") !== current.replace(/^v/, "") && compareVersions(latest.version, current) > 0) {
+            showToast(`发现新版本: v${latest.version}，请在右下角通知中更新`, "info");
+          } else {
+            showToast("当前已是最新版本", "success");
+          }
+        } else {
+          showToast("检查更新失败", "info");
+        }
       } else {
-        showToast("当前已是最新版本", "success");
+        const update = await check();
+        if (update) {
+          showToast(`发现新版本: ${update.version}`, "info");
+        } else {
+          showToast("当前已是最新版本", "success");
+        }
       }
     } catch {
       showToast("检查更新失败", "info");
@@ -45,6 +62,18 @@ export default function Sidebar() {
       setCheckingUpdate(false);
     }
   };
+
+  function compareVersions(a: string, b: string): number {
+    const aParts = a.replace(/^v/, '').split('.').map(Number);
+    const bParts = b.replace(/^v/, '').split('.').map(Number);
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const aPart = aParts[i] || 0;
+      const bPart = bParts[i] || 0;
+      if (aPart > bPart) return 1;
+      if (aPart < bPart) return -1;
+    }
+    return 0;
+  }
 
   return (
     <>

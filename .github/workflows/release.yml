@@ -1,6 +1,5 @@
 name: Build & Release
 
-# 触发条件：推送 v 开头的 tag
 on:
   push:
     tags:
@@ -14,44 +13,42 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
-      - name: 🦀 Setup Rust
+      - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: 💾 Setup Rust cache
+      - name: Setup Rust cache
         uses: swatinem/rust-cache@v2
 
-      - name: 📥 Install npm dependencies
+      - name: Install npm dependencies
         run: npm ci
 
-      - name: 🔏 Write signing key file
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      - name: Import signing key (if configured)
+        id: import_key
         shell: pwsh
         run: |
-          # 把 secret 内容原样写入临时文件（用 .NET 避免换行/编码问题）
-          $keyPath = Join-Path $env:RUNNER_TEMP "mynx-signing.key"
-          [System.IO.File]::WriteAllText($keyPath, $env:TAURI_SIGNING_PRIVATE_KEY, [System.Text.UTF8Encoding]::new($false))
-          $size = (Get-Item $keyPath).Length
-          Write-Host "Signing key written to $keyPath ($size bytes)"
-          if ($size -eq 0) {
-            Write-Host "::warning::TAURI_SIGNING_PRIVATE_KEY secret 为空 — 构建将不签名"
+          $key = "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}"
+          if ([string]::IsNullOrEmpty($key)) {
+            Write-Host "::warning::TAURI_SIGNING_PRIVATE_KEY secret not set — build will skip signing"
+            "KEY_AVAILABLE=false" >> $env:GITHUB_ENV
+          } else {
+            $keyPath = Join-Path $env:RUNNER_TEMP "mynx-signing.key"
+            [System.IO.File]::WriteAllText($keyPath, $key, [System.Text.UTF8Encoding]::new($false))
+            $size = (Get-Item $keyPath).Length
+            Write-Host "Signing key written ($size bytes)"
+            "KEY_AVAILABLE=true" >> $env:GITHUB_ENV
+            "TAURI_SIGNING_PRIVATE_KEY_PATH=$keyPath" >> $env:GITHUB_ENV
           }
-          # 设置后续 step 要用的环境变量
-          "TAURI_SIGNING_PRIVATE_KEY_PATH=$keyPath" >> $env:GITHUB_ENV
 
-      - name: 🔨 Build (NSIS installer, auto-signed by Tauri)
-        env:
-          TAURI_SIGNING_PRIVATE_KEY_PATH: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PATH }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      - name: Build (NSIS installer)
         shell: pwsh
         run: |
           npm run tauri build
@@ -61,9 +58,11 @@ jobs:
             Get-ChildItem $nsis | ForEach-Object { Write-Host "    $($_.Name)  ($($_.Length) bytes)" }
           }
 
-      - name: 📤 Prepare release assets
+      - name: Prepare release assets
         id: assets
         shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           $ErrorActionPreference = 'Continue'
 
@@ -71,19 +70,21 @@ jobs:
           $version = $pkg.version
           $nsisDir = "src-tauri\target\release\bundle\nsis"
           $releaseDir = "src-tauri\target\release"
+          $keyPath = $env:TAURI_SIGNING_PRIVATE_KEY_PATH
+          $keyPassword = $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD
 
           Write-Host "==> Preparing assets for version $version"
 
-          # --- 1. NSIS 安装包 (+ 签名文件如果 Tauri 生成了) ---
+          # 1. NSIS installer + .sig
           $nsisExe = Get-ChildItem "$nsisDir\Mynx*_setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           $nsisSig = Get-ChildItem "$nsisDir\Mynx*_setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($nsisSig) {
             Write-Host "==> NSIS setup IS signed: $($nsisSig.Name)"
           } else {
-            Write-Host "==> NSIS setup NOT signed (no .sig) — 自动更新将不可用"
+            Write-Host "==> NSIS setup NOT signed — auto-update will not work"
           }
 
-          # --- 2. 便携版 exe (复制 + 用密钥文件签名) ---
+          # 2. Portable exe
           $portableSrc = Get-ChildItem "$releaseDir\mynx.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           $portableDest = "$releaseDir\Mynx_${version}_portable.exe"
 
@@ -91,75 +92,66 @@ jobs:
             Copy-Item $portableSrc.FullName $portableDest -Force
             Write-Host "==> Portable exe copied: $portableDest"
 
-            # 签名便携版：用 -f <file> 传文件路径（不是 -k，-k 要的是密钥字符串）
-            $keyPath = $env:TAURI_SIGNING_PRIVATE_KEY_PATH
-            if ($keyPath -and (Test-Path $keyPath)) {
-              Write-Host "==> Signing portable exe with key file: $keyPath"
-              & npx tauri signer sign -f "$keyPath" -p "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" "$portableDest"
+            # Sign portable exe
+            if ($keyPath -and (Test-Path $keyPath) -and $keyPassword) {
+              Write-Host "==> Signing portable exe..."
+              & npx tauri sign sign -f "$keyPath" -p "$keyPassword" "$portableDest"
               if ($LASTEXITCODE -eq 0) {
                 Write-Host "    Portable signing OK"
               } else {
-                Write-Host "    ! Portable signing failed (exit $LASTEXITCODE), continuing anyway"
+                Write-Host "    Portable signing failed (exit $LASTEXITCODE), continuing anyway"
               }
             } else {
-              Write-Host "==> No key file, skipping portable signing"
+              Write-Host "==> No key file or password, skipping portable signing"
             }
-          } else {
-            Write-Host "==> No mynx.exe found, skipping portable build"
           }
 
-          # --- 3. 生成 latest.json ---
-          $nsisSize = if ($nsisExe) { (Get-Item $nsisExe.FullName).Length } else { 0 }
-          $portableSize = if (Test-Path $portableDest) { (Get-Item $portableDest).Length } else { 0 }
+          # 3. latest.json
+          $nsisSigContent = ""
+          if ($nsisSig -and (Test-Path $nsisSig.FullName)) {
+            $nsisSigContent = (Get-Content $nsisSig.FullName -Raw).Trim()
+          }
 
           $ghBase = "https://github.com/hanhan124/mynx/releases/download/v${version}"
-          $today = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
+          $today = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
           $jsonObj = [ordered]@{
             version = $version
             date = $today
             notes = "See the GitHub Release for full changelog."
             body = ""
-            downloads = @(
-              [ordered]@{
-                name = "Mynx_${version}_x64-setup.exe"
-                signature = "$ghBase/Mynx_${version}_x64-setup.exe.sig"
+            platforms = [ordered]@{
+              "windows-x86_64" = [ordered]@{
                 url = "$ghBase/Mynx_${version}_x64-setup.exe"
-                size = $nsisSize
-              },
-              [ordered]@{
-                name = "Mynx_${version}_portable.exe"
-                signature = "$ghBase/Mynx_${version}_portable.exe.sig"
-                url = "$ghBase/Mynx_${version}_portable.exe"
-                size = $portableSize
+                signature = $nsisSigContent
               }
-            )
+            }
+            portableUrl = "$ghBase/Mynx_${version}_portable.exe"
           }
 
           $jsonStr = $jsonObj | ConvertTo-Json -Depth 4 -Compress
           $latestJsonPath = "$releaseDir\latest.json"
-          $jsonStr | Out-File -FilePath $latestJsonPath -Encoding UTF8
+          [System.IO.File]::WriteAllText($latestJsonPath, $jsonStr, [System.Text.UTF8Encoding]::new($false))
           Write-Host "==> latest.json:"
           Write-Host $jsonStr
 
-          # --- 4. 收集要上传的文件 ---
-          $assets = New-Object System.Collections.Generic.List[string]
-          if ($nsisExe) { $assets.Add($nsisExe.FullName) }
-          if ($nsisSig) { $assets.Add($nsisSig.FullName) }
-          if ($portableSize -gt 0 -and (Test-Path $portableDest)) { $assets.Add($portableDest) }
+          # 4. Collect assets
+          $assets = @()
+          if ($nsisExe) { $assets += $nsisExe.FullName }
+          if ($nsisSig) { $assets += $nsisSig.FullName }
+          if ($portableSrc -and (Test-Path $portableDest)) { $assets += $portableDest }
           $portableSig = "$portableDest.sig"
-          if (Test-Path $portableSig) { $assets.Add($portableSig) }
-          if (Test-Path $latestJsonPath) { $assets.Add($latestJsonPath) }
+          if (Test-Path $portableSig) { $assets += $portableSig }
+          if (Test-Path $latestJsonPath) { $assets += $latestJsonPath }
 
           Write-Host "==> Final assets to upload:"
           $assets | ForEach-Object { Write-Host "    $_" }
 
-          $joined = $assets -join "`n"
           "ASSETS<<EOF" >> $env:GITHUB_ENV
-          "$joined" >> $env:GITHUB_ENV
+          ($assets -join "`n") >> $env:GITHUB_ENV
           "EOF" >> $env:GITHUB_ENV
 
-      - name: 🚀 Create GitHub Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           draft: false

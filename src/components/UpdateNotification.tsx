@@ -2,9 +2,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { check, type Update, type DownloadEvent } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { invoke } from "@tauri-apps/api/core";
+import { getVersion } from "@tauri-apps/api/app";
 import { Download, X, AlertCircle, Loader2 } from "lucide-react";
 
-type UpdateStatus = "idle" | "available" | "downloading" | "installing" | "error";
+type UpdateStatus = "idle" | "available" | "downloading" | "ready" | "error";
 
 interface UpdateState {
   status: UpdateStatus;
@@ -36,12 +37,20 @@ interface LatestJson {
   date?: string;
   notes?: string;
   body?: string;
-  downloads: Array<{
-    name?: string;
-    signature: string;
-    url: string;
-    size?: number;
-  }>;
+  portableUrl?: string;
+  platforms?: Record<string, { url?: string; signature?: string }>;
+}
+
+function compareVersions(a: string, b: string): number {
+  const aParts = a.replace(/^v/, '').split('.').map(Number);
+  const bParts = b.replace(/^v/, '').split('.').map(Number);
+  for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+    const aPart = aParts[i] || 0;
+    const bPart = bParts[i] || 0;
+    if (aPart > bPart) return 1;
+    if (aPart < bPart) return -1;
+  }
+  return 0;
 }
 
 export default function UpdateNotification() {
@@ -58,11 +67,11 @@ export default function UpdateNotification() {
   const totalRef = useRef(0);
   const lastUiUpdateRef = useRef(0);
   const isPortableRef = useRef(false);
+  const portableUrlRef = useRef<string>("");
 
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
-        // Check if running as portable
         try {
           isPortableRef.current = await invoke<boolean>("is_portable");
         } catch {
@@ -70,10 +79,9 @@ export default function UpdateNotification() {
         }
 
         if (isPortableRef.current) {
-          // Portable: use custom update check
+          await invoke("cleanup_update_bak").catch(() => {});
           await handlePortableCheck();
         } else {
-          // Installed: use Tauri's built-in updater
           const update = await check();
           if (update) {
             updateRef.current = update;
@@ -86,7 +94,7 @@ export default function UpdateNotification() {
           }
         }
       } catch {
-        // 静默失败
+        // silently ignore update check failures
       }
     }, 2000);
 
@@ -97,12 +105,15 @@ export default function UpdateNotification() {
     try {
       const resp = await fetch(UPDATE_ENDPOINT);
       if (!resp.ok) return;
-      
+
       const latest: LatestJson = await resp.json();
-      
-      // Simple version comparison
-      if (compareVersions(latest.version, "1.8.0") <= 0) return;
-      
+      const currentVersion = await getVersion();
+
+      if (compareVersions(latest.version, currentVersion) <= 0) return;
+
+      const ghBase = `https://github.com/hanhan124/mynx/releases/download/v${latest.version}`;
+      portableUrlRef.current = `${ghBase}/Mynx_${latest.version}_portable.exe`;
+
       setState((prev) => ({
         ...prev,
         status: "available",
@@ -110,22 +121,9 @@ export default function UpdateNotification() {
         body: latest.body || latest.notes,
       }));
     } catch {
-      // 静默失败
+      // silently ignore portable update check failures
     }
   };
-
-  function compareVersions(a: string, b: string): number {
-    const aParts = a.replace(/^v/, '').split('.').map(Number);
-    const bParts = b.replace(/^v/, '').split('.').map(Number);
-    
-    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-      const aPart = aParts[i] || 0;
-      const bPart = bParts[i] || 0;
-      if (aPart > bPart) return 1;
-      if (aPart < bPart) return -1;
-    }
-    return 0;
-  }
 
   const handleUpdate = useCallback(async () => {
     if (isPortableRef.current) {
@@ -178,7 +176,7 @@ export default function UpdateNotification() {
           case "Finished":
             setState((prev) => ({
               ...prev,
-              status: "installing",
+              status: "ready",
               progress: 1,
             }));
             break;
@@ -196,68 +194,84 @@ export default function UpdateNotification() {
   };
 
   const handlePortableUpdate = async () => {
+    const url = portableUrlRef.current;
+    if (!url) {
+      setState((prev) => ({ ...prev, status: "error", error: "No download URL" }));
+      return;
+    }
+
+    setState((prev) => ({ ...prev, status: "downloading", progress: 0 }));
+    startTimeRef.current = Date.now();
+    downloadedRef.current = 0;
+    lastUiUpdateRef.current = Date.now();
+
     try {
-      const resp = await fetch(UPDATE_ENDPOINT);
-      if (!resp.ok) {
-        throw new Error("Failed to fetch update info");
-      }
-      
-      const latest: LatestJson = await resp.json();
-      
-      // Find the portable download entry
-      const portableDownload = latest.downloads.find(d => 
-        d.name && d.name.includes("portable")
-      );
-      
-      if (!portableDownload) {
-        throw new Error("No portable update available");
-      }
-
-      setState((prev) => ({ ...prev, status: "downloading", progress: 0 }));
-
-      // Download using curl via Tauri shell
-      const exePath = await invoke<string>("app_exe_path");
       const { tempDir } = await import("@tauri-apps/api/path");
       const tmpDir = await tempDir();
-      const tempExe = tmpDir + "\\mynx_update_temp.exe";
+      const tempExe = `${tmpDir}\\mynx_update_temp.exe`;
 
-      const { Command } = await import("@tauri-apps/plugin-shell");
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+
+      const contentLength = parseInt(response.headers.get("content-length") || "0", 10);
+      totalRef.current = contentLength;
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      const chunks: Uint8Array[] = [];
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        chunks.push(value);
+        downloadedRef.current += value.length;
+
+        const now = Date.now();
+        if (now - lastUiUpdateRef.current > 250) {
+          const elapsed = (now - startTimeRef.current) / 1000;
+          const speed = elapsed > 0 ? downloadedRef.current / elapsed : 0;
+          const progress = contentLength > 0 ? downloadedRef.current / contentLength : 0;
+          setState((prev) => ({
+            ...prev,
+            progress,
+            speed,
+            downloaded: downloadedRef.current,
+            total: contentLength,
+          }));
+          lastUiUpdateRef.current = now;
+        }
+      }
+
       const { writeFile } = await import("@tauri-apps/plugin-fs");
+      const totalBytes = new Uint8Array(downloadedRef.current);
+      let offset = 0;
+      for (const chunk of chunks) {
+        totalBytes.set(chunk, offset);
+        offset += chunk.length;
+      }
+      await writeFile(tempExe, totalBytes);
 
-      // Download the portable exe
-      const downloader = Command.create("curl", [
-        "-f",
-        "-L",
-        "-o", tempExe,
-        portableDownload.url,
-      ]);
+      setState((prev) => ({
+        ...prev,
+        status: "ready",
+        progress: 1,
+        downloaded: downloadedRef.current,
+        total: contentLength,
+      }));
 
-      // Wait for download
-      await downloader.execute();
-
-      // Create a batch script to replace the exe and relaunch
-      const escapedExePath = exePath.replace(/\\/g, "\\\\");
-      const escapedTempExe = tempExe.replace(/\\/g, "\\\\");
-      
-      const batchContent = `@echo off
-timeout /t 1 /nobreak > nul
-taskkill /F /IM mynx.exe 2>nul
-timeout /t 1 /nobreak > nul
-del "${escapedExePath}" 2>nul
-move /y "${escapedTempExe}" "${escapedExePath}" > nul
-start "" "${escapedExePath}"
-exit
-`;
-      
-      const batchPath = tmpDir + "\\mynx_update_helper.bat";
-      await writeFile(batchPath, new TextEncoder().encode(batchContent));
-
-      // Launch the batch script and exit the app
-      const batchShell = Command.create("cmd", ["/c", batchPath]);
-      await batchShell.execute();
-      
-      // Exit the current process using Tauri process plugin
-      await invoke<void>("terminate");
+      setTimeout(async () => {
+        try {
+          await invoke<undefined>("portable_self_update", { newExePath: tempExe });
+        } catch (e) {
+          setState((prev) => ({
+            ...prev,
+            status: "error",
+            error: e instanceof Error ? e.message : String(e),
+          }));
+        }
+      }, 1500);
     } catch (e) {
       setState((prev) => ({
         ...prev,
@@ -266,6 +280,21 @@ exit
       }));
     }
   };
+
+  const handleRestart = useCallback(async () => {
+    try {
+      const { tempDir } = await import("@tauri-apps/api/path");
+      const tmpDir = await tempDir();
+      const tempExe = `${tmpDir}\\mynx_update_temp.exe`;
+      await invoke("portable_self_update", { newExePath: tempExe });
+    } catch (e) {
+      setState((prev) => ({
+        ...prev,
+        status: "error",
+        error: e instanceof Error ? e.message : String(e),
+      }));
+    }
+  }, []);
 
   const handleDismiss = useCallback(() => {
     setState((prev) => ({ ...prev, status: "idle" }));
@@ -333,13 +362,24 @@ exit
           </>
         )}
 
-        {state.status === "installing" && (
+        {state.status === "ready" && (
           <div className="update-header">
-            <div className="update-icon-wrap update-icon-spin">
-              <Loader2 size={16} strokeWidth={2} />
+            <div className="update-icon-wrap" style={{ background: "rgba(48,209,88,0.12)", color: "#30d158" }}>
+              <Download size={16} strokeWidth={2} />
             </div>
             <div className="update-title-area">
-              <div className="update-title">安装完成，正在重启...</div>
+              <div className="update-title">下载完成，点击重启</div>
+            </div>
+            <button className="update-close" onClick={handleDismiss}>
+              <X size={14} strokeWidth={2} />
+            </button>
+            <div className="update-actions" style={{ marginTop: 8 }}>
+              <button className="btn" onClick={handleDismiss}>
+                稍后
+              </button>
+              <button className="btn btn-primary" onClick={handleRestart}>
+                重启
+              </button>
             </div>
           </div>
         )}
