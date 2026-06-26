@@ -55,6 +55,43 @@ git push origin main --follow-tags
 
 ---
 
+## 推送前必检清单（避免 CI 报错）
+
+每次推送 tag 前，在本地依次执行以下三项检查。**任何一项不过都不要推送。**
+
+### 检查 1：TypeScript 类型检查
+
+CI 的 build 命令是 `tsc && vite build`——先跑 `tsc` 类型检查，再跑 `vite build`。但本地开发时通常只跑 `npx vite build`，它**跳过了 `tsc`**，所以类型错误在本地不会暴露，到了 CI 才炸。
+
+```bash
+npx tsc
+```
+
+零输出 = 零错误。有任何 error 必须逐个修复后再推送。
+
+> 常见陷阱：图标库迁移（如 Lucide → Tabler）会引入 `ForwardRefExoticComponent` 类型的组件，它不被 `ComponentType` 接受。用 `ComponentType<any>` 规避。详见坑 6。
+
+### 检查 2：依赖锁定文件同步
+
+CI 用 `npm ci` 安装依赖，要求 `package-lock.json` 与 `package.json` **完全一致**。如果新增或移除了依赖但没跑 `npm install`，CI 会直接报错。
+
+```bash
+npm install          # 同步 lock 文件
+git diff package-lock.json   # 确认有改动（如果有新依赖）
+```
+
+### 检查 3：版本号三文件一致
+
+```bash
+node -e "console.log(require('./package.json').version)"
+node -e "console.log(require('./src-tauri/tauri.conf.json').version)"
+grep '^version' src-tauri/Cargo.toml
+```
+
+三个输出必须相同。不一致时运行 `node scripts/sync-version.cjs`。
+
+---
+
 ## Release 产物
 
 CI 成功后自动创建 GitHub Release：
@@ -205,6 +242,74 @@ connect-src 'self' ipc: http://ipc.localhost
   http://ip-api.com                          （IP 定位策略2）
 ```
 
+### 坑 6：本地 `vite build` 通过但 CI 的 `tsc` 报错
+
+**现象**：本地 `npx vite build` 成功，推送到 CI 后 `npm run build`（= `tsc && vite build`）在 `tsc` 阶段报大量 TypeScript 错误。
+
+**原因**：`vite build` 使用 esbuild 转译 TypeScript，**不做类型检查**，只去掉类型注解。而 CI 的 `npm run build` 先跑 `tsc`（完整的类型检查），再跑 `vite build`。所以类型错误在本地不可见，只在 CI 暴露。
+
+**典型场景**：更换图标库后，新库的组件类型（如 Tabler 的 `ForwardRefExoticComponent`）与项目自定义的 `IconType`（`ComponentType<...>`）不兼容。`vite build` 不检查类型所以通过，`tsc` 则报 `ForwardRefExoticComponent is not assignable to FunctionComponent`。
+
+**解决**：
+
+1. 本地推送前**必须**跑 `npx tsc`（不只是 `vite build`）
+2. 如果类型不兼容，用 `ComponentType<any>` 放宽类型约束：
+
+```typescript
+// ❌ 太严格——ForwardRefExoticComponent 不兼容 FunctionComponent
+type IconType = ComponentType<SVGProps<SVGSVGElement> & { stroke?: number | string }>;
+
+// ✅ 用 any 绕过 propTypes 逆变问题
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type IconType = ComponentType<any>;
+```
+
+3. 根本原因：React 的 `ComponentType` = `ComponentClass | FunctionComponent`，而 `forwardRef` 返回的 `ForwardRefExoticComponent` 继承自 `ExoticComponent`，两者是不同的类型层级。`any` 参数能让 TypeScript 跳过 `propTypes` 的逆变检查。
+
+### 坑 7：`package-lock.json` 未同步导致 CI `npm ci` 失败
+
+**现象**：CI 的 "Install npm dependencies" 步骤报错，类似 `npm ERR! Could not resolve dependency`。
+
+**原因**：在 `package.json` 中新增或移除了依赖（如 `lucide-react` → `@tabler/icons-react`），但没有运行 `npm install` 更新 `package-lock.json`。CI 用 `npm ci`（严格模式），要求 lock 文件与 `package.json` 完全一致。
+
+**解决**：
+
+```bash
+# 修改 package.json 后，立即运行：
+npm install
+
+# 确认 lock 文件已更新
+git diff package-lock.json
+
+# 一起提交
+git add package.json package-lock.json
+git commit -m "deps: update icon library"
+```
+
+### 坑 8：从 zip 解压的工作目录与仓库版本不一致
+
+**现象**：把改动复制到 git 仓库后推送，CI 报大量莫名错误（如 `Property 'setupUrl' does not exist on type 'UpdateInfo'`）。
+
+**原因**：从 GitHub 下载的 release zip（如 `mynx-1.9.6.zip`）是某个版本的快照。仓库 main 分支可能已经有更新的提交（如 v1.9.7 修复了 updater 逻辑）。如果把 zip 的文件直接覆盖到仓库，会**回退掉仓库已有的改进**。
+
+**解决**：
+
+1. 不要盲目 `cp -r src/ repo/src/`——只复制你**实际修改过**的文件
+2. 复制后检查 diff：`git diff --stat`，确认没有意外回退
+3. 如果 diff 显示大量你未修改的文件有变化（只有行尾差异），用 `git checkout -- <file>` 还原
+
+```bash
+# 只复制你改过的文件
+cp mynx-1.9.6/src/components/Sidebar.tsx repo/src/components/Sidebar.tsx
+cp mynx-1.9.6/src/styles/*.css repo/src/styles/
+
+# 检查——只应看到你改过的文件
+git diff --stat
+
+# 如果有意外的文件变化（行尾差异等），还原它们
+git checkout -- src/App.tsx src/main.tsx src/lib/updater.ts
+```
+
 ---
 
 ## 架构说明
@@ -248,3 +353,93 @@ GitHub Release (自动创建)
 | `src-tauri/Cargo.toml` | Rust 依赖和版本号 |
 | `src/components/UpdateNotification.tsx` | 更新检测与通知 UI |
 | `src/components/WeatherWidget.tsx` | 天气组件（含定位 + 天气 API 调用） |
+
+---
+
+## AI 自动修复循环（让 AI 帮你改到 CI 通过）
+
+如果不想手动排查 CI 错误，把以下提示词**完整复制**发给 AI 助手（QoderWork / Cursor / Claude Code 等），它会自动循环"检查 CI → 读错误 → 修代码 → 本地验证 → 重新推送"直到构建成功。
+
+### 前提
+
+- 仓库已 clone 到本地，且在 main 分支上
+- 已推送过 tag（如 `v1.9.7`），CI 已触发
+- 本地已安装依赖（`npm install`）
+
+### 提示词
+
+```
+我刚向 GitHub 仓库 hanhan124/mynx 推送了 tag vX.Y.Z，CI 正在跑。
+请帮我监控构建状态，如果失败则读取错误日志、修复代码、本地验证后重新推送，循环直到构建成功。
+
+仓库本地路径：<填写你的仓库路径，如 C:/Users/HAN/Downloads/mynx-repo>
+
+每次循环执行以下步骤：
+
+1. 检查 CI 状态：
+   curl -s "https://api.github.com/repos/hanhan124/mynx/actions/runs?per_page=1" | python -c "import json,sys; d=json.load(sys.stdin); r=d['workflow_runs'][0]; print(f'Run {r[\"id\"]} | {r[\"status\"]} | {r.get(\"conclusion\") or \"running\"}')"
+
+2. 如果 status 是 in_progress，等待 60 秒后回到步骤 1。
+
+3. 如果 conclusion 是 success，结束——构建已通过。
+
+4. 如果 conclusion 是 failure，获取失败步骤：
+   curl -s "https://api.github.com/repos/hanhan124/mynx/actions/runs/<RUN_ID>/jobs" | python -c "
+   import json,sys
+   d=json.load(sys.stdin)
+   for job in d.get('jobs',[]):
+       for step in job.get('steps',[]):
+           if step.get('conclusion')=='failure':
+               print(f'FAILED: {step[\"number\"]}. {step[\"name\"]}')
+   "
+
+5. 获取构建日志（替换 RUN_ID 和 JOB_ID）：
+   curl -s "https://api.github.com/repos/hanhan124/mynx/actions/jobs/<JOB_ID>/logs" | tail -100
+
+6. 分析错误，修复代码。
+
+7. 本地验证（三项全过才能推送）：
+   npx tsc              # TypeScript 类型检查
+   npx vite build       # 前端构建
+   # 如果改了 package.json：
+   npm install          # 同步 lock 文件
+
+8. 提交并重新推送：
+   cd <仓库路径>
+   git add -A
+   git commit -m "fix: resolve CI build errors"
+   git tag -d vX.Y.Z
+   git push origin :refs/tags/vX.Y.Z
+   git tag -a vX.Y.Z -m "release: vX.Y.Z"
+   git push origin main --follow-tags
+
+9. 回到步骤 1。
+
+注意：
+- 把 vX.Y.Z 替换为实际版本号
+- 如果同一版本重复推送超过 3 次仍失败，停下来告诉我具体错误
+- 常见错误：tsc 类型不兼容（用 ComponentType<any>）、package-lock.json 未同步（跑 npm install）、旧版代码覆盖了新版改进（只复制实际修改的文件）
+```
+
+### 流程图
+
+```
+推送 tag → CI 触发
+               │
+        ┌──────┴──────┐
+        │ in_progress  │ ──→ 等待 60s ──→ 重新检查
+        └──────┬──────┘
+               │
+        ┌──────┴──────┐
+        │  success?   │ ──→ ✅ 完成
+        └──────┬──────┘
+               │ failure
+               ▼
+     读错误日志 → 修代码
+               │
+     npx tsc + vite build （本地验证）
+               │
+     删旧 tag → 提交 → 重新打 tag → 推送
+               │
+         回到检查 CI ──→ 循环
+```
