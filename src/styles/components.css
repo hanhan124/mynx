@@ -240,6 +240,10 @@
   margin-bottom: 10px;
 }
 
+.about-spin-icon {
+  animation: spin 800ms linear infinite;
+}
+
 .about-copyright {
   text-align: center;
   font-size: 10px;

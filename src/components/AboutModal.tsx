@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { getVersion } from "@tauri-apps/api/app";
-import { invoke } from "@tauri-apps/api/core";
 import Modal from "@/components/Modal";
 import AppMark from "@/components/AppMark";
-import { showToast } from "@/components/Toast";
-import { compareVersions } from "@/lib/version";
-import { Globe } from "lucide-react";
+import { showToast, type ToastType } from "@/components/Toast";
+import { showUpdateNotification } from "@/components/UpdateNotification";
+import { checkForUpdates, detectPortable } from "@/lib/updater";
+import { Globe, Loader2 } from "lucide-react";
 
 interface AboutModalProps {
   open: boolean;
@@ -23,39 +23,22 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
   const handleCheckUpdate = async () => {
     setCheckingUpdate(true);
     try {
-      const portable = await invoke<boolean>("is_portable").catch(() => false);
-      if (portable) {
-        const resp = await fetch(
-          "https://github.com/hanhan124/mynx/releases/latest/download/latest.json",
-        );
-        if (resp.ok) {
-          const latest: { version: string } = await resp.json();
-          const current = await getVersion();
-          if (
-            latest.version.replace(/^v/, "") !== current.replace(/^v/, "") &&
-            compareVersions(latest.version, current) > 0
-          ) {
-            showToast(
-              `发现新版本: v${latest.version}，请在右下角通知中更新`,
-              "info",
-            );
-          } else {
-            showToast("当前已是最新版本", "success");
-          }
-        } else {
-          showToast("检查更新失败", "info");
-        }
+      const isPortable = await detectPortable();
+      const result = await checkForUpdates(isPortable);
+
+      if (result.found) {
+        // Trigger the UpdateNotification side-slide dialog
+        showUpdateNotification(result.info);
       } else {
-        const { check } = await import("@tauri-apps/plugin-updater");
-        const update = await check();
-        if (update) {
-          showToast(`发现新版本: ${update.version}`, "info");
-        } else {
-          showToast("当前已是最新版本", "success");
-        }
+        showToast("当前已是最新版本", "success");
       }
-    } catch {
-      showToast("检查更新失败", "info");
+    } catch (e) {
+      const hint = e instanceof Error ? e.message : String(e);
+      showToast(hint.includes("fetch") || hint.includes("network")
+        ? "网络连接失败，请检查网络后重试"
+        : `检查更新失败: ${hint}`,
+        "error" as ToastType,
+      );
     } finally {
       setCheckingUpdate(false);
     }
@@ -105,7 +88,14 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
         onClick={handleCheckUpdate}
         disabled={checkingUpdate}
       >
-        {checkingUpdate ? "检查中..." : "检查更新"}
+        {checkingUpdate ? (
+          <>
+            <Loader2 size={14} strokeWidth={2} className="about-spin-icon" />
+            检查中...
+          </>
+        ) : (
+          "检查更新"
+        )}
       </button>
 
       <div className="about-copyright">© 2026 Han · MIT License</div>
