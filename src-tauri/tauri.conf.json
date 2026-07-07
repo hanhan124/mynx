@@ -1,0 +1,86 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nickelpack/tauri/v2/core/tauri-config-schema/schema.json",
+  "productName": "Mynx",
+  "version": "2.0.1",
+  "identifier": "com.fanguanghan.mynx",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "title": "Mynx",
+        "width": 440,
+        "height": 620,
+        "minWidth": 380,
+        "minHeight": 380,
+        "resizable": true,
+        "decorations": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: asset: http://asset.localhost; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' ipc: http://ipc.localhost https://github.com https://api.github.com https://release-assets.githubusercontent.com https://objects.githubusercontent.com https://api.open-meteo.com https://ipwho.is http://ip-api.com"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis",
+      "dmg"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "both",
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico",
+        "compression": "lzma",
+        "sidebarImage": "icons/sidebar.bmp",
+        "headerImage": "icons/header.bmp",
+        "displayLanguageSelector": true,
+        "languages": [
+          "SimpChinese",
+          "English"
+        ],
+        "template": "installer/installer.nsi"
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "12.0",
+      "frameworks": [],
+      "dmg": {
+        "appPosition": {
+          "x": 180,
+          "y": 170
+        },
+        "applicationFolderPosition": {
+          "x": 480,
+          "y": 170
+        },
+        "windowSize": {
+          "height": 400,
+          "width": 660
+        }
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/hanhan124/mynx/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEEwQzk1NEE3MDlEMjEzQgpSV1E3SVoxd1NwVU1DZ1pqR244a0lWMlo1OUNmT1ExL0JhTU9ZRksxTlBMYnc0WnNRRnN2Q0NLZwo="
+    }
+  }
+}

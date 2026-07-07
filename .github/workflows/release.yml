@@ -1,0 +1,173 @@
+name: Build & Release (macOS + Windows)
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Import signing key (if configured)
+        id: import_key
+        shell: pwsh
+        run: |
+          $key = "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}"
+          if ([string]::IsNullOrEmpty($key)) {
+            Write-Host "::warning::TAURI_SIGNING_PRIVATE_KEY secret not set"
+            "KEY_AVAILABLE=false" >> $env:GITHUB_ENV
+          } else {
+            $keyPath = Join-Path $env:RUNNER_TEMP "mynx-signing.key"
+            [System.IO.File]::WriteAllText($keyPath, $key, [System.Text.UTF8Encoding]::new($false))
+            "KEY_AVAILABLE=true" >> $env:GITHUB_ENV
+            "TAURI_SIGNING_PRIVATE_KEY_PATH=$keyPath" >> $env:GITHUB_ENV
+          }
+
+      - name: Build (NSIS installer)
+        shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          npm run tauri build
+          if ($LASTEXITCODE -ne 0) { throw "tauri build failed" }
+
+      - name: Prepare and sign release assets
+        id: assets
+        shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $pkg = Get-Content "package.json" -Raw | ConvertFrom-Json
+          $version = $pkg.version
+          $nsisDir = "src-tauri\target\release\bundle\nsis"
+          $keyPath = $env:TAURI_SIGNING_PRIVATE_KEY_PATH
+          $keyPassword = $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+          $ghBase = "https://github.com/hanhan124/mynx/releases/download/v${version}"
+
+          # NSIS installer
+          $nsisExe = Get-ChildItem "$nsisDir\Mynx*setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+
+          # Sign NSIS installer (Tauri updater requires .sig for verification)
+          $nsisSig = Get-ChildItem "$nsisDir\Mynx*setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $nsisSig -and $env:KEY_AVAILABLE -eq 'true' -and $keyPath -and (Test-Path $keyPath) -and $keyPassword) {
+            & npx tauri signer sign -f "$keyPath" -p "$keyPassword" "$($nsisExe.FullName)"
+            $nsisSig = Get-ChildItem "$nsisDir\Mynx*setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
+          }
+
+          # Read signature for latest.json
+          $nsisSigContent = ""
+          if ($nsisSig -and (Test-Path $nsisSig.FullName)) {
+            $nsisSigContent = (Get-Content $nsisSig.FullName -Raw).Trim()
+          }
+
+          # Generate latest.json (used by Tauri updater)
+          $today = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+          $jsonObj = [ordered]@{
+            version = $version
+            date = $today
+            notes = "See the GitHub Release for full changelog."
+            body = ""
+            platforms = [ordered]@{
+              "windows-x86_64" = [ordered]@{
+                url = "$ghBase/Mynx_${version}_x64-setup.exe"
+                signature = $nsisSigContent
+              }
+            }
+          }
+
+          $jsonStr = $jsonObj | ConvertTo-Json -Depth 4 -Compress
+          $latestJsonPath = "$($nsisDir)/latest.json"
+          [System.IO.File]::WriteAllText($latestJsonPath, $jsonStr, [System.Text.UTF8Encoding]::new($false))
+
+          # Collect final assets
+          $assets = @()
+          if ($nsisExe) { $assets += $nsisExe.FullName }
+          if ($nsisSig) { $assets += $nsisSig.FullName }
+          if (Test-Path $latestJsonPath) { $assets += $latestJsonPath }
+
+          "ASSETS<<EOF" >> $env:GITHUB_ENV
+          ($assets -join "`n") >> $env:GITHUB_ENV
+          "EOF" >> $env:GITHUB_ENV
+
+      - name: Create/Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            ${{ env.ASSETS }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - name: Setup Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build (DMG installer - Apple Silicon)
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          npm run tauri build -- --target aarch64-apple-darwin
+
+      - name: Upload macOS release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+          files: |
+            src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+            src-tauri/target/release/bundle/dmg/*.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

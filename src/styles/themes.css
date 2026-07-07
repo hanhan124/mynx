@@ -1,0 +1,70 @@
+:root {
+  color-scheme: dark;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* macOS 26 暗色 (Tahoe) */
+[data-theme="graphite"] {
+  color-scheme: dark;
+  --bg-primary: #1c1c1e;
+  --bg-secondary: #2c2c2e;
+  --bg-card: #2c2c2e;
+  --bg-elevated: #3a3a3c;
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  --bg-active: rgba(10, 132, 255, 0.18);
+  --bg-glass: rgba(28, 28, 30, 0.72);
+  --bg-sidebar: rgba(40, 40, 42, 0.78);
+  --bg-titlebar: rgba(40, 40, 42, 0.80);
+  --text-primary: rgba(255, 255, 255, 0.90);
+  --text-secondary: rgba(255, 255, 255, 0.58);
+  --text-tertiary: rgba(255, 255, 255, 0.38);
+  --accent: #0a84ff;
+  --accent-rgb: 10, 132, 255;
+  --accent-soft: rgba(10, 132, 255, 0.14);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --separator: rgba(255, 255, 255, 0.06);
+  --green: #30d158;
+  --green-rgb: 48, 209, 88;
+  --red: #ff453a;
+  --red-rgb: 255, 69, 58;
+  --orange: #ff9f0a;
+  --shadow-sm: 0 0.5px 1px rgba(0, 0, 0, 0.18), 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.22), 0 4px 16px rgba(0, 0, 0, 0.14);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.32), 0 2px 8px rgba(0, 0, 0, 0.18);
+  --focus-ring: 0 0 0 3px rgba(10, 132, 255, 0.32);
+}
+
+/* macOS 26 亮色 (Tahoe) */
+[data-theme="pearl"] {
+  color-scheme: light;
+  --bg-primary: #f5f5f7;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover: rgba(0, 0, 0, 0.035);
+  --bg-active: rgba(0, 122, 255, 0.10);
+  --bg-glass: rgba(245, 245, 247, 0.72);
+  --bg-sidebar: rgba(242, 242, 244, 0.78);
+  --bg-titlebar: rgba(247, 247, 249, 0.80);
+  --text-primary: rgba(0, 0, 0, 0.86);
+  --text-secondary: rgba(0, 0, 0, 0.52);
+  --text-tertiary: rgba(0, 0, 0, 0.36);
+  --accent: #007aff;
+  --accent-rgb: 0, 122, 255;
+  --accent-soft: rgba(0, 122, 255, 0.08);
+  --border: rgba(0, 0, 0, 0.06);
+  --border-strong: rgba(0, 0, 0, 0.10);
+  --separator: rgba(0, 0, 0, 0.06);
+  --green: #34c759;
+  --green-rgb: 52, 199, 89;
+  --red: #ff3b30;
+  --red-rgb: 255, 59, 48;
+  --orange: #ff9500;
+  --shadow-sm: 0 0.5px 1px rgba(0, 0, 0, 0.05), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06), 0 4px 20px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.05);
+  --focus-ring: 0 0 0 3px rgba(0, 122, 255, 0.28);
+}

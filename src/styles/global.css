@@ -1,0 +1,86 @@
+@import "./themes.css";
+@import "./layout.css";
+@import "./pages.css";
+@import "./components.css";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.5;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+#root {
+  background: var(--bg-primary);
+}
+
+/* macOS 风格自动隐藏滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.22);
+  border-radius: 3px;
+  transition: background 200ms;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.40);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+button {
+  border: none;
+  cursor: pointer;
+  transition: background 200ms var(--ease-smooth, cubic-bezier(0.25, 0.1, 0.25, 1));
+  font-family: inherit;
+  font-size: inherit;
+}
+
+select,
+input {
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+}
+
+/* 全局焦点可见性 — macOS 蓝色焦点环 */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: inherit;
+}
+
+/* 选中文字颜色 */
+::selection {
+  background: rgba(var(--accent-rgb, 0, 122, 255), 0.25);
+}

@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+target/
+tmp-icons/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Signing keys
+*.key
+*.key.pub
+
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+
+# Cargo (local build target redirect)
+.cargo/
+
+# Internal docs (not for GitHub)
+docs/
+
+# Workbuddy (local AI agent context)
+.workbuddy/
+
+# Claude (local AI agent context)
+.claude/
+
+# Mobile platform icons (not used for desktop app)
+src-tauri/icons/android/
+src-tauri/icons/ios/
+
+# Portable build artifacts (deprecated — installed-only app)
+scripts/build-portable.cjs
+scripts/build-singlefile.cjs

@@ -1,0 +1,7 @@
+dist
+src-tauri
+node_modules
+*.css
+*.svg
+*.png
+*.ico
