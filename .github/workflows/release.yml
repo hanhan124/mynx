@@ -36,17 +36,7 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
-      - name: Run frontend build separately (tsc + vite)
-        shell: pwsh
-        env:
-          CI: false
-        run: |
-          npm run build 2>&1
-          if ($LASTEXITCODE -ne 0) {
-            $output = npm run build 2>&1 | Out-String
-            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "# Build Errors`n```$output```"
-            throw "npm run build failed"
-          }
+      - name: Build (NSIS installer)
 
       - name: Build (NSIS installer)
         shell: pwsh
