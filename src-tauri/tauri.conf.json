@@ -52,8 +52,7 @@
         "languages": [
           "SimpChinese",
           "English"
-        ],
-        "template": "installer/installer.nsi"
+        ]
       }
     },
     "macOS": {
