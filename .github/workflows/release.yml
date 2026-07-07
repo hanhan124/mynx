@@ -38,7 +38,6 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           npm run tauri build -- --bundles nsis 2>&1
-          if ($LASTEXITCODE -ne 0) { throw "tauri build failed" }
 
       - name: Prepare and sign release assets
         id: assets
