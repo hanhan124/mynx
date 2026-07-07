@@ -36,6 +36,13 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      - name: Diagnostic - check build tooling
+        run: |
+          node --version
+          npm --version
+          npx tsc --version
+          npx vite --version 2>/dev/null || echo "vite not found globally"
+
       - name: Build frontend (verify before tauri)
         run: npm run build
 
