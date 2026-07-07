@@ -36,16 +36,6 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
-      - name: Diagnostic - check build tooling
-        shell: pwsh
-        run: |
-          node --version
-          npm --version
-          npx tsc --version
-
-      - name: Build frontend (verify before tauri)
-        run: npm run build
-
       - name: Build (NSIS installer)
         shell: pwsh
         env:
