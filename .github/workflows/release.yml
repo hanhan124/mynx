@@ -55,8 +55,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          npm run tauri build
-          if ($LASTEXITCODE -ne 0) { throw "tauri build failed" }
+          npm run tauri build -- --bundles nsis 2>&1
+          if ($LASTEXITCODE -ne 0) { throw "tauri build failed (exit $LASTEXITCODE)" }
 
       - name: Prepare and sign release assets
         id: assets
@@ -158,7 +158,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          npm run tauri build -- --target aarch64-apple-darwin
+          npm run tauri build -- --target aarch64-apple-darwin --bundles dmg 2>&1
+          if [ $? -ne 0 ]; then echo "tauri build failed"; exit 1; fi
 
       - name: Upload macOS release assets
         uses: softprops/action-gh-release@v2
