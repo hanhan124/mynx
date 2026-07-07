@@ -1,4 +1,4 @@
-name: Build & Release (macOS + Windows)
+name: Build & Release
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  release-windows:
+  release:
     runs-on: windows-latest
 
     steps:
@@ -37,7 +37,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          npm run tauri build -- --bundles nsis 2>&1
+          npm run tauri build
+          if ($LASTEXITCODE -ne 0) { throw "tauri build failed with exit code $LASTEXITCODE" }
 
       - name: Prepare and sign release assets
         id: assets
@@ -49,13 +50,14 @@ jobs:
           $pkg = Get-Content "package.json" -Raw | ConvertFrom-Json
           $version = $pkg.version
           $nsisDir = "src-tauri\target\release\bundle\nsis"
+          $releaseDir = "src-tauri\target\release"
           $keyPath = $env:TAURI_SIGNING_PRIVATE_KEY_PATH
           $keyPassword = $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD
           $ghBase = "https://github.com/hanhan124/mynx/releases/download/v${version}"
 
           $nsisExe = Get-ChildItem "$nsisDir\Mynx*setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-
           $nsisSig = Get-ChildItem "$nsisDir\Mynx*setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
+
           if (-not $nsisSig -and $env:KEY_AVAILABLE -eq 'true' -and $keyPath -and (Test-Path $keyPath) -and $keyPassword) {
             & npx tauri signer sign -f "$keyPath" -p "$keyPassword" "$($nsisExe.FullName)"
             $nsisSig = Get-ChildItem "$nsisDir\Mynx*setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -81,7 +83,7 @@ jobs:
           }
 
           $jsonStr = $jsonObj | ConvertTo-Json -Depth 4 -Compress
-          $latestJsonPath = "$($nsisDir)/latest.json"
+          $latestJsonPath = "$releaseDir\latest.json"
           [System.IO.File]::WriteAllText($latestJsonPath, $jsonStr, [System.Text.UTF8Encoding]::new($false))
 
           $assets = @()
@@ -93,7 +95,7 @@ jobs:
           ($assets -join "`n") >> $env:GITHUB_ENV
           "EOF" >> $env:GITHUB_ENV
 
-      - name: Create/Update GitHub Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           draft: false
@@ -101,47 +103,5 @@ jobs:
           generate_release_notes: true
           files: |
             ${{ env.ASSETS }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  release-macos:
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-darwin
-
-      - name: Setup Rust cache
-        uses: swatinem/rust-cache@v2
-
-      - name: Install npm dependencies
-        run: npm ci
-
-      - name: Build (DMG installer - Apple Silicon)
-        shell: bash
-        run: |
-          npm run tauri build -- --bundles dmg --target aarch64-apple-darwin 2>&1
-          if [ $? -ne 0 ]; then echo "tauri build failed"; exit 1; fi
-
-      - name: Upload macOS release assets
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: false
-          prerelease: false
-          generate_release_notes: false
-          files: |
-            src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
-            src-tauri/target/release/bundle/dmg/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
