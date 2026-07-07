@@ -51,9 +51,6 @@
           "English"
         ]
       }
-    },
-    "macOS": {
-      "minimumSystemVersion": "12.0"
     }
   },
   "plugins": {
