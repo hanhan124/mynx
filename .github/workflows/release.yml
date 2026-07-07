@@ -1,8 +1,5 @@
 name: Build & Release (macOS + Windows)
 
-env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-
 on:
   push:
     tags:
@@ -34,21 +31,6 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
-      - name: Import signing key (if configured)
-        id: import_key
-        shell: pwsh
-        run: |
-          $key = "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}"
-          if ([string]::IsNullOrEmpty($key)) {
-            Write-Host "::warning::TAURI_SIGNING_PRIVATE_KEY secret not set"
-            "KEY_AVAILABLE=false" >> $env:GITHUB_ENV
-          } else {
-            $keyPath = Join-Path $env:RUNNER_TEMP "mynx-signing.key"
-            [System.IO.File]::WriteAllText($keyPath, $key, [System.Text.UTF8Encoding]::new($false))
-            "KEY_AVAILABLE=true" >> $env:GITHUB_ENV
-            "TAURI_SIGNING_PRIVATE_KEY_PATH=$keyPath" >> $env:GITHUB_ENV
-          }
-
       - name: Build (NSIS installer)
         shell: pwsh
         env:
@@ -56,7 +38,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           npm run tauri build -- --bundles nsis 2>&1
-          if ($LASTEXITCODE -ne 0) { throw "tauri build failed (exit $LASTEXITCODE)" }
+          if ($LASTEXITCODE -ne 0) { throw "tauri build failed" }
 
       - name: Prepare and sign release assets
         id: assets
@@ -72,23 +54,19 @@ jobs:
           $keyPassword = $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD
           $ghBase = "https://github.com/hanhan124/mynx/releases/download/v${version}"
 
-          # NSIS installer
           $nsisExe = Get-ChildItem "$nsisDir\Mynx*setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
 
-          # Sign NSIS installer (Tauri updater requires .sig for verification)
           $nsisSig = Get-ChildItem "$nsisDir\Mynx*setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
           if (-not $nsisSig -and $env:KEY_AVAILABLE -eq 'true' -and $keyPath -and (Test-Path $keyPath) -and $keyPassword) {
             & npx tauri signer sign -f "$keyPath" -p "$keyPassword" "$($nsisExe.FullName)"
             $nsisSig = Get-ChildItem "$nsisDir\Mynx*setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
           }
 
-          # Read signature for latest.json
           $nsisSigContent = ""
           if ($nsisSig -and (Test-Path $nsisSig.FullName)) {
             $nsisSigContent = (Get-Content $nsisSig.FullName -Raw).Trim()
           }
 
-          # Generate latest.json (used by Tauri updater)
           $today = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
           $jsonObj = [ordered]@{
             version = $version
@@ -107,7 +85,6 @@ jobs:
           $latestJsonPath = "$($nsisDir)/latest.json"
           [System.IO.File]::WriteAllText($latestJsonPath, $jsonStr, [System.Text.UTF8Encoding]::new($false))
 
-          # Collect final assets
           $assets = @()
           if ($nsisExe) { $assets += $nsisExe.FullName }
           if ($nsisSig) { $assets += $nsisSig.FullName }
@@ -154,9 +131,6 @@ jobs:
 
       - name: Build (DMG installer - Apple Silicon)
         shell: bash
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           npm run tauri build -- --target aarch64-apple-darwin --bundles dmg 2>&1
           if [ $? -ne 0 ]; then echo "tauri build failed"; exit 1; fi
