@@ -38,7 +38,20 @@ jobs:
 
       - name: Run frontend build separately (tsc + vite)
         shell: cmd
-        run: npm run build
+        run: |
+          echo "Running tsc..."
+          npx tsc --noEmit 2>&1
+          if errorlevel 1 (
+            echo "TSC FAILED - exit code: %errorlevel%"
+            exit /b %errorlevel%
+          )
+          echo "Running vite build..."
+          npx vite build 2>&1
+          if errorlevel 1 (
+            echo "VITE FAILED - exit code: %errorlevel%"
+            exit /b %errorlevel%
+          )
+          echo "Frontend build succeeded"
 
       - name: Build (NSIS installer)
         shell: pwsh
