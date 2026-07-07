@@ -37,24 +37,26 @@ jobs:
         run: npm ci
 
       - name: Run frontend build separately (tsc + vite)
-        shell: cmd
+        shell: pwsh
         run: |
           echo "Running tsc --noEmit..."
-          npx tsc --noEmit > tsc_output.txt 2>&1
-          set /p TSC_OUT=<tsc_output.txt
-          if errorlevel 1 (
-            echo "::error::TSC FAILED: %TSC_OUT%"
-            type tsc_output.txt
-            exit /b 1
-          )
-          echo "TSC OK"
-          echo "Running vite build..."
+          $tscOutput = & npx tsc --noEmit 2>&1
+          $tscExit = $LASTEXITCODE
+          if ($tscExit -ne 0) {
+            Write-Host "::error::TSC FAILED (exit $tscExit)"
+            $tscOutput | ForEach-Object { Write-Host "::error::TS: $_" }
+            # Also write to GitHub summary for visibility
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "# TSC Errors`n"
+            $tscOutput | Add-Content -Path $env:GITHUB_STEP_SUMMARY
+            throw "tsc failed with exit code $tscExit"
+          }
+          Write-Host "TSC OK"
+          Write-Host "Running vite build..."
           npx vite build 2>&1
-          if errorlevel 1 (
-            echo "::error::VITE BUILD FAILED"
-            exit /b 1
-          )
-          echo "Frontend build succeeded"
+          if ($LASTEXITCODE -ne 0) {
+            throw "vite build failed"
+          }
+          Write-Host "Frontend build succeeded"
 
       - name: Build (NSIS installer)
         shell: pwsh
