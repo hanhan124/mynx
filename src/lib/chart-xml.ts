@@ -162,7 +162,7 @@ export function buildChartXml(
           <a:lstStyle/>
           <a:p>
             <a:r>
-              <a:rPr lang="en-US" sz="1200" b="1" i="1">
+              <a:rPr lang="en-US" sz="1500" b="1" i="1">
                 <a:latin typeface="Calibri"/>
               </a:rPr>
               <a:t>${gene}</a:t>
@@ -201,7 +201,7 @@ export function buildChartXml(
         <c:majorTickMark val="none"/>
         <c:tickLblPos val="nextTo"/>
         <c:txPr>
-          <a:bodyPr rot="-1620000"/>
+          <a:bodyPr rot="-2700000"/>
           <a:lstStyle/>
           <a:p>
             <a:pPr>

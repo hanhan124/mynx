@@ -37,8 +37,6 @@ jobs:
         run: npm ci
 
       - name: Build (NSIS installer)
-
-      - name: Build (NSIS installer)
         shell: pwsh
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
