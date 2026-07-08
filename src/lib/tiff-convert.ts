@@ -1,4 +1,5 @@
 import { platform } from "@tauri-apps/plugin-os";
+import { Command as ShellCommand } from "@tauri-apps/plugin-shell";
 
 export interface TiffOptions {
   watermark: boolean;
@@ -278,8 +279,7 @@ async function convertWithPowershell(
     };
 
     try {
-      const { Command } = require("@tauri-apps/plugin-shell");
-      const command = Command.create("powershell", [
+      const command = ShellCommand.create("powershell", [
         "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", psPath,
       ]);
 
@@ -347,11 +347,9 @@ async function convertWithShell(
     };
 
     try {
-      const { Command } = require("@tauri-apps/plugin-shell");
-      // Make script executable first
-      const chmodCmd = Command.create("bash", ["-c", `chmod +x '${shPath}'`]);
+      const chmodCmd = ShellCommand.create("bash", ["-c", `chmod +x '${shPath}'`]);
       chmodCmd.execute().then(() => {
-        const command = Command.create("bash", [shPath]);
+        const command = ShellCommand.create("bash", [shPath]);
         command.stdout.on("data", (line: string) => {
           stdoutBuf += line + "\n";
           if (!onProgress) return;
