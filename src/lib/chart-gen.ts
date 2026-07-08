@@ -52,7 +52,6 @@ export function extractChartData(
   for (const ws of workbook.worksheets) {
     if (PROTECTED_SHEETS.has(ws.name)) continue;
     sheetIndex++;
-
     const geneName = ws.name;
 
     // Find the "Group_Name" header row in the summary table

@@ -35,9 +35,12 @@ export function calculateQpcr(workbook: ExcelJS.Workbook, repeatCount: number, r
   const colCount = sourceSheet.columnCount;
   const headerRow = sourceSheet.getRow(1);
 
-  // VBA: Start from col 4 (D), skip A=Num, B=Group, C=RefGene
+  // Collect all gene columns starting from c=3 (column C). Columns A=Num, B=Group are skipped.
+  // Must match detectTransformedGenes() in qpcr-transform.ts which also starts from c=3.
+  // (Previously started from c=4, which silently dropped any gene written to column C — e.g.
+  //  TBP, when the source data had it as an extra reference gene.)
   const geneNames = [];
-  for (let c = 4; c <= colCount; c++) {
+  for (let c = 3; c <= colCount; c++) {
     const name = String(headerRow.getCell(c).value ?? '').trim();
     if (name && name !== refGene) geneNames.push(name);
   }
