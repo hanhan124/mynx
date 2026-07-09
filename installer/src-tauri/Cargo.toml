@@ -1,0 +1,40 @@
+[package]
+name = "mynx-installer"
+version = "2.1.0"
+description = "Mynx 安装向导(Tauri 自建安装器)"
+authors = ["Han"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "mynx_installer_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Windows-only: 用于检测 WebView2、管理员权限、快捷方式、注册表
+[target."cfg(windows)".dependencies]
+windows = { version = "0.58", features = [
+    "Win32_Foundation",
+    "Win32_UI_Shell",
+    "Win32_System_Com",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Storage_FileSystem",
+] }
+winreg = "0.52"
+dirs = "5"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+incremental = false
+opt-level = "s"
+strip = true

@@ -18,18 +18,19 @@ GitHub Actions: .github/workflows/release.yml
         ▼
 windows-latest runner:
   checkout → 装 Node 22 → 装 Rust → 装 VS linker → 缓存 Rust 依赖 →
-  npm ci → npm run tauri build → 签名 → 上传 Release 资源
+  npm ci → 生成安装图 → tauri build --no-bundle → 装 Inno Setup → ISCC 编译 →
+  签名 → 上传 Release 资源
         │
         ▼
 GitHub Release 页面自动出现：
-  Mynx_2.0.5_x64-setup.exe      ← NSIS 安装程序
-  Mynx_2.0.5_x64-setup.exe.sig ← 签名（自动更新校验用）
-  latest.json                   ← 自动更新清单
+  mynx-2.0.5-setup.exe           ← Inno Setup 安装程序（QQ 风格，中文，管理员权限）
+  mynx-2.0.5-setup.exe.sig       ← 签名（自动更新校验用）
+  latest.json                    ← 自动更新清单
 ```
 
 **关键事实：**
 - 只有打 **`v` 开头的 tag** 推送到远程才会触发 CI。普通提交到 `main` 不触发。
-- CI 只跑 **windows-latest**，只生成 **NSIS 安装程序**（无 macOS DMG、无 Linux 包）。
+- CI 只跑 **windows-latest**，只生成 **Inno Setup 安装程序**（无 macOS DMG、无 Linux 包）。
 - tag 名格式必须是 `vX.Y.Z`，例如 `v2.0.5`（不是 `2.0.5`、不是 `V2.0.5`）。
 
 ### 1.2 版本号三文件同步
@@ -83,6 +84,11 @@ GitHub Release 页面自动出现：
 
 默认分支是 `main`。CI 不能在其它分支跑触发（release.yml 的触发条件就是 tag 推送，但代码必须在 `main` 上）。
 
+### 2.4 本地需要 Inno Setup（仅本地手动构建需要）
+
+CI 上会自动下载 Inno Setup 便携版，无需准备。
+本地如果想 `npm run installer` 出包，安装一次即可：https://jrsoftware.org/isdl.php （默认装到 `C:\Program Files (x86)\Inno Setup 6\`）。
+
 ---
 
 ## 三、日常发版流程
@@ -128,7 +134,7 @@ npx tsc
 
 **判定：** 零输出 = 零错误。有任何 `error TSxxxx` 都必须逐个修掉再推。
 
-> CI 里的 `npm run tauri build` 会先跑 `npm run build = tsc && vite build`，tsc 在本地不过、CI 也必然不过。本地秒级反馈、CI 要 10 多分钟才发现，差距很大。
+> CI 里的 `npm run installer` 会先跑 `tauri build --no-bundle`（含 `tsc && vite build`），tsc 在本地不过、CI 也必然不过。本地秒级反馈、CI 要 10 多分钟才发现，差距很大。
 
 ### 检查 2：依赖锁定文件同步
 
@@ -160,12 +166,12 @@ node scripts/sync-version.cjs
 ### 检查 4（可选但推荐）：本地构建一次
 
 ```bash
-npm run tauri build
+npm run installer
 ```
 
 完全模拟 CI 做的事，本地过 CI 基本就过。耗时 5–10 分钟，但能在本地立刻看到错误信息，比等 CI 强很多。
 
-产物位置：`src-tauri/target/release/bundle/nsis/Mynx_2.0.5_x64-setup.exe`
+产物位置：`src-tauri/release-installer/mynx-2.0.5-setup.exe`
 
 ---
 
@@ -181,8 +187,8 @@ https://github.com/hanhan124/mynx/actions
 - 红色 ✗：失败，展开失败的 step 看日志。
 
 CI 成功后，**GitHub Releases 页面** 会出现：
-- `Mynx_2.0.5_x64-setup.exe`
-- `Mynx_2.0.5_x64-setup.exe.sig`
+- `mynx-2.0.5-setup.exe`
+- `mynx-2.0.5-setup.exe.sig`
 - `latest.json`
 
 应用启动后会通过 `latest.json` 检测新版本并提示用户升级。
@@ -221,7 +227,7 @@ git push origin v2.0.5
 
 ### 7.1 `error TSxxxx` —— tsc 类型错误
 
-**症状：** CI 步骤 `Build (NSIS installer)` 在 `tsc && vite build` 阶段挂掉。
+**症状：** CI 步骤 `Build (Inno Setup installer)` 在 `tauri build --no-bundle` 阶段的 `tsc && vite build` 挂掉。
 
 **修复：**
 ```bash
@@ -284,15 +290,18 @@ CI 上不会出这个错，因为 workflow 配置完整。
 
 ---
 
-## 八、相关文件速查
+## 八、安装包相关文件速查
 
 | 文件 | 作用 |
-|---|---|
-| `.github/workflows/release.yml` | CI 构建发布流水线（Windows NSIS） |
+|------|------|
+| `src-tauri/mynx.iss` | Inno Setup 安装脚本（QQ 风格、中文、管理员权限、WebView2 检测） |
+| `src-tauri/ChineseSimplified.isl` | Inno Setup 简体中文语言包 |
+| `scripts/gen-installer-images.cjs` | 生成 Inno Setup 所需 BMP：sidebar.bmp (164×314 含大 Logo)、small.bmp (55×55) |
+| `scripts/build-installer.cjs` | 本地构建：`tauri build --no-bundle` → ISCC 编译 → 输出 `release-installer/mynx-{ver}-setup.exe` |
+| `.github/workflows/release.yml` | CI 构建发布流水线（下载 Inno Setup 便携版 + 签名 + 上传） |
 | `scripts/release.cjs` | 一键发版脚本（commit → version → sync → tag → push） |
 | `scripts/sync-version.cjs` | 版本号同步脚本（package.json → tauri.conf.json + Cargo.toml） |
-| `scripts/gen-installer-images.cjs` | 生成 NSIS 安装界面 BMP 图（header/sidebar/installer-logo）|
-| `src-tauri/tauri.conf.json` | Tauri 配置（版本、updater pubkey、NSIS 安装样式、CSP） |
+| `src-tauri/tauri.conf.json` | Tauri 配置（版本、updater pubkey、CSP） |
 | `src-tauri/Cargo.toml` | Rust 依赖清单和版本号 |
 | `src-tauri/src/lib.rs` | Rust 命令（app_exe_path, is_portable, cleanup_update_bak） |
 | `src/lib/updater.ts` | 自动更新检测逻辑 |
@@ -325,8 +334,8 @@ grep '^version' src-tauri/Cargo.toml
 # 三个都应该是 2.0.5
 
 # ＝＝ 第 4 步：本地构建验证（强烈推荐）＝＝
-npm run tauri build
-# 看到 Finished 另起一行没有红色错误，去 src-tauri/target/release/bundle/nsis/ 双击安装包测一下
+npm run installer
+# 看到 ISCC 编译结束，去 src-tauri/release-installer/ 双击安装包测一下
 
 # ＝＝ 第 5 步：提交、打 tag、推送 ＝＝
 git add -A
@@ -344,4 +353,4 @@ git push origin main --follow-tags
 ## 十、一句话总结
 
 > **本地 tsc 过 + lock 一致 + 三文件版本号一致 + tag 是 vX.Y.Z 格式**，CI 99% 会过。
-> 不放心就再加一步本地 `npm run tauri build`，本地过 CI 基本就过。
+> 不放心就再加一步本地 `npm run installer`，本地过 CI 基本就过。

@@ -36,41 +36,66 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
-      - name: Build (NSIS installer)
+      # ── 1. Build main app (mynx.exe) ─────────────────────────────────────
+      - name: Build main app
         shell: pwsh
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          npm run tauri build
-          if ($LASTEXITCODE -ne 0) { throw "tauri build failed with exit code $LASTEXITCODE" }
+          npx tauri build --no-bundle
+          if ($LASTEXITCODE -ne 0) { throw "main app build failed" }
+          if (-not (Test-Path "src-tauri/target/release/mynx.exe")) {
+            throw "mynx.exe not produced"
+          }
+          Write-Host "OK: mynx.exe ($([math]::Round((Get-Item 'src-tauri/target/release/mynx.exe').Length/1MB,1)) MB)"
 
+      # ── 2. Sync installer payload ───────────────────────────────────────
+      - name: Sync installer payload
+        run: npm run installer:payload
+
+      # ── 3. Build installer (self-contained exe with embedded mynx.exe) ───
+      - name: Build installer
+        shell: pwsh
+        run: |
+          cd installer
+          npm ci
+          npm run tauri:build
+          if ($LASTEXITCODE -ne 0) { throw "installer build failed" }
+          $exe = "src-tauri\target\release\mynx-installer.exe"
+          if (-not (Test-Path $exe)) { throw "installer exe not produced: $exe" }
+          Write-Host "OK: $exe ($([math]::Round((Get-Item $exe).Length/1MB,1)) MB)"
+
+      # ── 4. Sign installer + generate latest.json ───────────────────────
       - name: Prepare and sign release assets
         id: assets
         shell: pwsh
         env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           $ErrorActionPreference = 'Continue'
           $pkg = Get-Content "package.json" -Raw | ConvertFrom-Json
           $version = $pkg.version
-          $nsisDir = "src-tauri\target\release\bundle\nsis"
-          $releaseDir = "src-tauri\target\release"
-          $keyPath = $env:TAURI_SIGNING_PRIVATE_KEY_PATH
-          $keyPassword = $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+          $installerPath = "installer\src-tauri\target\release\mynx-installer.exe"
+          $sigPath = "$installerPath.sig"
           $ghBase = "https://github.com/hanhan124/mynx/releases/download/v${version}"
 
-          $nsisExe = Get-ChildItem "$nsisDir\Mynx*setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          $nsisSig = Get-ChildItem "$nsisDir\Mynx*setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
-
-          if (-not $nsisSig -and $env:KEY_AVAILABLE -eq 'true' -and $keyPath -and (Test-Path $keyPath) -and $keyPassword) {
-            & npx tauri signer sign -f "$keyPath" -p "$keyPassword" "$($nsisExe.FullName)"
-            $nsisSig = Get-ChildItem "$nsisDir\Mynx*setup.exe.sig" -ErrorAction SilentlyContinue | Select-Object -First 1
+          # Only attempt signing if key is provided
+          if ($env:TAURI_SIGNING_PRIVATE_KEY) {
+            try {
+              & npx tauri signer sign -k "$env:TAURI_SIGNING_PRIVATE_KEY" -p "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$installerPath"
+              Write-Host "Installer signed successfully"
+            } catch {
+              Write-Warning "Signing failed: $_"
+            }
+          } else {
+            Write-Host "No signing key provided, uploading unsigned installer"
           }
 
-          $nsisSigContent = ""
-          if ($nsisSig -and (Test-Path $nsisSig.FullName)) {
-            $nsisSigContent = (Get-Content $nsisSig.FullName -Raw).Trim()
+          $sigContent = ""
+          if (Test-Path $sigPath) {
+            $sigContent = (Get-Content $sigPath -Raw).Trim()
           }
 
           $today = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
@@ -81,19 +106,22 @@ jobs:
             body = ""
             platforms = [ordered]@{
               "windows-x86_64" = [ordered]@{
-                url = "$ghBase/Mynx_${version}_x64-setup.exe"
-                signature = $nsisSigContent
+                url = "$ghBase/mynx-installer.exe"
+                signature = $sigContent
               }
             }
           }
 
-          $jsonStr = $jsonObj | ConvertTo-Json -Depth 4 -Compress
-          $latestJsonPath = "$releaseDir\latest.json"
-          [System.IO.File]::WriteAllText($latestJsonPath, $jsonStr, [System.Text.UTF8Encoding]::new($false))
+          $latestJsonPath = "installer\src-tauri\target\release\latest.json"
+          [System.IO.File]::WriteAllText(
+            $latestJsonPath,
+            ($jsonObj | ConvertTo-Json -Depth 4 -Compress),
+            [System.Text.UTF8Encoding]::new($false)
+          )
 
           $assets = @()
-          if ($nsisExe) { $assets += $nsisExe.FullName }
-          if ($nsisSig) { $assets += $nsisSig.FullName }
+          if (Test-Path $installerPath) { $assets += $installerPath }
+          if (Test-Path $sigPath) { $assets += $sigPath }
           if (Test-Path $latestJsonPath) { $assets += $latestJsonPath }
 
           "ASSETS<<EOF" >> $env:GITHUB_ENV

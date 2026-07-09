@@ -5,6 +5,10 @@ node_modules/
 dist/
 target/
 tmp-icons/
+tmp-tools/
+
+# Tauri installer output (single exe deliverable - not tracked)
+release-installer/
 
 # IDE
 .vscode/
@@ -47,3 +51,5 @@ src-tauri/icons/ios/
 # Portable build artifacts (deprecated — installed-only app)
 scripts/build-portable.cjs
 scripts/build-singlefile.cjs
+
+RELEASE_GUIDE.md
