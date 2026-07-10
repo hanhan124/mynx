@@ -50,7 +50,3 @@ export function resolveTheme(theme: ThemeId): ResolvedTheme {
   if (theme === "system") return getSystemTheme();
   return theme;
 }
-
-export function getTheme(theme: ThemeId) {
-  return THEMES.find((item) => item.id === theme) ?? THEMES[0];
-}

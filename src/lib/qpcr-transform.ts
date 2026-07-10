@@ -20,7 +20,7 @@ function detectColumn(headers: string[], keywords: string[]): number {
   return -1;
 }
 
-export interface TransformResult {
+interface TransformResult {
   geneNames: string[];
 }
 

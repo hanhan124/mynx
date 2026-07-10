@@ -15,13 +15,13 @@ export interface TiffOptions {
   quality: number;
 }
 
-export interface ConvertResult {
+interface ConvertResult {
   ok: number;
   failed: number;
   outputDir: string;
 }
 
-export type TiffProgress = (current: number, total: number) => void;
+type TiffProgress = (current: number, total: number) => void;
 
 // ── PowerShell ESC (Windows) ────────────────────────────────────────────────
 function escapePsString(value: string): string {

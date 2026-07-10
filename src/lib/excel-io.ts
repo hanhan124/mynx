@@ -18,10 +18,6 @@ export function getSheetNames(wb: ExcelJS.Workbook): string[] {
   return wb.worksheets.map(s => s.name);
 }
 
-export function getSheet(wb: ExcelJS.Workbook, name: string): ExcelJS.Worksheet | undefined {
-  return wb.worksheets.find(s => s.name === name);
-}
-
 export async function saveExcelFile(wb: ExcelJS.Workbook, path: string): Promise<void> {
   const buffer = await wb.xlsx.writeBuffer();
   const { writeFile } = await import('@tauri-apps/plugin-fs');

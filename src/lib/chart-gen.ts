@@ -160,19 +160,16 @@ export async function generateCharts(
 }
 
 /**
- * Legacy wrapper — same signature as the old generateVbsCharts for compatibility.
- * Automatically reads the xlsx from disk, injects charts via pure JS.
- *
- * @deprecated Use generateCharts() instead.
+ * Generate native Excel charts from a file on disk. Reads the xlsx, injects
+ * chart XML via pure JS, and writes it back.
  */
-export async function generateVbsCharts(
+export async function generateChartsFromFile(
   excelPath: string,
   repeatCount: number,
   colorHex: string = DEFAULT_CHART_COLOR,
   onProgress?: (current: number, total: number) => void
 ): Promise<ChartGenResult> {
   try {
-    // Read the workbook from disk
     const { readFile } = await import('@tauri-apps/plugin-fs');
     const buffer = await readFile(excelPath);
     const workbook = new ExcelJS.Workbook();

@@ -31,7 +31,7 @@ const CHART_CT = 'application/vnd.openxmlformats-officedocument.drawingml.chart+
 const DRAWING_CT = 'application/vnd.openxmlformats-officedocument.drawing+xml';
 
 // ── Types ───────────────────────────────────────────────────────────────────
-export interface DataPoint {
+interface DataPoint {
   name: string;
   avg: number;
   stdev: number;
@@ -46,7 +46,7 @@ export interface ChartSheetData {
   groupHeaderRow: number;
 }
 
-export interface ChartInjectionOptions {
+interface ChartInjectionOptions {
   sheets: ChartSheetData[];
   repeatCount: number;
   colorRGB?: number;
@@ -67,7 +67,7 @@ function safeGeneName(name: string): string {
 }
 
 // ── Chart XML Builder ───────────────────────────────────────────────────────
-export function buildChartXml(
+function buildChartXml(
   sheet: ChartSheetData,
   chartTableStart: number,
   chartTableEnd: number,
@@ -266,7 +266,7 @@ export function buildChartXml(
 }
 
 // ── Drawing XML Builder ─────────────────────────────────────────────────────
-export function buildDrawingXml(chartRId: string): string {
+function buildDrawingXml(chartRId: string): string {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xdr:wsDr
   xmlns:xdr="${NS.DRAWING}"
@@ -309,7 +309,7 @@ export function buildDrawingXml(chartRId: string): string {
 }
 
 // ── Relationships Helpers ────────────────────────────────────────────────────
-export function buildRelsXml(rels: Array<{ Id: string; Type: string; Target: string }>): string {
+function buildRelsXml(rels: Array<{ Id: string; Type: string; Target: string }>): string {
   const items = rels.map(
     (r) => `    <Relationship Id="${r.Id}" Type="${r.Type}" Target="${r.Target}"/>`
   );
@@ -319,18 +319,18 @@ ${items.join('\n')}
 </Relationships>`;
 }
 
-export function buildChartRelsXml(): string {
+function buildChartRelsXml(): string {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="${NS.RELS}">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/package" Target="../theme/theme1.xml"/>
 </Relationships>`;
 }
 
-export function chartContentTypeOverride(partName: string): string {
+function chartContentTypeOverride(partName: string): string {
   return `<Override PartName="${partName}" ContentType="${CHART_CT}"/>`;
 }
 
-export function drawingContentTypeOverride(partName: string): string {
+function drawingContentTypeOverride(partName: string): string {
   return `<Override PartName="${partName}" ContentType="${DRAWING_CT}"/>`;
 }
 

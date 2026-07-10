@@ -33,7 +33,7 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
     } catch (e) {
       const hint = e instanceof Error ? e.message : String(e);
       console.error("[AboutModal] checkForUpdates error:", e);
-      const isNetworkError = hint.includes("fetch") || hint.includes("network") || hint.includes("Failed") || hint.includes("network");
+      const isNetworkError = hint.includes("fetch") || hint.includes("network") || hint.includes("Failed");
       showToast(isNetworkError
         ? `网络连接失败，请检查网络后重试 (detail: ${hint.substring(0, 150)})`
         : `检查更新失败: ${hint}`,

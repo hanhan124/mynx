@@ -805,3 +805,467 @@
   from { opacity: 0; transform: translateX(100%) translateY(8px); }
   to { opacity: 1; transform: translateX(0) translateY(0); }
 }
+
+/* ========= Panel Actions (header right side) ========= */
+.panel-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ========= Help Button ========= */
+.help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 160ms var(--ease-smooth), color 160ms var(--ease-smooth);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.help-btn--icon {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+}
+
+.help-btn--inline {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 0.5px solid var(--border-strong);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+}
+
+.help-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.help-btn--inline:hover {
+  background: var(--bg-hover);
+}
+
+.help-btn:active {
+  background: var(--bg-active);
+  transition-duration: 60ms;
+}
+
+/* ========= Modal Wide Variant ========= */
+.modal-box--wide {
+  width: min(720px, 100vw - 32px);
+}
+
+/* ========= qPCR Tutorial ========= */
+.tutorial {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(85vh - 8px);
+}
+
+.tutorial__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 12px;
+  border-bottom: 0.5px solid var(--separator);
+  flex-shrink: 0;
+}
+
+.tutorial__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.tutorial__subtitle {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.tutorial__close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
+  border: none;
+  cursor: pointer;
+  transition: background 160ms var(--ease-smooth), color 160ms var(--ease-smooth);
+  flex-shrink: 0;
+}
+
+.tutorial__close:hover {
+  background: rgba(128, 128, 128, 0.15);
+  color: var(--text-primary);
+}
+
+.tutorial__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Left nav ── */
+.tutorial__nav {
+  width: 168px;
+  min-width: 168px;
+  padding: 14px 10px 14px 14px;
+  border-right: 0.5px solid var(--separator);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.tutorial__nav-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  padding: 0 6px;
+}
+
+.tutorial__nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tutorial__nav-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 7px;
+  transition: background 140ms var(--ease-smooth), color 140ms var(--ease-smooth);
+}
+
+.tutorial__nav-item svg {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.tutorial__nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.tutorial__nav-item.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.tutorial__nav-item.active svg {
+  opacity: 1;
+}
+
+.tutorial__nav-tip {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding: 8px 6px 0;
+  line-height: 1.5;
+}
+
+/* ── Right content ── */
+.tutorial__content {
+  flex: 1;
+  padding: 18px 22px 8px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.tutorial__section {
+  margin-bottom: 28px;
+  scroll-margin-top: 0;
+}
+
+.tutorial__h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+}
+
+.tutorial__subtitle-inline {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 0 0 12px;
+}
+
+.tutorial__section p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin: 0 0 10px;
+}
+
+.tutorial__section p strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.tutorial__section ul,
+.tutorial__section ol {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+.tutorial__section li {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin-bottom: 4px;
+}
+
+.tutorial__section li strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.tutorial__section code {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 12px;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* ── Table ── */
+.tutorial__table-wrap {
+  overflow-x: auto;
+  margin: 0 0 12px;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+}
+
+.tutorial__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.tutorial__table th {
+  text-align: left;
+  padding: 7px 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-bottom: 0.5px solid var(--separator);
+  white-space: nowrap;
+}
+
+.tutorial__table td {
+  padding: 7px 10px;
+  color: var(--text-secondary);
+  border-bottom: 0.5px solid var(--separator);
+  line-height: 1.5;
+}
+
+.tutorial__table tr:last-child td {
+  border-bottom: none;
+}
+
+.tutorial__table td code {
+  background: transparent;
+  padding: 0;
+  color: var(--accent);
+}
+
+/* ── Code block ── */
+.tutorial__code {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  padding: 10px 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 0 0 12px;
+  white-space: pre;
+}
+
+/* ── Formula ── */
+.tutorial__formula {
+  text-align: center;
+  padding: 14px 12px;
+  background: var(--accent-soft);
+  border-radius: 10px;
+  margin: 0 0 12px;
+}
+
+.tutorial__formula code {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 14px;
+  background: transparent;
+  color: var(--accent);
+  padding: 0;
+}
+
+.tutorial__formula sup,
+.tutorial__formula sub {
+  font-size: 10px;
+}
+
+/* ── Callout ── */
+.tutorial__callout {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+
+.tutorial__callout--info {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+.tutorial__callout--info code {
+  color: var(--accent);
+}
+
+.tutorial__callout--warn {
+  background: rgba(255, 159, 10, 0.1);
+  color: var(--text-primary);
+}
+
+.tutorial__callout--warn code {
+  color: var(--orange);
+}
+
+.tutorial__callout--tip {
+  background: rgba(var(--green-rgb), 0.08);
+  color: var(--text-primary);
+}
+
+/* ── FAQ ── */
+.tutorial__faq {
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.tutorial__faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.tutorial__faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.tutorial__faq summary:hover {
+  color: var(--accent);
+}
+
+.tutorial__faq-arrow {
+  font-size: 16px;
+  color: var(--text-tertiary);
+  transition: transform 200ms var(--ease-smooth);
+  flex-shrink: 0;
+}
+
+.tutorial__faq-arrow.open {
+  transform: rotate(90deg);
+}
+
+.tutorial__faq-body {
+  padding: 0 0 10px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.tutorial__faq-body code {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 11.5px;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.tutorial__faq-body strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ── Footer ── */
+.tutorial__footer {
+  padding: 6px 0 18px;
+  text-align: center;
+}
+
+.tutorial__done {
+  width: 100%;
+  height: 34px;
+  font-size: 13px;
+}
+
+/* ── Responsive: narrow screens collapse nav to top bar ── */
+@media (max-width: 560px) {
+  .tutorial__body {
+    flex-direction: column;
+  }
+
+  .tutorial__nav {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 0.5px solid var(--separator);
+    padding: 10px 14px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .tutorial__nav ul {
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .tutorial__nav-item {
+    white-space: nowrap;
+    padding: 5px 10px;
+  }
+
+  .tutorial__nav-tip {
+    display: none;
+  }
+
+  .tutorial__content {
+    padding: 14px 16px 8px;
+  }
+}

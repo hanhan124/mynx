@@ -4,9 +4,10 @@ import FileSelect from './FileSelect';
 import Transform from './Transform';
 import Calculate from './Calculate';
 import LoadingOverlay from '@/components/LoadingOverlay';
+import HelpButton, { QpcrTutorial } from '@/components/HelpButton';
 import type { ExcelFile } from '@/lib/excel-io';
 import { saveExcelFile } from '@/lib/excel-io';
-import { generateVbsCharts } from '@/lib/chart-gen';
+import { generateChartsFromFile } from '@/lib/chart-gen';
 import { detectTransformedGenes } from '@/lib/qpcr-transform';
 import { showToast } from '@/components/Toast';
 
@@ -72,7 +73,7 @@ export default function QpcrPage() {
         await silentSave();
 
         startStage('正在生成图表...', 'determinate');
-        const result = await generateVbsCharts(
+        const result = await generateChartsFromFile(
           file.path,
           repeatCount,
           chartColor,
@@ -107,6 +108,9 @@ export default function QpcrPage() {
         <div className="panel-title">
           <h2>qPCR 分析</h2>
           <p>转换数据，计算相对表达量</p>
+        </div>
+        <div className="panel-actions">
+          <HelpButton>{(close) => <QpcrTutorial onClose={close} />}</HelpButton>
         </div>
       </div>
 

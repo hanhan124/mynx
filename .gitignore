@@ -44,6 +44,9 @@ docs/
 # Claude (local AI agent context)
 .claude/
 
+# ZCode (local agent context)
+.zcode/
+
 # Mobile platform icons (not used for desktop app)
 src-tauri/icons/android/
 src-tauri/icons/ios/

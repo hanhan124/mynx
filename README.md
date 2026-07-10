@@ -25,7 +25,7 @@
 ### 🎨 现代界面
 - 简洁的侧边栏导航,自定义主题色
 - 玻璃拟态 / 浅色 / 深色模式
-- 实时数据可视化(Chart.js + 原生 Canvas)
+- 实时数据可视化(原生 Excel 图表 XML 注入)
 
 ---
 
@@ -66,7 +66,6 @@ mynx-installer.exe
 - Node.js ≥ 22
 - Rust ≥ 1.77(stable, MSVC toolchain)
 - Windows 10/11 + Visual Studio Build Tools(C++ 工作负载)
-- Inno Setup 6+ (可选,仅旧版打包脚本需要)
 
 ### 安装依赖
 ```bash
@@ -144,7 +143,7 @@ git push origin main --follow-tags
 |---|---|
 | 前端 | React 18 · TypeScript · Vite · React Router |
 | 后端 | Rust · Tauri 2 |
-| 数据 | ExcelJS · JSZip · 原生 Canvas / Chart.js |
+| 数据 | ExcelJS · JSZip · 原生 Excel 图表 XML |
 | 安装器 | Tauri 自建(HTML/CSS/React + Rust + PowerShell COM + winreg) |
 | CI/CD | GitHub Actions(Windows runner) |
 

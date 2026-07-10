@@ -5,10 +5,11 @@ interface ModalProps {
   open: boolean;
   onClose: () => void;
   title?: string;
+  wide?: boolean;
   children: ReactNode;
 }
 
-export default function Modal({ open, onClose, title, children }: ModalProps) {
+export default function Modal({ open, onClose, title, wide, children }: ModalProps) {
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -22,7 +23,7 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-box${wide ? " modal-box--wide" : ""}`} onClick={(e) => e.stopPropagation()}>
         {title && (
           <div className="modal-header">
             <h3>{title}</h3>
