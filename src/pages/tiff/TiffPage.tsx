@@ -33,7 +33,11 @@ export default function TiffPage() {
         setLoadingText(`正在转换 (${current}/${total})...`);
       });
       setProgress(100);
-      if (result.failed > 0) {
+      if (result.failed < 0) {
+        showToast(`转换失败，请重试`, "error");
+      } else if (result.ok === 0 && result.failed === 0) {
+        showToast(`未找到 TIFF 文件`, "info");
+      } else if (result.failed > 0) {
         showToast(`${result.ok} 个成功，${result.failed} 个失败`, "info");
       } else {
         showToast(`转换完成，${result.ok} 个文件`, "success");

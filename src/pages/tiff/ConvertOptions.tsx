@@ -85,15 +85,15 @@ export default function ConvertOptions({ onConvert, loading, disabled }: Convert
             <div className="form-group">
               <label>粗体</label>
               <select value={bold ? "1" : "0"} onChange={(e) => setBold(e.target.value === "1")}>
-                <option value="true">是</option>
-                <option value="false">否</option>
+                <option value="1">是</option>
+                <option value="0">否</option>
               </select>
             </div>
             <div className="form-group">
               <label>斜体</label>
               <select value={italic ? "1" : "0"} onChange={(e) => setItalic(e.target.value === "1")}>
-                <option value="false">否</option>
-                <option value="true">是</option>
+                <option value="0">否</option>
+                <option value="1">是</option>
               </select>
             </div>
           </div>

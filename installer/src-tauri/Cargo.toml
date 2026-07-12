@@ -1,6 +1,6 @@
 [package]
 name = "mynx-installer"
-version = "2.1.1"
+version = "2.1.2"
 description = "Mynx 安装向导(Tauri 自建安装器)"
 authors = ["Han"]
 edition = "2021"

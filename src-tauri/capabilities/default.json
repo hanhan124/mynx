@@ -123,6 +123,26 @@
           "name": "powershell",
           "cmd": "powershell.exe",
           "args": true
+        },
+        {
+          "name": "bash",
+          "cmd": "bash",
+          "args": true
+        }
+      ]
+    },
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "powershell",
+          "cmd": "powershell.exe",
+          "args": true
+        },
+        {
+          "name": "bash",
+          "cmd": "bash",
+          "args": true
         }
       ]
     },

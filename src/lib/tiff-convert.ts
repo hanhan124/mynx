@@ -25,10 +25,11 @@ type TiffProgress = (current: number, total: number) => void;
 
 // ── PowerShell ESC (Windows) ────────────────────────────────────────────────
 function escapePsString(value: string): string {
+  // Backtick must be escaped FIRST, before we insert any backtick-based escapes
   return value
+    .replace(/`/g, "``")
     .replace(/'/g, "''")
     .replace(/\$/g, "`$")
-    .replace(/`/g, "``")
     .replace(/\(/g, "`(")
     .replace(/\)/g, "`)");
 }
@@ -50,6 +51,8 @@ function buildWindowsScript(
     options.italic ? " -bor [System.Drawing.FontStyle]::Italic" : "",
   ].join("");
 
+  const alpha = Math.max(0, Math.min(255, Math.round(options.transparency * 255)));
+
   return `
 Add-Type -AssemblyName System.Drawing
 
@@ -61,11 +64,11 @@ $MarginY = ${options.marginY}
 $PaddingX = ${options.paddingX}
 $PaddingY = ${options.paddingY}
 $TextColor = [System.Drawing.Color]::White
-$BackgroundColor = [System.Drawing.Color]::FromArgb(${Math.round(options.transparency * 255)}, 90, 90, 90)
+$BackgroundColor = [System.Drawing.Color]::FromArgb(${alpha}, 90, 90, 90)
 $JpegQuality = ${options.quality}
 $InputDir = '${escapePsString(folderPath)}'
 $OutputDir = '${escapePsString(outputDir)}'
-$AddFileName = $${options.watermark ? "true" : "false"}
+$AddFileName = ${options.watermark ? "$true" : "$false"}
 $jpgCodec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq "image/jpeg" }
 $encoderParams = New-Object System.Drawing.Imaging.EncoderParameters(1)
 $encoderParams.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality, [int64]$JpegQuality)
@@ -77,7 +80,7 @@ if (!(Test-Path -LiteralPath $OutputDir)) {
 }
 
 $Files = Get-ChildItem -LiteralPath $InputDir -File | Where-Object { $_.Extension -match '^\\.tiff?$' }
-$totalFiles = $Files.Count
+$totalFiles = if ($Files) { @($Files).Count } else { 0 }
 $idx = 0
 Write-Output "PROGRESS:0/$totalFiles"
 
@@ -139,16 +142,16 @@ function buildUnixScript(
   outputDir: string,
   options: TiffOptions
 ): string {
-  // sips is built-in on macOS (no ImageMagick needed for basic conversion)
-  // For watermark, we use a combination of sips + optional ImageMagick if available
   const inputDirEsc = escapeShString(folderPath);
   const outputDirEsc = escapeShString(outputDir);
   const fontEsc = escapeShString(options.font);
-  /* fontSize unused in shell script directly, passed through fontEsc */
   const quality = options.quality;
   const watermarkEnabled = options.watermark;
   const marginX = options.marginX;
   const marginY = options.marginY;
+  const fontSize = options.fontSize;
+  const boldFlag = options.bold ? "1" : "0";
+  const italicFlag = options.italic ? "1" : "0";
 
   return `
 #!/bin/bash
@@ -157,17 +160,18 @@ OUTPUT_DIR='${outputDirEsc}'
 QUALITY=${quality}
 WATERMARK=${watermarkEnabled ? "true" : "false"}
 FONT_NAME='${fontEsc}'
-const FONT_SIZE = Math.round(${options.fontSize})
+FONT_SIZE=${fontSize}
+BOLD=${boldFlag}
+ITALIC=${italicFlag}
 MARGIN_X=${marginX}
 MARGIN_Y=${marginY}
 
 mkdir -p "$OUTPUT_DIR"
 
-# Collect files
 FILES=()
 while IFS= read -r -d '' f; do
   FILES+=("$f")
-done < <(find "$INPUT_DIR" -maxdepth 1 -type f \( -iname "*.tif" -o -iname "*.tiff" \) -print0)
+done < <(find "$INPUT_DIR" -maxdepth 1 -type f \\( -iname "*.tif" -o -iname "*.tiff" \\) -print0)
 
 TOTAL=\${#FILES[@]}
 IDX=0
@@ -177,16 +181,14 @@ FAILED=0
 echo "PROGRESS:0/$TOTAL"
 
 for f in "\${FILES[@]}"; do
-  IDX=\$((IDX + 1))
-  BASENAME=\$(basename "\$f")
+  IDX=$((IDX + 1))
+  BASENAME=$(basename "\$f")
   NAME="\${BASENAME%.*}"
   OUT="\$OUTPUT_DIR/\${NAME}.jpg"
 
-  # macOS built-in conversion via sips (preserves quality)
   if command -v sips &>/dev/null; then
     sips -s format jpeg -s formatOptions ${quality} "$f" --out "$OUT" 2>/dev/null
     CONV_OK=$?
-  # Fallback: ImageMagick
   elif command -v magick &>/dev/null; then
     magick convert "$f" -quality ${quality}% "$OUT" 2>/dev/null
     CONV_OK=$?
@@ -199,13 +201,20 @@ for f in "\${FILES[@]}"; do
 
   if [ $CONV_OK -eq 0 ] && [ -f "$OUT" ]; then
     if [ "$WATERMARK" = "true" ]; then
-      # Try ImageMagick for watermark; if not available, skip watermark without failing
+      FONT_OPTS=""
+      if [ "$BOLD" = "1" ]; then FONT_OPTS="$FONT_OPTS -weight Bold"; fi
+      if [ "$ITALIC" = "1" ]; then FONT_OPTS="$FONT_OPTS -style Italic"; fi
+      TMP_OUT="\$OUT.tmp"
       if command -v magick &>/dev/null; then
-        magick "$OUT" -font "$FONT_NAME" -pointsize $FONT_SIZE \
-          -fill "rgba(255,255,255,0.8)" -annotate +\${MARGIN_X}+\${MARGIN_Y} "\$NAME" "\$OUT" 2>/dev/null
+        mv "$OUT" "$TMP_OUT"
+        magick "$TMP_OUT" -font "$FONT_NAME" -pointsize $FONT_SIZE $FONT_OPTS \
+          -fill "rgba(255,255,255,0.85)" -annotate +\${MARGIN_X}+\${MARGIN_Y} "\$NAME" "$OUT" 2>/dev/null
+        rm -f "$TMP_OUT"
       elif command -v convert &>/dev/null; then
-        convert "\$OUT" -font "\$FONT_NAME" -pointsize \$FONT_SIZE \
-          -fill "rgba(255,255,255,0.8)" -annotate +\${MARGIN_X}+\${MARGIN_Y} "\$NAME" "\$OUT" 2>/dev/null
+        mv "$OUT" "$TMP_OUT"
+        convert "\$TMP_OUT" -font "\$FONT_NAME" -pointsize \$FONT_SIZE $FONT_OPTS \
+          -fill "rgba(255,255,255,0.85)" -annotate +\${MARGIN_X}+\${MARGIN_Y} "\$NAME" "\$OUT" 2>/dev/null
+        rm -f "$TMP_OUT"
       fi
     fi
     OK=$((OK + 1))
@@ -239,7 +248,6 @@ export async function convertTiff(
 
   const outputDir = `${folderPath}/JPG_output_${ts}`;
 
-  // Detect platform
   const os = await platform();
 
   if (os === "windows") {
@@ -247,6 +255,20 @@ export async function convertTiff(
   } else {
     return convertWithShell(folderPath, outputDir, options, onProgress);
   }
+}
+
+// ── stdout line buffer: splits chunked data into complete lines ────────────
+function createLineHandler(onLine: (line: string) => void) {
+  let buffer = "";
+  return (data: string) => {
+    buffer += data;
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      const trimmed = line.replace(/\r$/, "");
+      if (trimmed) onLine(trimmed);
+    }
+  };
 }
 
 // ── Windows: PowerShell ─────────────────────────────────────────────────────
@@ -257,11 +279,19 @@ async function convertWithPowershell(
   onProgress?: TiffProgress
 ): Promise<ConvertResult> {
   const psScript = buildWindowsScript(folderPath, outputDir, options);
-  const tempDir = folderPath;
-  const psPath = `${tempDir}/tiff_convert_${Date.now()}.ps1`;
 
   const { writeFile, remove } = await import("@tauri-apps/plugin-fs");
-  await writeFile(psPath, new TextEncoder().encode(psScript));
+  const { tempDir } = await import("@tauri-apps/api/path");
+  const tmp = await tempDir();
+  const psPath = `${tmp}/tiff_convert_${Date.now()}.ps1`;
+
+  // Write with UTF-8 BOM so PowerShell 5.1 reads CJK font names correctly
+  const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
+  const scriptBytes = new TextEncoder().encode(psScript);
+  const fileBytes = new Uint8Array(bom.length + scriptBytes.length);
+  fileBytes.set(bom, 0);
+  fileBytes.set(scriptBytes, bom.length);
+  await writeFile(psPath, fileBytes);
 
   return new Promise<ConvertResult>((resolve) => {
     let stdoutBuf = "";
@@ -278,28 +308,31 @@ async function convertWithPowershell(
       resolve(result);
     };
 
+    const handleLine = createLineHandler((line) => {
+      stdoutBuf += line + "\n";
+      if (onProgress) {
+        const match = line.match(/PROGRESS:(\d+)\/(\d+)/);
+        if (match) {
+          const cur = parseInt(match[1], 10);
+          const tot = parseInt(match[2], 10);
+          if (Number.isFinite(cur) && Number.isFinite(tot) && tot >= 0) {
+            onProgress(cur, tot);
+          }
+        }
+      }
+    });
+
     try {
       const command = ShellCommand.create("powershell", [
         "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", psPath,
       ]);
 
-      command.stdout.on("data", (line: string) => {
-        stdoutBuf += line + "\n";
-        if (!onProgress) return;
-        const match = line.match(/PROGRESS:(\d+)\/(\d+)/);
-        if (match) {
-          const cur = parseInt(match[1], 10);
-          const tot = parseInt(match[2], 10);
-          if (Number.isFinite(cur) && Number.isFinite(tot) && tot > 0) {
-            onProgress(cur, tot);
-          }
-        }
-      });
+      command.stdout.on("data", handleLine);
 
       command.on("close", () => {
         const match = stdoutBuf.match(/RESULT:(\d+)\|(\d+)\|(.*)$/s);
         if (!match) {
-          finalize({ ok: 0, failed: 0, outputDir });
+          finalize({ ok: 0, failed: -1, outputDir });
           return;
         }
         finalize({
@@ -309,10 +342,10 @@ async function convertWithPowershell(
         });
       });
 
-      command.on("error", () => finalize({ ok: 0, failed: 0, outputDir }));
+      command.on("error", () => finalize({ ok: 0, failed: -1, outputDir }));
       void command.spawn();
     } catch {
-      finalize({ ok: 0, failed: 0, outputDir });
+      finalize({ ok: 0, failed: -1, outputDir });
     }
   });
 }
@@ -326,9 +359,10 @@ async function convertWithShell(
 ): Promise<ConvertResult> {
   const shScript = buildUnixScript(folderPath, outputDir, options);
 
-  // Write script to a temp file
   const { writeFile, remove } = await import("@tauri-apps/plugin-fs");
-  const shPath = `${folderPath}/tiff_convert_${Date.now()}.sh`;
+  const { tempDir } = await import("@tauri-apps/api/path");
+  const tmp = await tempDir();
+  const shPath = `${tmp}/tiff_convert_${Date.now()}.sh`;
   await writeFile(shPath, new TextEncoder().encode(shScript));
 
   return new Promise<ConvertResult>((resolve) => {
@@ -346,27 +380,30 @@ async function convertWithShell(
       resolve(result);
     };
 
+    const handleLine = createLineHandler((line) => {
+      stdoutBuf += line + "\n";
+      if (onProgress) {
+        const match = line.match(/PROGRESS:(\d+)\/(\d+)/);
+        if (match) {
+          const cur = parseInt(match[1], 10);
+          const tot = parseInt(match[2], 10);
+          if (Number.isFinite(cur) && Number.isFinite(tot) && tot >= 0) {
+            onProgress(cur, tot);
+          }
+        }
+      }
+    });
+
     try {
-      const chmodCmd = ShellCommand.create("bash", ["-c", `chmod +x '${shPath}'`]);
+      const chmodCmd = ShellCommand.create("bash", ["-c", `chmod +x '${escapeShString(shPath)}'`]);
       chmodCmd.execute().then(() => {
         const command = ShellCommand.create("bash", [shPath]);
-        command.stdout.on("data", (line: string) => {
-          stdoutBuf += line + "\n";
-          if (!onProgress) return;
-          const match = line.match(/PROGRESS:(\d+)\/(\d+)/);
-          if (match) {
-            const cur = parseInt(match[1], 10);
-            const tot = parseInt(match[2], 10);
-            if (Number.isFinite(cur) && Number.isFinite(tot) && tot > 0) {
-              onProgress(cur, tot);
-            }
-          }
-        });
+        command.stdout.on("data", handleLine);
 
         command.on("close", () => {
           const match = stdoutBuf.match(/RESULT:(\d+)\|(\d+)\|(.*)$/s);
           if (!match) {
-            finalize({ ok: 0, failed: 0, outputDir });
+            finalize({ ok: 0, failed: -1, outputDir });
             return;
           }
           finalize({
@@ -376,11 +413,11 @@ async function convertWithShell(
           });
         });
 
-        command.on("error", () => finalize({ ok: 0, failed: 0, outputDir }));
+        command.on("error", () => finalize({ ok: 0, failed: -1, outputDir }));
         void command.spawn();
       });
     } catch {
-      finalize({ ok: 0, failed: 0, outputDir });
+      finalize({ ok: 0, failed: -1, outputDir });
     }
   });
 }
