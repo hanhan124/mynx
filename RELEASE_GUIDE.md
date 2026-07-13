@@ -89,7 +89,7 @@ CI 成功后，GitHub Releases 页面应至少出现：
 npx tauri signer generate -w mynx.key
 ```
 
-`src-tauri/tauri.conf.json` 已配置对应公钥。CI 会要求 Windows 和 macOS updater 产物都有签名；缺少签名会直接失败，避免发布不可更新的版本。
+`src-tauri/tauri.conf.json` 已配置对应公钥。配置签名密钥后，CI 会把对应平台写入 `latest.json` 用于自动更新；缺少签名时仍会发布安装包，但 `latest.json` 会省略未签名的平台。
 
 ---
 

@@ -145,12 +145,16 @@ jobs:
         run: |
           $installerPath = "installer\src-tauri\target\release\mynx-installer.exe"
           if ($env:TAURI_SIGNING_PRIVATE_KEY) {
-            & npx tauri signer sign -k "$env:TAURI_SIGNING_PRIVATE_KEY" -p "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$installerPath"
-            if ($LASTEXITCODE -ne 0) { throw "installer signing failed" }
-            if (-not (Test-Path "$installerPath.sig")) { throw "installer signature not produced" }
-            Write-Host "Installer signed successfully"
+            try {
+              & npx tauri signer sign -k "$env:TAURI_SIGNING_PRIVATE_KEY" -p "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$installerPath"
+              if ($LASTEXITCODE -ne 0) { throw "installer signing failed" }
+              if (-not (Test-Path "$installerPath.sig")) { throw "installer signature not produced" }
+              Write-Host "Installer signed successfully"
+            } catch {
+              Write-Warning "Signing failed: $_"
+            }
           } else {
-            throw "TAURI_SIGNING_PRIVATE_KEY is required for updater signatures"
+            Write-Host "No signing key provided, uploading unsigned installer"
           }
 
       - name: Upload Windows artifacts
@@ -186,18 +190,18 @@ jobs:
             echo "No macOS DMG produced" >&2
             exit 1
           fi
-          if [ ${#tgzs[@]} -eq 0 ]; then
-            echo "No macOS updater .app.tar.gz produced" >&2
-            exit 1
-          fi
-          if [ ${#sigs[@]} -eq 0 ]; then
-            echo "No macOS updater signature produced" >&2
-            exit 1
-          fi
 
           printf 'macOS DMG: %s\n' "${dmgs[@]}"
-          printf 'macOS updater: %s\n' "${tgzs[@]}"
-          printf 'macOS signature: %s\n' "${sigs[@]}"
+          if [ ${#tgzs[@]} -gt 0 ]; then
+            printf 'macOS updater: %s\n' "${tgzs[@]}"
+          else
+            echo "No macOS updater .app.tar.gz produced; release will include DMG only"
+          fi
+          if [ ${#sigs[@]} -gt 0 ]; then
+            printf 'macOS signature: %s\n' "${sigs[@]}"
+          else
+            echo "No macOS updater signature produced"
+          fi
 
       - name: Upload macOS artifacts
         if: runner.os == 'macOS'
@@ -272,33 +276,39 @@ jobs:
           mac_dmgs = sorted(assets.glob('*.dmg'))
           mac_tgzs = sorted(p for p in assets.glob('*.app.tar.gz') if not str(p).endswith('.sig'))
 
-          if not win_exe.exists() or not win_sig.exists():
-              raise SystemExit('Windows installer or signature is missing')
+          if not win_exe.exists():
+              raise SystemExit('Windows installer is missing')
           if not mac_dmgs:
               raise SystemExit('macOS DMG is missing')
-          if not mac_tgzs:
-              raise SystemExit('macOS updater tarball is missing')
 
-          mac_tgz = mac_tgzs[0]
-          mac_sig = Path(str(mac_tgz) + '.sig')
-          if not mac_sig.exists():
-              raise SystemExit(f'macOS updater signature is missing: {mac_sig}')
+          platforms = {}
+          if win_sig.exists():
+              platforms['windows-x86_64'] = {
+                  'url': f'{base}/mynx-installer.exe',
+                  'signature': win_sig.read_text(encoding='utf-8').strip(),
+              }
+          else:
+              print('Windows signature is missing; latest.json will omit windows-x86_64')
+
+          if mac_tgzs:
+              mac_tgz = mac_tgzs[0]
+              mac_sig = Path(str(mac_tgz) + '.sig')
+              if mac_sig.exists():
+                  platforms['darwin-aarch64'] = {
+                      'url': f'{base}/{mac_tgz.name}',
+                      'signature': mac_sig.read_text(encoding='utf-8').strip(),
+                  }
+              else:
+                  print(f'macOS updater signature is missing; latest.json will omit darwin-aarch64: {mac_sig}')
+          else:
+              print('macOS updater tarball is missing; latest.json will omit darwin-aarch64')
 
           latest = {
               'version': version,
               'date': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
               'notes': 'See the GitHub Release for full changelog.',
               'body': '',
-              'platforms': {
-                  'windows-x86_64': {
-                      'url': f'{base}/mynx-installer.exe',
-                      'signature': win_sig.read_text(encoding='utf-8').strip(),
-                  },
-                  'darwin-aarch64': {
-                      'url': f'{base}/{mac_tgz.name}',
-                      'signature': mac_sig.read_text(encoding='utf-8').strip(),
-                  },
-              },
+              'platforms': platforms,
           }
 
           Path('release-assets/latest.json').write_text(
