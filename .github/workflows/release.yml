@@ -182,23 +182,23 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s globstar nullglob
-          mapfile -t dmgs < <(find src-tauri/target -name '*.dmg' -type f)
-          mapfile -t tgzs < <(find src-tauri/target -name '*.app.tar.gz' -type f)
-          mapfile -t sigs < <(find src-tauri/target -name '*.app.tar.gz.sig' -type f)
+          dmgs=$(find src-tauri/target -name '*.dmg' -type f)
+          tgzs=$(find src-tauri/target -name '*.app.tar.gz' -type f)
+          sigs=$(find src-tauri/target -name '*.app.tar.gz.sig' -type f)
 
-          if [ ${#dmgs[@]} -eq 0 ]; then
+          if [ -z "$dmgs" ]; then
             echo "No macOS DMG produced" >&2
             exit 1
           fi
 
-          printf 'macOS DMG: %s\n' "${dmgs[@]}"
-          if [ ${#tgzs[@]} -gt 0 ]; then
-            printf 'macOS updater: %s\n' "${tgzs[@]}"
+          printf 'macOS DMG:\n%s\n' "$dmgs"
+          if [ -n "$tgzs" ]; then
+            printf 'macOS updater:\n%s\n' "$tgzs"
           else
             echo "No macOS updater .app.tar.gz produced; release will include DMG only"
           fi
-          if [ ${#sigs[@]} -gt 0 ]; then
-            printf 'macOS signature: %s\n' "${sigs[@]}"
+          if [ -n "$sigs" ]; then
+            printf 'macOS signature:\n%s\n' "$sigs"
           else
             echo "No macOS updater signature produced"
           fi
