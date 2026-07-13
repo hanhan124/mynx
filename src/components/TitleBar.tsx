@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { platform } from "@tauri-apps/plugin-os";
 import { loadConfig, saveAlwaysOnTop } from "@/lib/config";
 import AppMark from "@/components/AppMark";
 import { IconMinus, IconSquare, IconPin, IconX } from "@tabler/icons-react";
@@ -11,6 +12,7 @@ interface TitleBarProps {
 export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
   const [pinned, setPinned] = useState(false);
   const appWindow = getCurrentWindow();
+  const isMac = platform() === "macos";
 
   useEffect(() => {
     loadConfig().then((cfg) => {
@@ -25,7 +27,7 @@ export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
         <AppMark size={24} className="title-bar-mark" />
         <span className="title-bar-text">{title}</span>
       </div>
-      <div className="title-bar-controls">
+      <div className={`title-bar-controls${isMac ? " title-bar-controls--left" : ""}`}>
         <button
           className={`title-bar-btn ${pinned ? "title-bar-btn--active" : ""}`}
           data-tauri-no-drag

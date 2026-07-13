@@ -22,10 +22,20 @@ fn is_portable() -> Result<bool, String> {
 fn cleanup_update_bak() -> Result<(), String> {
     let current = std::env::current_exe()
         .map_err(|e| format!("Failed to get exe path: {}", e))?;
-    let bak_path = current.with_extension("exe.bak");
-    if bak_path.exists() {
-        fs::remove_file(&bak_path)
-            .map_err(|e| format!("Failed to remove bak file: {}", e))?;
+    #[cfg(windows)]
+    {
+        let bak_path = current.with_extension("exe.bak");
+        if bak_path.exists() {
+            fs::remove_file(&bak_path)
+                .map_err(|e| format!("Failed to remove bak file: {}", e))?;
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        let bak_path = current.with_extension("bak");
+        if bak_path.exists() {
+            let _ = fs::remove_file(&bak_path);
+        }
     }
     Ok(())
 }

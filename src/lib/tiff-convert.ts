@@ -19,6 +19,7 @@ interface ConvertResult {
   ok: number;
   failed: number;
   outputDir: string;
+  watermarkSkipped: boolean;
 }
 
 type TiffProgress = (current: number, total: number) => void;
@@ -132,7 +133,7 @@ foreach ($file in $Files) {
   Write-Output "PROGRESS:$idx/$totalFiles"
 }
 
-Write-Output "RESULT:$ok|$failed|$OutputDir"
+Write-Output "RESULT:$ok|$failed|0|$OutputDir"
 `.trim();
 }
 
@@ -177,6 +178,18 @@ TOTAL=\${#FILES[@]}
 IDX=0
 OK=0
 FAILED=0
+WATERMARK_SKIPPED=0
+
+# Check if ImageMagick is available for watermarking
+HAS_MAGICK=0
+if command -v magick &>/dev/null; then
+  HAS_MAGICK=1
+elif command -v convert &>/dev/null; then
+  HAS_MAGICK=1
+fi
+if [ "$WATERMARK" = "true" ] && [ "$HAS_MAGICK" = "0" ]; then
+  WATERMARK_SKIPPED=1
+fi
 
 echo "PROGRESS:0/$TOTAL"
 
@@ -200,7 +213,7 @@ for f in "\${FILES[@]}"; do
   fi
 
   if [ $CONV_OK -eq 0 ] && [ -f "$OUT" ]; then
-    if [ "$WATERMARK" = "true" ]; then
+    if [ "$WATERMARK" = "true" ] && [ "$HAS_MAGICK" = "1" ]; then
       FONT_OPTS=""
       if [ "$BOLD" = "1" ]; then FONT_OPTS="$FONT_OPTS -weight Bold"; fi
       if [ "$ITALIC" = "1" ]; then FONT_OPTS="$FONT_OPTS -style Italic"; fi
@@ -225,7 +238,7 @@ for f in "\${FILES[@]}"; do
   echo "PROGRESS:$IDX/$TOTAL"
 done
 
-echo "RESULT:$OK|$FAILED|$OUTPUT_DIR"
+echo "RESULT:$OK|$FAILED|$WATERMARK_SKIPPED|$OUTPUT_DIR"
 `;
 }
 
@@ -330,22 +343,23 @@ async function convertWithPowershell(
       command.stdout.on("data", handleLine);
 
       command.on("close", () => {
-        const match = stdoutBuf.match(/RESULT:(\d+)\|(\d+)\|(.*)$/s);
+        const match = stdoutBuf.match(/RESULT:(\d+)\|(\d+)\|(\d+)\|(.*)$/s);
         if (!match) {
-          finalize({ ok: 0, failed: -1, outputDir });
+          finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false });
           return;
         }
         finalize({
           ok: parseInt(match[1], 10),
           failed: parseInt(match[2], 10),
-          outputDir: match[3].trim() || outputDir,
+          watermarkSkipped: parseInt(match[3], 10) === 1,
+          outputDir: match[4].trim() || outputDir,
         });
       });
 
-      command.on("error", () => finalize({ ok: 0, failed: -1, outputDir }));
+      command.on("error", () => finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false }));
       void command.spawn();
     } catch {
-      finalize({ ok: 0, failed: -1, outputDir });
+      finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false });
     }
   });
 }
@@ -401,23 +415,24 @@ async function convertWithShell(
         command.stdout.on("data", handleLine);
 
         command.on("close", () => {
-          const match = stdoutBuf.match(/RESULT:(\d+)\|(\d+)\|(.*)$/s);
+          const match = stdoutBuf.match(/RESULT:(\d+)\|(\d+)\|(\d+)\|(.*)$/s);
           if (!match) {
-            finalize({ ok: 0, failed: -1, outputDir });
+            finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false });
             return;
           }
           finalize({
             ok: parseInt(match[1], 10),
             failed: parseInt(match[2], 10),
-            outputDir: match[3].trim() || outputDir,
+            watermarkSkipped: parseInt(match[3], 10) === 1,
+            outputDir: match[4].trim() || outputDir,
           });
         });
 
-        command.on("error", () => finalize({ ok: 0, failed: -1, outputDir }));
+        command.on("error", () => finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false }));
         void command.spawn();
       });
     } catch {
-      finalize({ ok: 0, failed: -1, outputDir });
+      finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false });
     }
   });
 }

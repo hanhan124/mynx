@@ -42,6 +42,9 @@ export default function TiffPage() {
       } else {
         showToast(`转换完成，${result.ok} 个文件`, "success");
       }
+      if (result.watermarkSkipped) {
+        showToast(`水印需要 ImageMagick（brew install imagemagick），已跳过水印`, "info");
+      }
     } catch (e) {
       showToast(`转换失败：${e instanceof Error ? e.message : String(e)}`, "error");
     } finally {

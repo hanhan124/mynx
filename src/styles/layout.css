@@ -59,6 +59,13 @@
   gap: 2px;
 }
 
+/* macOS: window controls on the left side */
+.title-bar-controls--left {
+  order: -1;
+  margin-right: auto;
+  padding-left: 0;
+}
+
 .title-bar-btn {
   display: inline-flex;
   align-items: center;
