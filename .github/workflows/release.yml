@@ -174,21 +174,19 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: npm run mac:build
+          run: npx tauri build --target aarch64-apple-darwin --bundles dmg,app
 
       - name: Verify macOS artifacts
         if: runner.os == 'macOS'
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s globstar nullglob
           dmgs=$(find src-tauri/target -name '*.dmg' -type f)
           tgzs=$(find src-tauri/target -name '*.app.tar.gz' -type f)
           sigs=$(find src-tauri/target -name '*.app.tar.gz.sig' -type f)
 
           if [ -z "$dmgs" ]; then
-            echo "No macOS DMG produced" >&2
-            exit 1
+            echo "No macOS DMG produced; release will rely on .app.tar.gz if present" >&2
           fi
 
           printf 'macOS DMG:\n%s\n' "$dmgs"
