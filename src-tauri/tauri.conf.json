@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/nickelpack/tauri/v2/core/tauri-config-schema/schema.json",
   "productName": "Mynx",
-  "version": "2.2.6",
+  "version": "2.2.7",
   "identifier": "com.fanguanghan.mynx",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -29,6 +29,7 @@
   "bundle": {
     "active": true,
     "targets": [],
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

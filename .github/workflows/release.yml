@@ -174,7 +174,18 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          run: npx tauri build --target aarch64-apple-darwin --bundles dmg,app
+        run: |
+          npx tauri build --target aarch64-apple-darwin --bundles app,dmg
+          if [ $? -ne 0 ]; then
+            echo "macOS app build failed" >&2
+            exit 1
+          fi
+          app_path=$(find src-tauri/target/aarch64-apple-darwin -name '*.app' -maxdepth 4 -type d | head -1)
+          if [ -z "$app_path" ]; then
+            echo "macOS .app bundle not produced" >&2
+            exit 1
+          fi
+          echo "OK: $app_path"
 
       - name: Verify macOS artifacts
         if: runner.os == 'macOS'

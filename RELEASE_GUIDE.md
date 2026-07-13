@@ -27,7 +27,7 @@ GitHub Actions: .github/workflows/release.yml
         │
         ├─ macos-14 / aarch64-apple-darwin
         │   ├─ npm ci
-        │   ├─ npm run mac:build
+        │   ├─ npx tauri build --target aarch64-apple-darwin --bundles app,dmg
         │   └─ 上传 DMG + .app.tar.gz + .app.tar.gz.sig
         │
         └─ release
@@ -90,6 +90,10 @@ npx tauri signer generate -w mynx.key
 ```
 
 `src-tauri/tauri.conf.json` 已配置对应公钥。配置签名密钥后，CI 会把对应平台写入 `latest.json` 用于自动更新；缺少签名时仍会发布安装包，但 `latest.json` 会省略未签名的平台。
+
+### 2.3 macOS updater 产物开关
+
+`src-tauri/tauri.conf.json` 的 `bundle.createUpdaterArtifacts` 必须为 `true`，否则 macOS 构建只产出 `.dmg`，不会生成 `*.app.tar.gz` 和 `*.app.tar.gz.sig`，`latest.json` 就无法写入 `darwin-aarch64`。请勿删除该字段。
 
 ---
 
@@ -200,7 +204,7 @@ grep -A2 'name = "mynx-installer"' installer/src-tauri/Cargo.lock | head -2
   npm run mac:build
   ```
 
-  预期产物：`src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.dmg` 以及 updater tarball/signature。
+  `mac:build` 等价于 `tauri build --target aarch64-apple-darwin`，与 CI 一致。预期产物：`src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg` 以及 `bundle/macos/*.app.tar.gz` + `.sig`。tarball 的 `.sig` 只有在设置了 `TAURI_SIGNING_PRIVATE_KEY` 和 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 环境变量时才会生成。
 
 在 Windows 开发机上无法本地产出 macOS DMG，最终以 `macos-14` GitHub Actions runner 为准。
 
@@ -281,3 +285,11 @@ cd installer && npm install --package-lock-only && cd ..
 ### 7.5 Windows installer 签名失败
 
 检查 `TAURI_SIGNING_PRIVATE_KEY`、`TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 是否与 `src-tauri/tauri.conf.json` 中的公钥匹配。
+
+### 7.6 macOS step 的 `run:` 缩进错误
+
+`release.yml` 中 `Build macOS app` 步骤的 `run:` 必须与 `shell:`、`env:` 同级（step 下一层），不能缩进到 `env:` 里面。一旦缩进错误，`run` 会被当成一个环境变量，构建命令根本不执行，macOS 不产出任何产物，`release` job 会在 `if-no-files-found: error` 处失败。改动该步骤后务必核对缩进。
+
+### 7.7 缺少 `*.app.tar.gz` / `.sig`（非签名原因）
+
+若签名密钥已配置但仍缺 updater 产物，检查 `src-tauri/tauri.conf.json` 的 `bundle.createUpdaterArtifacts` 是否为 `true`。为 `false` 或缺失时，Tauri 只打包 `.dmg`，不会生成 updater tarball 与签名。
