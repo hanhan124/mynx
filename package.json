@@ -1,7 +1,7 @@
 {
   "name": "mynx",
   "private": true,
-  "version": "2.2.0",
+  "version": "2.2.1",
   "type": "module",
   "repository": "https://github.com/hanhan124/mynx",
   "scripts": {
@@ -9,6 +9,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "mac:build": "tauri build --target aarch64-apple-darwin",
     "version": "node scripts/sync-version.cjs",
     "prebuild": "node scripts/sync-version.cjs",
     "installer:payload": "node scripts/sync-installer-payload.cjs",

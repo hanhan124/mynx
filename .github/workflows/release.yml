@@ -16,9 +16,51 @@ permissions:
 
 jobs:
   # ════════════════════════════════════════════════════════════════════════
-  # Build per platform (Windows + macOS in parallel)
+  # Prepare release tag once before matrix builds
+  # ════════════════════════════════════════════════════════════════════════
+  prepare-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.release-tag.outputs.release_tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release tag
+        id: release-tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+            if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Release tag must look like v2.2.0: $TAG" >&2
+              exit 1
+            fi
+            if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+              echo "Tag already exists: $TAG" >&2
+              exit 1
+            fi
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "release: $TAG"
+            git push origin "$TAG"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+
+          echo "release_tag=$TAG" >> "$GITHUB_OUTPUT"
+
+  # ════════════════════════════════════════════════════════════════════════
+  # Build per platform (Windows + macOS Apple Silicon in parallel)
   # ════════════════════════════════════════════════════════════════════════
   build:
+    needs: prepare-tag
     strategy:
       fail-fast: false
       matrix:
@@ -35,14 +77,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Create tag (workflow_dispatch only)
-        if: github.event_name == 'workflow_dispatch'
-        shell: bash
-        run: |
-          TAG="${{ inputs.tag }}"
-          git tag -a "$TAG" -m "release: $TAG"
-          git push origin "$TAG"
+        with:
+          ref: ${{ needs.prepare-tag.outputs.release_tag }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -109,14 +145,12 @@ jobs:
         run: |
           $installerPath = "installer\src-tauri\target\release\mynx-installer.exe"
           if ($env:TAURI_SIGNING_PRIVATE_KEY) {
-            try {
-              & npx tauri signer sign -k "$env:TAURI_SIGNING_PRIVATE_KEY" -p "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$installerPath"
-              Write-Host "Installer signed successfully"
-            } catch {
-              Write-Warning "Signing failed: $_"
-            }
+            & npx tauri signer sign -k "$env:TAURI_SIGNING_PRIVATE_KEY" -p "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$installerPath"
+            if ($LASTEXITCODE -ne 0) { throw "installer signing failed" }
+            if (-not (Test-Path "$installerPath.sig")) { throw "installer signature not produced" }
+            Write-Host "Installer signed successfully"
           } else {
-            Write-Host "No signing key provided, uploading unsigned installer"
+            throw "TAURI_SIGNING_PRIVATE_KEY is required for updater signatures"
           }
 
       - name: Upload Windows artifacts
@@ -129,14 +163,41 @@ jobs:
             installer/src-tauri/target/release/mynx-installer.exe.sig
           if-no-files-found: error
 
-      # ── macOS: build .app + .dmg + updater .app.tar.gz ───────────────────
+      # ── macOS: build Apple Silicon .app + .dmg + updater .app.tar.gz ─────
       - name: Build macOS app
         if: runner.os == 'macOS'
         shell: bash
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: npx tauri build --target aarch64-apple-darwin
+        run: npm run mac:build
+
+      - name: Verify macOS artifacts
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          dmgs=(src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.dmg)
+          tgzs=(src-tauri/target/aarch64-apple-darwin/release/**/*.app.tar.gz)
+          sigs=(src-tauri/target/aarch64-apple-darwin/release/**/*.app.tar.gz.sig)
+
+          if [ ${#dmgs[@]} -eq 0 ]; then
+            echo "No macOS DMG produced" >&2
+            exit 1
+          fi
+          if [ ${#tgzs[@]} -eq 0 ]; then
+            echo "No macOS updater .app.tar.gz produced" >&2
+            exit 1
+          fi
+          if [ ${#sigs[@]} -eq 0 ]; then
+            echo "No macOS updater signature produced" >&2
+            exit 1
+          fi
+
+          printf 'macOS DMG: %s\n' "${dmgs[@]}"
+          printf 'macOS updater: %s\n' "${tgzs[@]}"
+          printf 'macOS signature: %s\n' "${sigs[@]}"
 
       - name: Upload macOS artifacts
         if: runner.os == 'macOS'
@@ -145,21 +206,24 @@ jobs:
           name: macos-assets
           path: |
             src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.dmg
-            src-tauri/target/aarch64-apple-darwin/release/*.app.tar.gz
-            src-tauri/target/aarch64-apple-darwin/release/*.app.tar.gz.sig
-          if-no-files-found: warn
+            src-tauri/target/aarch64-apple-darwin/release/**/*.app.tar.gz
+            src-tauri/target/aarch64-apple-darwin/release/**/*.app.tar.gz.sig
+          if-no-files-found: error
 
   # ════════════════════════════════════════════════════════════════════════
   # Create Release + latest.json (after both builds succeed)
   # ════════════════════════════════════════════════════════════════════════
   release:
-    needs: build
-    if: always()
+    needs:
+      - prepare-tag
+      - build
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare-tag.outputs.release_tag }}
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -170,84 +234,78 @@ jobs:
         run: find artifacts -type f -exec ls -la {} \;
 
       - name: Prepare release assets
-        id: prep
         shell: bash
         run: |
-          set +e
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          shopt -s nullglob
 
           mkdir -p release-assets
 
           # Windows assets
-          cp artifacts/windows-assets/mynx-installer.exe release-assets/ 2>/dev/null
-          cp artifacts/windows-assets/mynx-installer.exe.sig release-assets/ 2>/dev/null
+          find artifacts/windows-assets -name 'mynx-installer.exe' -exec cp {} release-assets/ \;
+          find artifacts/windows-assets -name 'mynx-installer.exe.sig' -exec cp {} release-assets/ \;
 
-          # macOS assets
-          cp artifacts/macos-assets/*.dmg release-assets/ 2>/dev/null
-          cp artifacts/macos-assets/*.app.tar.gz release-assets/ 2>/dev/null
-          cp artifacts/macos-assets/*.app.tar.gz.sig release-assets/ 2>/dev/null
+          # macOS assets (Apple Silicon)
+          find artifacts/macos-assets -name '*.dmg' -exec cp {} release-assets/ \;
+          find artifacts/macos-assets -name '*.app.tar.gz' -exec cp {} release-assets/ \;
+          find artifacts/macos-assets -name '*.app.tar.gz.sig' -exec cp {} release-assets/ \;
 
-          # Debug: list what we have
           echo "=== release-assets contents ==="
           ls -la release-assets/
-
-          # Read Windows signature
-          WIN_SIG=""
-          if [ -f release-assets/mynx-installer.exe.sig ]; then
-            WIN_SIG=$(cat release-assets/mynx-installer.exe.sig)
-          fi
-
-          # Read macOS signature
-          MAC_SIG=""
-          MAC_TGZ=$(ls release-assets/*.app.tar.gz 2>/dev/null | grep -v '.sig$' | head -1)
-          if [ -n "$MAC_TGZ" ] && [ -f "${MAC_TGZ}.sig" ]; then
-            MAC_SIG=$(cat "${MAC_TGZ}.sig")
-          fi
-
-          echo "win_sig=$WIN_SIG" >> $GITHUB_OUTPUT
-          echo "mac_sig=$MAC_SIG" >> $GITHUB_OUTPUT
 
       - name: Generate latest.json
         shell: bash
         run: |
-          set +e
-          VERSION="${{ steps.prep.outputs.version }}"
-          WIN_SIG="${{ steps.prep.outputs.win_sig }}"
-          MAC_SIG="${{ steps.prep.outputs.mac_sig }}"
-          GH_BASE="https://github.com/hanhan124/mynx/releases/download/v${VERSION}"
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
 
-          TODAY=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          version = json.loads(Path('package.json').read_text(encoding='utf-8'))['version']
+          tag = '${{ needs.prepare-tag.outputs.release_tag }}'
+          base = f'https://github.com/hanhan124/mynx/releases/download/{tag}'
+          assets = Path('release-assets')
 
-          # Find macOS updater tarball filename
-          MAC_TGZ_NAME=""
-          for f in release-assets/*.app.tar.gz; do
-            if [ -f "$f" ] && [[ "$f" != *.sig ]]; then
-              MAC_TGZ_NAME=$(basename "$f")
-              break
-            fi
-          done
+          win_exe = assets / 'mynx-installer.exe'
+          win_sig = assets / 'mynx-installer.exe.sig'
+          mac_dmgs = sorted(assets.glob('*.dmg'))
+          mac_tgzs = sorted(p for p in assets.glob('*.app.tar.gz') if not str(p).endswith('.sig'))
 
-          echo "MAC_TGZ_NAME: $MAC_TGZ_NAME"
+          if not win_exe.exists() or not win_sig.exists():
+              raise SystemExit('Windows installer or signature is missing')
+          if not mac_dmgs:
+              raise SystemExit('macOS DMG is missing')
+          if not mac_tgzs:
+              raise SystemExit('macOS updater tarball is missing')
 
-          # Build latest.json - only include platforms that have assets
-          PLATFORMS=""
-          PLATFORMS+="\"windows-x86_64\": {\"url\": \"${GH_BASE}/mynx-installer.exe\", \"signature\": \"${WIN_SIG}\"}"
-          if [ -n "$MAC_TGZ_NAME" ]; then
-            PLATFORMS+=", \"darwin-aarch64\": {\"url\": \"${GH_BASE}/${MAC_TGZ_NAME}\", \"signature\": \"${MAC_SIG}\"}"
-          fi
+          mac_tgz = mac_tgzs[0]
+          mac_sig = Path(str(mac_tgz) + '.sig')
+          if not mac_sig.exists():
+              raise SystemExit(f'macOS updater signature is missing: {mac_sig}')
 
-          cat > release-assets/latest.json << ENDJSON
-{
-  "version": "${VERSION}",
-  "date": "${TODAY}",
-  "notes": "See the GitHub Release for full changelog.",
-  "body": "",
-  "platforms": {
-    ${PLATFORMS}
-  }
-}
-ENDJSON
+          latest = {
+              'version': version,
+              'date': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+              'notes': 'See the GitHub Release for full changelog.',
+              'body': '',
+              'platforms': {
+                  'windows-x86_64': {
+                      'url': f'{base}/mynx-installer.exe',
+                      'signature': win_sig.read_text(encoding='utf-8').strip(),
+                  },
+                  'darwin-aarch64': {
+                      'url': f'{base}/{mac_tgz.name}',
+                      'signature': mac_sig.read_text(encoding='utf-8').strip(),
+                  },
+              },
+          }
+
+          Path('release-assets/latest.json').write_text(
+              json.dumps(latest, indent=2, ensure_ascii=False) + '\n',
+              encoding='utf-8',
+          )
+          PY
 
           echo "=== latest.json ==="
           cat release-assets/latest.json
@@ -255,6 +313,7 @@ ENDJSON
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.prepare-tag.outputs.release_tag }}
           draft: false
           prerelease: false
           generate_release_notes: true

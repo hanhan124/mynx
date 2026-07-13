@@ -195,9 +195,9 @@ echo "PROGRESS:0/$TOTAL"
 
 for f in "\${FILES[@]}"; do
   IDX=$((IDX + 1))
-  BASENAME=$(basename "\$f")
+  BASENAME=$(basename "$f")
   NAME="\${BASENAME%.*}"
-  OUT="\$OUTPUT_DIR/\${NAME}.jpg"
+  OUT="$OUTPUT_DIR/\${NAME}.jpg"
 
   if command -v sips &>/dev/null; then
     sips -s format jpeg -s formatOptions ${quality} "$f" --out "$OUT" 2>/dev/null
@@ -217,16 +217,16 @@ for f in "\${FILES[@]}"; do
       FONT_OPTS=""
       if [ "$BOLD" = "1" ]; then FONT_OPTS="$FONT_OPTS -weight Bold"; fi
       if [ "$ITALIC" = "1" ]; then FONT_OPTS="$FONT_OPTS -style Italic"; fi
-      TMP_OUT="\$OUT.tmp"
+      TMP_OUT="$OUT.tmp"
       if command -v magick &>/dev/null; then
         mv "$OUT" "$TMP_OUT"
         magick "$TMP_OUT" -font "$FONT_NAME" -pointsize $FONT_SIZE $FONT_OPTS \
-          -fill "rgba(255,255,255,0.85)" -annotate +\${MARGIN_X}+\${MARGIN_Y} "\$NAME" "$OUT" 2>/dev/null
+          -fill "rgba(255,255,255,0.85)" -annotate +\${MARGIN_X}+\${MARGIN_Y} "$NAME" "$OUT" 2>/dev/null
         rm -f "$TMP_OUT"
       elif command -v convert &>/dev/null; then
         mv "$OUT" "$TMP_OUT"
-        convert "\$TMP_OUT" -font "\$FONT_NAME" -pointsize \$FONT_SIZE $FONT_OPTS \
-          -fill "rgba(255,255,255,0.85)" -annotate +\${MARGIN_X}+\${MARGIN_Y} "\$NAME" "\$OUT" 2>/dev/null
+        convert "$TMP_OUT" -font "$FONT_NAME" -pointsize $FONT_SIZE $FONT_OPTS \
+          -fill "rgba(255,255,255,0.85)" -annotate +\${MARGIN_X}+\${MARGIN_Y} "$NAME" "$OUT" 2>/dev/null
         rm -f "$TMP_OUT"
       fi
     fi

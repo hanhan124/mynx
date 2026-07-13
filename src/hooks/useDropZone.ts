@@ -11,7 +11,9 @@ export function useDropZone(onDrop: (paths: string[]) => void) {
   const [isDragOver, setIsDragOver] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const handleDrop = useCallback(onDrop, [onDrop]);
+  const handleDrop = useCallback((paths: string[]) => {
+    onDrop(paths);
+  }, [onDrop]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;

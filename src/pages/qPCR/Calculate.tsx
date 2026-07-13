@@ -42,23 +42,18 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress 
     return detectTransformedGenes(workbook);
   }, [geneNames, workbook]);
 
-  // Auto-select first gene as reference gene
-  useEffect(() => {
-    if (effectiveGeneNames.length > 0 && !refGene) {
-      setRefGene(effectiveGeneNames[0]);
-    }
-  }, [effectiveGeneNames, refGene]);
+  const selectedRefGene = refGene || effectiveGeneNames[0] || '';
 
   // Button is enabled whenever a workbook is loaded and a ref gene is selected
-  const canExecute = workbook !== null && refGene !== '' && status !== 'processing';
+  const canExecute = workbook !== null && selectedRefGene !== '' && status !== 'processing';
 
   async function handleExecute() {
-    if (!workbook || !refGene) return;
+    if (!workbook || !selectedRefGene) return;
     try {
       setStatus('processing');
       setErrorMsg('');
       onProgress?.(0, 2, '正在计算相对表达量...');
-      calculateQpcr(workbook, repeatCount, refGene);
+      calculateQpcr(workbook, repeatCount, selectedRefGene);
       onProgress?.(2, 2, '计算完成');
       setStatus('success');
       setResultMsg(`计算完成，${effectiveGeneNames.length} 个基因`);
@@ -93,7 +88,7 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress 
         <div className="form-group">
           <label>参考基因</label>
           <select
-            value={refGene}
+            value={selectedRefGene}
             onChange={(e) => setRefGene(e.target.value)}
             disabled={status === 'processing' || !hasGenes}
           >
