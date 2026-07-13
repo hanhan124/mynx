@@ -182,9 +182,9 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s globstar nullglob
-          dmgs=(src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.dmg)
-          tgzs=(src-tauri/target/aarch64-apple-darwin/release/**/*.app.tar.gz)
-          sigs=(src-tauri/target/aarch64-apple-darwin/release/**/*.app.tar.gz.sig)
+          mapfile -t dmgs < <(find src-tauri/target -name '*.dmg' -type f)
+          mapfile -t tgzs < <(find src-tauri/target -name '*.app.tar.gz' -type f)
+          mapfile -t sigs < <(find src-tauri/target -name '*.app.tar.gz.sig' -type f)
 
           if [ ${#dmgs[@]} -eq 0 ]; then
             echo "No macOS DMG produced" >&2
@@ -209,9 +209,9 @@ jobs:
         with:
           name: macos-assets
           path: |
-            src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.dmg
-            src-tauri/target/aarch64-apple-darwin/release/**/*.app.tar.gz
-            src-tauri/target/aarch64-apple-darwin/release/**/*.app.tar.gz.sig
+            src-tauri/target/**/*.dmg
+            src-tauri/target/**/*.app.tar.gz
+            src-tauri/target/**/*.app.tar.gz.sig
           if-no-files-found: error
 
   # ════════════════════════════════════════════════════════════════════════

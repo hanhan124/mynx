@@ -1765,7 +1765,7 @@ dependencies = [
 
 [[package]]
 name = "mynx-installer"
-version = "2.2.3"
+version = "2.2.4"
 dependencies = [
  "dirs 5.0.1",
  "serde",
