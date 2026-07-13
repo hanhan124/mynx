@@ -1,6 +1,6 @@
 [package]
 name = "mynx"
-version = "2.1.5"
+version = "2.2.0"
 description = "qPCR Tools & TIFF-to-JPG Converter"
 authors = ["Mynx Team"]
 edition = "2021"
