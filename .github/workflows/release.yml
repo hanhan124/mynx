@@ -122,15 +122,7 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: |
-          npx tauri build --target aarch64-apple-darwin
-          if [ $? -ne 0 ]; then echo "macOS build failed"; exit 1; fi
-
-      - name: Find macOS artifacts
-        if: runner.os == 'macOS'
-        id: mac-artifacts
-        shell: bash
-        run: python3 scripts/find-macos-artifacts.py
+        run: npx tauri build --target aarch64-apple-darwin
 
       - name: Upload macOS artifacts
         if: runner.os == 'macOS'
@@ -138,9 +130,9 @@ jobs:
         with:
           name: macos-assets
           path: |
-            ${{ steps.mac-artifacts.outputs.dmg_path }}
-            ${{ steps.mac-artifacts.outputs.updater_tgz }}
-            ${{ steps.mac-artifacts.outputs.updater_sig }}
+            src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.dmg
+            src-tauri/target/aarch64-apple-darwin/release/*.app.tar.gz
+            src-tauri/target/aarch64-apple-darwin/release/*.app.tar.gz.sig
           if-no-files-found: warn
 
   # ════════════════════════════════════════════════════════════════════════
