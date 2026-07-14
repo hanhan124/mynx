@@ -220,11 +220,11 @@ jobs:
       # Apple Developer ID notarization is not configured because this project
       # intentionally does not use a paid Apple Developer Program account.
       # Browser-downloaded DMGs are blocked by Gatekeeper ("damaged, can't be
-      # opened"). To spare users from running terminal commands, the DMG is
-      # rebuilt (next step) to bundle a 修复损坏.command script alongside the
-      # .app — users right-click → Open it once to clear the quarantine xattr
-      # via a guided native dialog. This workflow still fails fast if Tauri
-      # updater artifacts/signatures are missing.
+      # opened"). To spare users from running terminal commands, a 修复损坏.command
+      # script is injected into the Tauri-produced DMG (next step) so users can
+      # right-click → Open it once to clear the quarantine xattr via a guided
+      # native dialog. This workflow still fails fast if Tauri updater
+      # artifacts/signatures are missing.
       #
       - name: Build macOS app
         if: runner.os == 'macOS'
@@ -243,96 +243,99 @@ jobs:
           fi
           find src-tauri/target/aarch64-apple-darwin -name '*.app' -type d -print
 
-      - name: Rebuild DMG with fix script
+      - name: Inject fix script into DMG
         if: runner.os == 'macOS'
         shell: bash
         run: |
           set -euo pipefail
 
-          # create-dmg (andreyvit/create-dmg) supports --add-file to bundle
-          # extra files alongside the .app in the DMG image.
-          brew install create-dmg
-
           # The fix script must be executable when extracted from the DMG.
           chmod +x src-tauri/scripts/fix-damaged.command
 
-          # Locate the .app bundle produced by Tauri.
-          APP_PATH=$(find src-tauri/target/aarch64-apple-darwin/release/bundle/macos \
-            -name 'Mynx.app' -type d | head -1)
-          if [ -z "$APP_PATH" ]; then
-            echo "::error::Mynx.app not found for DMG rebuild" >&2
-            exit 1
-          fi
-          echo "App bundle: $APP_PATH"
-
-          # Remove the Tauri-produced DMG so create-dmg can recreate it at the
-          # same path (preserving the expected filename for release uploads).
+          # Locate the Tauri-produced DMG (read-only UDZO format).
           DMG_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
-          OLD_DMG=$(find "$DMG_DIR" -name '*.dmg' -type f | head -1)
-          if [ -z "$OLD_DMG" ]; then
-            echo "::error::Original DMG not found for rebuild" >&2
+          ORIG_DMG=$(find "$DMG_DIR" -name '*.dmg' -type f | head -1)
+          if [ -z "$ORIG_DMG" ]; then
+            echo "::error::Original DMG not found for fix script injection" >&2
             exit 1
           fi
-          DMG_NAME=$(basename "$OLD_DMG")
-          rm -f "$OLD_DMG"
-          echo "Removed original DMG, will rebuild as: $DMG_NAME"
+          echo "Original DMG: $ORIG_DMG"
 
-          # Rebuild the DMG with Mynx.app + fix-damaged.command at the root.
-          # --sandbox-safe skips the AppleScript Finder-pretty step that fails
-          # in the headless GitHub Actions runner (no window server).
-          # The old DMG was already removed above, so --overwrite is unnecessary
-          # (and unsupported by create-dmg 1.2.x shipped on some runners).
-          set +e
-          create-dmg \
-            --sandbox-safe \
-            --volname "Mynx" \
-            --no-internet-enable \
-            --app-drop-link 470 170 \
-            --add-file "修复损坏.command" src-tauri/scripts/fix-damaged.command 120 170 \
-            --window-size 660 400 \
-            --icon "Mynx.app" 270 170 \
-            "${DMG_DIR}/${DMG_NAME}" \
-            "$APP_PATH"
-          CREATE_DMG_EXIT=$?
-          set -e
-          if [ "$CREATE_DMG_EXIT" -ne 0 ]; then
-            echo "::error::create-dmg exited with code $CREATE_DMG_EXIT" >&2
+          # Tauri's DMG is read-only (UDZO). Convert to read-write (UDRW) so we
+          # can copy the fix script into it, then re-compress back to UDZO.
+          RW_DMG="${DMG_DIR}/tmp-rw.dmg"
+          hdiutil convert "$ORIG_DMG" -format UDRW -o "$RW_DMG" \
+            >/dev/null 2>&1
+          if [ ! -f "$RW_DMG" ]; then
+            echo "::error::Failed to convert DMG to read-write format" >&2
             exit 1
           fi
 
-          # Verify the rebuilt DMG exists and contains both expected entries.
-          NEW_DMG="${DMG_DIR}/${DMG_NAME}"
-          if [ ! -f "$NEW_DMG" ]; then
-            echo "::error::Rebuilt DMG not found: $NEW_DMG" >&2
+          # Mount the read-write DMG and copy the fix script into it.
+          MOUNT_POINT=$(mktemp -d /tmp/mynx-dmg-mount-XXXX)
+          if ! hdiutil attach -nobrowse -noautoopen -mountpoint "$MOUNT_POINT" "$RW_DMG" \
+            >/dev/null 2>&1; then
+            echo "::error::Failed to mount read-write DMG" >&2
+            rm -rf "$MOUNT_POINT" "$RW_DMG"
             exit 1
           fi
 
-          MOUNT_POINT=$(mktemp -d /tmp/mynx-dmg-verify-XXXX)
-          if ! hdiutil attach -nobrowse -noautoopen -mountpoint "$MOUNT_POINT" "$NEW_DMG" >/dev/null 2>&1; then
-            echo "::error::Failed to mount rebuilt DMG for verification" >&2
-            rm -rf "$MOUNT_POINT"
-            exit 1
-          fi
-          echo "=== DMG contents ==="
+          echo "=== DMG contents before injection ==="
           ls -la "$MOUNT_POINT"
 
-          VERIFY_OK=1
-          if [ ! -d "$MOUNT_POINT/Mynx.app" ]; then
-            echo "::error::Mynx.app missing from rebuilt DMG" >&2
-            VERIFY_OK=0
-          fi
-          if [ ! -f "$MOUNT_POINT/修复损坏.command" ]; then
-            echo "::error::修复损坏.command missing from rebuilt DMG" >&2
-            VERIFY_OK=0
-          fi
+          cp src-tauri/scripts/fix-damaged.command "$MOUNT_POINT/修复损坏.command"
+          chmod +x "$MOUNT_POINT/修复损坏.command"
+
+          echo "=== DMG contents after injection ==="
+          ls -la "$MOUNT_POINT"
 
           hdiutil detach "$MOUNT_POINT" >/dev/null 2>&1 || true
           rm -rf "$MOUNT_POINT"
 
+          # Re-compress back to read-only UDZO, replacing the original DMG.
+          FINAL_DMG="${DMG_DIR}/tmp-final.dmg"
+          hdiutil convert "$RW_DMG" -format UDZO -imagekey zlib-level=9 -o "$FINAL_DMG" \
+            >/dev/null 2>&1
+          rm -f "$RW_DMG"
+
+          if [ ! -f "$FINAL_DMG" ]; then
+            echo "::error::Failed to re-compress DMG to UDZO format" >&2
+            exit 1
+          fi
+
+          # Replace the original DMG with the one containing the fix script.
+          DMG_NAME=$(basename "$ORIG_DMG")
+          mv -f "$FINAL_DMG" "$ORIG_DMG"
+          echo "Rebuilt DMG with fix script: $ORIG_DMG"
+
+          # Verify the final DMG contains both Mynx.app and the fix script.
+          VERIFY_MOUNT=$(mktemp -d /tmp/mynx-dmg-verify-XXXX)
+          if ! hdiutil attach -nobrowse -noautoopen -mountpoint "$VERIFY_MOUNT" "$ORIG_DMG" \
+            >/dev/null 2>&1; then
+            echo "::error::Failed to mount final DMG for verification" >&2
+            rm -rf "$VERIFY_MOUNT"
+            exit 1
+          fi
+          echo "=== Final DMG contents ==="
+          ls -la "$VERIFY_MOUNT"
+
+          VERIFY_OK=1
+          if [ ! -d "$VERIFY_MOUNT/Mynx.app" ]; then
+            echo "::error::Mynx.app missing from final DMG" >&2
+            VERIFY_OK=0
+          fi
+          if [ ! -f "$VERIFY_MOUNT/修复损坏.command" ]; then
+            echo "::error::修复损坏.command missing from final DMG" >&2
+            VERIFY_OK=0
+          fi
+
+          hdiutil detach "$VERIFY_MOUNT" >/dev/null 2>&1 || true
+          rm -rf "$VERIFY_MOUNT"
+
           if [ "$VERIFY_OK" -ne 1 ]; then
             exit 1
           fi
-          echo "OK: rebuilt DMG contains Mynx.app + 修复损坏.command"
+          echo "OK: final DMG contains Mynx.app + 修复损坏.command"
 
       - name: Verify macOS artifacts
         if: runner.os == 'macOS'
