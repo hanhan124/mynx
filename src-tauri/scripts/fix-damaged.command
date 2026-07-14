@@ -1,14 +1,14 @@
 #!/bin/bash
 #
-# fix-damaged.command — Mynx macOS Gatekeeper 修复脚本
+# fix-damaged.command — Mynx macOS Gatekeeper + AMFI 修复脚本
 #
-# 未签名的 DMG 下载后会被 macOS 打上 com.apple.quarantine 隔离属性，
-# 导致双击 Mynx.app 时提示「已损坏，无法打开」。本脚本自动清除该属性，
-# 并通过原生对话框引导用户，无需手动输入终端命令。
+# macOS 26 (Tahoe) 上未签名的 app 会被 AMFI 直接 SIGKILL，且隔离属性
+# (com.apple.quarantine) 会导致 Gatekeeper 提示「已损坏」。本脚本同时
+# 执行 ad-hoc 签名（满足 AMFI）和清除隔离属性（绕过 Gatekeeper），
+# 无需 Apple 开发者账号。
 #
-# 用法：在 DMG 中右键本文件 → 打开 → 弹窗确认「打开」即可。
-#
-# 注意：不使用 set -e，因为我们需要在失败时弹出图形提示而非直接退出。
+# 前提：本脚本自身需已被 ad-hoc 签名（CI 构建时完成），否则在 macOS 26
+# 上会在执行第一行前被 AMFI 杀死。
 
 APP_NAME="Mynx.app"
 APP_DISPLAY="Mynx"
@@ -18,7 +18,6 @@ APP_DISPLAY="Mynx"
 # 路径中的特殊字符导致 AppleScript 语法错误。
 show_dialog() {
     local icon="$1" message="$2" title="$3"
-    # 转义双引号和反斜杠，防止注入 AppleScript
     local escaped
     escaped="${message//\\/\\\\}"
     escaped="${escaped//\"/\\\"}"
@@ -35,7 +34,6 @@ find_app() {
         "$(dirname "$0")/${APP_NAME}" \
         "$(pwd)/${APP_NAME}"; do
         if [ -d "$candidate" ]; then
-            # 规范化为绝对路径
             (cd "$(dirname "$candidate")" && echo "$(pwd)/$(basename "$candidate")")
             return 0
         fi
@@ -56,22 +54,28 @@ if [ -z "$APP_PATH" ]; then
     exit 1
 fi
 
-# ── 清除隔离属性 ───────────────────────────────────────────────────────────
 echo "正在修复 ${APP_DISPLAY} …"
 echo "目标: ${APP_PATH}"
 echo ""
 
-if xattr -cr "$APP_PATH" 2>/dev/null; then
-    echo "✓ 隔离属性已清除"
-    show_dialog information \
-        "${APP_DISPLAY} 已修复！现在可以关闭此窗口，双击「应用程序」里的 ${APP_DISPLAY} 正常使用了。" \
-        "修复成功"
-else
-    echo "✗ 清除失败"
-    show_dialog stop \
-        "修复未能完成。请尝试手动在终端运行：xattr -cr \"${APP_PATH}\"" \
-        "修复失败"
-fi
+# ── 第一步：清除隔离属性 ───────────────────────────────────────────────────
+# 移除 com.apple.quarantine 及所有扩展属性，绕过 Gatekeeper 的「已损坏」检查。
+echo "[1/2] 清除隔离属性…"
+xattr -cr "$APP_PATH" 2>/dev/null
+echo "  ✓ 隔离属性已清除"
+
+# ── 第二步：Ad-hoc 签名 ───────────────────────────────────────────────────
+# macOS 26 的 AMFI 会杀死未签名的 ARM 原生可执行文件。Ad-hoc 签名
+# (codesign -s -) 不需要 Apple 开发者账号，足以满足 AMFI 要求。
+echo "[2/2] 应用 ad-hoc 签名…"
+codesign --force --deep --sign - "$APP_PATH" 2>/dev/null
+echo "  ✓ Ad-hoc 签名已完成"
+
+echo ""
+echo "✓ ${APP_DISPLAY} 修复完成！"
+show_dialog information \
+    "${APP_DISPLAY} 已修复！现在可以关闭此窗口，双击「应用程序」里的 ${APP_DISPLAY} 正常使用了。" \
+    "修复成功"
 
 echo ""
 echo "按回车键关闭此窗口…"

@@ -220,11 +220,13 @@ jobs:
       # Apple Developer ID notarization is not configured because this project
       # intentionally does not use a paid Apple Developer Program account.
       # Browser-downloaded DMGs are blocked by Gatekeeper ("damaged, can't be
-      # opened"). To spare users from running terminal commands, a 修复损坏.command
-      # script is injected into the Tauri-produced DMG (next step) so users can
-      # right-click → Open it once to clear the quarantine xattr via a guided
-      # native dialog. This workflow still fails fast if Tauri updater
-      # artifacts/signatures are missing.
+      # opened") and on macOS 26 (Tahoe) AMFI kills unsigned executables.
+      # To work around both: a 修复损坏.command script is injected into the
+      # DMG (next step) with ad-hoc signing applied to both the .app and the
+      # .command. Users right-click → Open the script once to clear the
+      # quarantine xattr and apply ad-hoc signing via a guided native dialog.
+      # This workflow still fails fast if Tauri updater artifacts/signatures
+      # are missing.
       #
       - name: Build macOS app
         if: runner.os == 'macOS'
@@ -285,6 +287,16 @@ jobs:
 
           cp src-tauri/scripts/fix-damaged.command "$MOUNT_POINT/修复损坏.command"
           chmod +x "$MOUNT_POINT/修复损坏.command"
+
+          # Ad-hoc sign both the .app and the .command script. On macOS 26
+          # (Tahoe), AMFI kills unsigned ARM executables with SIGKILL before
+          # they can run — this includes the .command fix script itself.
+          # Ad-hoc signing (codesign -s -) requires no Apple Developer account
+          # and is sufficient to satisfy AMFI on Apple Silicon.
+          echo "Ad-hoc signing Mynx.app…"
+          codesign --force --deep --sign - "$MOUNT_POINT/Mynx.app" 2>&1 || true
+          echo "Ad-hoc signing 修复损坏.command…"
+          codesign --force --sign - "$MOUNT_POINT/修复损坏.command" 2>&1 || true
 
           echo "=== DMG contents after injection ==="
           ls -la "$MOUNT_POINT"

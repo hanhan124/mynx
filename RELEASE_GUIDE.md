@@ -298,15 +298,24 @@ cd installer && npm install --package-lock-only && cd ..
 
 **根因**：当前 CI 的 macOS 构建只执行 `npx tauri build --bundles app,dmg`，**没有配置 Apple Developer ID 代码签名（codesign）和公证（notarization）**。`TAURI_SIGNING_PRIVATE_KEY` 是 Tauri updater 的签名密钥，跟 macOS Gatekeeper 验证的 Apple 代码签名是两回事。浏览器下载的未签名 DMG 会被 Gatekeeper 打上 `com.apple.quarantine` 隔离属性，显示「已损坏」。
 
-**已实现的方案（用户侧免终端）**：CI 在 Tauri 构建 DMG 后，用 `create-dmg`（`brew install create-dmg`，即 `andreyvit/create-dmg`）重建 DMG，把 `src-tauri/scripts/fix-damaged.command` 一并放进 DMG 根目录。用户在 DMG 窗口里**右键 → 打开**该 `.command` 文件，脚本会自动执行 `xattr -cr` 清除隔离属性，并通过 `osascript` 弹出中文图形提示框引导。`.command` 同样会被 Gatekeeper 拦截，但「右键 → 打开」对所有 macOS 版本都能稳定放行，用户全程不需打开终端输命令。详见 `release.yml` 的 `Rebuild DMG with fix script` 步骤。
+**macOS 26 (Tahoe) 的额外限制**：AMFI（Apple Mobile File Integrity）会直接 SIGKILL 未签名的 ARM 原生可执行文件，包括 `.command` 脚本本身——表现为 `zsh: killed`，脚本在执行第一行前就被终止。这意味着旧的 `xattr -cr` 单独方案在 macOS 26 上不再可靠，需要 **ad-hoc 签名 + 清除隔离属性**双管齐下。
+
+**已实现的方案（CI + 用户侧）**：
+
+CI 在 Tauri 构建 DMG 后，用 `hdiutil` 打开 DMG 注入 `修复损坏.command`，并对 `.app` 和 `.command` 都做 **ad-hoc 签名**（`codesign --force --deep --sign -`），无需 Apple 开发者账号。用户在 DMG 中右键 → 打开该 `.command` 文件，脚本自动执行两步修复：
+1. `xattr -cr` 清除隔离属性（绕过 Gatekeeper「已损坏」检查）
+2. `codesign --force --deep --sign -` 应用 ad-hoc 签名（满足 AMFI，防止 SIGKILL）
 
 关键实现细节：
-- `create-dmg` 必须加 `--sandbox-safe`，否则 CI 的无头 macOS runner 上 AppleScript 美化步骤会失败。
-- Tauri 原生不支持往 DMG 加额外文件（官方 issue #11996 已拒绝），只能后处理重建。
+- `hdiutil convert` 将 Tauri 只读 DMG (UDZO) 转为读写格式 (UDRW)，注入脚本后重新压缩为 UDZO。详见 `release.yml` 的 `Inject fix script into DMG` 步骤。
 - 重建只影响 `.dmg`；`.app.tar.gz` 和 `.sig` 是 `tauri build` 独立产出的，不受影响，updater 正常工作。
-- `fix-damaged.command` 脚本自动定位 `/Applications/Mynx.app`，找不到时弹出提示让用户先拖到「应用程序」。
+- ad-hoc 签名是每台机器独立的（用户在本地签名），不能替代 Apple Developer ID 公证。浏览器下载的 DMG 仍会被打上隔离属性，用户仍需运行修复脚本。
 
-**兜底方案**：若用户右键打开 `.command` 仍失败，可在终端执行 `xattr -cr /Applications/Mynx.app`。
+**兜底方案**：若用户在 macOS 26 上右键打开 `.command` 仍被 AMFI 杀死（`zsh: killed`），可在终端手动执行：
+```bash
+sudo xattr -cr /Applications/Mynx.app
+sudo codesign --force --deep --sign - /Applications/Mynx.app
+```
 
 **永久方案（开发者侧）**：获取 Apple Developer Program 会员（$99/年）后，在 CI 的 macOS 构建步骤中添加 codesign + notarize + staple 流程。需要在 GitHub Secrets 中配置：
 
