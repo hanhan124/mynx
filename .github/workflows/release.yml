@@ -280,7 +280,8 @@ jobs:
           # Rebuild the DMG with Mynx.app + fix-damaged.command at the root.
           # --sandbox-safe skips the AppleScript Finder-pretty step that fails
           # in the headless GitHub Actions runner (no window server).
-          # create-dmg may print non-fatal warnings; capture its exit code.
+          # The old DMG was already removed above, so --overwrite is unnecessary
+          # (and unsupported by create-dmg 1.2.x shipped on some runners).
           set +e
           create-dmg \
             --sandbox-safe \
@@ -290,7 +291,6 @@ jobs:
             --add-file "修复损坏.command" src-tauri/scripts/fix-damaged.command 120 170 \
             --window-size 660 400 \
             --icon "Mynx.app" 270 170 \
-            --overwrite \
             "${DMG_DIR}/${DMG_NAME}" \
             "$APP_PATH"
           CREATE_DMG_EXIT=$?
