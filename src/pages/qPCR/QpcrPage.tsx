@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { IconFlask, IconFileSpreadsheet } from '@tabler/icons-react';
+import { IconDna, IconFileSpreadsheet } from '@tabler/icons-react';
 import FileSelect from './FileSelect';
 import Transform from './Transform';
 import Calculate from './Calculate';
@@ -66,7 +66,11 @@ export default function QpcrPage() {
   );
 
   const handleCalculateComplete = useCallback(
-    async (repeatCount: number, chartColor: string) => {
+    async (
+      repeatCount: number,
+      chartColor: string,
+      methodOptions: { method: 'ref-normalized' | 'control-relative'; controlGroup?: string }
+    ) => {
       if (!file) return;
       try {
         startStage('正在保存...', 'indeterminate');
@@ -79,7 +83,8 @@ export default function QpcrPage() {
           chartColor,
           (current, total) => {
             updateProgress(current, total, `正在生成图表 (${current}/${total})...`);
-          }
+          },
+          methodOptions
         );
         if (result.success) {
           const created = result.chartsCreated ?? 0;
@@ -103,7 +108,7 @@ export default function QpcrPage() {
 
       <div className="panel-header">
         <div className="panel-icon" style={{ background: '#0a84ff' }}>
-          <IconFlask size={18} color="white" stroke={2} />
+          <IconDna size={18} color="white" stroke={1.75} />
         </div>
         <div className="panel-title">
           <h2>qPCR 分析</h2>
@@ -117,7 +122,7 @@ export default function QpcrPage() {
       {/* 步骤 0: 文件 */}
       <div className="card">
         <div className="card-title">
-          <IconFileSpreadsheet size={14} stroke={2} />
+          <IconFileSpreadsheet size={14} stroke={1.75} />
           <span>数据文件</span>
         </div>
         <div className="card-body">

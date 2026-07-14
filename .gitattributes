@@ -1,0 +1,4 @@
+# Ensure shell scripts and .command files keep LF line endings on all platforms.
+# CRLF line endings break bash scripts on macOS ("bad interpreter" error).
+*.command text eol=lf
+*.sh text eol=lf

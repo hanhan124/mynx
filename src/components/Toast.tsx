@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { IconCircleCheck, IconCircleX, IconInfoCircle } from "@tabler/icons-react";
+import { IconCircleCheckFilled, IconCircleXFilled, IconInfoCircleFilled } from "@tabler/icons-react";
 
 export type ToastType = "success" | "error" | "info";
 
@@ -17,10 +17,10 @@ export function showToast(text: string, type: ToastType = "info") {
   listeners.forEach((fn) => fn(msg));
 }
 
-const ICONS: Record<ToastType, typeof IconCircleCheck> = {
-  success: IconCircleCheck,
-  error: IconCircleX,
-  info: IconInfoCircle,
+const ICONS: Record<ToastType, typeof IconCircleCheckFilled> = {
+  success: IconCircleCheckFilled,
+  error: IconCircleXFilled,
+  info: IconInfoCircleFilled,
 };
 
 export default function ToastContainer() {
@@ -48,7 +48,7 @@ export default function ToastContainer() {
         const Icon = ICONS[toast.type];
         return (
           <div key={toast.id} className={`toast ${toast.type}`}>
-            <Icon size={16} stroke={2} className="toast-icon" />
+            <Icon size={16} stroke={1.75} className="toast-icon" />
             <span>{toast.text}</span>
           </div>
         );

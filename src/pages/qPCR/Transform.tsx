@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { IconInfoCircle, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
+import { IconInfoCircleFilled, IconCircleCheckFilled, IconCircleXFilled } from '@tabler/icons-react';
 import type ExcelJS from 'exceljs';
 import { transformQpcrData, detectTransformedGenes } from '@/lib/qpcr-transform';
 
@@ -35,6 +35,14 @@ export default function Transform({ workbook, sheetName, onComplete, onProgress 
     try {
       setStatus('processing');
       onProgress?.(0, 2, '正在转换数据...');
+
+      // Yield two animation frames so the "processing" overlay paints
+      // before the synchronous ExcelJS row scan in transformQpcrData
+      // blocks the main thread. See Calculate.tsx for the same pattern.
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+
       const sourceSheet = workbook.getWorksheet(sheetName);
       if (!sourceSheet) throw new Error('工作表未找到');
       const { geneNames } = transformQpcrData(sourceSheet, workbook);
@@ -51,13 +59,13 @@ export default function Transform({ workbook, sheetName, onComplete, onProgress 
   return (
     <>
       <div className="notice">
-        <IconInfoCircle size={14} stroke={2} />
+        <IconInfoCircleFilled size={14} stroke={1.75} />
         <span>转置数据为按样本分组，缺失值标黄</span>
       </div>
 
       {showAlreadyTransformed && (
         <div className="result-success">
-          <IconCircleCheck size={14} stroke={2} />
+          <IconCircleCheckFilled size={14} stroke={1.75} />
           <div>已转换（{existingGenes.length} 个基因），可直接计算</div>
         </div>
       )}
@@ -72,14 +80,14 @@ export default function Transform({ workbook, sheetName, onComplete, onProgress 
 
       {status === 'success' && resultMsg && (
         <div className="result-success">
-          <IconCircleCheck size={14} stroke={2} />
+          <IconCircleCheckFilled size={14} stroke={1.75} />
           <div>{resultMsg}</div>
         </div>
       )}
 
       {status === 'error' && (
         <div className="result-success" style={{ color: 'var(--red)', background: 'rgba(255,59,48,0.08)' }}>
-          <IconCircleX size={14} stroke={2} />
+          <IconCircleXFilled size={14} stroke={1.75} />
           <div>{errorMsg}</div>
         </div>
       )}

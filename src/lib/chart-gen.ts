@@ -18,6 +18,15 @@ export interface ChartGenResult {
 /** Default chart fill color (matching the legacy hardcoded blue #3C9FDF). */
 export const DEFAULT_CHART_COLOR = '#3C9FDF';
 
+/**
+ * Calculation-method context that affects only the chart's Y-axis title wording.
+ * Kept optional so existing callers (相对内参) need no changes.
+ */
+export interface ChartMethodOptions {
+  method?: 'ref-normalized' | 'control-relative';
+  controlGroup?: string;
+}
+
 /** Sheets to skip when looking for gene data */
 const PROTECTED_SHEETS = new Set([
   'Transformed Data',
@@ -116,7 +125,8 @@ export async function generateCharts(
   excelPath: string,
   repeatCount: number,
   colorHex: string = DEFAULT_CHART_COLOR,
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (current: number, total: number) => void,
+  methodOptions: ChartMethodOptions = {}
 ): Promise<ChartGenResult> {
   try {
     // Step 1: Extract chart data from the workbook
@@ -141,6 +151,8 @@ export async function generateCharts(
       sheets,
       repeatCount,
       colorRGB,
+      method: methodOptions.method,
+      controlGroup: methodOptions.controlGroup,
     });
 
     // Step 4: Write the modified buffer back
@@ -167,7 +179,8 @@ export async function generateChartsFromFile(
   excelPath: string,
   repeatCount: number,
   colorHex: string = DEFAULT_CHART_COLOR,
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (current: number, total: number) => void,
+  methodOptions: ChartMethodOptions = {}
 ): Promise<ChartGenResult> {
   try {
     const { readFile } = await import('@tauri-apps/plugin-fs');
@@ -180,7 +193,8 @@ export async function generateChartsFromFile(
       excelPath,
       repeatCount,
       colorHex,
-      onProgress
+      onProgress,
+      methodOptions
     );
   } catch (error) {
     return {

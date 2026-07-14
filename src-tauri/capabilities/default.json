@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
+  "description": "Capability for the main window. Permissions are scoped to the minimum set the app actually uses: reading/writing user-selected files (xlsx) and writing/cleaning up temp conversion scripts.",
   "windows": ["main"],
   "permissions": [
     "core:default",
@@ -12,111 +12,46 @@
     "core:window:allow-toggle-maximize",
     "core:window:allow-set-always-on-top",
     "core:window:allow-start-dragging",
+
     "dialog:default",
     "dialog:allow-open",
     "dialog:allow-save",
     "dialog:allow-message",
     "dialog:allow-ask",
     "dialog:allow-confirm",
+
     {
+      "comment": "read-file: load user-selected .xlsx workbooks (qPCR) and re-read saved xlsx for chart injection.",
       "identifier": "fs:allow-read-file",
       "allow": [
         { "path": "$HOME/**" },
         { "path": "$DOCUMENTS/**" },
         { "path": "$DOWNLOADS/**" },
         { "path": "$DESKTOP/**" },
-        { "path": "$APPDATA/**" },
-        { "path": "$APPLOCALDATA/**" },
         { "path": "$TEMP/**" }
       ]
     },
     {
+      "comment": "write-file: persist xlsx results + write temp .ps1/.sh conversion scripts.",
       "identifier": "fs:allow-write-file",
       "allow": [
         { "path": "$HOME/**" },
         { "path": "$DOCUMENTS/**" },
         { "path": "$DOWNLOADS/**" },
         { "path": "$DESKTOP/**" },
-        { "path": "$APPDATA/**" },
-        { "path": "$APPLOCALDATA/**" },
         { "path": "$TEMP/**" }
       ]
     },
     {
-      "identifier": "fs:allow-exists",
-      "allow": [
-        { "path": "$HOME/**" },
-        { "path": "$DOCUMENTS/**" },
-        { "path": "$DOWNLOADS/**" },
-        { "path": "$DESKTOP/**" },
-        { "path": "$APPDATA/**" },
-        { "path": "$APPLOCALDATA/**" },
-        { "path": "$TEMP/**" }
-      ]
-    },
-    {
-      "identifier": "fs:allow-read-dir",
-      "allow": [
-        { "path": "$HOME/**" },
-        { "path": "$DOCUMENTS/**" },
-        { "path": "$DOWNLOADS/**" },
-        { "path": "$DESKTOP/**" },
-        { "path": "$APPDATA/**" },
-        { "path": "$APPLOCALDATA/**" },
-        { "path": "$TEMP/**" }
-      ]
-    },
-    {
-      "identifier": "fs:allow-mkdir",
-      "allow": [
-        { "path": "$HOME/**" },
-        { "path": "$DOCUMENTS/**" },
-        { "path": "$DOWNLOADS/**" },
-        { "path": "$DESKTOP/**" },
-        { "path": "$APPDATA/**" },
-        { "path": "$APPLOCALDATA/**" },
-        { "path": "$TEMP/**" }
-      ]
-    },
-    {
-      "identifier": "fs:allow-rename",
-      "allow": [
-        { "path": "$HOME/**" },
-        { "path": "$DOCUMENTS/**" },
-        { "path": "$DOWNLOADS/**" },
-        { "path": "$DESKTOP/**" },
-        { "path": "$APPDATA/**" },
-        { "path": "$APPLOCALDATA/**" },
-        { "path": "$TEMP/**" }
-      ]
-    },
-    {
-      "identifier": "fs:allow-copy-file",
-      "allow": [
-        { "path": "$HOME/**" },
-        { "path": "$DOCUMENTS/**" },
-        { "path": "$DOWNLOADS/**" },
-        { "path": "$DESKTOP/**" },
-        { "path": "$APPDATA/**" },
-        { "path": "$APPLOCALDATA/**" },
-        { "path": "$TEMP/**" }
-      ]
-    },
-    {
+      "comment": "remove: only needed to clean up temp conversion scripts in $TEMP.",
       "identifier": "fs:allow-remove",
       "allow": [
-        { "path": "$HOME/**" },
-        { "path": "$DOCUMENTS/**" },
-        { "path": "$DOWNLOADS/**" },
-        { "path": "$DESKTOP/**" },
-        { "path": "$APPDATA/**" },
-        { "path": "$APPLOCALDATA/**" },
         { "path": "$TEMP/**" }
       ]
     },
-    "shell:default",
-    "shell:allow-open",
+
     {
+      "comment": "shell:allow-execute enables Command.execute() — used by the macOS/Linux TIFF converter to run `chmod +x` on the temp .sh script.",
       "identifier": "shell:allow-execute",
       "allow": [
         {
@@ -132,6 +67,7 @@
       ]
     },
     {
+      "comment": "shell:allow-spawn enables Command.spawn() — used by both the Windows (PowerShell) and Unix (bash) TIFF converters to run the temp conversion script and stream stdout PROGRESS/RESULT lines.",
       "identifier": "shell:allow-spawn",
       "allow": [
         {
@@ -146,6 +82,8 @@
         }
       ]
     },
+    "shell:allow-open",
+
     "store:default",
     "updater:default",
     "os:default",

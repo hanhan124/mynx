@@ -59,7 +59,7 @@ export default function FileSelect({ file, sheetName, onFileChange, onSheetChang
         className={`file-display${isDragOver ? ' file-display--drag' : ''}`}
       >
         <div className="file-icon" style={{ background: '#34c759' }}>
-          <IconFileSpreadsheet size={20} color="white" stroke={1.5} />
+          <IconFileSpreadsheet size={20} color="white" stroke={1.75} />
         </div>
         <div className="file-info">
           <div className="file-name">{file ? file.name : '未选择文件'}</div>

@@ -1,4 +1,4 @@
-/* ========= 首页 ========= */
+/* ========= 首页 — macOS 风格 ========= */
 .home-shell {
   display: flex;
   flex-direction: column;
@@ -28,12 +28,13 @@
   font-size: 24px;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .home-subtitle {
   font-size: 13px;
   color: var(--text-secondary);
+  letter-spacing: -0.005em;
 }
 
 .tool-grid {
@@ -49,19 +50,25 @@
   gap: 12px;
   padding: 12px 14px;
   background: var(--bg-card);
-  border: 0.5px solid var(--border);
-  border-radius: 12px;
+  background-image: var(--surface-gradient);
+  border: 1px solid var(--border, var(--stroke));
+  border-radius: var(--radius-lg);
   text-align: left;
-  transition: background 180ms var(--ease-smooth), border-color 180ms var(--ease-smooth);
+  transition: background 180ms var(--ease-smooth),
+              border-color 180ms var(--ease-smooth),
+              transform 120ms var(--ease-smooth),
+              box-shadow 200ms var(--ease-smooth);
 }
 
 .tool-card:hover {
   background: var(--bg-hover);
-  border-color: var(--border-strong);
+  border-color: var(--border-strong, var(--stroke-strong));
+  box-shadow: var(--shadow-sm);
 }
 
 .tool-card:active {
   background: var(--bg-active);
+  transform: scale(0.985);
   transition-duration: 60ms;
 }
 
@@ -69,10 +76,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: var(--radius-md);
 }
 
 .tool-card-body {
@@ -87,6 +94,7 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .tool-card-desc {
@@ -97,9 +105,15 @@
 .tool-card-arrow {
   color: var(--text-tertiary);
   flex-shrink: 0;
+  transition: transform 200ms var(--ease-smooth), color 200ms var(--ease-smooth);
 }
 
-/* ========= 天气组件 ========= */
+.tool-card:hover .tool-card-arrow {
+  color: var(--text-secondary);
+  transform: translateX(2px);
+}
+
+/* ========= 天气组件 — macOS 风格 ========= */
 .weather-widget {
   display: flex;
   align-items: center;
@@ -107,15 +121,17 @@
   width: 100%;
   padding: 10px 16px;
   background: var(--bg-card);
-  border: 0.5px solid var(--border);
-  border-radius: 12px;
+  background-image: var(--surface-gradient);
+  border: 1px solid var(--border, var(--stroke));
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   font-size: 13px;
-  transition: border-color 200ms var(--ease-smooth);
+  transition: border-color 200ms var(--ease-smooth), box-shadow 200ms var(--ease-smooth);
 }
 
 .weather-widget:hover {
-  border-color: var(--border-strong);
+  border-color: var(--border-strong, var(--stroke-strong));
+  box-shadow: var(--shadow-md);
 }
 
 .weather-widget--loading {
@@ -138,7 +154,7 @@
 .weather-spinner {
   width: 14px;
   height: 14px;
-  border: 1.5px solid var(--border-strong);
+  border: 1.5px solid var(--border-strong, var(--stroke-strong));
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 600ms linear infinite;
@@ -166,7 +182,7 @@
   font-weight: 700;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .weather-label {

@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  IconSun,
-  IconCloud,
+  IconSunFilled,
+  IconCloudFilled,
   IconCloudRain,
   IconCloudSnow,
   IconCloudBolt,
   IconCloudFog,
-  IconMapPin,
+  IconMapPinFilled,
 } from "@tabler/icons-react";
 
 /* ========= WMO 天气码 → SVG 图标映射 ========= */
@@ -16,10 +16,10 @@ import type { ComponentType } from "react";
 type IconType = ComponentType<any>;
 
 const WEATHER_CODES: Record<number, { icon: IconType; label: string }> = {
-  0: { icon: IconSun, label: "\u6674" },
-  1: { icon: IconSun, label: "\u6674\u95F4\u591A\u4E91" },
-  2: { icon: IconSun, label: "\u591A\u4E91" },
-  3: { icon: IconCloud, label: "\u9634" },
+  0: { icon: IconSunFilled, label: "\u6674" },
+  1: { icon: IconSunFilled, label: "\u6674\u95F4\u591A\u4E91" },
+  2: { icon: IconSunFilled, label: "\u591A\u4E91" },
+  3: { icon: IconCloudFilled, label: "\u9634" },
   45: { icon: IconCloudFog, label: "\u96FE" },
   48: { icon: IconCloudFog, label: "\u51BB\u96FE" },
   51: { icon: IconCloudRain, label: "\u6BDB\u6BDB\u96E8" },
@@ -226,7 +226,7 @@ export default function WeatherWidget() {
   }
 
   const info = WEATHER_CODES[weather.weatherCode] ?? {
-    icon: IconSun,
+    icon: IconSunFilled,
     label: "\u672A\u77E5",
   };
   const WeatherIcon = info.icon;
@@ -238,7 +238,7 @@ export default function WeatherWidget() {
     >
       <WeatherIcon
         size={22}
-        stroke={1.5}
+        stroke={1.75}
         className="weather-icon"
       />
       <div className="weather-info">
@@ -247,7 +247,7 @@ export default function WeatherWidget() {
       </div>
       <span className="weather-divider" />
       <span className="weather-city">
-        <IconMapPin size={12} stroke={1.5} />
+        <IconMapPinFilled size={12} stroke={1.75} />
         {weather.city}
       </span>
     </div>

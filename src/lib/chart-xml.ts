@@ -50,6 +50,39 @@ interface ChartInjectionOptions {
   sheets: ChartSheetData[];
   repeatCount: number;
   colorRGB?: number;
+  /** 计算方法，决定 Y 轴标题措辞。默认 'ref-normalized'。 */
+  method?: 'ref-normalized' | 'control-relative';
+  /** method 为 'control-relative' 时的对照组名，用于 Y 轴标题。 */
+  controlGroup?: string;
+}
+
+/**
+ * Build the rich-text runs for the Y-axis title.
+ *  - ref-normalized:   "Normalize to <i>{refGene}</i>"
+ *  - control-relative: "Normalize to {controlGroup} (<i>{refGene}</i>)"
+ * Gene names are rendered italic (i="1"); group names are not.
+ */
+function buildValAxisTitleRuns(
+  refGene: string,
+  method: 'ref-normalized' | 'control-relative',
+  controlGroup: string
+): string {
+  const run = (text: string, italic: boolean) =>
+    `<a:r>
+      <a:rPr lang="en-US" sz="900" i="${italic ? 1 : 0}">
+        <a:latin typeface="Calibri"/>
+      </a:rPr>
+      <a:t>${esc(text)}</a:t>
+    </a:r>`;
+
+  if (method === 'control-relative') {
+    return (
+      run('Normalize to ' + controlGroup + ' (', false) +
+      run(refGene, true) +
+      run(')', false)
+    );
+  }
+  return run('Normalize to ', false) + run(refGene, true);
 }
 
 // ── XML Helpers ─────────────────────────────────────────────────────────────
@@ -72,13 +105,14 @@ function buildChartXml(
   chartTableStart: number,
   chartTableEnd: number,
   colorRGB: number,
-  repeatCount: number
+  repeatCount: number,
+  method: 'ref-normalized' | 'control-relative' = 'ref-normalized',
+  controlGroup = ''
 ): string {
   const data = sheet.dataPoints;
   const n = data.length;
   const hasErrorBars = repeatCount > 1;
   const gene = esc(safeGeneName(sheet.geneName));
-  const refGene = esc(sheet.refGene);
   const sheetName = esc(sheet.geneName);
   const colA = `'${sheetName}'!$A$${chartTableStart}:$A$${chartTableEnd}`;
   const colB = `'${sheetName}'!$B$${chartTableStart}:$B$${chartTableEnd}`;
@@ -228,18 +262,7 @@ function buildChartXml(
             <a:bodyPr/>
             <a:lstStyle/>
             <a:p>
-              <a:r>
-                <a:rPr lang="en-US" sz="900" i="0">
-                  <a:latin typeface="Calibri"/>
-                </a:rPr>
-                <a:t>Normalize to </a:t>
-              </a:r>
-              <a:r>
-                <a:rPr lang="en-US" sz="900" i="1">
-                  <a:latin typeface="Calibri"/>
-                </a:rPr>
-                <a:t>${refGene}</a:t>
-              </a:r>
+              ${buildValAxisTitleRuns(sheet.refGene, method, controlGroup)}
               </a:p>
             </c:rich>
           </c:tx>
@@ -368,7 +391,7 @@ export async function injectChartsIntoWorkbook(
   buffer: Uint8Array,
   options: ChartInjectionOptions
 ): Promise<Uint8Array> {
-  const { sheets, repeatCount, colorRGB = 0x4f81bd } = options;
+  const { sheets, repeatCount, colorRGB = 0x4f81bd, method = 'ref-normalized', controlGroup = '' } = options;
 
   if (sheets.length === 0) return buffer;
 
@@ -391,7 +414,7 @@ export async function injectChartsIntoWorkbook(
     const chartTableStart = sheet.groupHeaderRow + 1;
     const chartTableEnd = sheet.groupHeaderRow + sheet.dataPoints.length;
 
-    const chartXml = buildChartXml(sheet, chartTableStart, chartTableEnd, colorRGB, repeatCount);
+    const chartXml = buildChartXml(sheet, chartTableStart, chartTableEnd, colorRGB, repeatCount, method, controlGroup);
     zip.file(`xl/charts/chart${chartIndex}.xml`, chartXml);
 
     const chartRelsXml = buildChartRelsXml();

@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { IconPhoto, IconFolder, IconSettings } from "@tabler/icons-react";
+import { IconPhotoFilled, IconFolderFilled, IconAdjustmentsFilled } from "@tabler/icons-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { convertTiff, type TiffOptions } from "@/lib/tiff-convert";
 import ConvertOptions from "./ConvertOptions";
 import LoadingOverlay from "@/components/LoadingOverlay";
+import HelpButton, { TiffTutorial } from "@/components/HelpButton";
 import { showToast } from "@/components/Toast";
 import { useDropZone } from "@/hooks/useDropZone";
 
@@ -69,17 +70,20 @@ export default function TiffPage() {
 
       <div className="panel-header">
         <div className="panel-icon" style={{ background: '#34c759' }}>
-          <IconPhoto size={18} color="white" stroke={2} />
+          <IconPhotoFilled size={18} color="white" stroke={1.75} />
         </div>
         <div className="panel-title">
           <h2>TIFF 转 JPG</h2>
           <p>批量将 TIFF 转为 JPG</p>
         </div>
+        <div className="panel-actions">
+          <HelpButton>{(close) => <TiffTutorial onClose={close} />}</HelpButton>
+        </div>
       </div>
 
       <div className="card">
         <div className="card-title">
-          <IconFolder size={14} stroke={2} />
+          <IconFolderFilled size={14} stroke={1.75} />
           <span>源文件夹</span>
         </div>
         <div className="card-body">
@@ -88,7 +92,7 @@ export default function TiffPage() {
             className={`file-display${isDragOver ? ' file-display--drag' : ''}`}
           >
             <div className="file-icon" style={{ background: '#34c759' }}>
-              <IconFolder size={20} color="white" stroke={1.5} />
+              <IconFolderFilled size={20} color="white" stroke={1.75} />
             </div>
             <div className="file-info">
               <div className="file-name">{folder ? folder.name : '未选择文件夹'}</div>
@@ -104,7 +108,7 @@ export default function TiffPage() {
 
       <div className="card">
         <div className="card-title">
-          <IconSettings size={14} stroke={2} />
+          <IconAdjustmentsFilled size={14} stroke={1.75} />
           <span>转换选项</span>
         </div>
         <div className="card-body">

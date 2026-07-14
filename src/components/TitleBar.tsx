@@ -3,7 +3,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { platform } from "@tauri-apps/plugin-os";
 import { loadConfig, saveAlwaysOnTop } from "@/lib/config";
 import AppMark from "@/components/AppMark";
-import { IconMinus, IconSquare, IconPin, IconX } from "@tabler/icons-react";
+import { IconMinus, IconSquare, IconPinFilled, IconX } from "@tabler/icons-react";
 
 interface TitleBarProps {
   title?: string;
@@ -39,16 +39,16 @@ export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
           }}
           title="窗口置顶"
         >
-          <IconPin size={14} stroke={2} />
+          <IconPinFilled size={14} stroke={1.75} />
         </button>
         <button className="title-bar-btn" data-tauri-no-drag onClick={() => appWindow.minimize()} title="最小化">
-          <IconMinus size={14} stroke={2} />
+          <IconMinus size={14} stroke={1.75} />
         </button>
         <button className="title-bar-btn" data-tauri-no-drag onClick={() => appWindow.toggleMaximize()} title="最大化">
-          <IconSquare size={14} stroke={2} />
+          <IconSquare size={14} stroke={1.75} />
         </button>
         <button className="title-bar-btn title-bar-btn--close" data-tauri-no-drag onClick={() => appWindow.close()} title="关闭">
-          <IconX size={14} stroke={2} />
+          <IconX size={14} stroke={1.75} />
         </button>
       </div>
     </div>

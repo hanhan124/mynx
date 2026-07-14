@@ -28,7 +28,7 @@ export default function Modal({ open, onClose, title, wide, children }: ModalPro
           <div className="modal-header">
             <h3>{title}</h3>
             <button className="modal-close-btn" onClick={onClose}>
-              <IconX size={14} stroke={2} />
+              <IconX size={14} stroke={1.75} />
             </button>
           </div>
         )}

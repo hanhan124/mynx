@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { IconInfoCircle } from "@tabler/icons-react";
+import { IconInfoCircleFilled } from "@tabler/icons-react";
 import type { TiffOptions } from "@/lib/tiff-convert";
 
 const FONTS = ["Arial", "Calibri", "Times New Roman", "微软雅黑", "黑体", "宋体"];
@@ -32,17 +32,27 @@ export default function ConvertOptions({ onConvert, loading, disabled }: Convert
   const [quality, setQuality] = useState(95);
 
   const handleConvert = () => {
+    // Clamp numeric fields to their declared min/max so that an empty
+    // input (Number("") === 0) or a manually-typed out-of-range value
+    // never produces a broken TIFF script. NaN/empty falls back to the
+    // field's current default rather than silently sending 0.
+    const clamp = (raw: string, lo: number, hi: number, fallback: number): number => {
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return fallback;
+      return Math.max(lo, Math.min(hi, n));
+    };
+
     onConvert({
       watermark: addLabel,
       font,
       fontSize,
       bold,
       italic,
-      marginX: Number(marginX),
-      marginY: Number(marginY),
-      paddingX: Number(paddingX),
-      paddingY: Number(paddingY),
-      transparency: Number(bgAlpha) / 255,
+      marginX: clamp(marginX, 0, 200, 18),
+      marginY: clamp(marginY, 0, 200, 18),
+      paddingX: clamp(paddingX, 0, 50, 12),
+      paddingY: clamp(paddingY, 0, 50, 8),
+      transparency: clamp(bgAlpha, 0, 255, 210) / 255,
       quality,
     });
   };
@@ -52,7 +62,7 @@ export default function ConvertOptions({ onConvert, loading, disabled }: Convert
   return (
     <>
       <div className="notice">
-        <IconInfoCircle size={14} stroke={2} />
+        <IconInfoCircleFilled size={14} stroke={1.75} />
         <span>配置文字水印和输出质量</span>
       </div>
 

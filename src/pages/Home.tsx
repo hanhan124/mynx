@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { IconArrowRight } from "@tabler/icons-react";
+import { IconArrowBadgeRight } from "@tabler/icons-react";
 import AppMark from "@/components/AppMark";
 import WeatherWidget from "@/components/WeatherWidget";
 import { tools } from "@/lib/tools";
@@ -29,13 +29,13 @@ export default function Home() {
               onClick={() => navigate(tool.path)}
             >
               <div className="tool-card-icon" style={{ background: tool.accent }}>
-                <Icon size={18} color="white" stroke={2} />
+                <Icon size={18} color="white" stroke={1.75} />
               </div>
               <div className="tool-card-body">
                 <span className="tool-card-title">{tool.title}</span>
                 <span className="tool-card-desc">{tool.description}</span>
               </div>
-              <IconArrowRight size={14} stroke={2} className="tool-card-arrow" />
+              <IconArrowBadgeRight size={14} stroke={1.75} className="tool-card-arrow" />
             </button>
           );
         })}

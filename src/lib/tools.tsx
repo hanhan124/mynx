@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { IconFlask, IconPhoto } from "@tabler/icons-react";
+import { IconDna, IconPhotoFilled } from "@tabler/icons-react";
 import { lazy } from "react";
 
 /**
@@ -46,7 +46,7 @@ export const tools: Tool[] = [
     description: "qPCR 数据处理与图表",
     path: "/qpcr",
     accent: "#007aff",
-    icon: IconFlask,
+    icon: IconDna,
     component: QpcrPage,
     navLabel: "qPCR",
     showInSidebar: true,
@@ -57,7 +57,7 @@ export const tools: Tool[] = [
     description: "TIFF 批量转 JPG",
     path: "/tiff",
     accent: "#34c759",
-    icon: IconPhoto,
+    icon: IconPhotoFilled,
     component: TiffPage,
     navLabel: "TIFF",
     showInSidebar: true,

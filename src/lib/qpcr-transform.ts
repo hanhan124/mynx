@@ -43,6 +43,28 @@ export function detectTransformedGenes(workbook: ExcelJS.Workbook): string[] {
   return genes;
 }
 
+/**
+ * Detects the distinct group names from an existing "Transformed Data" sheet,
+ * preserving their first-seen order. Used to populate the control-group selector
+ * for the "相对对照" (ΔΔCt) calculation method.
+ * Column 2 (B) holds the group name for each row.
+ */
+export function detectTransformedGroups(workbook: ExcelJS.Workbook): string[] {
+  const sheet = workbook.getWorksheet('Transformed Data');
+  if (!sheet) return [];
+
+  const groups: string[] = [];
+  const seen = new Set<string>();
+  for (let r = 2; r <= sheet.rowCount; r++) {
+    const name = String(sheet.getRow(r).getCell(2).value ?? '').trim();
+    if (name && !seen.has(name)) {
+      seen.add(name);
+      groups.push(name);
+    }
+  }
+  return groups;
+}
+
 export function transformQpcrData(sourceSheet: ExcelJS.Worksheet, targetWorkbook: ExcelJS.Workbook): TransformResult {
   const headerRow = sourceSheet.getRow(1);
   const colCount = sourceSheet.columnCount;

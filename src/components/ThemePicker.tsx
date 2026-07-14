@@ -102,7 +102,7 @@ export default function ThemePicker({ value, onSelect }: ThemePickerProps) {
                 <span className="theme-tile-desc">{theme.description}</span>
               </div>
               <span className={`theme-tile-check ${active ? "theme-tile-check--active" : "theme-tile-check--inactive"}`}>
-                <IconCheck size={14} stroke={2} />
+                <IconCheck size={14} stroke={1.75} />
               </span>
             </div>
           </button>

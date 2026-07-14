@@ -293,3 +293,29 @@ cd installer && npm install --package-lock-only && cd ..
 ### 7.7 缺少 `*.app.tar.gz` / `.sig`（非签名原因）
 
 若签名密钥已配置但仍缺 updater 产物，检查 `src-tauri/tauri.conf.json` 的 `bundle.createUpdaterArtifacts` 是否为 `true`。为 `false` 或缺失时，Tauri 只打包 `.dmg`，不会生成 updater tarball 与签名。
+
+### 7.8 macOS DMG 提示「已损坏，无法打开」
+
+**根因**：当前 CI 的 macOS 构建只执行 `npx tauri build --bundles app,dmg`，**没有配置 Apple Developer ID 代码签名（codesign）和公证（notarization）**。`TAURI_SIGNING_PRIVATE_KEY` 是 Tauri updater 的签名密钥，跟 macOS Gatekeeper 验证的 Apple 代码签名是两回事。浏览器下载的未签名 DMG 会被 Gatekeeper 打上 `com.apple.quarantine` 隔离属性，显示「已损坏」。
+
+**已实现的方案（用户侧免终端）**：CI 在 Tauri 构建 DMG 后，用 `create-dmg`（`brew install create-dmg`，即 `andreyvit/create-dmg`）重建 DMG，把 `src-tauri/scripts/fix-damaged.command` 一并放进 DMG 根目录。用户在 DMG 窗口里**右键 → 打开**该 `.command` 文件，脚本会自动执行 `xattr -cr` 清除隔离属性，并通过 `osascript` 弹出中文图形提示框引导。`.command` 同样会被 Gatekeeper 拦截，但「右键 → 打开」对所有 macOS 版本都能稳定放行，用户全程不需打开终端输命令。详见 `release.yml` 的 `Rebuild DMG with fix script` 步骤。
+
+关键实现细节：
+- `create-dmg` 必须加 `--sandbox-safe`，否则 CI 的无头 macOS runner 上 AppleScript 美化步骤会失败。
+- Tauri 原生不支持往 DMG 加额外文件（官方 issue #11996 已拒绝），只能后处理重建。
+- 重建只影响 `.dmg`；`.app.tar.gz` 和 `.sig` 是 `tauri build` 独立产出的，不受影响，updater 正常工作。
+- `fix-damaged.command` 脚本自动定位 `/Applications/Mynx.app`，找不到时弹出提示让用户先拖到「应用程序」。
+
+**兜底方案**：若用户右键打开 `.command` 仍失败，可在终端执行 `xattr -cr /Applications/Mynx.app`。
+
+**永久方案（开发者侧）**：获取 Apple Developer Program 会员（$99/年）后，在 CI 的 macOS 构建步骤中添加 codesign + notarize + staple 流程。需要在 GitHub Secrets 中配置：
+
+| Secret 名称 | 用途 |
+|---|---|
+| `APPLE_CERTIFICATE` | Developer ID Application 证书（.p12 base64） |
+| `APPLE_CERTIFICATE_PASSWORD` | 导出 .p12 时设置的密码 |
+| `APPLE_ID` | Apple Developer 账号邮箱 |
+| `APPLE_PASSWORD` | App-Specific Password（appleid.apple.com 生成） |
+| `APPLE_TEAM_ID` | Developer Team ID |
+
+然后在 `release.yml` 的 `Build macOS app` 步骤前导入证书到 Keychain，并在 `tauri build` 时通过环境变量 `APPLE_SIGNING_IDENTITY` 指定签名身份。详见 [Tauri macOS 签名文档](https://v2.tauri.app/distribute/macos-application/)。

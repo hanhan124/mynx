@@ -25,18 +25,19 @@ body {
   user-select: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: -0.01em;
-  font-feature-settings: "kern" 1, "liga" 1;
+  letter-spacing: -0.011em;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  text-rendering: optimizeLegibility;
 }
 
 #root {
   background: var(--bg-primary);
 }
 
-/* macOS 风格自动隐藏滚动条 */
+/* macOS 风格自动隐藏滚动条 — 更窄更柔 */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
@@ -45,13 +46,16 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.22);
-  border-radius: 3px;
+  background: rgba(128, 128, 128, 0.20);
+  border-radius: 100px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
   transition: background 200ms;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.40);
+  background: rgba(128, 128, 128, 0.38);
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-corner {
@@ -61,9 +65,16 @@ body {
 button {
   border: none;
   cursor: pointer;
-  transition: background 200ms var(--ease-smooth, cubic-bezier(0.25, 0.1, 0.25, 1));
+  transition: background 200ms var(--ease-smooth, cubic-bezier(0.25, 0.1, 0.25, 1)),
+              transform 120ms var(--ease-smooth, cubic-bezier(0.25, 0.1, 0.25, 1)),
+              box-shadow 200ms var(--ease-smooth, cubic-bezier(0.25, 0.1, 0.25, 1));
   font-family: inherit;
   font-size: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 select,
@@ -82,5 +93,5 @@ input {
 
 /* 选中文字颜色 */
 ::selection {
-  background: rgba(var(--accent-rgb, 0, 122, 255), 0.25);
+  background: rgba(var(--accent-rgb, 0, 122, 255), 0.22);
 }

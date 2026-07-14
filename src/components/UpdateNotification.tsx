@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { type Update, type DownloadEvent } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
-import { IconDownload, IconX, IconAlertCircle, IconLoader } from "@tabler/icons-react";
+import { IconDownload, IconX, IconAlertTriangleFilled, IconLoader2 } from "@tabler/icons-react";
 import { checkForUpdates, type UpdateInfo } from "@/lib/updater";
 
 /* ---- types ------------------------------------------------------------ */
@@ -220,7 +220,7 @@ export default function UpdateNotification() {
           <>
             <div className="update-header">
               <div className="update-icon-wrap">
-                <IconDownload size={16} stroke={2} />
+                <IconDownload size={16} stroke={1.75} />
               </div>
               <div className="update-title-area">
                 <div className="update-title">发现新版本 v{state.version}</div>
@@ -229,7 +229,7 @@ export default function UpdateNotification() {
                 )}
               </div>
               <button className="update-close" onClick={handleDismiss}>
-                <IconX size={14} stroke={2} />
+                <IconX size={14} stroke={1.75} />
               </button>
             </div>
             <div className="update-actions">
@@ -248,7 +248,7 @@ export default function UpdateNotification() {
           <>
             <div className="update-header">
               <div className="update-icon-wrap update-icon-spin">
-                <IconLoader size={16} stroke={2} />
+                <IconLoader2 size={16} stroke={1.75} />
               </div>
               <div className="update-title-area">
                 <div className="update-title">正在下载 v{state.version}</div>
@@ -280,13 +280,13 @@ export default function UpdateNotification() {
                 className="update-icon-wrap"
                 style={{ background: "rgba(48,209,88,0.12)", color: "#30d158" }}
               >
-                <IconDownload size={16} stroke={2} />
+                <IconDownload size={16} stroke={1.75} />
               </div>
               <div className="update-title-area">
                 <div className="update-title">下载完成</div>
               </div>
               <button className="update-close" onClick={handleDismiss}>
-                <IconX size={14} stroke={2} />
+                <IconX size={14} stroke={1.75} />
               </button>
             </div>
             <div className="update-actions">
@@ -308,14 +308,14 @@ export default function UpdateNotification() {
                 className="update-icon-wrap"
                 style={{ background: "rgba(255,69,58,0.12)", color: "#ff453a" }}
               >
-                <IconAlertCircle size={16} stroke={2} />
+                <IconAlertTriangleFilled size={16} stroke={1.75} />
               </div>
               <div className="update-title-area">
                 <div className="update-title">更新失败</div>
                 {state.error && <div className="update-body">{state.error}</div>}
               </div>
               <button className="update-close" onClick={handleDismiss}>
-                <IconX size={14} stroke={2} />
+                <IconX size={14} stroke={1.75} />
               </button>
             </div>
             <div className="update-actions">

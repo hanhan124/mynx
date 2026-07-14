@@ -4,11 +4,11 @@ import { useTheme } from "@/hooks/useTheme";
 import Modal from "@/components/Modal";
 import ThemePicker from "@/components/ThemePicker";
 import AboutModal from "@/components/AboutModal";
-import { IconHome, IconWorld, IconPalette, IconInfoCircle } from "@tabler/icons-react";
+import { IconHomeFilled, IconWorldFilled, IconPaletteFilled, IconInfoCircleFilled } from "@tabler/icons-react";
 import { tools } from "@/lib/tools";
 
 const navItems = [
-  { icon: IconHome, label: "主页", path: "/" },
+  { icon: IconHomeFilled, label: "主页", path: "/" },
   ...tools
     .filter((t) => t.showInSidebar)
     .map((t) => ({ icon: t.icon, label: t.navLabel, path: t.path })),
@@ -51,21 +51,21 @@ export default function Sidebar() {
               );
             }}
           >
-            <IconWorld size={16} stroke={2} />
+            <IconWorldFilled size={16} stroke={2} />
           </button>
           <button
             className="sidebar-btn"
             title="主题"
             onClick={() => setShowThemes(true)}
           >
-            <IconPalette size={16} stroke={2} />
+            <IconPaletteFilled size={16} stroke={2} />
           </button>
           <button
             className="sidebar-btn"
             title="关于"
             onClick={() => setShowAbout(true)}
           >
-            <IconInfoCircle size={16} stroke={2} />
+            <IconInfoCircleFilled size={16} stroke={2} />
           </button>
         </div>
       </div>

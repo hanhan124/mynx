@@ -45,13 +45,50 @@ jobs:
               echo "Tag already exists: $TAG" >&2
               exit 1
             fi
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
 
+          node - "$TAG" <<'NODE'
+          const fs = require('node:fs');
+
+          const tag = process.argv[2];
+          const readJson = (path) => JSON.parse(fs.readFileSync(path, 'utf8'));
+          const readCargoVersion = (path) => {
+            const text = fs.readFileSync(path, 'utf8');
+            const match = text.match(/^version\s*=\s*"([^"]+)"/m);
+            if (!match) throw new Error(`Missing package version in ${path}`);
+            return match[1];
+          };
+
+          const version = readJson('package.json').version;
+          const expectedTag = `v${version}`;
+          if (tag !== expectedTag) {
+            throw new Error(`Release tag ${tag} does not match package.json version ${version}; expected ${expectedTag}`);
+          }
+
+          const versions = [
+            ['package.json', version],
+            ['src-tauri/tauri.conf.json', readJson('src-tauri/tauri.conf.json').version],
+            ['src-tauri/Cargo.toml', readCargoVersion('src-tauri/Cargo.toml')],
+            ['installer/package.json', readJson('installer/package.json').version],
+            ['installer/src-tauri/tauri.conf.json', readJson('installer/src-tauri/tauri.conf.json').version],
+            ['installer/src-tauri/Cargo.toml', readCargoVersion('installer/src-tauri/Cargo.toml')],
+          ];
+
+          const mismatches = versions.filter(([, value]) => value !== version);
+          if (mismatches.length) {
+            throw new Error(`Version mismatch: ${mismatches.map(([path, value]) => `${path}=${value}`).join(', ')}; expected ${version}`);
+          }
+
+          console.log(`Release version verified: ${expectedTag}`);
+          NODE
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git tag -a "$TAG" -m "release: $TAG"
             git push origin "$TAG"
-          else
-            TAG="${GITHUB_REF_NAME}"
           fi
 
           echo "release_tag=$TAG" >> "$GITHUB_OUTPUT"
@@ -62,7 +99,7 @@ jobs:
   build:
     needs: prepare-tag
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - os: windows-latest
@@ -105,13 +142,26 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      - name: Check Tauri updater signing secrets
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
+            echo "TAURI_SIGNING_PRIVATE_KEY is required for release updater artifacts" >&2
+            exit 1
+          fi
+          if [ -z "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" ]; then
+            echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD is required for release updater artifacts" >&2
+            exit 1
+          fi
+
       # ── Windows: build main app + self-built installer ──────────────────
       - name: Build main app (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           npx tauri build --no-bundle
           if ($LASTEXITCODE -ne 0) { throw "main app build failed" }
@@ -144,18 +194,16 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           $installerPath = "installer\src-tauri\target\release\mynx-installer.exe"
-          if ($env:TAURI_SIGNING_PRIVATE_KEY) {
-            try {
-              & npx tauri signer sign -k "$env:TAURI_SIGNING_PRIVATE_KEY" -p "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$installerPath"
-              if ($LASTEXITCODE -ne 0) { throw "installer signing failed" }
-              if (-not (Test-Path "$installerPath.sig")) { throw "installer signature not produced" }
-              Write-Host "Installer signed successfully"
-            } catch {
-              Write-Warning "Signing failed: $_"
-            }
-          } else {
-            Write-Host "No signing key provided, uploading unsigned installer"
-          }
+          if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { throw "TAURI_SIGNING_PRIVATE_KEY is required" }
+          if (-not $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD) { throw "TAURI_SIGNING_PRIVATE_KEY_PASSWORD is required" }
+
+          & npx tauri signer sign -k "$env:TAURI_SIGNING_PRIVATE_KEY" -p "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD" "$installerPath"
+          if ($LASTEXITCODE -ne 0) { throw "installer signing failed" }
+          if (-not (Test-Path "$installerPath.sig")) { throw "installer signature not produced" }
+
+          $sig = (Get-Content "$installerPath.sig" -Raw).Trim()
+          if (-not $sig) { throw "installer signature is empty" }
+          Write-Host "Installer signed successfully"
 
       - name: Upload Windows artifacts
         if: runner.os == 'Windows'
@@ -168,6 +216,16 @@ jobs:
           if-no-files-found: error
 
       # ── macOS: build Apple Silicon .app + .dmg + updater .app.tar.gz ─────
+      #
+      # Apple Developer ID notarization is not configured because this project
+      # intentionally does not use a paid Apple Developer Program account.
+      # Browser-downloaded DMGs are blocked by Gatekeeper ("damaged, can't be
+      # opened"). To spare users from running terminal commands, the DMG is
+      # rebuilt (next step) to bundle a 修复损坏.command script alongside the
+      # .app — users right-click → Open it once to clear the quarantine xattr
+      # via a guided native dialog. This workflow still fails fast if Tauri
+      # updater artifacts/signatures are missing.
+      #
       - name: Build macOS app
         if: runner.os == 'macOS'
         shell: bash
@@ -175,42 +233,144 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
+          set -euo pipefail
           npx tauri build --target aarch64-apple-darwin --bundles app,dmg
-          if [ $? -ne 0 ]; then
-            echo "macOS app build failed" >&2
-            exit 1
-          fi
-          app_path=$(find src-tauri/target/aarch64-apple-darwin -name '*.app' -maxdepth 4 -type d | head -1)
-          if [ -z "$app_path" ]; then
+
+          app_count=$(find src-tauri/target/aarch64-apple-darwin -name '*.app' -type d | wc -l | tr -d ' ')
+          if [ "$app_count" -lt 1 ]; then
             echo "macOS .app bundle not produced" >&2
             exit 1
           fi
-          echo "OK: $app_path"
+          find src-tauri/target/aarch64-apple-darwin -name '*.app' -type d -print
+
+      - name: Rebuild DMG with fix script
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # create-dmg (andreyvit/create-dmg) supports --add-file to bundle
+          # extra files alongside the .app in the DMG image.
+          brew install create-dmg
+
+          # The fix script must be executable when extracted from the DMG.
+          chmod +x src-tauri/scripts/fix-damaged.command
+
+          # Locate the .app bundle produced by Tauri.
+          APP_PATH=$(find src-tauri/target/aarch64-apple-darwin/release/bundle/macos \
+            -name 'Mynx.app' -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "::error::Mynx.app not found for DMG rebuild" >&2
+            exit 1
+          fi
+          echo "App bundle: $APP_PATH"
+
+          # Remove the Tauri-produced DMG so create-dmg can recreate it at the
+          # same path (preserving the expected filename for release uploads).
+          DMG_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
+          OLD_DMG=$(find "$DMG_DIR" -name '*.dmg' -type f | head -1)
+          if [ -z "$OLD_DMG" ]; then
+            echo "::error::Original DMG not found for rebuild" >&2
+            exit 1
+          fi
+          DMG_NAME=$(basename "$OLD_DMG")
+          rm -f "$OLD_DMG"
+          echo "Removed original DMG, will rebuild as: $DMG_NAME"
+
+          # Rebuild the DMG with Mynx.app + fix-damaged.command at the root.
+          # --sandbox-safe skips the AppleScript Finder-pretty step that fails
+          # in the headless GitHub Actions runner (no window server).
+          # create-dmg may print non-fatal warnings; capture its exit code.
+          set +e
+          create-dmg \
+            --sandbox-safe \
+            --volname "Mynx" \
+            --no-internet-enable \
+            --app-drop-link 470 170 \
+            --add-file "修复损坏.command" src-tauri/scripts/fix-damaged.command 120 170 \
+            --window-size 660 400 \
+            --icon "Mynx.app" 270 170 \
+            --overwrite \
+            "${DMG_DIR}/${DMG_NAME}" \
+            "$APP_PATH"
+          CREATE_DMG_EXIT=$?
+          set -e
+          if [ "$CREATE_DMG_EXIT" -ne 0 ]; then
+            echo "::error::create-dmg exited with code $CREATE_DMG_EXIT" >&2
+            exit 1
+          fi
+
+          # Verify the rebuilt DMG exists and contains both expected entries.
+          NEW_DMG="${DMG_DIR}/${DMG_NAME}"
+          if [ ! -f "$NEW_DMG" ]; then
+            echo "::error::Rebuilt DMG not found: $NEW_DMG" >&2
+            exit 1
+          fi
+
+          MOUNT_POINT=$(mktemp -d /tmp/mynx-dmg-verify-XXXX)
+          if ! hdiutil attach -nobrowse -noautoopen -mountpoint "$MOUNT_POINT" "$NEW_DMG" >/dev/null 2>&1; then
+            echo "::error::Failed to mount rebuilt DMG for verification" >&2
+            rm -rf "$MOUNT_POINT"
+            exit 1
+          fi
+          echo "=== DMG contents ==="
+          ls -la "$MOUNT_POINT"
+
+          VERIFY_OK=1
+          if [ ! -d "$MOUNT_POINT/Mynx.app" ]; then
+            echo "::error::Mynx.app missing from rebuilt DMG" >&2
+            VERIFY_OK=0
+          fi
+          if [ ! -f "$MOUNT_POINT/修复损坏.command" ]; then
+            echo "::error::修复损坏.command missing from rebuilt DMG" >&2
+            VERIFY_OK=0
+          fi
+
+          hdiutil detach "$MOUNT_POINT" >/dev/null 2>&1 || true
+          rm -rf "$MOUNT_POINT"
+
+          if [ "$VERIFY_OK" -ne 1 ]; then
+            exit 1
+          fi
+          echo "OK: rebuilt DMG contains Mynx.app + 修复损坏.command"
 
       - name: Verify macOS artifacts
         if: runner.os == 'macOS'
         shell: bash
         run: |
           set -euo pipefail
-          dmgs=$(find src-tauri/target -name '*.dmg' -type f)
-          tgzs=$(find src-tauri/target -name '*.app.tar.gz' -type f)
-          sigs=$(find src-tauri/target -name '*.app.tar.gz.sig' -type f)
+          dmg_count=$(find src-tauri/target -name '*.dmg' -type f | wc -l | tr -d ' ')
+          tgz_count=$(find src-tauri/target -name '*.app.tar.gz' -type f | wc -l | tr -d ' ')
+          sig_count=$(find src-tauri/target -name '*.app.tar.gz.sig' -type f | wc -l | tr -d ' ')
 
-          if [ -z "$dmgs" ]; then
-            echo "No macOS DMG produced; release will rely on .app.tar.gz if present" >&2
+          if [ "$dmg_count" -ne 1 ]; then
+            echo "Expected exactly 1 macOS DMG, found $dmg_count" >&2
+            find src-tauri/target -name '*.dmg' -type f -print
+            exit 1
+          fi
+          if [ "$tgz_count" -ne 1 ]; then
+            echo "Expected exactly 1 macOS updater .app.tar.gz, found $tgz_count" >&2
+            find src-tauri/target -name '*.app.tar.gz' -type f -print
+            exit 1
+          fi
+          if [ "$sig_count" -ne 1 ]; then
+            echo "Expected exactly 1 macOS updater .app.tar.gz.sig, found $sig_count" >&2
+            find src-tauri/target -name '*.app.tar.gz.sig' -type f -print
+            exit 1
           fi
 
-          printf 'macOS DMG:\n%s\n' "$dmgs"
-          if [ -n "$tgzs" ]; then
-            printf 'macOS updater:\n%s\n' "$tgzs"
-          else
-            echo "No macOS updater .app.tar.gz produced; release will include DMG only"
+          sig_path=$(find src-tauri/target -name '*.app.tar.gz.sig' -type f | head -1)
+          if [ ! -s "$sig_path" ]; then
+            echo "macOS updater signature is empty: $sig_path" >&2
+            exit 1
           fi
-          if [ -n "$sigs" ]; then
-            printf 'macOS signature:\n%s\n' "$sigs"
-          else
-            echo "No macOS updater signature produced"
-          fi
+
+          printf 'macOS DMG:\n'
+          find src-tauri/target -name '*.dmg' -type f -print
+          printf 'macOS updater:\n'
+          find src-tauri/target -name '*.app.tar.gz' -type f -print
+          printf 'macOS signature:\n'
+          find src-tauri/target -name '*.app.tar.gz.sig' -type f -print
 
       - name: Upload macOS artifacts
         if: runner.os == 'macOS'
@@ -263,6 +423,29 @@ jobs:
           find artifacts/macos-assets -name '*.app.tar.gz' -exec cp {} release-assets/ \;
           find artifacts/macos-assets -name '*.app.tar.gz.sig' -exec cp {} release-assets/ \;
 
+          test -f release-assets/mynx-installer.exe || { echo "Windows installer missing" >&2; exit 1; }
+          test -s release-assets/mynx-installer.exe.sig || { echo "Windows installer signature missing or empty" >&2; exit 1; }
+
+          dmg_count=$(find release-assets -maxdepth 1 -name '*.dmg' -type f | wc -l | tr -d ' ')
+          tgz_count=$(find release-assets -maxdepth 1 -name '*.app.tar.gz' -type f | wc -l | tr -d ' ')
+          sig_count=$(find release-assets -maxdepth 1 -name '*.app.tar.gz.sig' -type f | wc -l | tr -d ' ')
+
+          if [ "$dmg_count" -ne 1 ]; then
+            echo "Expected exactly 1 release DMG, found $dmg_count" >&2
+            exit 1
+          fi
+          if [ "$tgz_count" -ne 1 ]; then
+            echo "Expected exactly 1 release macOS updater tarball, found $tgz_count" >&2
+            exit 1
+          fi
+          if [ "$sig_count" -ne 1 ]; then
+            echo "Expected exactly 1 release macOS updater signature, found $sig_count" >&2
+            exit 1
+          fi
+
+          mac_tgz=$(find release-assets -maxdepth 1 -name '*.app.tar.gz' -type f | head -1)
+          test -s "$mac_tgz.sig" || { echo "macOS updater signature missing or empty: $mac_tgz.sig" >&2; exit 1; }
+
           echo "=== release-assets contents ==="
           ls -la release-assets/
 
@@ -277,6 +460,9 @@ jobs:
 
           version = json.loads(Path('package.json').read_text(encoding='utf-8'))['version']
           tag = '${{ needs.prepare-tag.outputs.release_tag }}'
+          if tag != f'v{version}':
+              raise SystemExit(f'Release tag {tag} does not match package.json version {version}')
+
           base = f'https://github.com/hanhan124/mynx/releases/download/{tag}'
           assets = Path('release-assets')
 
@@ -287,30 +473,28 @@ jobs:
 
           if not win_exe.exists():
               raise SystemExit('Windows installer is missing')
-          if not mac_dmgs:
-              raise SystemExit('macOS DMG is missing')
+          if not win_sig.exists() or not win_sig.read_text(encoding='utf-8').strip():
+              raise SystemExit('Windows signature is missing or empty')
+          if len(mac_dmgs) != 1:
+              raise SystemExit(f'Expected exactly 1 macOS DMG, found {len(mac_dmgs)}')
+          if len(mac_tgzs) != 1:
+              raise SystemExit(f'Expected exactly 1 macOS updater tarball, found {len(mac_tgzs)}')
 
-          platforms = {}
-          if win_sig.exists():
-              platforms['windows-x86_64'] = {
+          mac_tgz = mac_tgzs[0]
+          mac_sig = Path(str(mac_tgz) + '.sig')
+          if not mac_sig.exists() or not mac_sig.read_text(encoding='utf-8').strip():
+              raise SystemExit(f'macOS updater signature is missing or empty: {mac_sig}')
+
+          platforms = {
+              'windows-x86_64': {
                   'url': f'{base}/mynx-installer.exe',
                   'signature': win_sig.read_text(encoding='utf-8').strip(),
-              }
-          else:
-              print('Windows signature is missing; latest.json will omit windows-x86_64')
-
-          if mac_tgzs:
-              mac_tgz = mac_tgzs[0]
-              mac_sig = Path(str(mac_tgz) + '.sig')
-              if mac_sig.exists():
-                  platforms['darwin-aarch64'] = {
-                      'url': f'{base}/{mac_tgz.name}',
-                      'signature': mac_sig.read_text(encoding='utf-8').strip(),
-                  }
-              else:
-                  print(f'macOS updater signature is missing; latest.json will omit darwin-aarch64: {mac_sig}')
-          else:
-              print('macOS updater tarball is missing; latest.json will omit darwin-aarch64')
+              },
+              'darwin-aarch64': {
+                  'url': f'{base}/{mac_tgz.name}',
+                  'signature': mac_sig.read_text(encoding='utf-8').strip(),
+              },
+          }
 
           latest = {
               'version': version,

@@ -1,6 +1,6 @@
 [package]
 name = "mynx"
-version = "2.2.7"
+version = "2.2.8"
 description = "qPCR Tools & TIFF-to-JPG Converter"
 authors = ["Mynx Team"]
 edition = "2021"
@@ -23,3 +23,5 @@ tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+thiserror = "1"
+tokio = { version = "1", features = ["fs", "rt-multi-thread", "sync"] }

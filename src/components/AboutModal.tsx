@@ -5,7 +5,7 @@ import AppMark from "@/components/AppMark";
 import { showToast, type ToastType } from "@/components/Toast";
 import { showUpdateNotification } from "@/components/UpdateNotification";
 import { checkForUpdates } from "@/lib/updater";
-import { IconWorld, IconLoader } from "@tabler/icons-react";
+import { IconWorldFilled, IconLoader2 } from "@tabler/icons-react";
 
 interface AboutModalProps {
   open: boolean;
@@ -50,7 +50,7 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
         <AppMark size={48} />
         <div className="about-header-text">
           <div className="about-app-name">Mynx</div>
-          <div className="about-app-desc">让工作更简单</div>
+          <div className="about-app-desc">好用的小工具，触手可及</div>
         </div>
       </div>
 
@@ -78,7 +78,7 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
             );
           }}
         >
-          <IconWorld size={14} stroke={2} />
+          <IconWorldFilled size={14} stroke={1.75} />
           GitHub
         </button>
       </div>
@@ -90,7 +90,7 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
       >
         {checkingUpdate ? (
           <>
-            <IconLoader size={14} stroke={2} className="about-spin-icon" />
+            <IconLoader2 size={14} stroke={1.75} className="about-spin-icon" />
             检查中...
           </>
         ) : (
