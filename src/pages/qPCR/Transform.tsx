@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { IconInfoCircleFilled, IconCircleCheckFilled, IconCircleXFilled } from '@tabler/icons-react';
 import type ExcelJS from 'exceljs';
 import { transformQpcrData, detectTransformedGenes } from '@/lib/qpcr-transform';
@@ -16,6 +16,15 @@ export default function Transform({ workbook, sheetName, onComplete, onProgress 
   const [status, setStatus] = useState<Status>('ready');
   const [errorMsg, setErrorMsg] = useState('');
   const [resultMsg, setResultMsg] = useState('');
+
+  // Clear execution feedback when the selected workbook changes or is cleared.
+  useEffect(() => {
+    // Reset feedback when a different workbook is selected.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setStatus('ready');
+    setErrorMsg('');
+    setResultMsg('');
+  }, [workbook]);
 
   // Check if file already has transformed data
   const existingGenes = useMemo(() => {

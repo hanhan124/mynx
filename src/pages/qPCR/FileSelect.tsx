@@ -71,7 +71,10 @@ export default function FileSelect({ file, sheetName, onFileChange, onSheetChang
       <div className="btn-row">
         <button className="btn btn-primary" onClick={handleOpen}>打开</button>
         {file && (
-          <button className="btn" style={{ marginLeft: 'auto', color: 'var(--red)' }} onClick={() => onFileChange(null)}>
+          <button className="btn" style={{ marginLeft: 'auto', color: 'var(--red)' }} onClick={() => {
+            onSheetChange('');
+            onFileChange(null);
+          }}>
             清空
           </button>
         )}

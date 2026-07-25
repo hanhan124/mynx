@@ -136,7 +136,9 @@ export default function QpcrPage() {
                 const genes = detectTransformedGenes(f.workbook);
                 setGeneNames(genes);
               } else {
+                setSheetName('');
                 setGeneNames([]);
+                endStage();
               }
             }}
             onSheetChange={setSheetName}

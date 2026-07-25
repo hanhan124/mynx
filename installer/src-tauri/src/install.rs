@@ -71,19 +71,28 @@ fn extract_payload_to_temp() -> Result<PathBuf, String> {
 }
 
 /// 用 PowerShell + WScript.Shell 创建 .lnk 快捷方式
-fn create_shortcut(target: &str, lnk_path: &str, work_dir: &str, icon_path: &str) -> Result<(), String> {
+fn create_shortcut(
+    target: &str,
+    lnk_path: &str,
+    work_dir: &str,
+    icon_path: &str,
+    arguments: Option<&str>,
+) -> Result<(), String> {
     let esc = |s: &str| s.replace('\'', "''");
+    let arguments = arguments.map(esc).unwrap_or_default();
     let script = format!(
         "$s = (New-Object -COM WScript.Shell).CreateShortcut('{}'); \
          $s.TargetPath = '{}'; \
          $s.WorkingDirectory = '{}'; \
          $s.IconLocation = '{}'; \
+         $s.Arguments = '{}'; \
          $s.Description = 'Mynx'; \
          $s.Save()",
         esc(lnk_path),
         esc(target),
         esc(work_dir),
         esc(icon_path),
+        arguments,
     );
     let out = silent_powershell(&script)?;
     if !out.status.success() {
@@ -268,7 +277,7 @@ pub fn perform_install(app: &AppHandle, opts: InstallOptions) -> Result<InstallR
         let sm_dir = start_menu.join("Mynx");
         fs::create_dir_all(&sm_dir).map_err(|e| format!("创建开始菜单目录失败: {e}"))?;
         let sm_lnk = sm_dir.join("Mynx.lnk");
-        create_shortcut(&exe_str, &sm_lnk.to_string_lossy(), &install_dir.to_string_lossy(), &exe_str)?;
+        create_shortcut(&exe_str, &sm_lnk.to_string_lossy(), &install_dir.to_string_lossy(), &exe_str, None)?;
         let uninst_lnk = sm_dir.join("卸载 Mynx.lnk");
         let uninst_exe = install_dir.join("Uninst.exe");
         create_shortcut(
@@ -276,12 +285,13 @@ pub fn perform_install(app: &AppHandle, opts: InstallOptions) -> Result<InstallR
             &uninst_lnk.to_string_lossy(),
             &install_dir.to_string_lossy(),
             &exe_str,
+            Some("--uninstall"),
         )?;
     }
     if opts.create_desktop_icon {
         let desktop = dirs::desktop_dir().ok_or_else(|| "找不到桌面目录".to_string())?;
         let dt_lnk = desktop.join("Mynx.lnk");
-        create_shortcut(&exe_str, &dt_lnk.to_string_lossy(), &install_dir.to_string_lossy(), &exe_str)?;
+        create_shortcut(&exe_str, &dt_lnk.to_string_lossy(), &install_dir.to_string_lossy(), &exe_str, None)?;
     }
 
     emit("registry", "正在写入注册表…", 85);

@@ -36,6 +36,8 @@ pub fn relaunch_as_admin() {
     };
     let exe_w: Vec<u16> = exe.as_os_str().encode_wide().chain(std::iter::once(0)).collect();
     let verb_w: Vec<u16> = "runas\0".encode_utf16().collect();
+    let params = std::env::args().skip(1).collect::<Vec<_>>().join(" ");
+    let params_w: Vec<u16> = params.encode_utf16().chain(std::iter::once(0)).collect();
 
     unsafe {
         // 用 ShellExecuteW + lpVerb="runas" → 触发 UAC 弹窗
@@ -43,7 +45,7 @@ pub fn relaunch_as_admin() {
             None,
             windows::core::PCWSTR(verb_w.as_ptr()),
             windows::core::PCWSTR(exe_w.as_ptr()),
-            None,
+            windows::core::PCWSTR(params_w.as_ptr()),
             None,
             windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL,
         );

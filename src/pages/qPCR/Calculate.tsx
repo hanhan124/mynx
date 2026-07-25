@@ -40,6 +40,15 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress 
     };
   }, []);
 
+  // Clear execution feedback when the selected workbook changes or is cleared.
+  useEffect(() => {
+    // Reset feedback when a different workbook is selected.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setStatus('ready');
+    setErrorMsg('');
+    setResultMsg('');
+  }, [workbook]);
+
   // Auto-detect gene names from workbook's Transformed Data sheet
   // if not already provided (e.g. file was already transformed)
   const effectiveGeneNames = useMemo(() => {
