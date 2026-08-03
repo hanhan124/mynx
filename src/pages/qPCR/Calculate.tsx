@@ -15,11 +15,12 @@ interface CalculateProps {
     methodOptions: { method: CalcMethod; controlGroup?: string }
   ) => void;
   onProgress?: (current: number, total: number, text?: string) => void;
+  onError?: () => void;
 }
 
 type Status = 'ready' | 'processing' | 'success' | 'error';
 
-export default function Calculate({ workbook, geneNames, onComplete, onProgress }: CalculateProps) {
+export default function Calculate({ workbook, geneNames, onComplete, onProgress, onError }: CalculateProps) {
   const [repeatCount, setRepeatCount] = useState(2);
   const [method, setMethod] = useState<CalcMethod>('ref-normalized');
   const [controlGroup, setControlGroup] = useState('');
@@ -111,6 +112,7 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress 
         controlGroup: needsControl ? selectedControlGroup : undefined,
       });
     } catch (e) {
+      onError?.();
       setStatus('error');
       setErrorMsg(e instanceof Error ? e.message : '计算出错');
     }

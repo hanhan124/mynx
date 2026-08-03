@@ -8,11 +8,12 @@ interface TransformProps {
   sheetName: string;
   onComplete: (geneNames: string[]) => void;
   onProgress?: (current: number, total: number, text?: string) => void;
+  onError?: () => void;
 }
 
 type Status = 'ready' | 'processing' | 'success' | 'error';
 
-export default function Transform({ workbook, sheetName, onComplete, onProgress }: TransformProps) {
+export default function Transform({ workbook, sheetName, onComplete, onProgress, onError }: TransformProps) {
   const [status, setStatus] = useState<Status>('ready');
   const [errorMsg, setErrorMsg] = useState('');
   const [resultMsg, setResultMsg] = useState('');
@@ -60,6 +61,7 @@ export default function Transform({ workbook, sheetName, onComplete, onProgress 
       setResultMsg(`转换完成，${geneNames.length} 个基因`);
       onComplete(geneNames);
     } catch (e) {
+      onError?.();
       setErrorMsg(e instanceof Error ? e.message : String(e));
       setStatus('error');
     }

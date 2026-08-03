@@ -1,7 +1,7 @@
 {
   "name": "mynx",
   "private": true,
-  "version": "2.2.10",
+  "version": "2.2.12",
   "type": "module",
   "repository": "https://github.com/hanhan124/mynx",
   "scripts": {

@@ -187,6 +187,9 @@
 
 /* ========= 页面布局 — macOS 风格 ========= */
 .page-shell {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
   padding: 22px;
   display: flex;
   flex-direction: column;

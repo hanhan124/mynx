@@ -158,6 +158,7 @@ export default function QpcrPage() {
             sheetName={sheetName}
             onComplete={handleTransformComplete}
             onProgress={updateProgress}
+            onError={endStage}
           />
         </div>
       </div>
@@ -174,6 +175,7 @@ export default function QpcrPage() {
             geneNames={geneNames}
             onComplete={handleCalculateComplete}
             onProgress={updateProgress}
+            onError={endStage}
           />
         </div>
       </div>

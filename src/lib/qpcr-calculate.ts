@@ -47,6 +47,58 @@ function parseNumber(val: unknown): number {
   return isNaN(parsed) ? NaN : parsed;
 }
 
+function validateRepeatCount(repeatCount: number): number {
+  if (!Number.isInteger(repeatCount) || repeatCount < 1) {
+    throw new Error('重复次数必须是大于等于 1 的整数');
+  }
+  return repeatCount;
+}
+
+interface GroupRange {
+  groupName: string;
+  startRow: number;
+  endRow: number;
+}
+
+function readGroupRanges(sheet: ExcelJS.Worksheet, repeatCount: number): GroupRange[] {
+  let lastDataRow = 1;
+  for (let r = sheet.rowCount; r >= 2; r--) {
+    const groupName = String(sheet.getRow(r).getCell(2).value ?? '').trim();
+    if (groupName) {
+      lastDataRow = r;
+      break;
+    }
+  }
+
+  const ranges: GroupRange[] = [];
+  let row = 2;
+  while (row <= lastDataRow) {
+    const groupName = String(sheet.getRow(row).getCell(2).value ?? '').trim();
+    if (!groupName) {
+      row++;
+      continue;
+    }
+
+    const startRow = row;
+    while (
+      row <= lastDataRow &&
+      String(sheet.getRow(row).getCell(2).value ?? '').trim() === groupName
+    ) {
+      row++;
+    }
+
+    const actualRepeatCount = row - startRow;
+    if (actualRepeatCount !== repeatCount) {
+      throw new Error(
+        `分组 "${groupName}" 从第 ${startRow} 行开始有 ${actualRepeatCount} 个重复，` +
+        `但当前设置为 ${repeatCount} 个。请检查重复次数或 Transformed Data 数据。`
+      );
+    }
+    ranges.push({ groupName, startRow, endRow: row });
+  }
+  return ranges;
+}
+
 function findColumn(sheet: ExcelJS.Worksheet, name: string): number {
   const headerRow = sheet.getRow(1);
   for (let c = 1; c <= sheet.columnCount; c++) {
@@ -61,6 +113,7 @@ export function calculateQpcr(
   refGene: string,
   options: CalcOptions = {}
 ): void {
+  repeatCount = validateRepeatCount(repeatCount);
   const method: CalcMethod = options.method ?? 'ref-normalized';
   const controlGroup = (options.controlGroup ?? '').trim();
   if (method === 'control-relative' && !controlGroup) {
@@ -71,6 +124,10 @@ export function calculateQpcr(
   if (!sourceSheet) throw new Error('Transformed Data sheet not found');
   const colCount = sourceSheet.columnCount;
   const headerRow = sourceSheet.getRow(1);
+  const refCol = findColumn(sourceSheet, refGene);
+  // Validate all group boundaries before deleting any previous result sheets.
+  // This keeps a bad repeat-count selection from leaving a half-cleared workbook.
+  const groupRanges = readGroupRanges(sourceSheet, repeatCount);
 
   // Collect all gene columns starting from c=3 (column C). Columns A=Num, B=Group are skipped.
   // Must match detectTransformedGenes() in qpcr-transform.ts which also starts from c=3.
@@ -107,7 +164,6 @@ export function calculateQpcr(
   summaryHeaders.forEach((h, i) => { const cell = shRow.getCell(i + 1); cell.value = h; cell.font = BOLD_FONT; });
   const methodColIndex = summaryHeaders.length; // 1-based index of the 'Method' column
 
-  const refCol = findColumn(sourceSheet, refGene);
   let summaryDataRow = 2;
 
   for (const targetGene of geneNames) {
@@ -125,27 +181,20 @@ export function calculateQpcr(
 
     const groupMap = new Map();
 
-    let lastDataRow = 1;
-    for (let r = sourceSheet.rowCount; r >= 2; r--) {
-      const g = String(sourceSheet.getRow(r).getCell(2).value ?? '').trim();
-      if (g) { lastDataRow = r; break; }
-    }
-
-    // Pass 1: read each group block and compute the raw per-replicate
-    // relative expression 2^-(target - ref). Nothing is written yet, because
-    // control-relative needs the control group's mean before it can scale.
+    // Pass 1: read contiguous group blocks and compute the raw per-replicate
+    // relative expression 2^-(target - ref). Do not derive block boundaries
+    // from repeatCount: a workbook may contain a different number of rows for
+    // one group, and fixed-size stepping shifts every following group.
     interface Block { groupName: string; startRow: number; refVals: number[]; targetVals: number[]; rawRe: number[]; allValid: boolean; }
     const blocks: Block[] = [];
-    for (let startRow = 2; startRow <= lastDataRow; startRow += repeatCount) {
-      const groupName = String(sourceSheet.getRow(startRow).getCell(2).value ?? '').trim();
-      if (!groupName) break;
+    for (const range of groupRanges) {
+      const { groupName, startRow: groupStartRow, endRow } = range;
       const refVals: number[] = [];
       const targetVals: number[] = [];
       const rawRe: number[] = [];
       let allValid = true;
-      for (let r = 0; r < repeatCount; r++) {
-        const currRow = startRow + r;
-        if (currRow > lastDataRow) { allValid = false; break; }
+      for (let r = 0; r < endRow - groupStartRow; r++) {
+        const currRow = groupStartRow + r;
         const row = sourceSheet.getRow(currRow);
         const tVal = parseNumber(row.getCell(targetCol).value);
         const rVal = parseNumber(row.getCell(refCol).value);
@@ -157,7 +206,7 @@ export function calculateQpcr(
           allValid = false;
         }
       }
-      blocks.push({ groupName, startRow, refVals, targetVals, rawRe, allValid });
+      blocks.push({ groupName, startRow: groupStartRow, refVals, targetVals, rawRe, allValid });
     }
 
     // Divisor: 1 for ref-normalized; the control group's mean raw RE for
@@ -176,7 +225,7 @@ export function calculateQpcr(
     for (const block of blocks) {
       const { groupName, refVals, targetVals, rawRe, allValid } = block;
       const reValues: number[] = [];
-      for (let r = 0; r < repeatCount; r++) {
+      for (let r = 0; r < refVals.length; r++) {
         const outRow = geneSheet.getRow(outputRow + r);
         outRow.getCell(1).value = refVals[r];
         outRow.getCell(2).value = targetVals[r];
@@ -208,7 +257,7 @@ export function calculateQpcr(
         sRow.getCell(4 + repeatCount).value = stdev;
         sRow.getCell(methodColIndex).value = methodNote;
       }
-      outputRow += repeatCount;
+      outputRow += refVals.length;
     }
 
     if (groupMap.size > 0) {
