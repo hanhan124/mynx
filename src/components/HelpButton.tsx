@@ -318,7 +318,7 @@ B02   SYBR   TNF      Sample_B     24.87`}</pre>
                 </tbody>
               </table>
             </div>
-            <p>此外还会生成一张 <code>Summary_All_Genes</code> 汇总表，包含所有基因所有组的表达量、均值和标准差，每行末尾标注 Method。</p>
+            <p>此外还会生成一张 <code>Summary_All_Genes</code> 汇总表，包含所有基因所有组的表达量、均值和标准差，每行末尾标注 Method，并附上原始 Ct 值：内参基因和目标基因各按重复列出一列（直接从 <code>Transformed Data</code> 复制，标黄的填补值会一并标黄）。表头按列区块配色（蓝=基因/组名、深蓝=重复、绿=均值/标准差、橙=方法、黄=内参 Ct、紫=目标 Ct），并冻结了首行和前两列，方便区分。</p>
             <Callout type="warn">
               ⚠️ 如果某组数据有缺失（Ct 为空），该组的均值和标准差不会计算，显示为 N/A。
               请回到原始 Excel 补上对应孔位的 Ct 值后重新转换 + 计算。

@@ -5,7 +5,7 @@ import ExcelJS from 'exceljs';
  */
 
 const PROTECTED_SHEETS = new Set(['Transformed Data', 'Summary_All_Genes', 'Sheet1']);
-const BOLD_FONT: Partial<ExcelJS.Font> = { bold: true };
+const BOLD_FONT: Partial<ExcelJS.Font> = { bold: true, name: 'Times New Roman' };
 
 /**
  * qPCR 计算方法（原 "mode"）。
@@ -107,6 +107,37 @@ function findColumn(sheet: ExcelJS.Worksheet, name: string): number {
   throw new Error('Column ' + name + ' not found');
 }
 
+// ── 原始 Ct 列复制（Summary_All_Genes 末尾追加内参/目标基因 Ct 列用） ──
+// 与 qpcr-transform.ts 中的 YELLOW_FILL 保持一致：Transformed Data 里被标黄的
+// 缺失填补格（用其他有效重复补数或填 50），复制到汇总表时要一并带上黄色标记。
+const YELLOW_FILL: ExcelJS.Fill = {
+  type: 'pattern',
+  pattern: 'solid',
+  fgColor: { argb: 'FFFFFF00' },
+};
+
+// 标识列（基因/组名）数据格底色：比表头更浅的蓝，柔和不刺眼。
+const IDENTITY_COLUMN_FILL = 'EAF3FA';
+
+function isYellowFilled(cell: ExcelJS.Cell): boolean {
+  const fill = cell.fill;
+  return (
+    fill !== undefined &&
+    fill.type === 'pattern' &&
+    fill.pattern === 'solid' &&
+    (fill.fgColor?.argb ?? '').toUpperCase() === 'FFFFFF00'
+  );
+}
+
+/** 按显示宽度计算字符串长度：CJK/全角字符按 2 个字符宽计算（Excel 列宽单位）。 */
+function displayLength(text: string): number {
+  let len = 0;
+  for (const ch of text) {
+    len += /[\u1100-\u115F\u2E80-\uA4CF\uA960-\uA97F\uAC00-\uD7A3\uF900-\uFAFF\uFE10-\uFE19\uFE30-\uFE6F\uFF00-\uFF60\uFFE0-\uFFE6\u3000-\u303F]/.test(ch) ? 2 : 1;
+  }
+  return len;
+}
+
 export function calculateQpcr(
   workbook: ExcelJS.Workbook,
   repeatCount: number,
@@ -157,14 +188,53 @@ export function calculateQpcr(
   // control-relative 下第 3 列存的是"归一化到对照组"的相对表达量。
   const reColHeader = method === 'control-relative' ? 'Normalized Expression' : 'Relative Expression';
 
-  const summaryHeaders = ['Gene', 'Group_Name'];
-  for (let i = 1; i <= repeatCount; i++) summaryHeaders.push('Repeat' + i);
-  summaryHeaders.push('Average', 'Stdev', 'Method');
-  const shRow = summarySheet.getRow(1);
-  summaryHeaders.forEach((h, i) => { const cell = shRow.getCell(i + 1); cell.value = h; cell.font = BOLD_FONT; });
+  // 列分组配色（浅色底纹），让列多的时候能按区块一眼区分：
+  // 基因/组名=蓝、重复=深蓝、均值/标准差=绿、方法=橙、内参Ct=黄、目标Ct=紫。
+  const HEADER_COLORS = {
+    identity: 'DDEBF7', // Gene / Group_Name
+    repeats: 'BDD7EE',  // Repeat1..N
+    stats: 'E2EFDA',    // Average / Stdev
+    method: 'FCE4D6',   // Method
+    refCt: 'FFF2CC',    // {refGene}_Ct_R*
+    targetCt: 'E4DFEC', // Target_Ct_R*
+  };
+  const summaryHeaders: string[] = [];
+  const headerColors: string[] = [];
+  const pushHeader = (h: string, color: string) => {
+    summaryHeaders.push(h);
+    headerColors.push(color);
+  };
+  pushHeader('Gene', HEADER_COLORS.identity);
+  pushHeader('Group_Name', HEADER_COLORS.identity);
+  for (let i = 1; i <= repeatCount; i++) pushHeader('Repeat' + i, HEADER_COLORS.repeats);
+  pushHeader('Average', HEADER_COLORS.stats);
+  pushHeader('Stdev', HEADER_COLORS.stats);
+  pushHeader('Method', HEADER_COLORS.method);
   const methodColIndex = summaryHeaders.length; // 1-based index of the 'Method' column
+  // 末尾追加原始 Ct 列：每个重复各一列，内参基因在前、目标基因在后。
+  for (let i = 1; i <= repeatCount; i++) pushHeader(`${refGene}_Ct_R${i}`, HEADER_COLORS.refCt);
+  for (let i = 1; i <= repeatCount; i++) pushHeader(`Target_Ct_R${i}`, HEADER_COLORS.targetCt);
+  const shRow = summarySheet.getRow(1);
+  summaryHeaders.forEach((h, i) => {
+    const cell = shRow.getCell(i + 1);
+    cell.value = h;
+    cell.font = BOLD_FONT;
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: headerColors[i] },
+    };
+    cell.border = {
+      bottom: { style: 'medium', color: { argb: 'FFB0B0B0' } },
+    };
+  });
+  // 冻结首行 + 前两列（Gene/Group_Name）：横向滚动时表头和基因/组名始终可见。
+  summarySheet.views = [{ state: 'frozen', xSplit: 2, ySplit: 1, topLeftCell: 'C2' }];
 
   let summaryDataRow = 2;
+
+  // 记录生成的基因表，最后统一应用字体/对齐样式。
+  const generatedGeneSheets: ExcelJS.Worksheet[] = [];
 
   for (const targetGene of geneNames) {
     const targetCol = findColumn(sourceSheet, targetGene);
@@ -174,6 +244,7 @@ export function calculateQpcr(
     let geneSheet = workbook.getWorksheet(sheetName);
     if (!geneSheet) { geneSheet = workbook.addWorksheet(sheetName); }
     else { for (let r = geneSheet.rowCount; r >= 1; r--) geneSheet.spliceRows(r, 1); }
+    generatedGeneSheets.push(geneSheet);
 
     const headers = [refGene, targetGene, reColHeader, 'Average', 'Stdev', 'Group_Name', 'Method'];
     const hRow = geneSheet.getRow(1);
@@ -185,28 +256,34 @@ export function calculateQpcr(
     // relative expression 2^-(target - ref). Do not derive block boundaries
     // from repeatCount: a workbook may contain a different number of rows for
     // one group, and fixed-size stepping shifts every following group.
-    interface Block { groupName: string; startRow: number; refVals: number[]; targetVals: number[]; rawRe: number[]; allValid: boolean; }
+    interface Block { groupName: string; startRow: number; refVals: number[]; targetVals: number[]; refFilled: boolean[]; targetFilled: boolean[]; rawRe: number[]; allValid: boolean; }
     const blocks: Block[] = [];
     for (const range of groupRanges) {
       const { groupName, startRow: groupStartRow, endRow } = range;
       const refVals: number[] = [];
       const targetVals: number[] = [];
+      const refFilled: boolean[] = [];
+      const targetFilled: boolean[] = [];
       const rawRe: number[] = [];
       let allValid = true;
       for (let r = 0; r < endRow - groupStartRow; r++) {
         const currRow = groupStartRow + r;
         const row = sourceSheet.getRow(currRow);
-        const tVal = parseNumber(row.getCell(targetCol).value);
-        const rVal = parseNumber(row.getCell(refCol).value);
+        const targetCell = row.getCell(targetCol);
+        const refCell = row.getCell(refCol);
+        const tVal = parseNumber(targetCell.value);
+        const rVal = parseNumber(refCell.value);
         refVals.push(rVal);
         targetVals.push(tVal);
+        refFilled.push(isYellowFilled(refCell));
+        targetFilled.push(isYellowFilled(targetCell));
         if (!isNaN(tVal) && !isNaN(rVal)) {
           rawRe.push(Math.pow(2, -(tVal - rVal)));
         } else {
           allValid = false;
         }
       }
-      blocks.push({ groupName, startRow: groupStartRow, refVals, targetVals, rawRe, allValid });
+      blocks.push({ groupName, startRow: groupStartRow, refVals, targetVals, refFilled, targetFilled, rawRe, allValid });
     }
 
     // Divisor: 1 for ref-normalized; the control group's mean raw RE for
@@ -223,7 +300,7 @@ export function calculateQpcr(
     // Pass 2: write rows using the (possibly scaled) expression values.
     let outputRow = 2;
     for (const block of blocks) {
-      const { groupName, refVals, targetVals, rawRe, allValid } = block;
+      const { groupName, refVals, targetVals, refFilled, targetFilled, rawRe, allValid } = block;
       const reValues: number[] = [];
       for (let r = 0; r < refVals.length; r++) {
         const outRow = geneSheet.getRow(outputRow + r);
@@ -256,6 +333,15 @@ export function calculateQpcr(
         sRow.getCell(3 + repeatCount).value = avg;
         sRow.getCell(4 + repeatCount).value = stdev;
         sRow.getCell(methodColIndex).value = methodNote;
+        // 末尾追加的 Ct 列：直接从 Transformed Data 复制（含标黄的填补值）。
+        for (let i = 0; i < repeatCount; i++) {
+          const refCell = sRow.getCell(methodColIndex + 1 + i);
+          refCell.value = isNaN(refVals[i]) ? 'N/A' : refVals[i];
+          if (refFilled[i]) refCell.fill = YELLOW_FILL;
+          const targetCell = sRow.getCell(methodColIndex + 1 + repeatCount + i);
+          targetCell.value = isNaN(targetVals[i]) ? 'N/A' : targetVals[i];
+          if (targetFilled[i]) targetCell.fill = YELLOW_FILL;
+        }
       }
       outputRow += refVals.length;
     }
@@ -276,4 +362,40 @@ export function calculateQpcr(
       }
     }
   }
+
+  // 生成的基因表同样统一为 Times New Roman + 左对齐。
+  for (const geneSheet of generatedGeneSheets) {
+    geneSheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        cell.font = { ...(cell.font ?? {}), name: 'Times New Roman' };
+        cell.alignment = { horizontal: 'left' };
+      });
+    });
+  }
+
+  // 统一字体与左对齐：Times New Roman 全表生效（含表头），数值单元格默认右对齐也改成左对齐。
+  // 基因/组名列（1、2 列）数据格整列加浅蓝底色，突出标识列。
+  summarySheet.eachRow((row, rowNumber) => {
+    row.eachCell((cell, colNumber) => {
+      cell.font = { ...(cell.font ?? {}), name: 'Times New Roman' };
+      cell.alignment = { horizontal: 'left' };
+      if (rowNumber > 1 && (colNumber === 1 || colNumber === 2)) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: IDENTITY_COLUMN_FILL } };
+      }
+    });
+  });
+
+  // 自动调整列宽：按显示宽度取能完整显示最宽内容（含首行表头）的最小宽度，
+  // 中文/全角字符算 2 个字符宽，避免表头被截断，也不留空白。
+  // 前两列（Gene/Group_Name 标识列）额外加宽，方便阅读。
+  summarySheet.columns.forEach((column, index) => {
+    let maxLength = 0;
+    if (column.eachCell) {
+      column.eachCell((cell) => {
+        const length = cell.value ? displayLength(String(cell.value)) : 10;
+        if (length > maxLength) maxLength = length;
+      });
+    }
+    column.width = maxLength + (index < 2 ? 6 : 0);
+  });
 }
