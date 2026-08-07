@@ -30,6 +30,9 @@ const NS = {
 const CHART_CT = 'application/vnd.openxmlformats-officedocument.drawingml.chart+xml';
 const DRAWING_CT = 'application/vnd.openxmlformats-officedocument.drawing+xml';
 
+/** 汇总柱状图 sheet 的名字：把每个基因 sheet 的柱状图复制一份放到这里。 */
+export const CHARTS_SUMMARY_SHEET = 'Charts_All_Genes';
+
 // ── Types ───────────────────────────────────────────────────────────────────
 interface DataPoint {
   name: string;
@@ -342,6 +345,61 @@ ${items.join('\n')}
 </Relationships>`;
 }
 
+/**
+ * 汇总图表 drawing：把每张柱状图用一个 twoCellAnchor 纵向堆叠，
+ * 每个图表占 15 行（与基因 sheet 里的尺寸一致），图表之间空 1 行。
+ * 第 i 张图引用 rId{i+1}（对应 xl/charts/chart{i+1}.xml）。
+ */
+function buildSummaryDrawingXml(count: number): string {
+  const rowsPerChart = 16; // 15 行图表 + 1 行间隔
+  const anchors: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const fromRow = i * rowsPerChart;
+    const toRow = fromRow + 14;
+    const yOff = 190500 + i * rowsPerChart * 190500; // 每行约 15pt = 190500 EMU
+    anchors.push(`  <xdr:twoCellAnchor editAs="oneCell">
+    <xdr:from>
+      <xdr:col>0</xdr:col>
+      <xdr:colOff>95250</xdr:colOff>
+      <xdr:row>${fromRow}</xdr:row>
+      <xdr:rowOff>190500</xdr:rowOff>
+    </xdr:from>
+    <xdr:to>
+      <xdr:col>6</xdr:col>
+      <xdr:colOff>0</xdr:colOff>
+      <xdr:row>${toRow}</xdr:row>
+      <xdr:rowOff>0</xdr:rowOff>
+    </xdr:to>
+    <xdr:graphicFrame macro="">
+      <xdr:nvGraphicFramePr>
+        <xdr:cNvPr id="${i + 2}" name="Chart ${i + 1}"/>
+        <xdr:cNvGraphicFramePr>
+          <a:graphicFrameLocks noGrp="1"/>
+        </xdr:cNvGraphicFramePr>
+      </xdr:nvGraphicFramePr>
+      <xdr:xfrm>
+        <a:off x="95250" y="${yOff}"/>
+        <a:ext cx="3810000" cy="2857500"/>
+      </xdr:xfrm>
+      <a:graphic>
+        <a:graphicData uri="${NS.CHART}">
+          <c:chart r:id="rId${i + 1}"/>
+        </a:graphicData>
+      </a:graphic>
+    </xdr:graphicFrame>
+    <xdr:clientData/>
+  </xdr:twoCellAnchor>`);
+  }
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xdr:wsDr
+  xmlns:xdr="${NS.DRAWING}"
+  xmlns:a="${NS.A}"
+  xmlns:r="${NS.R}"
+  xmlns:c="${NS.CHART}">
+${anchors.join('\n')}
+</xdr:wsDr>`;
+}
+
 function buildChartRelsXml(): string {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="${NS.RELS}">
@@ -399,12 +457,14 @@ export async function injectChartsIntoWorkbook(
   const sheetNameMap = await buildSheetNameMap(zip);
 
   let chartIndex = 0;
+  const processedSheets: ChartSheetData[] = [];
 
   for (const sheet of sheets) {
     chartIndex++;
 
     const sheetId = sheetNameMap.get(sheet.geneName);
     if (!sheetId) continue;
+    processedSheets.push(sheet);
 
     const sheetPath = `xl/worksheets/sheet${sheetId}.xml`;
     const sheetRelsPath = `xl/worksheets/_rels/sheet${sheetId}.xml.rels`;
@@ -464,6 +524,67 @@ export async function injectChartsIntoWorkbook(
     zip.file(sheetPath, updatedSheetXml);
   }
 
+  // ── 汇总柱状图 sheet：把每个基因的柱状图复制一份，纵向堆叠到一张表里 ──
+  // 图表本身在 xl/charts/chart*.xml（上面循环已生成），这里只新建一个 drawing
+  // 让汇总 sheet 引用这些 chart 部件即可，不必复制 chart XML。
+  let summaryDrawingIndex = 0;
+  const summarySheetId = sheetNameMap.get(CHARTS_SUMMARY_SHEET);
+  if (summarySheetId !== undefined && processedSheets.length > 0) {
+    const summarySheetPath = `xl/worksheets/sheet${summarySheetId}.xml`;
+    const summarySheetEntry = zip.file(summarySheetPath);
+    if (summarySheetEntry) {
+      const summarySheetXml = await summarySheetEntry.async('string');
+      summaryDrawingIndex = chartIndex + 1; // 与现有 drawing1..N 不冲突
+      const summaryDrawingPath = `xl/drawings/drawing${summaryDrawingIndex}.xml`;
+
+      zip.file(summaryDrawingPath, buildSummaryDrawingXml(processedSheets.length));
+
+      // 汇总 drawing 的 rels：每个图表一条关系
+      const summaryDrawingRels = processedSheets.map((_, i) => ({
+        Id: `rId${i + 1}`,
+        Type: NS.CHART_REL,
+        Target: `../charts/chart${i + 1}.xml`,
+      }));
+      zip.file(
+        `xl/drawings/_rels/drawing${summaryDrawingIndex}.xml.rels`,
+        buildRelsXml(summaryDrawingRels)
+      );
+
+      if (!summarySheetXml.includes('<drawing')) {
+        const summarySheetRelsPath = `xl/worksheets/_rels/sheet${summarySheetId}.xml.rels`;
+        const summarySheetRelsEntry = zip.file(summarySheetRelsPath);
+        let updatedSummarySheetXml: string;
+        if (summarySheetRelsEntry) {
+          const relsXml = await summarySheetRelsEntry.async('string');
+          const nextRId = maxRId(relsXml) + 1;
+          zip.file(
+            summarySheetRelsPath,
+            relsXml.replace(
+              '</Relationships>',
+              `  <Relationship Id="rId${nextRId}" Type="${NS.DRAWING_REL}" Target="../drawings/drawing${summaryDrawingIndex}.xml"/>\n</Relationships>`
+            )
+          );
+          updatedSummarySheetXml = summarySheetXml.replace(
+            '</worksheet>',
+            `  <drawing r:id="rId${nextRId}"/>\n</worksheet>`
+          );
+        } else {
+          zip.file(
+            summarySheetRelsPath,
+            buildRelsXml([
+              { Id: 'rId1', Type: NS.DRAWING_REL, Target: `../drawings/drawing${summaryDrawingIndex}.xml` },
+            ])
+          );
+          updatedSummarySheetXml = summarySheetXml.replace(
+            '</worksheet>',
+            `  <drawing r:id="rId1"/>\n</worksheet>`
+          );
+        }
+        zip.file(summarySheetPath, updatedSummarySheetXml);
+      }
+    }
+  }
+
   // Update [Content_Types].xml
   const ctEntry = zip.file('[Content_Types].xml');
   if (ctEntry) {
@@ -473,6 +594,12 @@ export async function injectChartsIntoWorkbook(
       const drawingOverride = drawingContentTypeOverride(`/xl/drawings/drawing${i}.xml`);
       if (!ctXml.includes(`chart${i}.xml`)) {
         ctXml = ctXml.replace('</Types>', `  ${chartOverride}\n  ${drawingOverride}\n</Types>`);
+      }
+    }
+    if (summaryDrawingIndex > 0) {
+      const summaryDrawingOverride = drawingContentTypeOverride(`/xl/drawings/drawing${summaryDrawingIndex}.xml`);
+      if (!ctXml.includes(`drawing${summaryDrawingIndex}.xml`)) {
+        ctXml = ctXml.replace('</Types>', `  ${summaryDrawingOverride}\n</Types>`);
       }
     }
     zip.file('[Content_Types].xml', ctXml);

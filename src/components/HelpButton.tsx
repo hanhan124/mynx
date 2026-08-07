@@ -332,7 +332,9 @@ B02   SYBR   TNF      Sample_B     24.87`}</pre>
           {/* ── ④ 出图 ── */}
           <Section id="chart" title="④ 出图" subtitle="计算完自动生成，打开 Excel 就能看">
             <p>
-              计算完成后，图表会<strong>自动嵌入</strong>到每个基因 sheet 的底部。
+              计算完成后，图表会<strong>自动嵌入</strong>到每个基因 sheet 的底部，
+              并新建一张 <code>Charts_All_Genes</code> 汇总表，把<strong>所有基因的柱状图
+              纵向排列复制</strong>到一起，方便一次浏览全部结果。
               每张图是一根柱状图：
             </p>
             <ul>

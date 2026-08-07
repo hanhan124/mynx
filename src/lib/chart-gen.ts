@@ -6,7 +6,7 @@
  * No Excel, no cscript, no temporary files needed.
  */
 import ExcelJS from 'exceljs';
-import { injectChartsIntoWorkbook, type ChartSheetData } from './chart-xml';
+import { injectChartsIntoWorkbook, CHARTS_SUMMARY_SHEET, type ChartSheetData } from './chart-xml';
 import { saveExcelFile } from './excel-io';
 
 export interface ChartGenResult {
@@ -31,6 +31,7 @@ export interface ChartMethodOptions {
 const PROTECTED_SHEETS = new Set([
   'Transformed Data',
   'Summary_All_Genes',
+  'Charts_All_Genes',
   'Sheet1',
 ]);
 
@@ -137,6 +138,25 @@ export async function generateCharts(
         reason: '未找到可生成图表的基因数据（没有找到 Group_Name 汇总表）',
       };
     }
+
+    // 新建空的汇总柱状图 sheet（Charts_All_Genes），放在 Summary_All_Genes 旁边，
+    // 稍后由 chart-xml 注入把所有基因的柱状图纵向堆叠到这里。
+    const existingChartsSheet = workbook.getWorksheet(CHARTS_SUMMARY_SHEET);
+    if (existingChartsSheet) workbook.removeWorksheet(existingChartsSheet.id);
+    workbook.addWorksheet(CHARTS_SUMMARY_SHEET);
+
+    // ExcelJS 的 tab 顺序由各 sheet 的 orderNo 决定（worksheets getter 按它排序），
+    // 直接把 Charts_All_Genes 排到 Summary_All_Genes 之后。
+    const currentOrder = workbook.worksheets.map((ws) => ws.name);
+    const desiredOrder = currentOrder.filter((n) => n !== CHARTS_SUMMARY_SHEET);
+    const summaryIdx = desiredOrder.indexOf('Summary_All_Genes');
+    if (summaryIdx !== -1) {
+      desiredOrder.splice(summaryIdx + 1, 0, CHARTS_SUMMARY_SHEET);
+    }
+    desiredOrder.forEach((name, i) => {
+      const ws = workbook.getWorksheet(name);
+      if (ws) (ws as ExcelJS.Worksheet & { orderNo?: number }).orderNo = i + 1;
+    });
 
     // Step 2: First save the workbook data normally via exceljs
     onProgress?.(0, sheets.length);

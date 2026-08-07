@@ -4,7 +4,7 @@ import ExcelJS from 'exceljs';
  * qPCR 相对定量计算 — 完全参照 VBA 宏 (2.caculate.txt)
  */
 
-const PROTECTED_SHEETS = new Set(['Transformed Data', 'Summary_All_Genes', 'Sheet1']);
+const PROTECTED_SHEETS = new Set(['Transformed Data', 'Summary_All_Genes', 'Charts_All_Genes', 'Sheet1']);
 const BOLD_FONT: Partial<ExcelJS.Font> = { bold: true, name: 'Times New Roman' };
 
 /**
