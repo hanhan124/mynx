@@ -102,6 +102,9 @@ npx tauri signer generate -w mynx.key
 ### 方法 A：手动流程（推荐）
 
 ```bash
+# 0. 更新 CHANGELOG.md，添加本次版本小节（格式 `## [x.y.z]`，可带日期后缀）。
+#    CI 的 release job 会提取该小节写入 latest.json 的 notes 字段，作为客户端
+#    「发现新版本」提示框显示的本次更新摘要；缺失小节会导致发布 job 失败。
 # 1. 改版本号并同步
 npm version 2.2.1 --no-git-tag-version
 node scripts/sync-version.cjs
@@ -143,6 +146,10 @@ npm run build
 ```
 
 CI 的 Tauri build 会先执行前端构建。本地不过，CI 也会失败。
+
+### 检查 0：CHANGELOG.md 更新摘要
+
+发布前确认 `CHANGELOG.md` 中已有本次版本（如 `v2.2.15`）的小节。release job 会提取它生成更新提示框的摘要，缺失会让发布失败。
 
 ### 检查 2：Lint
 

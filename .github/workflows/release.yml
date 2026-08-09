@@ -470,6 +470,7 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import json
+          import re
           from datetime import datetime, timezone
           from pathlib import Path
 
@@ -477,6 +478,21 @@ jobs:
           tag = '${{ needs.prepare-tag.outputs.release_tag }}'
           if tag != f'v{version}':
               raise SystemExit(f'Release tag {tag} does not match package.json version {version}')
+
+          # 读取 CHANGELOG.md 中当前版本的小节，作为客户端更新提示框显示的本次更新摘要。
+          changelog = Path('CHANGELOG.md').read_text(encoding='utf-8')
+          sections = {}
+          current = None
+          for line in changelog.splitlines():
+              m = re.match(r'^## \[([^\]]+)\](.*)$', line)
+              if m:
+                  current = m.group(1).strip()
+                  sections[current] = []
+              elif current is not None:
+                  sections[current].append(line)
+          notes = '\n'.join(sections.get(version, [])).strip()
+          if not notes:
+              raise SystemExit(f'CHANGELOG.md 缺少 v{version} 的小节，无法生成更新摘要')
 
           base = f'https://github.com/hanhan124/mynx/releases/download/{tag}'
           assets = Path('release-assets')
@@ -514,8 +530,9 @@ jobs:
           latest = {
               'version': version,
               'date': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-              'notes': 'See the GitHub Release for full changelog.',
-              'body': '',
+              'pub_date': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+              'notes': notes,
+              'body': notes,
               'platforms': platforms,
           }
 
