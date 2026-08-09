@@ -291,6 +291,14 @@ B02   SYBR   TNF      Sample_B     24.87`}</pre>
               <li><strong>重复次数</strong>：选 1–10，跟实际技术重复数一致</li>
               <li><strong>参考基因</strong>：选 1 个（常用 GAPDH / ACTB），默认选第一个基因</li>
               <li><strong>柱状图颜色</strong>：默认蓝色，可自定义，选择会自动记住</li>
+              <li><strong>重复处理</strong>：选 0 关闭。两种模式二选一：
+                <ul>
+                  <li><strong>择优重复数</strong>：选 K（≥2）时为每个样本挑选标准差最低的 K 个重复，
+                    生成 <code>Summary_Best_Replicates</code> 汇总表</li>
+                  <li><strong>离群值剔除</strong>：选 ±K×SD 时迭代剔除偏离组均值超过 K×SD 的重复，
+                    生成 <code>Summary_Outlier_Removed</code> 汇总表</li>
+                </ul>
+              </li>
             </ul>
 
             <p>相对表达量计算公式：</p>
@@ -319,6 +327,20 @@ B02   SYBR   TNF      Sample_B     24.87`}</pre>
               </table>
             </div>
             <p>此外还会生成一张 <code>Summary_All_Genes</code> 汇总表，包含所有基因所有组的表达量、均值和标准差，每行末尾标注 Method，并附上原始 Ct 值：内参基因和目标基因各按重复列出一列（直接从 <code>Transformed Data</code> 复制，标黄的填补值会一并标黄）。表头按列区块配色（蓝=基因/组名、深蓝=重复、绿=均值/标准差、橙=方法、黄=内参 Ct、紫=目标 Ct），并冻结了首行和前两列，方便区分。</p>
+            <p>如果勾选了「择优重复数」≥ 2，还会生成一张 <code>Summary_Best_Replicates</code> 汇总表：
+              对每个基因 × 样本组，从所有重复中穷举选出<strong>标准差最低的 K 个重复</strong>，
+              格式与 <code>Summary_All_Genes</code> 一致（含原始内参 / 目标 Ct），
+              每行 Method 列会额外标注 <code>Best-K subset</code>。</p>
+            <Callout type="warn">
+              ⚠️ 该表是<strong>内部 QC / 探索性参考</strong>，不是标准统计结果：只保留标准差最低的 K 个重复
+              会系统性低估变异（SD 偏小），属于选择性报告，<strong>不直接用于发表</strong>。
+              正式报告一律以 <code>Summary_All_Genes</code>（全部重复的均值 ± SD）为准。
+            </Callout>
+            <p>如果选「离群值剔除」，还会生成一张 <code>Summary_Outlier_Removed</code> 汇总表：
+              按预先定义的客观规则（迭代式剔除偏离组均值超过 K×SD 的重复，未超阈值不剔除）
+              给出剔除后的均值 ± SD，格式同 <code>Summary_All_Genes</code>；
+              被剔除的重复留空，末尾 <code>Removed</code> 列标注被剔除的重复编号。
+              规则客观且可披露，<strong>可用于发表</strong>（在方法学中写明规则即可）。</p>
             <Callout type="warn">
               ⚠️ 如果某组数据有缺失（Ct 为空），该组的均值和标准差不会计算，显示为 N/A。
               请回到原始 Excel 补上对应孔位的 Ct 值后重新转换 + 计算。

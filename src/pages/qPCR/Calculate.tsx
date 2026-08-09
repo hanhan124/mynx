@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { IconCircleCheckFilled, IconCircleXFilled } from '@tabler/icons-react';
+import { IconCircleCheckFilled, IconCircleXFilled, IconInfoCircle } from '@tabler/icons-react';
 import type ExcelJS from 'exceljs';
 import { calculateQpcr, CALC_METHOD_LABELS, type CalcMethod } from '@/lib/qpcr-calculate';
 import { detectTransformedGenes, detectTransformedGroups } from '@/lib/qpcr-transform';
@@ -22,6 +22,8 @@ type Status = 'ready' | 'processing' | 'success' | 'error';
 
 export default function Calculate({ workbook, geneNames, onComplete, onProgress, onError }: CalculateProps) {
   const [repeatCount, setRepeatCount] = useState(2);
+  // 重复处理：'0'=关闭；'best:N'=择优重复数；'outlier:K'=离群值剔除阈值（K×SD）。
+  const [replicateOption, setReplicateOption] = useState('0');
   const [method, setMethod] = useState<CalcMethod>('ref-normalized');
   const [controlGroup, setControlGroup] = useState('');
   const [refGene, setRefGene] = useState('');
@@ -100,9 +102,19 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
         requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
       );
 
+      // 解析「重复处理」下拉：'best:N'=择优重复数；'outlier:K'=离群值剔除阈值。
+      let selectNum = 0;
+      let outlierSd = 0;
+      if (replicateOption.startsWith('best:')) {
+        selectNum = Number(replicateOption.slice('best:'.length));
+      } else if (replicateOption.startsWith('outlier:')) {
+        outlierSd = Number(replicateOption.slice('outlier:'.length));
+      }
       calculateQpcr(workbook, repeatCount, selectedRefGene, {
         method,
         controlGroup: needsControl ? selectedControlGroup : undefined,
+        selectNum,
+        outlierSd,
       });
       onProgress?.(2, 2, '计算完成');
       setStatus('success');
@@ -165,7 +177,19 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
       <div className="form-row form-row--three">
         <div className="form-group">
           <label>重复次数</label>
-          <select value={repeatCount} onChange={(e) => setRepeatCount(Number(e.target.value))} disabled={status === 'processing'}>
+          <select
+            value={repeatCount}
+            onChange={(e) => {
+              const next = Number(e.target.value);
+              setRepeatCount(next);
+              // 重复次数调小后，择优重复数可能越界，顺带收敛到新的上限。
+              if (replicateOption.startsWith('best:')) {
+                const k = Number(replicateOption.slice('best:'.length));
+                if (k > next) setReplicateOption(`best:${next}`);
+              }
+            }}
+            disabled={status === 'processing'}
+          >
             {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
               <option key={n} value={n}>{n}</option>
             ))}
@@ -204,6 +228,37 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
             />
             <span className="color-hex">{chartColor.toUpperCase()}</span>
           </div>
+        </div>
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <label>
+            重复处理
+            <span
+              title="重复处理：① 择优重复数 — 为每个样本挑选标准差最低的 K 个重复，生成 Summary_Best_Replicates（仅作内部 QC 参考，正式报告请用全部重复的 Summary_All_Genes）；② 离群值剔除 — 迭代剔除偏离组均值超过 K×SD 的重复，生成 Summary_Outlier_Removed（规则客观，可在方法学中披露）；选 0 关闭"
+              style={{ cursor: 'help', marginLeft: 4, verticalAlign: 'middle' }}
+            >
+              <IconInfoCircle size={14} stroke={1.75} style={{ color: 'var(--text-tertiary)' }} />
+            </span>
+          </label>
+          <select
+            value={replicateOption}
+            onChange={(e) => setReplicateOption(e.target.value)}
+            disabled={status === 'processing'}
+          >
+            <option value="0">0 — 不启用</option>
+            <optgroup label="择优重复数（最低标准差组合）">
+              {Array.from({ length: Math.max(0, repeatCount - 1) }, (_, i) => i + 2).map((n) => (
+                <option key={`best:${n}`} value={`best:${n}`}>{n} 个重复</option>
+              ))}
+            </optgroup>
+            <optgroup label="离群值剔除（|Δ| > K×SD）">
+              <option value="outlier:1.5">±1.5 SD</option>
+              <option value="outlier:2">±2 SD</option>
+              <option value="outlier:3">±3 SD</option>
+            </optgroup>
+          </select>
         </div>
       </div>
 

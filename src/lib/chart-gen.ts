@@ -31,6 +31,8 @@ export interface ChartMethodOptions {
 const PROTECTED_SHEETS = new Set([
   'Transformed Data',
   'Summary_All_Genes',
+  'Summary_Best_Replicates',
+  'Summary_Outlier_Removed',
   'Charts_All_Genes',
   'Sheet1',
 ]);
