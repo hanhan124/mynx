@@ -190,7 +190,7 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
             }}
             disabled={status === 'processing'}
           >
-            {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
               <option key={n} value={n}>{n}</option>
             ))}
           </select>

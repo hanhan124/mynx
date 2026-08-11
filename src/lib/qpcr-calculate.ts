@@ -67,7 +67,7 @@ function validateOutlierSd(outlierSd: number): number {
 
 /**
  * 从 values 中选出 k 个下标，使这 k 个值组成的样本标准差最小：穷举所有 C(n,k) 组合，
- * 平局取先枚举到的。n 上限 10（C(10,5)=252 个组合），每次计算微秒级，开销可忽略。
+ * 平局取先枚举到的。n 上限 12（C(12,6)=924 个组合），每次计算微秒级，开销可忽略。
  */
 function bestKCombination(values: number[], k: number): number[] {
   const n = values.length;

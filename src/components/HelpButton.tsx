@@ -288,7 +288,7 @@ B02   SYBR   TNF      Sample_B     24.87`}</pre>
             <p>选定方法后，设置其余参数：</p>
             <ul>
               <li><strong>对照组</strong>（仅 ΔΔCt 方法）：从下拉框选一个组作为对照，其余组归一化到它</li>
-              <li><strong>重复次数</strong>：选 1–10，跟实际技术重复数一致</li>
+              <li><strong>重复次数</strong>：选 1–12，跟实际技术重复数一致</li>
               <li><strong>参考基因</strong>：选 1 个（常用 GAPDH / ACTB），默认选第一个基因</li>
               <li><strong>柱状图颜色</strong>：默认蓝色，可自定义，选择会自动记住</li>
               <li><strong>重复处理</strong>：选 0 关闭。两种模式二选一：
