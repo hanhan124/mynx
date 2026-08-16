@@ -20,7 +20,12 @@ export const Welcome: React.FC<Props> = ({ onNext, onCancel }) => {
   useEffect(() => {
     api.getContext().then((c) => {
       setCtx(c);
-      setPath(c.default_install_path);
+      // 已有安装 → 沿用原路径(升级),否则默认 Program Files
+      setPath(c.installed_path || c.default_install_path);
+      if (c.installed_version) {
+        // 升级场景:旧应用已被关闭,装完默认直接启动新版
+        setLaunchAfter(true);
+      }
     });
   }, []);
 
@@ -38,7 +43,15 @@ export const Welcome: React.FC<Props> = ({ onNext, onCancel }) => {
         <Logo size={64} />
         <div className="hero__title">Mynx</div>
         <div className="hero__subtitle">
-          版本 {ctx?.app_version ?? "..."} · {ctx?.publisher ?? ""}
+          {ctx?.installed_version ? (
+            <>
+              检测到已安装 v{ctx.installed_version} · 本次将升级到 v{ctx.app_version}
+            </>
+          ) : (
+            <>
+              版本 {ctx?.app_version ?? "..."} · {ctx?.publisher ?? ""}
+            </>
+          )}
         </div>
       </div>
 

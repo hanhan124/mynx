@@ -1,7 +1,7 @@
 {
   "name": "mynx",
   "private": true,
-  "version": "2.2.17",
+  "version": "2.2.18",
   "type": "module",
   "repository": "https://github.com/hanhan124/mynx",
   "scripts": {
@@ -14,7 +14,7 @@
     "prebuild": "node scripts/sync-version.cjs",
     "installer:payload": "node scripts/sync-installer-payload.cjs",
     "installer:dev": "cd installer && npm run tauri:dev",
-    "installer:build": "npm run tauri:build -- --no-bundle && npm run installer:payload && cd installer && npm install && npm run tauri:build && node ../scripts/post-installer-build.cjs",
+    "installer:build": "npx tauri build --no-bundle && npm run installer:payload && cd installer && npm install && npm run tauri:build && node ../scripts/post-installer-build.cjs",
     "installer:clean": "node scripts/clean-installer-artifacts.cjs",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",

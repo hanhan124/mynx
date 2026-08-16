@@ -9,8 +9,8 @@ export interface InstallContext {
   app_version: string;
   publisher: string;
   default_install_path: string;
-  installed_path: string | null;     // 仅 uninstall 模式:已安装位置
-  installed_version: string | null;  // 仅 uninstall 模式
+  installed_path: string | null;     // 已安装位置(install=升级默认路径,uninstall=卸载目标)
+  installed_version: string | null;  // 已安装版本(有值表示本次为升级)
   payload_size_mb: number;            // 主程序大小(MB),用于提示
   is_admin: boolean;
 }

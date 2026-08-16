@@ -28,11 +28,7 @@ fn get_install_context(app: tauri::AppHandle) -> InstallContext {
         "install"
     };
 
-    let (installed_path, installed_version) = if mode == "uninstall" {
-        install::read_install_info().unwrap_or((None, None))
-    } else {
-        (None, None)
-    };
+    let (installed_path, installed_version) = install::read_install_info().unwrap_or((None, None));
 
     let _ = app;
 
@@ -91,8 +87,21 @@ async fn pick_install_dir(app: tauri::AppHandle) -> Option<String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // 若非管理员 → 用 runas 重新启动并退出当前进程
-    if !elevate::is_elevated() {
+    // 自动更新模式:tauri updater 以 `/P /UPDATE …` 启动本安装器并已退出旧应用,
+    // 跳过向导直接静默升级(沿用已装路径与快捷方式,装完启动新版)。
+    // 静默失败时回落到向导模式,用户可手动完成。
+    if install::is_update_launch() {
+        if !elevate::is_elevated() {
+            // runas 提权会透传全部参数,/UPDATE 不丢失
+            elevate::relaunch_as_admin();
+            return;
+        }
+        match install::silent_update() {
+            Ok(()) => std::process::exit(0),
+            Err(e) => eprintln!("silent update failed, fallback to wizard: {e}"),
+        }
+    } else if !elevate::is_elevated() {
+        // 若非管理员 → 用 runas 重新启动并退出当前进程
         elevate::relaunch_as_admin();
         return;
     }

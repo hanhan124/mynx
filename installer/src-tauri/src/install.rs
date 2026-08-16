@@ -228,6 +228,45 @@ pub fn is_mynx_running() -> bool {
         .unwrap_or(false)
 }
 
+/// 等待 mynx.exe 全部退出(轮询 tasklist),超时返回 false
+fn wait_mynx_exit(timeout_ms: u64) -> bool {
+    let start = std::time::Instant::now();
+    loop {
+        if !is_mynx_running() {
+            return true;
+        }
+        if start.elapsed().as_millis() as u64 >= timeout_ms {
+            return !is_mynx_running();
+        }
+        std::thread::sleep(std::time::Duration::from_millis(200));
+    }
+}
+
+/// 关闭正在运行的 Mynx(升级/重装场景):
+/// 先发 WM_CLOSE 优雅关闭(等同用户点 ×),等待最多 6 秒;
+/// 仍存活则 taskkill /F 强制结束。更新流程中旧进程由 updater 触发退出,
+/// 这里同时兜底「尚未退净」与「用户手动双开」两种竞态。
+fn stop_mynx_processes() -> Result<(), String> {
+    if !is_mynx_running() {
+        return Ok(());
+    }
+    let _ = Command::new("taskkill")
+        .args(["/IM", "mynx.exe"])
+        .creation_flags(CREATE_NO_WINDOW)
+        .output();
+    if wait_mynx_exit(6000) {
+        return Ok(());
+    }
+    let _ = Command::new("taskkill")
+        .args(["/F", "/IM", "mynx.exe"])
+        .creation_flags(CREATE_NO_WINDOW)
+        .output();
+    if wait_mynx_exit(4000) {
+        return Ok(());
+    }
+    Err("无法关闭正在运行的 Mynx,请手动退出后重试".into())
+}
+
 /// 校验安装路径合法性:非空、绝对路径、父目录可写
 fn validate_install_path(path: &str) -> Result<PathBuf, String> {
     let trimmed = path.trim();
@@ -270,6 +309,8 @@ fn copy_payload(
     fs::copy(src, &dst_exe).map_err(|e| format!("复制 mynx.exe 失败: {e}"))?;
 
     on_progress(25, "正在安装分析引擎…");
+    // 先清掉旧版 r/ 目录,避免升级后残留已删除/改名的脚本
+    let _ = fs::remove_dir_all(dst_dir.join("r"));
     for (rel, bytes) in R_RESOURCES {
         let dst = dst_dir.join(rel.replace('/', std::path::MAIN_SEPARATOR_STR));
         if let Some(parent) = dst.parent() {
@@ -288,25 +329,17 @@ fn copy_payload(
     Ok(dst_exe)
 }
 
-pub fn perform_install(app: &AppHandle, opts: InstallOptions) -> Result<InstallResult, String> {
-    // 1. 前置检查
-    if is_mynx_running() {
-        return Err("Mynx 正在运行,请先关闭程序后再安装".to_string());
-    }
+/// 安装核心(与 UI 无关,静默升级复用同一逻辑)
+fn do_install(
+    opts: &InstallOptions,
+    emit: &dyn Fn(&str, &str, u8),
+) -> Result<InstallResult, String> {
+    // 1. 关闭正在运行的 Mynx(升级场景:旧进程可能尚未退净)
+    emit("preparing", "正在关闭正在运行的 Mynx…", 2);
+    stop_mynx_processes()?;
     let install_dir = validate_install_path(&opts.install_path)?;
 
-    let emit = |stage: &str, msg: &str, pct: u8| {
-        let _ = app.emit(
-            "install-progress",
-            InstallProgress {
-                stage: stage.into(),
-                message: msg.into(),
-                percent: pct,
-            },
-        );
-    };
-
-    emit("preparing", "正在准备…", 2);
+    emit("preparing", "正在准备…", 5);
     let payload_src = extract_payload_to_temp()?;
     let dst_exe = copy_payload(&payload_src, &install_dir, &|p, m| emit("copy", m, p))?;
 
@@ -375,6 +408,71 @@ pub fn perform_install(app: &AppHandle, opts: InstallOptions) -> Result<InstallR
     })
 }
 
+/// UI 模式安装:进度事件推送到安装器窗口
+pub fn perform_install(app: &AppHandle, opts: InstallOptions) -> Result<InstallResult, String> {
+    do_install(&opts, &|stage, msg, pct| {
+        let _ = app.emit(
+            "install-progress",
+            InstallProgress {
+                stage: stage.into(),
+                message: msg.into(),
+                percent: pct,
+            },
+        );
+    })
+}
+
+// ────────────────────────────────────────────────────────────
+// 自动更新(tauri updater 以 /UPDATE 启动本安装器)
+// ────────────────────────────────────────────────────────────
+
+/// 是否为更新启动:tauri updater 在 Windows 上以 NSIS 兼容参数启动
+/// (默认 passive 模式,形如 `/P /UPDATE /ARGS …`),这里识别其中任意一个。
+pub fn is_update_launch() -> bool {
+    std::env::args().skip(1).any(|a| {
+        let a = a.trim().to_lowercase();
+        a == "/update" || a == "--update" || a == "/p"
+    })
+}
+
+/// 静默升级:沿用已安装路径与快捷方式,装完自动启动新版。
+/// 没有历史安装信息时按默认路径全新安装。
+pub fn silent_update() -> Result<(), String> {
+    let (installed_path, _installed_version) = read_install_info().unwrap_or((None, None));
+    let dir = installed_path
+        .filter(|p| Path::new(p).exists())
+        .unwrap_or_else(|| {
+            let program_files =
+                std::env::var("ProgramFiles").unwrap_or_else(|_| r"C:\Program Files".to_string());
+            format!(r"{}\Mynx", program_files)
+        });
+    // 快捷方式沿用现状:之前创建过就保持,没创建过就不新增
+    let desktop = dirs::desktop_dir()
+        .map(|d| d.join("Mynx.lnk").exists())
+        .unwrap_or(true);
+    let start_menu = dirs::data_dir()
+        .map(|d| {
+            d.join("Microsoft")
+                .join("Windows")
+                .join("Start Menu")
+                .join("Programs")
+                .join("Mynx")
+                .join("Mynx.lnk")
+                .exists()
+        })
+        .unwrap_or(true);
+    do_install(
+        &InstallOptions {
+            install_path: dir,
+            create_desktop_icon: desktop,
+            create_start_menu: start_menu,
+            launch_after: true,
+        },
+        &|_, _, _| {},
+    )?;
+    Ok(())
+}
+
 // ────────────────────────────────────────────────────────────
 // 卸载
 // ────────────────────────────────────────────────────────────
@@ -398,10 +496,8 @@ pub fn read_install_info() -> Result<(Option<String>, Option<String>), ()> {
 }
 
 pub fn perform_uninstall(app: &AppHandle) -> Result<(), String> {
-    // 卸载前同样检查 mynx.exe 是否在跑
-    if is_mynx_running() {
-        return Err("Mynx 正在运行,请先关闭程序后再卸载".to_string());
-    }
+    // 卸载前自动关闭正在运行的 Mynx(与安装同一套兜底逻辑)
+    stop_mynx_processes()?;
 
     let emit = |msg: &str, pct: u8| {
         let _ = app.emit(
