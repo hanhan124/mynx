@@ -32,7 +32,10 @@ export default function Home() {
                 <Icon size={18} color="white" stroke={1.75} />
               </div>
               <div className="tool-card-body">
-                <span className="tool-card-title">{tool.title}</span>
+                <span className="tool-card-title">
+                  {tool.title}
+                  {tool.badge && <em className="tool-card-badge">{tool.badge}</em>}
+                </span>
                 <span className="tool-card-desc">{tool.description}</span>
               </div>
               <IconArrowBadgeRight size={14} stroke={1.75} className="tool-card-arrow" />

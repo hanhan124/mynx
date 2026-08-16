@@ -8,10 +8,10 @@ import { IconHomeFilled, IconWorldFilled, IconPaletteFilled, IconInfoCircleFille
 import { tools } from "@/lib/tools";
 
 const navItems = [
-  { icon: IconHomeFilled, label: "主页", path: "/" },
+  { icon: IconHomeFilled, label: "主页", path: "/", badge: undefined },
   ...tools
     .filter((t) => t.showInSidebar)
-    .map((t) => ({ icon: t.icon, label: t.navLabel, path: t.path })),
+    .map((t) => ({ icon: t.icon, label: t.navLabel, path: t.path, badge: t.badge })),
 ];
 
 export default function Sidebar() {
@@ -33,9 +33,10 @@ export default function Sidebar() {
                 key={item.path}
                 className={`sidebar-btn ${active ? "sidebar-btn--active" : ""}`}
                 onClick={() => navigate(item.path)}
-                title={item.label}
+                title={item.badge ? `${item.label}（测试版）` : item.label}
               >
                 <Icon size={16} stroke={2} />
+                {item.badge && <span className="sidebar-btn-dot" aria-label="测试版" />}
               </button>
             );
           })}

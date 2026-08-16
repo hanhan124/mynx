@@ -157,6 +157,19 @@
   color: var(--accent);
 }
 
+/* 测试版小圆点(右上角) */
+.sidebar-btn-dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 0 2px var(--bg-primary);
+  pointer-events: none;
+}
+
 /* 活跃指示器：Fluent 2 药丸形竖条 */
 .sidebar-btn--active::after {
   content: "";
@@ -219,6 +232,9 @@
   color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .panel-title p {

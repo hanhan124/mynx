@@ -14,9 +14,7 @@ pub fn is_elevated() -> bool {
     match output {
         Ok(out) => {
             let s = String::from_utf8_lossy(&out.stdout);
-            s.contains("S-1-16-12288")
-                || s.contains("High Mandatory Level")
-                || s.contains("已启用")
+            s.contains("S-1-16-12288") || s.contains("High Mandatory Level") || s.contains("已启用")
         }
         Err(_) => false,
     }
@@ -34,7 +32,11 @@ pub fn relaunch_as_admin() {
         Ok(p) => p,
         Err(_) => return,
     };
-    let exe_w: Vec<u16> = exe.as_os_str().encode_wide().chain(std::iter::once(0)).collect();
+    let exe_w: Vec<u16> = exe
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
     let verb_w: Vec<u16> = "runas\0".encode_utf16().collect();
     let params = std::env::args().skip(1).collect::<Vec<_>>().join(" ");
     let params_w: Vec<u16> = params.encode_utf16().chain(std::iter::once(0)).collect();

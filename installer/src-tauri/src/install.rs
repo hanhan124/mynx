@@ -1,6 +1,7 @@
 // install.rs — 实际安装 / 卸载逻辑
 //   install:
 //     - 复制主程序(mynx.exe,从编译期嵌入)到目标目录
+//     - 释放 RNA-seq R 引擎脚本(R_RESOURCES)到主程序旁的 r/ 目录
 //     - 创建开始菜单 + 桌面快捷方式(PowerShell COM)
 //     - 写注册表:卸载项
 //     - 可选:启动应用
@@ -12,6 +13,21 @@
 const MYNX_PAYLOAD: &[u8] = include_bytes!("../resources/mynx.exe");
 /// 主程序大小(字节),提供给前端显示 + 写 EstimatedSize
 pub const PAYLOAD_SIZE: u64 = MYNX_PAYLOAD.len() as u64;
+
+/// RNA-seq R 引擎脚本(运行时按 resourceDir()/r/... 解析,安装时释放到主程序旁)。
+/// 由 scripts/sync-installer-payload.cjs 同步并校验清单一致性 —— r/ 下新增
+/// 脚本后必须同步登记到这里,否则同步脚本会让构建失败。
+const R_RESOURCES: &[(&str, &[u8])] = &[
+    ("r/runner.R", include_bytes!("../resources/r/runner.R")),
+    (
+        "r/modules/enrich.R",
+        include_bytes!("../resources/r/modules/enrich.R"),
+    ),
+    (
+        "r/modules/gsea.R",
+        include_bytes!("../resources/r/modules/gsea.R"),
+    ),
+];
 
 use std::fs;
 use std::io::Write;
@@ -28,7 +44,13 @@ const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 /// 静默执行 PowerShell(无 CMD 弹窗)
 fn silent_powershell(script: &str) -> Result<std::process::Output, String> {
     Command::new("powershell")
-        .args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script])
+        .args([
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            script,
+        ])
         .creation_flags(CREATE_NO_WINDOW)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::piped())
@@ -65,7 +87,8 @@ const UNINSTALL_KEY: &str = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstal
 fn extract_payload_to_temp() -> Result<PathBuf, String> {
     let temp = std::env::temp_dir().join("mynx-installer-payload.exe");
     let mut f = fs::File::create(&temp).map_err(|e| format!("创建临时文件失败: {e}"))?;
-    f.write_all(MYNX_PAYLOAD).map_err(|e| format!("写入 payload 失败: {e}"))?;
+    f.write_all(MYNX_PAYLOAD)
+        .map_err(|e| format!("写入 payload 失败: {e}"))?;
     f.sync_all().map_err(|e| e.to_string())?;
     Ok(temp)
 }
@@ -125,10 +148,7 @@ fn write_registry(install_path: &str, exe_path: &str, version: &str) -> Result<(
             let _ = key.set_value("NoModify", &1u32);
             let _ = key.set_value("NoRepair", &1u32);
             // 让"程序和功能"显示正确大小(KB,整除向上取整)
-            let _ = key.set_value(
-                "EstimatedSize",
-                &((PAYLOAD_SIZE + 1023) / 1024),
-            );
+            let _ = key.set_value("EstimatedSize", &((PAYLOAD_SIZE + 1023) / 1024));
             let _ = key.set_value("InstallDate", &chrono_like_today());
         }
         Err(e) => return Err(format!("写卸载项失败: {e}")),
@@ -155,14 +175,31 @@ fn days_to_ymd(mut days: i64) -> (i64, u32, u32) {
     let mut y = 1970;
     loop {
         let dy = if is_leap(y) { 366 } else { 365 };
-        if days < dy { break; }
+        if days < dy {
+            break;
+        }
         days -= dy;
         y += 1;
     }
-    let mdays = [31, 28 + if is_leap(y) { 1 } else { 0 }, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let mdays = [
+        31,
+        28 + if is_leap(y) { 1 } else { 0 },
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ];
     let mut m = 1u32;
     for &dm in &mdays {
-        if days < dm { break; }
+        if days < dm {
+            break;
+        }
         days -= dm;
         m += 1;
     }
@@ -208,10 +245,7 @@ fn validate_install_path(path: &str) -> Result<PathBuf, String> {
     }
     let parent = p.parent().ok_or("无法解析父目录".to_string())?;
     if !parent.exists() {
-        return Err(format!(
-            "父目录不存在,请先创建:\n{}",
-            parent.display()
-        ));
+        return Err(format!("父目录不存在,请先创建:\n{}", parent.display()));
     }
     // 写测试文件验证可写
     let test_file = parent.join(".mynx_write_test");
@@ -234,6 +268,15 @@ fn copy_payload(
     on_progress(15, "正在复制主程序…");
     let dst_exe = dst_dir.join("mynx.exe");
     fs::copy(src, &dst_exe).map_err(|e| format!("复制 mynx.exe 失败: {e}"))?;
+
+    on_progress(25, "正在安装分析引擎…");
+    for (rel, bytes) in R_RESOURCES {
+        let dst = dst_dir.join(rel.replace('/', std::path::MAIN_SEPARATOR_STR));
+        if let Some(parent) = dst.parent() {
+            fs::create_dir_all(parent).map_err(|e| format!("创建目录失败: {e}"))?;
+        }
+        fs::write(&dst, bytes).map_err(|e| format!("写入 {rel} 失败: {e}"))?;
+    }
 
     on_progress(35, "正在安装卸载程序…");
     let self_exe = std::env::current_exe().map_err(|e| format!("定位自身失败: {e}"))?;
@@ -272,12 +315,23 @@ pub fn perform_install(app: &AppHandle, opts: InstallOptions) -> Result<InstallR
     emit("shortcuts", "正在创建快捷方式…", 60);
     if opts.create_start_menu {
         let start_menu = dirs::data_dir()
-            .map(|p| p.join("Microsoft").join("Windows").join("Start Menu").join("Programs"))
+            .map(|p| {
+                p.join("Microsoft")
+                    .join("Windows")
+                    .join("Start Menu")
+                    .join("Programs")
+            })
             .ok_or_else(|| "找不到开始菜单目录".to_string())?;
         let sm_dir = start_menu.join("Mynx");
         fs::create_dir_all(&sm_dir).map_err(|e| format!("创建开始菜单目录失败: {e}"))?;
         let sm_lnk = sm_dir.join("Mynx.lnk");
-        create_shortcut(&exe_str, &sm_lnk.to_string_lossy(), &install_dir.to_string_lossy(), &exe_str, None)?;
+        create_shortcut(
+            &exe_str,
+            &sm_lnk.to_string_lossy(),
+            &install_dir.to_string_lossy(),
+            &exe_str,
+            None,
+        )?;
         let uninst_lnk = sm_dir.join("卸载 Mynx.lnk");
         let uninst_exe = install_dir.join("Uninst.exe");
         create_shortcut(
@@ -291,7 +345,13 @@ pub fn perform_install(app: &AppHandle, opts: InstallOptions) -> Result<InstallR
     if opts.create_desktop_icon {
         let desktop = dirs::desktop_dir().ok_or_else(|| "找不到桌面目录".to_string())?;
         let dt_lnk = desktop.join("Mynx.lnk");
-        create_shortcut(&exe_str, &dt_lnk.to_string_lossy(), &install_dir.to_string_lossy(), &exe_str, None)?;
+        create_shortcut(
+            &exe_str,
+            &dt_lnk.to_string_lossy(),
+            &install_dir.to_string_lossy(),
+            &exe_str,
+            None,
+        )?;
     }
 
     emit("registry", "正在写入注册表…", 85);
@@ -331,7 +391,10 @@ pub fn read_install_info() -> Result<(Option<String>, Option<String>), ()> {
 
     let path: String = key.get_value("InstallLocation").unwrap_or_default();
     let ver: String = key.get_value("DisplayVersion").unwrap_or_default();
-    Ok((Some(path).filter(|s| !s.is_empty()), Some(ver).filter(|s| !s.is_empty())))
+    Ok((
+        Some(path).filter(|s| !s.is_empty()),
+        Some(ver).filter(|s| !s.is_empty()),
+    ))
 }
 
 pub fn perform_uninstall(app: &AppHandle) -> Result<(), String> {
@@ -369,7 +432,12 @@ pub fn perform_uninstall(app: &AppHandle) -> Result<(), String> {
     }
 
     emit("正在删除开始菜单快捷方式…", 45);
-    if let Some(start_menu) = dirs::data_dir().map(|p| p.join("Microsoft").join("Windows").join("Start Menu").join("Programs")) {
+    if let Some(start_menu) = dirs::data_dir().map(|p| {
+        p.join("Microsoft")
+            .join("Windows")
+            .join("Start Menu")
+            .join("Programs")
+    }) {
         let sm_dir = start_menu.join("Mynx");
         let _ = fs::remove_dir_all(&sm_dir);
     }

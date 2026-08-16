@@ -47,6 +47,9 @@ docs/
 # ZCode (local agent context)
 .zcode/
 
+# Mimosa (local security scan history)
+.mimosa/
+
 # Mobile platform icons (not used for desktop app)
 src-tauri/icons/android/
 src-tauri/icons/ios/

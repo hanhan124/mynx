@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { IconDna, IconPhotoFilled } from "@tabler/icons-react";
+import { IconDna, IconPhotoFilled, IconMicroscope } from "@tabler/icons-react";
 import { lazy } from "react";
 
 /**
@@ -34,10 +34,13 @@ export interface Tool {
   navLabel: string;
   /** Whether to show in sidebar (default true) */
   showInSidebar: boolean;
+  /** Optional status badge, e.g. "Beta" — shown on home card & page header */
+  badge?: string;
 }
 
 const QpcrPage = lazy(() => import("@/pages/qPCR/QpcrPage"));
 const TiffPage = lazy(() => import("@/pages/tiff/TiffPage"));
+const RnaSeqPage = lazy(() => import("@/pages/rnaseq/RnaSeqPage"));
 
 export const tools: Tool[] = [
   {
@@ -60,6 +63,18 @@ export const tools: Tool[] = [
     icon: IconPhotoFilled,
     component: TiffPage,
     navLabel: "TIFF",
+    showInSidebar: true,
+  },
+  {
+    id: "rnaseq",
+    title: "RNA-seq 分析",
+    description: "差异分析与图表导出",
+    path: "/rnaseq",
+    accent: "#af52de",
+    badge: "Beta",
+    icon: IconMicroscope,
+    component: RnaSeqPage,
+    navLabel: "RNA-seq",
     showInSidebar: true,
   },
 ];
