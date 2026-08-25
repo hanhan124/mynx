@@ -70,7 +70,14 @@ function loadCache(): WeatherInfo | null {
     if (!raw) return null;
     const entry: CacheEntry = JSON.parse(raw);
     if (Date.now() - entry.timestamp > CACHE_DURATION) return null;
-    const { timestamp: _ts, ...weather } = entry;
+    const weather: WeatherInfo = {
+      temperature: entry.temperature,
+      weatherCode: entry.weatherCode,
+      humidity: entry.humidity,
+      windSpeed: entry.windSpeed,
+      city: entry.city,
+      isDay: entry.isDay,
+    };
     return weather;
   } catch {
     return null;
@@ -97,9 +104,55 @@ async function fetchWithTimeout(url: string, ms: number): Promise<Response> {
   }
 }
 
+/** 拼接地址：城市 + 地区，避免重复（如「北京 · 北京」只留城市） */
+function formatLocation(city?: string, region?: string): string {
+  const c = (city ?? "").trim();
+  const r = (region ?? "").trim();
+  const UNKNOWN = "\u672A\u77E5";
+  if (c && r && c !== r) return `${c} · ${r}`;
+  return c || r || UNKNOWN;
+}
+
+/** 反向地理编码：坐标 → 地名（免费、无需 Key、支持 CORS） */
+async function reverseGeocode(lat: number, lon: number): Promise<string | null> {
+  try {
+    const url =
+      `https://api.bigdatacloud.net/data/reverse-geocode-client` +
+      `?latitude=${lat}&longitude=${lon}&localityLanguage=zh`;
+    const resp = await fetchWithTimeout(url, 6000);
+    if (!resp.ok) return null;
+    const d = await resp.json();
+    const city = d.city || d.locality || d.principalSubdivision;
+    if (!city) return null;
+    return formatLocation(city, d.principalSubdivision);
+  } catch {
+    return null;
+  }
+}
+
 /** 多策略 IP 定位 —— 国际 + 国内均可 */
 async function getLocation(): Promise<{ lat: number; lon: number; city: string } | null> {
-  const UNKNOWN = "\u672A\u77E5";
+  // 优先使用系统定位拿到精确坐标，再用反向地理编码得到地名；
+  // 若反向地理编码失败，则回退到 IP 定位（同样能拿到地名）。
+  try {
+    if (typeof navigator !== "undefined" && navigator.geolocation) {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: false,
+          timeout: 3500,
+          maximumAge: 30 * 60 * 1000,
+        });
+      });
+      const name = await reverseGeocode(position.coords.latitude, position.coords.longitude);
+      if (name) {
+        return {
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          city: name,
+        };
+      }
+    }
+  } catch { /* 用户拒绝或系统定位不可用,继续 IP 定位 */ }
 
   // 策略 1: ipwho.is (HTTPS，国际通用，免费无需 Key)
   try {
@@ -107,12 +160,25 @@ async function getLocation(): Promise<{ lat: number; lon: number; city: string }
     if (resp.ok) {
       const d = await resp.json();
       if (d.success && d.latitude && d.longitude) {
-        return { lat: d.latitude, lon: d.longitude, city: d.city || d.region || UNKNOWN };
+        return { lat: d.latitude, lon: d.longitude, city: formatLocation(d.city, d.region) };
       }
     }
   } catch { /* continue */ }
 
-  // 策略 2: ip-api.com (HTTP only for free tier，国内可用)
+  // 策略 2:HTTPS IP 定位,避免 HTTP 服务被 WebView/CSP 拦截
+  try {
+    const resp = await fetchWithTimeout("https://ipapi.co/json/", 6000);
+    if (resp.ok) {
+      const d = await resp.json();
+      const lat = Number(d.latitude);
+      const lon = Number(d.longitude);
+      if (Number.isFinite(lat) && Number.isFinite(lon)) {
+        return { lat, lon, city: formatLocation(d.city, d.region) };
+      }
+    }
+  } catch { /* continue */ }
+
+  // 策略 3: ip-api.com (HTTP only for free tier，作为最后回退)
   try {
     const resp = await fetchWithTimeout(
       "http://ip-api.com/json/?fields=status,lat,lon,city,regionName",
@@ -121,7 +187,7 @@ async function getLocation(): Promise<{ lat: number; lon: number; city: string }
     if (resp.ok) {
       const d = await resp.json();
       if (d.status === "success" && d.lat && d.lon) {
-        return { lat: d.lat, lon: d.lon, city: d.city || d.regionName || UNKNOWN };
+        return { lat: d.lat, lon: d.lon, city: formatLocation(d.city, d.regionName) };
       }
     }
   } catch { /* continue */ }
@@ -160,6 +226,14 @@ export default function WeatherWidget() {
   const [weather, setWeather] = useState<WeatherInfo | null>(loadCache);
 
   const loadWeather = useCallback(async (): Promise<WeatherInfo | null> => {
+    // 桌面端优先从 Rust 请求，绕过 WebView 的 CORS/CSP 与定位权限差异。
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      const result = await invoke<WeatherInfo>("weather_by_ip");
+      if (result && Number.isFinite(result.temperature)) return result;
+    } catch {
+      // 旧版本桌面壳或服务暂时不可用时，继续使用前端多策略回退。
+    }
     const loc = await getLocation();
     if (!loc) return null;
     const w = await getWeather(loc.lat, loc.lon);
@@ -219,8 +293,13 @@ export default function WeatherWidget() {
 
   if (status === "error" || !weather) {
     return (
-      <button className="weather-widget weather-widget--error" onClick={handleRetry}>
-        <span>{"\u5929\u6C14\u83B7\u53D6\u5931\u8D25\uFF0C\u70B9\u51FB\u91CD\u8BD5"}</span>
+      <button
+        className="weather-widget weather-widget--error"
+        onClick={handleRetry}
+        title="定位服务或天气数据请求失败，请检查网络后重试"
+      >
+        <span>天气暂不可用</span>
+        <small>检查网络后重试</small>
       </button>
     );
   }

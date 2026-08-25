@@ -12,7 +12,7 @@ import React, {
   useState,
 } from "react";
 import { showToast } from "@/components/Toast";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open, save } from "@tauri-apps/plugin-dialog";
 import { defaultConfig, defaultPlotOptions, deepMerge } from "@/lib/rnaseq/defaults";
 import { importCounts as importCountsApi } from "@/lib/rnaseq/matrix";
 import {
@@ -104,6 +104,12 @@ export interface RnaSeqStore {
     opts?: { mergeParams?: boolean; quiet?: boolean },
   ) => Promise<boolean>;
   useAutoDetect: () => void;
+  /** 保存当前实验设计/参数配置到 JSON(剔除运行态),走 Tauri 原生对话框选路径 */
+  saveConfig: (
+    savePath?: string,
+  ) => Promise<{ saved: boolean; path?: string; error?: string }>;
+  /** 从 config.json / params.json 加载配置(深合并还原),可选导入 data_file / 定位结果 */
+  loadConfig: (loadPath: string) => Promise<{ ok: boolean; error?: string }>;
 }
 
 const LOG_CAP = 2000;
@@ -379,23 +385,33 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
       setPlotStatus("running");
       setCurrentPlot(plotType);
       pushPlotLog(plotType, "info", `──── 开始导出 ${plotType} ────`);
-      const handle = await runR(cfg, {
-        onLog: (level, msg) => pushPlotLog(plotType, level, msg),
-      });
-      plotHandleRef.current = handle;
-      setPlotOutputDir(handle.outputDir);
-      const r = await handle.promise;
-      setPlotStatus(r.status);
-      pushPlotLog(
-        plotType,
-        r.status === "done" ? "success" : r.status === "cancelled" ? "warning" : "error",
-        r.status === "done"
-          ? `[OK] ${plotType} 导出完成`
-          : r.status === "cancelled"
-            ? `[取消] ${plotType} 已取消`
-            : `[失败] ${plotType} 导出失败(退出码 ${r.exitCode})`,
-      );
-      return r;
+      try {
+        const handle = await runR(cfg, {
+          onLog: (level, msg) => pushPlotLog(plotType, level, msg),
+        });
+        plotHandleRef.current = handle;
+        setPlotOutputDir(handle.outputDir);
+        const r = await handle.promise;
+        setPlotStatus(r.status);
+        pushPlotLog(
+          plotType,
+          r.status === "done" ? "success" : r.status === "cancelled" ? "warning" : "error",
+          r.status === "done"
+            ? `[OK] ${plotType} 导出完成`
+            : r.status === "cancelled"
+              ? `[取消] ${plotType} 已取消`
+              : `[失败] ${plotType} 导出失败(退出码 ${r.exitCode})`,
+        );
+        return r;
+      } catch (e) {
+        setPlotStatus("failed");
+        pushPlotLog(
+          plotType,
+          "error",
+          `[失败] ${plotType} 启动失败: ${e instanceof Error ? e.message : String(e)}`,
+        );
+        return null;
+      }
     },
     [pushPlotLog],
   );
@@ -606,6 +622,98 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
     prevPlotStatus.current = plotStatus;
   }, [plotStatus, checkResult]);
 
+  // ── 配置存取(对齐 publication_pipeline_wails 的保存/加载配置) ──
+  const saveConfig = useCallback(
+    async (
+      savePath?: string,
+    ): Promise<{ saved: boolean; path?: string; error?: string }> => {
+      let path = savePath;
+      if (!path) {
+        let defaultPath = "rnaseq_config.json";
+        try {
+          const { homeDir } = await import("@tauri-apps/api/path");
+          const home = await homeDir();
+          const { joinPath } = await import("@/lib/rnaseq/io");
+          defaultPath = joinPath(home, "rnaseq_config.json");
+        } catch {
+          /* 退回裸文件名,对话框会用各自默认目录 */
+        }
+        const r = await save({
+          defaultPath,
+          filters: [{ name: "JSON 配置文件", extensions: ["json"] }],
+        });
+        if (typeof r !== "string" || !r) return { saved: false, error: "未选择保存路径" };
+        path = r;
+      }
+      // 只序列化非运行态字段(剔除 steps / preview_mode 等运行态),
+      // 字段集对齐 runner.R 的 params.json 契约,便于被「加载结果」复用。
+      const c = configRef.current;
+      const serializable = {
+        data_file: c.data_file,
+        output_dir: c.output_dir,
+        run_name: c.run_name,
+        groups: c.groups,
+        group_display: c.group_display,
+        group_order: c.group_order,
+        selected_groups: c.selected_groups,
+        comparisons: c.comparisons,
+        batches: c.batches,
+        params: c.params,
+        marker_genes: c.marker_genes,
+        gene_clusters: c.gene_clusters,
+        excluded_genes: c.excluded_genes,
+        plot_formats: c.plot_formats,
+        size_mode: c.size_mode,
+        plot_options: c.plot_options,
+        font_family: c.font_family,
+      };
+      try {
+        const { writeFile } = await import("@tauri-apps/plugin-fs");
+        await writeFile(path, new TextEncoder().encode(JSON.stringify(serializable, null, 2)));
+        return { saved: true, path };
+      } catch (e) {
+        return { saved: false, path, error: e instanceof Error ? e.message : String(e) };
+      }
+    },
+    [],
+  );
+
+  const loadConfig = useCallback(
+    async (loadPath: string): Promise<{ ok: boolean; error?: string }> => {
+      try {
+        const { readTextFile } = await import("@tauri-apps/plugin-fs");
+        const text = await readTextFile(loadPath);
+        const parsed = JSON.parse(text) as Record<string, unknown>;
+        // 先重置为默认,再深合并(防止旧/残缺配置缺字段导致页面崩溃)
+        setConfig(defaultConfig());
+        mergeConfig(parsed);
+        // 若含 data_file,尝试重新导入以便后续重跑;失败仅提示
+        if (typeof parsed.data_file === "string" && parsed.data_file) {
+          try {
+            await doImport(
+              parsed.data_file,
+              typeof parsed.matrix_format === "string"
+                ? parsed.matrix_format
+                : matrixFormat,
+            );
+          } catch {
+            showToast("配置中的数据文件无法导入,请检查路径或重新导入", "info");
+          }
+        }
+        // 来自 params.json 或含 output_dir:静默尝试把同目录标为结果源
+        const pathNorm = loadPath.replace(/\\/g, "/");
+        if (/params\.json$/i.test(pathNorm) || typeof parsed.output_dir === "string") {
+          const runDir = pathNorm.replace(/\/[^/]+$/, "");
+          await loadFromPath(runDir, { mergeParams: false, quiet: true }).catch(() => {});
+        }
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, error: e instanceof Error ? e.message : String(e) };
+      }
+    },
+    [mergeConfig, doImport, matrixFormat, loadFromPath],
+  );
+
   const value = useMemo<RnaSeqStore>(
     () => ({
       config,
@@ -655,6 +763,8 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
       browseAnalysisDir,
       loadFromPath,
       useAutoDetect,
+      saveConfig,
+      loadConfig,
     }),
     [
       config,
@@ -702,6 +812,8 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
       browseAnalysisDir,
       loadFromPath,
       useAutoDetect,
+      saveConfig,
+      loadConfig,
     ],
   );
 

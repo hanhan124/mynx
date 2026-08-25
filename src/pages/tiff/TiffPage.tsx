@@ -65,7 +65,7 @@ export default function TiffPage() {
   const { dropRef, isDragOver } = useDropZone(handleDrop);
 
   return (
-    <div className="page-shell">
+    <div className="page-shell page-shell--wide">
       <LoadingOverlay visible={loading} text={loadingText} progress={progress} />
 
       <div className="panel-header">
@@ -81,38 +81,41 @@ export default function TiffPage() {
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-title">
-          <IconFolderFilled size={14} stroke={1.75} />
-          <span>源文件夹</span>
-        </div>
-        <div className="card-body">
-          <div
-            ref={dropRef}
-            className={`file-display${isDragOver ? ' file-display--drag' : ''}`}
-          >
-            <div className="file-icon" style={{ background: '#34c759' }}>
-              <IconFolderFilled size={20} color="white" stroke={1.75} />
-            </div>
-            <div className="file-info">
-              <div className="file-name">{folder ? folder.name : '未选择文件夹'}</div>
-              <div className="file-path">{folder ? folder.path : '.tif / .tiff 文件目录'}</div>
-            </div>
-            {isDragOver && <span className="drop-hint">释放以导入</span>}
+      {/* 宽屏: 源文件夹 + 转换选项 左右并排; 窄屏自动回退单列堆叠 */}
+      <div className="card-grid card-grid--2">
+        <div className="card">
+          <div className="card-title">
+            <IconFolderFilled size={14} stroke={1.75} />
+            <span>源文件夹</span>
           </div>
-          <button className="btn btn-primary btn-full" onClick={handlePick}>
-            {folder ? '更换文件夹' : '选择文件夹'}
-          </button>
+          <div className="card-body">
+            <div
+              ref={dropRef}
+              className={`file-display${isDragOver ? ' file-display--drag' : ''}`}
+            >
+              <div className="file-icon" style={{ background: '#34c759' }}>
+                <IconFolderFilled size={20} color="white" stroke={1.75} />
+              </div>
+              <div className="file-info">
+                <div className="file-name">{folder ? folder.name : '未选择文件夹'}</div>
+                <div className="file-path">{folder ? folder.path : '.tif / .tiff 文件目录'}</div>
+              </div>
+              {isDragOver && <span className="drop-hint">释放以导入</span>}
+            </div>
+            <button className="btn btn-primary btn-full" onClick={handlePick}>
+              {folder ? '更换文件夹' : '选择文件夹'}
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="card">
-        <div className="card-title">
-          <IconAdjustmentsFilled size={14} stroke={1.75} />
-          <span>转换选项</span>
-        </div>
-        <div className="card-body">
-          <ConvertOptions onConvert={handleConvert} loading={loading} disabled={!folder} />
+        <div className="card">
+          <div className="card-title">
+            <IconAdjustmentsFilled size={14} stroke={1.75} />
+            <span>转换选项</span>
+          </div>
+          <div className="card-body">
+            <ConvertOptions onConvert={handleConvert} loading={loading} disabled={!folder} />
+          </div>
         </div>
       </div>
     </div>

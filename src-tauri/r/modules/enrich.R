@@ -270,3 +270,93 @@ run_enrich <- function(deg_env) {
 
   invisible(all_res)
 }
+
+# 方向性 ORA:上调/下调分别检验，避免把相反方向的基因合并后误读为同一机制。
+# runner.R 优先调用此函数；保留上面的旧函数作为旧缓存/兼容回退。
+run_enrich_directional <- function(deg_env) {
+  if (!("enrich" %in% steps)) return(invisible(NULL))
+  if (!requireNamespace("clusterProfiler", quietly = TRUE)) {
+    message("[WARN] 缺少 clusterProfiler,跳过方向性富集")
+    return(invisible(NULL))
+  }
+  suppressPackageStartupMessages({ library(clusterProfiler); library(enrichplot) })
+  o <- po$enrich
+  organism <- o$organism %||% "human"
+  databases <- o$databases %||% c("GO", "KEGG")
+  ontologies <- o$ontologies %||% c("BP", "CC", "MF")
+  p_cut <- as.numeric(o$pvalue_cutoff %||% 0.05)
+  q_cut <- as.numeric(o$qvalue_cutoff %||% 0.2)
+  top_n <- as.numeric(o$top_n %||% 20)
+  if (!ensure_org_pkg(organism)) {
+    message("[WARN] 无法加载物种注释包(", organism, "),跳过方向性富集")
+    return(invisible(NULL))
+  }
+  org_pkg <- ORG_PKG_MAP[[organism]]
+  suppressPackageStartupMessages(library(org_pkg, character.only = TRUE))
+  org_db <- get(org_pkg)
+  kegg_code <- KEGG_ORG_MAP[[organism]] %||% "hsa"
+  cmps <- intersect(plot_cnames("enrich"), names(deg_env$results_list))
+  if (length(cmps) == 0) return(invisible(NULL))
+
+  for (nm in cmps) {
+    res <- deg_env$results_list[[nm]]
+    tested <- unique(res$GeneSymbol[!is.na(res$GeneSymbol)])
+    universe <- tryCatch(unique(bitr(tested, fromType="SYMBOL", toType="ENTREZID", OrgDb=org_db)$ENTREZID), error=function(e) NULL)
+    if (is.null(universe) || length(universe) < 10) {
+      message("[WARN] ", nm, " 背景基因映射不足,跳过方向性富集")
+      next
+    }
+    all_res <- list()
+    for (direction in c("Up", "Down")) {
+      reg <- if (direction == "Up") "up" else "down"
+      symbols <- unique(res$GeneSymbol[res$regulation == reg & !is.na(res$GeneSymbol)])
+      if (length(symbols) < 5) {
+        message("[INFO] ", nm, " ", direction, " DEG 少于 5 个,跳过该方向")
+        next
+      }
+      ids <- tryCatch(unique(bitr(symbols, fromType="SYMBOL", toType="ENTREZID", OrgDb=org_db)$ENTREZID), error=function(e) NULL)
+      if (is.null(ids) || length(ids) < 3) next
+      direction_res <- list()
+      if ("GO" %in% databases) for (ont in ontologies) {
+        ego <- tryCatch(enrichGO(ids, universe=universe, OrgDb=org_db, ont=ont,
+                                 pvalueCutoff=p_cut, qvalueCutoff=q_cut, readable=TRUE), error=function(e) NULL)
+        if (!is.null(ego) && nrow(as.data.frame(ego)) > 0) {
+          df <- as.data.frame(ego); df$Database <- paste0("GO_", ont); direction_res[[paste0("GO_", ont)]] <- df
+        }
+      }
+      if ("KEGG" %in% databases) {
+        ekk <- tryCatch(enrichKEGG(ids, universe=universe, organism=kegg_code,
+                                   pvalueCutoff=p_cut, qvalueCutoff=q_cut), error=function(e) NULL)
+        if (!is.null(ekk) && nrow(as.data.frame(ekk)) > 0) {
+          ekk <- tryCatch(setReadable(ekk, OrgDb=org_db), error=function(e) ekk)
+          df <- as.data.frame(ekk); df$Database <- "KEGG"; direction_res[["KEGG"]] <- df
+        }
+      }
+      if (length(direction_res) == 0) next
+      dir_df <- bind_rows(direction_res, .id="Source")
+      dir_df$Direction <- direction
+      dir_df$Comparison <- nm
+      all_res[[direction]] <- dir_df
+      for (db in unique(dir_df$Database)) {
+        out <- dir_df[dir_df$Database == db, , drop=FALSE]
+        safe_db <- gsub("[^A-Za-z0-9_-]", "_", db)
+        safe_nm <- gsub("[^A-Za-z0-9_-]", "_", nm)
+        write.csv(out, file.path(output_dir, paste0("Enrichment_", direction, "_", safe_db, "_", safe_nm, ".csv")), row.names=FALSE)
+      }
+    }
+    if (length(all_res) == 0) next
+    plot_df <- bind_rows(all_res) %>%
+      mutate(Description=substr(Description, 1, 65), neg_log10_padj=-log10(pmax(p.adjust, 1e-300))) %>%
+      group_by(Direction, Database) %>% slice_min(p.adjust, n=top_n) %>% ungroup()
+    plot_df$Description <- factor(plot_df$Description, levels=rev(unique(plot_df$Description)))
+    pdir <- ggplot(plot_df, aes(x=Count, y=Description, color=Direction, size=neg_log10_padj)) +
+      geom_point(alpha=0.85) + scale_color_manual(values=c(Up="#D9485F", Down="#377EB8")) +
+      scale_size_continuous(range=c(2,7)) + labs(title=paste0("Directional ORA: ", nm), x="Gene Count", y="", color="Direction", size="-log10 adjusted P") +
+      build_theme(o)
+    safe_nm <- gsub("[^A-Za-z0-9_-]", "_", nm)
+    sz <- get_size("enrich", o, n_comparisons=length(unique(plot_df$Database)))
+    save_ggplot(pdir, paste0("enrich_direction_", safe_nm), width=sz$w, height=sz$h)
+    message("[OK] directional enrichment 已生成: ", nm)
+  }
+  invisible(NULL)
+}

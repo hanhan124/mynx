@@ -14,7 +14,9 @@ async function getStore(): Promise<Store> {
 function normalizeChartColor(value: unknown): string {
   if (typeof value !== "string") return "#3C9FDF";
   return /^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(value.trim())
-    ? (value.trim().startsWith("#") ? value.trim() : `#${value.trim()}`)
+    ? value.trim().startsWith("#")
+      ? value.trim()
+      : `#${value.trim()}`
     : "#3C9FDF";
 }
 
@@ -51,4 +53,15 @@ export async function saveChartColor(color: string): Promise<void> {
 export async function loadChartColor(): Promise<string> {
   const store = await getStore();
   return normalizeChartColor(await store.get<string>("chartColor"));
+}
+
+export async function loadAiSearchApiKey(): Promise<string> {
+  const store = await getStore();
+  return (await store.get<string>("aiSearchApiKey"))?.trim() ?? "";
+}
+
+export async function saveAiSearchApiKey(value: string): Promise<void> {
+  const store = await getStore();
+  await store.set("aiSearchApiKey", value.trim());
+  await store.save();
 }

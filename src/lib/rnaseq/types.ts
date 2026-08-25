@@ -180,6 +180,8 @@ export interface EnrichOptions extends CommonPlotOptions {
   organism?: string;
   databases?: string[];
   ontologies?: string[];
+  /** 分开检验上调/下调基因，避免方向相反的基因混合解释 */
+  split_direction?: boolean;
   pvalue_cutoff?: number;
   qvalue_cutoff?: number;
   top_n?: number;

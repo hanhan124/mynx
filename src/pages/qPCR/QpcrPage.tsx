@@ -103,7 +103,7 @@ export default function QpcrPage() {
   );
 
   return (
-    <div className="page-shell">
+    <div className="page-shell page-shell--wide">
       <LoadingOverlay visible={loading} text={loadingText} progress={progress} />
 
       <div className="panel-header">
@@ -146,40 +146,42 @@ export default function QpcrPage() {
         </div>
       </div>
 
-      {/* 步骤 1: 转换 — 始终显示 */}
-      <div className="card">
-        <div className="card-title">
-          <span className="step-num">1</span>
-          <span>数据转换</span>
+      {/* 步骤 1 + 2: 宽屏并排(转换 / 计算), 窄屏自动回退单列堆叠 */}
+      <div className="card-grid card-grid--2">
+        {/* 步骤 1: 转换 — 始终显示 */}
+        <div className="card">
+          <div className="card-title">
+            <span className="step-num">1</span>
+            <span>数据转换</span>
+          </div>
+          <div className="card-body">
+            <Transform
+              workbook={file?.workbook ?? null}
+              sheetName={sheetName}
+              onComplete={handleTransformComplete}
+              onProgress={updateProgress}
+              onError={endStage}
+            />
+          </div>
         </div>
-        <div className="card-body">
-          <Transform
-            workbook={file?.workbook ?? null}
-            sheetName={sheetName}
-            onComplete={handleTransformComplete}
-            onProgress={updateProgress}
-            onError={endStage}
-          />
+
+        {/* 步骤 2: 计算 — 始终显示 */}
+        <div className="card">
+          <div className="card-title">
+            <span className="step-num">2</span>
+            <span>qPCR 计算</span>
+          </div>
+          <div className="card-body">
+            <Calculate
+              workbook={file?.workbook ?? null}
+              geneNames={geneNames}
+              onComplete={handleCalculateComplete}
+              onProgress={updateProgress}
+              onError={endStage}
+            />
+          </div>
         </div>
       </div>
-
-      {/* 步骤 2: 计算 — 始终显示 */}
-      <div className="card">
-        <div className="card-title">
-          <span className="step-num">2</span>
-          <span>qPCR 计算</span>
-        </div>
-        <div className="card-body">
-          <Calculate
-            workbook={file?.workbook ?? null}
-            geneNames={geneNames}
-            onComplete={handleCalculateComplete}
-            onProgress={updateProgress}
-            onError={endStage}
-          />
-        </div>
-      </div>
-
 
     </div>
   );

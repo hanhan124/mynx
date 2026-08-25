@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { platform } from "@tauri-apps/plugin-os";
 import { loadConfig, saveAlwaysOnTop } from "@/lib/config";
@@ -11,18 +11,25 @@ interface TitleBarProps {
 
 export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
   const [pinned, setPinned] = useState(false);
-  const appWindow = getCurrentWindow();
-  const isMac = platform() === "macos";
+  const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+  const appWindow = useMemo(
+    () => (isTauri ? getCurrentWindow() : null),
+    [isTauri],
+  );
+  const isMac = useMemo(() => isTauri && platform() === "macos", [isTauri]);
 
   useEffect(() => {
+    if (!appWindow) return;
     loadConfig().then((cfg) => {
       setPinned(cfg.alwaysOnTop);
       appWindow.setAlwaysOnTop(cfg.alwaysOnTop);
     });
   }, [appWindow]);
 
+  if (!appWindow) return null;
+
   return (
-    <div className="title-bar" data-tauri-drag-region>
+    <div className={`title-bar${isMac ? " title-bar--mac" : ""}`} data-tauri-drag-region>
       <div className="title-bar-left">
         <AppMark size={24} className="title-bar-mark" />
         <span className="title-bar-text">{title}</span>

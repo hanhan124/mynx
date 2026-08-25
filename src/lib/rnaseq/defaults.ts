@@ -281,6 +281,7 @@ export function defaultPlotOptions(): PlotOptions {
       organism: "human",
       databases: ["GO", "KEGG"],
       ontologies: ["BP", "CC", "MF"],
+      split_direction: true,
       pvalue_cutoff: 0.05,
       qvalue_cutoff: 0.2,
       top_n: 20,

@@ -5,14 +5,15 @@
  * 进入本页时窗口最大化(保留任务栏的标准最大化,非全屏),离开时恢复进入前状态;
  * 设计体系完全沿用 mynx(Tahoe 令牌 / surface 渐变 / tabler 图标 / spring 动效)。
  */
-import { useEffect, useMemo, useRef, useState } from "react";
-import { LogicalSize, PhysicalPosition } from "@tauri-apps/api/dpi";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useMemo, useState } from "react";
+import { open } from "@tauri-apps/plugin-dialog";
 import {
   IconMicroscope,
   IconFileImport,
   IconFlask,
   IconPalette,
+  IconFolderOpen,
+  IconDeviceFloppy,
 } from "@tabler/icons-react";
 import { showToast } from "@/components/Toast";
 import HelpButton from "@/components/HelpButton";
@@ -51,102 +52,61 @@ function useStepReadiness() {
   }, [st.importData, st.config, st.hasResult, st.successfulImportPath]);
 }
 
+function RnaSeqStatusStrip() {
+  const st = useRnaSeq();
+  const selected = st.config.selected_groups;
+  const sampleCount = selected.reduce(
+    (n, group) => n + (st.config.groups[group]?.length ?? 0),
+    0,
+  );
+  const singleRep = selected.some(
+    (group) => (st.config.groups[group]?.length ?? 0) < 2,
+  );
+  const mode = selected.length < 2
+    ? "待设置"
+    : singleRep
+      ? "单重复 · 探索性"
+      : st.config.params.engine === "edger_qlf"
+        ? "edgeR QL"
+        : st.config.params.engine === "deseq2"
+          ? "DESeq2"
+          : "自动选择";
+  const items = [
+    { label: "Counts", value: st.importData ? `${st.importData.total_genes.toLocaleString()} genes` : "未导入", tone: st.importData ? "ok" : "muted" },
+    { label: "Samples", value: sampleCount ? `${sampleCount} samples` : "未分配", tone: sampleCount ? "ok" : "muted" },
+    { label: "Design", value: selected.length ? `${selected.length} groups` : "未设置", tone: selected.length >= 2 ? "ok" : "muted" },
+    { label: "Contrast", value: st.config.comparisons.length ? `${validComparisonsOf(st.config).length} valid` : "未设置", tone: validComparisonsOf(st.config).length ? "ok" : "muted" },
+  ];
+  return (
+    <div className={`rx-status-strip${singleRep ? " rx-status-strip--exploratory" : ""}`}>
+      <div className="rx-status-mode">
+        <span className="rx-status-pulse" />
+        <span className="rx-status-mode-label">分析模式</span>
+        <strong>{mode}</strong>
+      </div>
+      <div className="rx-status-metrics">
+        {items.map((item) => (
+          <div className="rx-status-metric" key={item.label}>
+            <span>{item.label}</span>
+            <b className={`rx-status-value rx-status-value--${item.tone}`}>{item.value}</b>
+          </div>
+        ))}
+      </div>
+      {singleRep && (
+        <div className="rx-status-note">
+          单重复结果用于内部探索，P 值为近似值，不应作为正式生物学重复推断。
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RnaSeqInner() {
   const [step, setStep] = useState<StepId>("import");
   const [betaNoteOpen, setBetaNoteOpen] = useState(true);
-  // 进入呈现:窗口最大化落定后内容统一淡入,避免窗口缩放与内容重排两段动画叠加掉帧
-  const [revealed, setRevealed] = useState(false);
-  const [enterDone, setEnterDone] = useState(false);
   const st = useRnaSeq();
   const readiness = useStepReadiness();
   const stepIndex = STEPS.findIndex((s) => s.id === step);
-
-  // ── 窗口最大化/恢复 ──
-  // 进入 → 最大化(标准最大化,保留任务栏;macOS 为 zoom 填满屏幕);
-  // 离开 → 恢复进入前的尺寸与位置。
-  // 注:Windows 无装饰窗口有两个 tao 怪癖 —— ① unmaximize 不还原 bounds,
-  // 需显式 setSize/setPosition;② 最大化状态下 set_min_size 会直接破坏最大化
-  // 标志。因此这里完全不动最小尺寸约束,只做最大化/还原。
-  const enterState = useRef<{
-    wasMax: boolean;
-    norm?: { w: number; h: number; x: number; y: number };
-  } | null>(null);
-  const restoreTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    const win = getCurrentWindow();
-    // 卸载后立即重挂载(dev StrictMode / HMR):取消已排定的恢复,避免最大化闪烁
-    if (restoreTimer.current) {
-      clearTimeout(restoreTimer.current);
-      restoreTimer.current = null;
-    }
-    void (async () => {
-      let delay = 0;
-      try {
-        if (enterState.current) {
-          // 重挂载:沿用首次进入的处理结果(窗口已最大化,直接呈现)
-        } else {
-          const wasMax = await win.isMaximized();
-          if (wasMax) {
-            enterState.current = { wasMax: true };
-          } else {
-            const scale = await win.scaleFactor();
-            const inner = await win.innerSize();
-            const pos = await win.outerPosition();
-            enterState.current = {
-              wasMax: false,
-              norm: {
-                w: inner.width / scale,
-                h: inner.height / scale,
-                x: pos.x,
-                y: pos.y,
-              },
-            };
-            await win.maximize().catch(() => {});
-            // 等最大化过渡与 WebView 重排完成后再呈现内容(内容此时 opacity:0,
-            // WebView 无需在缩放过程中绘制重 DOM,窗口动画因此不掉帧)
-            delay = 200;
-          }
-        }
-      } catch {
-        /* 非 Tauri 环境(纯浏览器开发)忽略 */
-      }
-      revealTimer.current = setTimeout(() => {
-        revealTimer.current = null;
-        setRevealed(true);
-      }, delay);
-    })();
-    return () => {
-      if (revealTimer.current) {
-        clearTimeout(revealTimer.current);
-        revealTimer.current = null;
-      }
-      const st = enterState.current;
-      // 恢复延迟一小拍:若组件随即重挂载,上面的挂载逻辑会取消它
-      restoreTimer.current = setTimeout(() => {
-        restoreTimer.current = null;
-        void (async () => {
-          try {
-            const curMax = await win.isMaximized();
-            if (curMax && st && !st.wasMax && st.norm) {
-              // 进入前是普通窗口 → 还原进入前的尺寸与位置
-              await win.unmaximize().catch(() => {});
-              await win
-                .setSize(new LogicalSize(st.norm.w, st.norm.h))
-                .catch(() => {});
-              await win
-                .setPosition(new PhysicalPosition(st.norm.x, st.norm.y))
-                .catch(() => {});
-            }
-            // 其余情形(进入前已最大化 / 页内手动还原过)不干预
-            enterState.current = null; // 真正离开,复位供下次进入
-          } catch {
-            /* ignore */
-          }
-        })();
-      }, 120);
-    };
-  }, []);
 
   const goStep = (s: StepId) => {
     if (s === "analysis" && !readiness.importReady && !st.hasResult) {
@@ -156,6 +116,36 @@ function RnaSeqInner() {
       showToast("绘图需要差异分析结果:先运行 DEG,或在结果来源处选择历史目录", "info");
     }
     setStep(s);
+  };
+
+  // ── 配置存取:保存/加载配置 + 加载结果(对齐 publication_pipeline_wails) ──
+  const onSaveConfig = async () => {
+    const r = await st.saveConfig();
+    if (r.saved) showToast(`配置已保存:${r.path}`, "success");
+    else if (r.error) showToast(r.error, "error");
+  };
+  const onLoadConfig = async () => {
+    const picked = await open({
+      multiple: false,
+      filters: [{ name: "JSON 配置", extensions: ["json"] }],
+    });
+    if (!picked) return;
+    const p = Array.isArray(picked) ? picked[0] : picked;
+    const res = await st.loadConfig(p);
+    if (res.ok) showToast("配置已加载,请核对分组与比较设置", "success");
+    else if (res.error) showToast(res.error, "error");
+  };
+  const onLoadResult = async () => {
+    const picked = await open({
+      directory: true,
+      multiple: false,
+      title: "选择差异分析结果目录(含 RNAseq_Analysis_Results.xlsx)",
+    });
+    if (!picked) return;
+    const p = Array.isArray(picked) ? picked[0] : picked;
+    const ok = await st.loadFromPath(p, { mergeParams: true });
+    if (ok) goStep("plots");
+    else showToast("该目录未找到差异分析结果(RNAseq_Analysis_Results.xlsx)", "info");
   };
 
   const rscriptTag = () => {
@@ -199,15 +189,7 @@ function RnaSeqInner() {
   };
 
   return (
-    <div
-      className={`page-shell page-shell--wide rx-enter${
-        enterDone ? "" : revealed ? " rx-enter--in" : " rx-enter--hidden"
-      }`}
-      onAnimationEnd={(e) => {
-        // 入场动画结束后移除动画类:清除 transform,避免影响内联 Modal 的 fixed 定位
-        if (e.target === e.currentTarget) setEnterDone(true);
-      }}
-    >
+    <div className="page-shell page-shell--wide">
       <div className="panel-header">
         <div className="panel-icon" style={{ background: "#af52de" }}>
           <IconMicroscope size={18} color="white" stroke={1.75} />
@@ -243,6 +225,8 @@ function RnaSeqInner() {
         </div>
       )}
 
+      <RnaSeqStatusStrip />
+
       {/* 三步 tab(macOS 分段控件) */}
       <div className="rx-steps" role="tablist">
         <span
@@ -277,6 +261,19 @@ function RnaSeqInner() {
             </button>
           );
         })}
+      </div>
+
+      {/* 配置存取工具条:加载配置 / 加载结果 / 保存配置 */}
+      <div className="rx-config-bar">
+        <button type="button" className="btn" onClick={() => void onLoadConfig()}>
+          <IconFileImport size={13} stroke={1.75} /> 加载配置
+        </button>
+        <button type="button" className="btn" onClick={() => void onLoadResult()}>
+          <IconFolderOpen size={13} stroke={1.75} /> 加载结果
+        </button>
+        <button type="button" className="btn" onClick={() => void onSaveConfig()}>
+          <IconDeviceFloppy size={13} stroke={1.75} /> 保存配置
+        </button>
       </div>
 
       <StepContent step={step} goStep={goStep} />

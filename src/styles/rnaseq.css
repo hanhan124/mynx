@@ -6,31 +6,18 @@
 
 /* ========= 宽屏页面壳 ========= */
 .page-shell--wide {
-  max-width: none;
+  max-width: var(--content-max);
   padding: 20px 24px 28px;
+  /* 纯 CSS 入场淡入(不含 transform,避免影响内联 Modal 的 fixed 定位) */
+  animation: fadeInShell 220ms var(--ease-out) both;
 }
 
-/* ========= 进入呈现 =========
-   窗口最大化落定前内容隐藏(见 RnaSeqPage 的 delay=200ms),
-   之后统一淡入 —— 窗口动画与内容渲染分离,各自都不掉帧。
-   动画结束后 JS 移除这两个类,不留 transform(内联 Modal 依赖 fixed 定位)。 */
-.rx-enter--hidden {
-  opacity: 0;
-}
-
-.rx-enter--in {
-  animation: rxEnterIn 260ms var(--ease-out) both;
-  will-change: opacity, transform;
-}
-
-@keyframes rxEnterIn {
+@keyframes fadeInShell {
   from {
     opacity: 0;
-    transform: scale(0.99);
   }
   to {
     opacity: 1;
-    transform: none;
   }
 }
 
@@ -38,6 +25,79 @@
   display: flex;
   flex-direction: column;
   animation: fadeIn 180ms var(--ease-out);
+}
+
+/* ========= 实验状态带:让用户在任何步骤都能看到当前设计 ========= */
+.rx-status-strip {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px 18px;
+  align-items: center;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  background: linear-gradient(105deg, rgba(175, 82, 222, 0.09), var(--bg-card) 42%);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-sm);
+}
+
+.rx-status-strip--exploratory {
+  background: linear-gradient(105deg, rgba(var(--orange-rgb), 0.14), var(--bg-card) 48%);
+  border-color: rgba(var(--orange-rgb), 0.32);
+}
+
+.rx-status-mode {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 152px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.rx-status-mode strong {
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.rx-status-mode-label { color: var(--text-tertiary); }
+
+.rx-status-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(var(--green-rgb), 0.12);
+}
+
+.rx-status-strip--exploratory .rx-status-pulse {
+  background: var(--orange);
+  box-shadow: 0 0 0 3px rgba(var(--orange-rgb), 0.14);
+}
+
+.rx-status-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rx-status-metric { display: grid; gap: 2px; min-width: 0; }
+.rx-status-metric > span { color: var(--text-tertiary); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+.rx-status-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.rx-status-value--ok { color: var(--text-primary); }
+.rx-status-value--muted { color: var(--text-tertiary); font-weight: 500; }
+
+.rx-status-note {
+  grid-column: 1 / -1;
+  padding-top: 8px;
+  border-top: 1px solid rgba(var(--orange-rgb), 0.18);
+  color: var(--orange);
+  font-size: 11px;
+}
+
+@media (max-width: 760px) {
+  .rx-status-strip { grid-template-columns: 1fr; }
+  .rx-status-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ========= 测试版提示条 ========= */
@@ -91,6 +151,14 @@
   background: var(--fill-control);
   border: 1px solid var(--stroke);
   border-radius: var(--radius-md);
+}
+
+/* 配置存取工具条:加载配置 / 加载结果 / 保存配置 */
+.rx-config-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -2px 0 14px;
 }
 
 .rx-steps-indicator {
@@ -695,6 +763,125 @@
   border-style: solid;
   background: var(--accent-soft) !important;
 }
+
+/* ========= 点击分配工具条(替代拖拽) ========= */
+.rx-assign-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-md);
+  font-size: 12.5px;
+}
+
+.rx-check-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.rx-check-all input,
+.rx-sample-chip--pick input {
+  accent-color: var(--accent);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  margin: 0;
+  flex: none;
+}
+
+.rx-assign-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.rx-assign-target {
+  flex: 1 1 120px;
+  min-width: 120px;
+  height: 26px;
+  padding: 2px 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--stroke-strong, var(--stroke));
+  border-radius: var(--radius-sm);
+  transition: border-color 180ms var(--ease-smooth);
+}
+.rx-assign-target:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.rx-assign-btn {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  gap: 3px;
+  flex: none;
+  white-space: nowrap;
+}
+
+/* 可勾选的样本 chip */
+.rx-sample-chip--pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  border-color: var(--stroke);
+}
+
+.rx-sample-chip--pick.checked {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.rx-sample-chip--pick input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rx-chip-check {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--stroke-strong, var(--stroke));
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: transparent;
+  transition: background 140ms var(--ease-smooth), color 140ms var(--ease-smooth);
+  flex: none;
+}
+
+.rx-sample-chip--pick.checked .rx-chip-check {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.rx-sample-pool,
+.rx-group-dropzone {
+  /* 拖拽交互已移除,这里仅保留布局容器;空状态提示即可 */
+}
+
 
 .rx-groups-box {
   display: flex;

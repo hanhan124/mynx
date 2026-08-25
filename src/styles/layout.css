@@ -67,6 +67,16 @@
   padding-left: 0;
 }
 
+/* macOS: 标题随交通灯左对齐(而非被 space-between 推到最右),更贴近原生观感 */
+.title-bar--mac {
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.title-bar--mac .title-bar-controls--left {
+  margin-right: 0;
+}
+
 .title-bar-btn {
   display: inline-flex;
   align-items: center;

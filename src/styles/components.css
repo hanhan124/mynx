@@ -295,6 +295,31 @@
   padding: 12px;
 }
 
+/* ========= 宽屏卡片网格 ========= */
+/* 窄屏(<720px)单列堆叠, 回退为原有布局; 宽屏多列并排。
+   align-items:start 让矮卡片保持自身高度, 不被拉伸成大片留白。 */
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+/* 网格内卡片用 gap 控制间距, 取消自身 margin-bottom 避免双倍空隙 */
+.card-grid > .card {
+  margin-bottom: 0;
+}
+
+@media (min-width: 720px) {
+  .card-grid--2 {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+  .card-grid--3 {
+    grid-template-columns: repeat(3, 1fr);
+    align-items: start;
+  }
+}
+
 /* ========= 步骤编号 ========= */
 .step-num {
   width: 18px;

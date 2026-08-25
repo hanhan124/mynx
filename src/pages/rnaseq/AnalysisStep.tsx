@@ -1,5 +1,5 @@
 /**
- * 步骤 2:差异分析 — 实验设计(拖拽分组)、差异比较、批次设置(可选)、
+ * 步骤 2:差异分析 — 实验设计(勾选分配)、差异比较、批次设置(可选)、
  * 分析参数、运行中心(实时日志/取消/历史记录)。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -24,6 +24,8 @@ import {
   IconPalette,
   IconPlayerStop,
   IconSearch,
+  IconArrowRight,
+  IconCheck,
 } from "@tabler/icons-react";
 import { showToast } from "@/components/Toast";
 import { batchConfounded, useRnaSeq, validComparisonsOf } from "./store";
@@ -70,11 +72,14 @@ export default function AnalysisStep({ goPlots }: { goPlots: () => void }) {
 
   const [search, setSearch] = useState("");
   const [editingNames, setEditingNames] = useState<Record<string, string>>({});
-  const [dragData, setDragData] = useState<{
-    sample: string;
-    fromGroup: string | null;
-  } | null>(null);
-  const [dragOverZone, setDragOverZone] = useState<string | null>(null);
+  // 勾选中的未分组样本(批量加入分组用)
+  const [poolSelected, setPoolSelected] = useState<Set<string>>(new Set());
+  // 当前目标组(批量加入)
+  const [targetGroup, setTargetGroup] = useState("");
+  // 勾选中的未分配批次样本
+  const [batchSelected, setBatchSelected] = useState<Set<string>>(new Set());
+  // 当前目标批次
+  const [targetBatch, setTargetBatch] = useState("");
   const [cancelling, setCancelling] = useState(false);
   const [runs, setRuns] = useState<RunItem[]>([]);
   const logAreaRef = useRef<HTMLDivElement>(null);
@@ -117,7 +122,7 @@ export default function AnalysisStep({ goPlots }: { goPlots: () => void }) {
   const validComps = useMemo(() => validComparisonsOf(config), [config]);
   const invalidCompCount = config.comparisons.length - validComps.length;
 
-  // ── 拖拽 ──
+  // ── 加入/移除样本(替代拖拽:Tauri 原生拖放会拦截 HTML5 DnD,故改点击分配) ──
   const moveSample = useCallback(
     (sample: string, fromGroup: string | null, toGroup: string | null) => {
       if (fromGroup === toGroup) return;
@@ -129,6 +134,13 @@ export default function AnalysisStep({ goPlots }: { goPlots: () => void }) {
           if (!c.groups[toGroup]) c.groups[toGroup] = [];
           if (!c.groups[toGroup].includes(sample)) c.groups[toGroup].push(sample);
         }
+      });
+      // 已经分配出去的样本不再属于「未分组勾选」
+      setPoolSelected((prev) => {
+        if (!prev.has(sample)) return prev;
+        const next = new Set(prev);
+        next.delete(sample);
+        return next;
       });
     },
     [updateConfig],
@@ -285,19 +297,69 @@ export default function AnalysisStep({ goPlots }: { goPlots: () => void }) {
     const used = new Set(Object.values(config.batches).flat());
     return allSamples.filter((s) => !used.has(s));
   }, [config.batches, allSamples]);
-  const [batchDrag, setBatchDrag] = useState<string | null>(null);
 
-  const batchDrop = (name: string) => {
-    const s = batchDrag;
-    setBatchDrag(null);
-    if (!s) return;
+  // 单个样本从批次移除回池
+  const removeFromBatch = useCallback(
+    (batchName: string, sample: string) => {
+      updateConfig((c) => {
+        if (c.batches[batchName])
+          c.batches[batchName] = c.batches[batchName].filter((x) => x !== sample);
+      });
+    },
+    [updateConfig],
+  );
+
+  // 目标组/目标批次:用户选定优先,无效则回落到第一个(渲染期派生,避免 effect 串渲染)
+  const effectiveTargetGroup =
+    groupList.length === 0
+      ? ""
+      : targetGroup && config.groups[targetGroup]
+        ? targetGroup
+        : groupList[0].name;
+  const effectiveTargetBatch =
+    batchList.length === 0
+      ? ""
+      : targetBatch && config.batches[targetBatch]
+        ? targetBatch
+        : batchList[0]?.name || "";
+
+  // 批量把未分组样本加入目标组
+  const assignSelectedToGroup = useCallback(() => {
+    const tgt = effectiveTargetGroup;
+    if (!tgt || poolSelected.size === 0) return;
+    const samples = Array.from(poolSelected);
     updateConfig((c) => {
-      for (const b of Object.keys(c.batches)) {
-        c.batches[b] = c.batches[b].filter((x) => x !== s);
+      if (!c.groups[tgt]) c.groups[tgt] = [];
+      const arr = c.groups[tgt];
+      for (const s of samples) {
+        if (!arr.includes(s)) arr.push(s);
+        // 样本此前可能在其他组里:从其他组剔除(单组归属)
+        for (const gn of Object.keys(c.groups)) {
+          if (gn !== tgt) c.groups[gn] = c.groups[gn].filter((x) => x !== s);
+        }
       }
-      if (name && !c.batches[name].includes(s)) c.batches[name].push(s);
     });
-  };
+    setPoolSelected(new Set());
+    showToast(`已将 ${samples.length} 个样本加入「${config.group_display[tgt] || tgt}」`, "success");
+  }, [effectiveTargetGroup, poolSelected, updateConfig, config.group_display]);
+
+  // 批量把未分配样本加入目标批次(从其他批次剔除)
+  const assignSelectedToBatch = useCallback(() => {
+    const tgt = effectiveTargetBatch;
+    if (!tgt || batchSelected.size === 0) return;
+    const samples = Array.from(batchSelected);
+    updateConfig((c) => {
+      if (!c.batches[tgt]) c.batches[tgt] = [];
+      const arr = c.batches[tgt];
+      for (const s of samples) {
+        for (const bn of Object.keys(c.batches)) {
+          if (bn !== tgt) c.batches[bn] = c.batches[bn].filter((x) => x !== s);
+        }
+        if (!arr.includes(s)) arr.push(s);
+      }
+    });
+    setBatchSelected(new Set());
+  }, [effectiveTargetBatch, batchSelected, updateConfig]);
 
   // ── 运行 ──
   const statusText = {
@@ -506,34 +568,71 @@ export default function AnalysisStep({ goPlots }: { goPlots: () => void }) {
                   />
                 </div>
               </div>
-              <div
-                className={`rx-sample-pool${dragOverZone === "__pool__" ? " rx-drag-over" : ""}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOverZone("__pool__");
-                }}
-                onDragLeave={() => setDragOverZone(null)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  if (dragData) moveSample(dragData.sample, dragData.fromGroup, null);
-                  setDragData(null);
-                  setDragOverZone(null);
-                }}
-              >
-                {poolSamples.map((s) => (
-                  <span
-                    key={s}
-                    className="rx-sample-chip"
-                    draggable
-                    onDragStart={() => setDragData({ sample: s, fromGroup: null })}
-                    onDragEnd={() => {
-                      setDragData(null);
-                      setDragOverZone(null);
-                    }}
-                  >
-                    {s}
+              {/* 批量加入工具条:替代拖拽——勾选未分组样本 → 选目标组 → 加入 */}
+              {groupList.length > 0 && poolSamples.length > 0 && (
+                <div className="rx-assign-bar">
+                  <label className="rx-check-all">
+                    <input
+                      type="checkbox"
+                      checked={poolSelected.size === poolSamples.length}
+                      onChange={(e) =>
+                        setPoolSelected(e.target.checked ? new Set(poolSamples) : new Set())
+                      }
+                    />
+                    全选
+                  </label>
+                  <span className="rx-assign-count">
+                    已选 {poolSelected.size}/{poolSamples.length}
                   </span>
-                ))}
+                  <select
+                    className="rx-assign-target"
+                    value={effectiveTargetGroup}
+                    onChange={(e) => setTargetGroup(e.target.value)}
+                  >
+                    {groupList.map((g) => (
+                      <option key={g.name} value={g.name}>
+                        → {g.display}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn btn-primary rx-assign-btn"
+                    disabled={poolSelected.size === 0 || !effectiveTargetGroup}
+                    onClick={assignSelectedToGroup}
+                    title="把勾选的未分组样本一次性加入目标组"
+                  >
+                    <IconArrowRight size={13} stroke={1.9} /> 加入
+                  </button>
+                </div>
+              )}
+              <div className="rx-sample-pool">
+                {poolSamples.map((s) => {
+                  const checked = poolSelected.has(s);
+                  return (
+                    <label
+                      key={s}
+                      className={`rx-sample-chip rx-sample-chip--pick${checked ? " checked" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) =>
+                          setPoolSelected((prev) => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.add(s);
+                            else next.delete(s);
+                            return next;
+                          })
+                        }
+                      />
+                      <span className="rx-chip-check">
+                        <IconCheck size={10} stroke={3} />
+                      </span>
+                      {s}
+                    </label>
+                  );
+                })}
                 {allSamples.length === 0 && (
                   <span className="rx-empty-tip">
                     请先在「数据导入」页导入 Counts 文件,样本会出现在这里
@@ -609,33 +708,11 @@ export default function AnalysisStep({ goPlots }: { goPlots: () => void }) {
                         <IconTrash size={13} stroke={1.75} />
                       </button>
                     </div>
-                    <div
-                      className={`rx-group-dropzone${dragOverZone === g.name ? " rx-drag-over" : ""}`}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        setDragOverZone(g.name);
-                      }}
-                      onDragLeave={() => setDragOverZone(null)}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (dragData)
-                          moveSample(dragData.sample, dragData.fromGroup, g.name);
-                        setDragData(null);
-                        setDragOverZone(null);
-                      }}
-                    >
+                    <div className="rx-group-dropzone">
                       {g.samples.map((s) => (
                         <span
                           key={s}
                           className="rx-sample-chip rx-sample-chip--group"
-                          draggable
-                          onDragStart={() =>
-                            setDragData({ sample: s, fromGroup: g.name })
-                          }
-                          onDragEnd={() => {
-                            setDragData(null);
-                            setDragOverZone(null);
-                          }}
                         >
                           {s}
                           <button
@@ -649,7 +726,7 @@ export default function AnalysisStep({ goPlots }: { goPlots: () => void }) {
                         </span>
                       ))}
                       {g.samples.length === 0 && (
-                        <span className="rx-empty-tip">拖拽样本到此处</span>
+                        <span className="rx-empty-tip">从样本池勾选样本并加入此组</span>
                       )}
                     </div>
                   </div>
@@ -662,7 +739,7 @@ export default function AnalysisStep({ goPlots }: { goPlots: () => void }) {
                   <span>
                     {allSamples.length === 0
                       ? "到「数据导入」选择 Counts 文件,导入后即可在这里分组。"
-                      : "点击「自动分组」按样本名前缀建组,或「新建组」手动拖拽。"}
+                      : "点击「自动分组」按样本名前缀建组,或「新建组」后在样本池勾选样本并加入。"}
                   </span>
                 </div>
               )}
@@ -858,30 +935,70 @@ export default function AnalysisStep({ goPlots }: { goPlots: () => void }) {
               <div className="rx-box-header">
                 <span>未分配样本</span>
               </div>
-              <div
-                className={`rx-sample-pool rx-sample-pool--batch${dragOverZone === "__batchpool__" ? " rx-drag-over" : ""}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOverZone("__batchpool__");
-                }}
-                onDragLeave={() => setDragOverZone(null)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  batchDrop("");
-                  setDragOverZone(null);
-                }}
-              >
-                {unbatchedSamples.map((s) => (
-                  <span
-                    key={s}
-                    className="rx-sample-chip"
-                    draggable
-                    onDragStart={() => setBatchDrag(s)}
-                    onDragEnd={() => setBatchDrag(null)}
-                  >
-                    {s}
+              {batchList.length > 0 && unbatchedSamples.length > 0 && (
+                <div className="rx-assign-bar">
+                  <label className="rx-check-all">
+                    <input
+                      type="checkbox"
+                      checked={batchSelected.size === unbatchedSamples.length}
+                      onChange={(e) =>
+                        setBatchSelected(e.target.checked ? new Set(unbatchedSamples) : new Set())
+                      }
+                    />
+                    全选
+                  </label>
+                  <span className="rx-assign-count">
+                    已选 {batchSelected.size}/{unbatchedSamples.length}
                   </span>
-                ))}
+                  <select
+                    className="rx-assign-target"
+                    value={effectiveTargetBatch}
+                    onChange={(e) => setTargetBatch(e.target.value)}
+                  >
+                    {batchList.map((b) => (
+                      <option key={b.name} value={b.name}>
+                        → {b.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn btn-primary rx-assign-btn"
+                    disabled={batchSelected.size === 0 || !effectiveTargetBatch}
+                    onClick={assignSelectedToBatch}
+                    title="把勾选的未分配样本一次性加入目标批次"
+                  >
+                    <IconArrowRight size={13} stroke={1.9} /> 加入
+                  </button>
+                </div>
+              )}
+              <div className="rx-sample-pool rx-sample-pool--batch">
+                {unbatchedSamples.map((s) => {
+                  const checked = batchSelected.has(s);
+                  return (
+                    <label
+                      key={s}
+                      className={`rx-sample-chip rx-sample-chip--pick${checked ? " checked" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) =>
+                          setBatchSelected((prev) => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.add(s);
+                            else next.delete(s);
+                            return next;
+                          })
+                        }
+                      />
+                      <span className="rx-chip-check">
+                        <IconCheck size={10} stroke={3} />
+                      </span>
+                      {s}
+                    </label>
+                  );
+                })}
                 {unbatchedSamples.length === 0 && (
                   <span className="rx-empty-tip">全部样本已分配</span>
                 )}
@@ -908,45 +1025,24 @@ export default function AnalysisStep({ goPlots }: { goPlots: () => void }) {
                       <IconTrash size={13} stroke={1.75} />
                     </button>
                   </div>
-                  <div
-                    className={`rx-group-dropzone${dragOverZone === `batch:${b.name}` ? " rx-drag-over" : ""}`}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      setDragOverZone(`batch:${b.name}`);
-                    }}
-                    onDragLeave={() => setDragOverZone(null)}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      batchDrop(b.name);
-                      setDragOverZone(null);
-                    }}
-                  >
+                  <div className="rx-group-dropzone">
                     {b.samples.map((s) => (
                       <span
                         key={s}
                         className="rx-sample-chip rx-sample-chip--group"
-                        draggable
-                        onDragStart={() => setBatchDrag(s)}
-                        onDragEnd={() => setBatchDrag(null)}
                       >
                         {s}
                         <button
                           className="rx-remove-x"
                           type="button"
-                          onClick={() =>
-                            updateConfig((c) => {
-                              c.batches[b.name] = c.batches[b.name].filter(
-                                (x) => x !== s,
-                              );
-                            })
-                          }
+                          onClick={() => removeFromBatch(b.name, s)}
                         >
                           <IconX size={11} stroke={2.2} />
                         </button>
                       </span>
                     ))}
                     {b.samples.length === 0 && (
-                      <span className="rx-empty-tip">拖拽样本到此批次</span>
+                      <span className="rx-empty-tip">从左侧勾选样本并加入此批次</span>
                     )}
                   </div>
                 </div>

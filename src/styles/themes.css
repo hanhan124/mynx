@@ -22,6 +22,9 @@
   --space-m: 12px;
   --space-l: 16px;
   --space-xl: 24px;
+
+  /* 内容容器最大宽度:宽屏页/首页统一上限,避免超宽屏被拉得过开(默认 960 窗下不生效) */
+  --content-max: 1120px;
 }
 
 /* macOS 26 暗色 (Tahoe) */
