@@ -34,6 +34,7 @@ import type {
   MatrixFormat,
   RunStatus,
 } from "@/lib/rnaseq/types";
+export { batchConfounded, validComparisonsOf } from "@/features/rnaseq/model/validation";
 
 export interface PlotLogEntry extends LogEntry {
   plotType: string;
@@ -97,7 +98,7 @@ export interface RnaSeqStore {
   mergeParamsOnLoad: boolean;
   setMergeParamsOnLoad: (v: boolean) => void;
   checkResult: () => Promise<boolean>;
-  validateDir: (opts?: { quiet?: boolean }) => Promise<boolean>;
+  validateDir: (path?: string, opts?: { quiet?: boolean }) => Promise<boolean>;
   browseAnalysisDir: () => Promise<boolean>;
   loadFromPath: (
     path: string,
@@ -481,8 +482,8 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
   );
 
   const validateDir = useCallback(
-    async (opts?: { quiet?: boolean }): Promise<boolean> => {
-      const p = analysisDir.trim();
+    async (path?: string, opts?: { quiet?: boolean }): Promise<boolean> => {
+      const p = (path ?? analysisDir).trim();
       if (!p) {
         setDirStatus("err");
         setDirMsg("请选择或输入差异分析结果目录");
@@ -535,7 +536,7 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
     const path = Array.isArray(picked) ? picked[0] : picked;
     setAnalysisDir(path);
     setUsingManualDir(true);
-    return validateDir();
+    return validateDir(path);
   }, [analysisDir, validateDir]);
 
   const loadFromPath = useCallback(
@@ -548,7 +549,7 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
       setAnalysisDir(p);
       setUsingManualDir(true);
       if (opts?.mergeParams !== undefined) setMergeParamsOnLoad(opts.mergeParams);
-      return validateDir({ quiet: opts?.quiet });
+      return validateDir(p, { quiet: opts?.quiet });
     },
     [validateDir],
   );
@@ -557,7 +558,7 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
     setCheckingResult(true);
     try {
       if (usingManualDir && analysisDir.trim()) {
-        return await validateDir({ quiet: true });
+        return await validateDir(analysisDir, { quiet: true });
       }
       const r = await hasAnalysisResultApi(configRef.current);
       setHasResult(r.found);
@@ -818,34 +819,4 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
   );
 
   return <RnaSeqContext.Provider value={value}>{children}</RnaSeqContext.Provider>;
-}
-
-/** 有效比较:两端非空、非自比、都在纳入组中 */
-export function validComparisonsOf(config: Config): [string, string][] {
-  return config.comparisons.filter(
-    ([t, ctrl]) =>
-      t &&
-      ctrl &&
-      t !== ctrl &&
-      config.selected_groups.includes(t) &&
-      config.selected_groups.includes(ctrl),
-  );
-}
-
-/** 批次×分组完全混淆检测(每个纳入组恰好独占一个批次) */
-export function batchConfounded(config: Config): boolean {
-  const entries = Object.entries(config.batches || {});
-  if (entries.length === 0) return false;
-  const sample2batch: Record<string, string> = {};
-  for (const [b, ss] of entries) for (const s of ss) sample2batch[s] = b;
-  const sel = Object.entries(config.groups).filter(
-    ([name, samples]) => config.selected_groups.includes(name) && samples.length > 0,
-  );
-  if (sel.length < 2) return false;
-  const groupBatch = sel.map(([, samples]) => [
-    ...new Set(samples.map((s) => sample2batch[s])),
-  ]);
-  if (groupBatch.some((bs) => bs.length > 1)) return false; // 组内跨批次 → 部分平衡
-  const uniqueBatches = new Set(groupBatch.map((bs) => bs[0]));
-  return uniqueBatches.size === sel.length;
 }

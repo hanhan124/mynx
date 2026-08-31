@@ -22,14 +22,9 @@ import ImportStep from "./ImportStep";
 import AnalysisStep from "./AnalysisStep";
 import PlotsStep from "./PlotsStep";
 import { RnaSeqTutorial } from "./RnaSeqTutorial";
+import { useLanguage } from "@/lib/i18n";
 
 type StepId = "import" | "analysis" | "plots";
-
-const STEPS: { id: StepId; label: string; icon: typeof IconFileImport }[] = [
-  { id: "import", label: "数据导入", icon: IconFileImport },
-  { id: "analysis", label: "差异分析", icon: IconFlask },
-  { id: "plots", label: "绘图导出", icon: IconPalette },
-];
 
 function StepContent({ step, goStep }: { step: StepId; goStep: (s: StepId) => void }) {
   if (step === "import") return <ImportStep />;
@@ -53,6 +48,8 @@ function useStepReadiness() {
 }
 
 function RnaSeqStatusStrip() {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => language === "en" ? en : zh;
   const st = useRnaSeq();
   const selected = st.config.selected_groups;
   const sampleCount = selected.reduce(
@@ -63,25 +60,25 @@ function RnaSeqStatusStrip() {
     (group) => (st.config.groups[group]?.length ?? 0) < 2,
   );
   const mode = selected.length < 2
-    ? "待设置"
+    ? l("待设置", "Needs setup")
     : singleRep
-      ? "单重复 · 探索性"
+      ? l("单重复 · 探索性", "Single replicate · exploratory")
       : st.config.params.engine === "edger_qlf"
         ? "edgeR QL"
         : st.config.params.engine === "deseq2"
           ? "DESeq2"
-          : "自动选择";
+          : l("自动选择", "Auto")
   const items = [
-    { label: "Counts", value: st.importData ? `${st.importData.total_genes.toLocaleString()} genes` : "未导入", tone: st.importData ? "ok" : "muted" },
-    { label: "Samples", value: sampleCount ? `${sampleCount} samples` : "未分配", tone: sampleCount ? "ok" : "muted" },
-    { label: "Design", value: selected.length ? `${selected.length} groups` : "未设置", tone: selected.length >= 2 ? "ok" : "muted" },
-    { label: "Contrast", value: st.config.comparisons.length ? `${validComparisonsOf(st.config).length} valid` : "未设置", tone: validComparisonsOf(st.config).length ? "ok" : "muted" },
+    { label: "Counts", value: st.importData ? `${st.importData.total_genes.toLocaleString()} genes` : l("未导入", "Not imported"), tone: st.importData ? "ok" : "muted" },
+    { label: "Samples", value: sampleCount ? `${sampleCount} samples` : l("未分配", "Unassigned"), tone: sampleCount ? "ok" : "muted" },
+    { label: "Design", value: selected.length ? `${selected.length} groups` : l("未设置", "Not set"), tone: selected.length >= 2 ? "ok" : "muted" },
+    { label: "Contrast", value: st.config.comparisons.length ? `${validComparisonsOf(st.config).length} valid` : l("未设置", "Not set"), tone: validComparisonsOf(st.config).length ? "ok" : "muted" },
   ];
   return (
     <div className={`rx-status-strip${singleRep ? " rx-status-strip--exploratory" : ""}`}>
       <div className="rx-status-mode">
         <span className="rx-status-pulse" />
-        <span className="rx-status-mode-label">分析模式</span>
+        <span className="rx-status-mode-label">{l("分析模式", "Analysis mode")}</span>
         <strong>{mode}</strong>
       </div>
       <div className="rx-status-metrics">
@@ -94,7 +91,7 @@ function RnaSeqStatusStrip() {
       </div>
       {singleRep && (
         <div className="rx-status-note">
-          单重复结果用于内部探索，P 值为近似值，不应作为正式生物学重复推断。
+          {l("单重复结果用于内部探索，P 值为近似值，不应作为正式生物学重复推断。", "Single-replicate results are exploratory. P values are approximate and should not be used as formal biological-replicate inference.")}
         </div>
       )}
     </div>
@@ -102,11 +99,17 @@ function RnaSeqStatusStrip() {
 }
 
 function RnaSeqInner() {
+  const { t } = useLanguage();
+  const steps: { id: StepId; label: string; icon: typeof IconFileImport }[] = [
+    { id: "import", label: t("rnaseq.import"), icon: IconFileImport },
+    { id: "analysis", label: t("rnaseq.analysis"), icon: IconFlask },
+    { id: "plots", label: t("rnaseq.plots"), icon: IconPalette },
+  ];
   const [step, setStep] = useState<StepId>("import");
   const [betaNoteOpen, setBetaNoteOpen] = useState(true);
   const st = useRnaSeq();
   const readiness = useStepReadiness();
-  const stepIndex = STEPS.findIndex((s) => s.id === step);
+  const stepIndex = steps.findIndex((s) => s.id === step);
 
   const goStep = (s: StepId) => {
     if (s === "analysis" && !readiness.importReady && !st.hasResult) {
@@ -195,13 +198,13 @@ function RnaSeqInner() {
           <IconMicroscope size={18} color="white" stroke={1.75} />
         </div>
         <div className="panel-title">
-          <h2>
-            RNA-seq 分析
-            <span className="rx-tag rx-tag--warn" title="测试版功能,仍在开发完善中">
-              测试版
+        <h2>
+            {t("rnaseq.title")}
+            <span className="rx-tag rx-tag--warn" title={t("rnaseq.beta")}>
+              {t("rnaseq.beta")}
             </span>
           </h2>
-          <p>差异分析(DESeq2 / edgeR)与图表导出</p>
+          <p>{t("rnaseq.subtitle")}</p>
         </div>
         <div className="panel-actions">
           {rscriptTag()}
@@ -233,7 +236,7 @@ function RnaSeqInner() {
           className="rx-steps-indicator"
           style={{ transform: `translateX(${stepIndex * 100}%)` }}
         />
-        {STEPS.map((s, i) => {
+        {steps.map((s, i) => {
           const Icon = s.icon;
           const ready =
             s.id === "import"
@@ -266,13 +269,13 @@ function RnaSeqInner() {
       {/* 配置存取工具条:加载配置 / 加载结果 / 保存配置 */}
       <div className="rx-config-bar">
         <button type="button" className="btn" onClick={() => void onLoadConfig()}>
-          <IconFileImport size={13} stroke={1.75} /> 加载配置
+          <IconFileImport size={13} stroke={1.75} /> {t("rnaseq.loadConfig")}
         </button>
         <button type="button" className="btn" onClick={() => void onLoadResult()}>
-          <IconFolderOpen size={13} stroke={1.75} /> 加载结果
+          <IconFolderOpen size={13} stroke={1.75} /> {t("rnaseq.loadResult")}
         </button>
         <button type="button" className="btn" onClick={() => void onSaveConfig()}>
-          <IconDeviceFloppy size={13} stroke={1.75} /> 保存配置
+          <IconDeviceFloppy size={13} stroke={1.75} /> {t("rnaseq.saveConfig")}
         </button>
       </div>
 

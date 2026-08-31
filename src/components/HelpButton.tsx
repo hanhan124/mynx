@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Modal from "./Modal";
 import { IconQuestionMark, IconX, IconChevronRight } from "@tabler/icons-react";
+import { useLanguage } from "@/lib/i18n";
 
 interface Props {
   variant?: "inline" | "icon";
@@ -10,6 +11,7 @@ export default function HelpButton({
   variant = "icon",
   children,
 }: Props & { children: (close: () => void) => React.ReactNode }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
 
   return (
@@ -18,11 +20,11 @@ export default function HelpButton({
         type="button"
         className={`help-btn help-btn--${variant}`}
         onClick={() => setOpen(true)}
-        title="查看使用教程"
-        aria-label="查看使用教程"
+        title={t("help.title")}
+        aria-label={t("help.title")}
       >
         <IconQuestionMark size={variant === "inline" ? 14 : 13} stroke={1.75} />
-        {variant === "inline" && <span>使用教程</span>}
+        {variant === "inline" && <span>{t("help.label")}</span>}
       </button>
       <Modal open={open} onClose={() => setOpen(false)} wide>
         {children(() => setOpen(false))}
@@ -82,6 +84,37 @@ function Faq({ q, children }: { q: string; children: React.ReactNode }) {
   );
 }
 
+function EnglishToolTutorial({ type, onClose }: { type: "qpcr" | "tiff"; onClose: () => void }) {
+  const qpcr = type === "qpcr";
+  const title = qpcr ? "qPCR analysis guide" : "TIFF to JPG guide";
+  const subtitle = qpcr ? "From Ct values to charts in four steps" : "Batch conversion with optional filename watermarks";
+  const sections = qpcr
+    ? [
+        ["Prepare", "Use an Excel workbook containing Target/Gene, Sample/Group, and Ct columns."],
+        ["Transform", "Open the workbook, choose the worksheet, then transform data into the analysis layout."],
+        ["Calculate", "Choose a calculation method, reference gene, replicate count, and optional control group."],
+        ["Export", "Run calculation to save the workbook and create charts for each target gene."],
+      ]
+    : [
+        ["Choose a folder", "Select or drop a folder that contains .tif or .tiff files."],
+        ["Set options", "Choose whether to add a filename watermark, then set font, margins, background opacity, and JPG quality."],
+        ["Convert", "Start conversion. Output is written to a timestamped JPG_output folder inside the selected source folder."],
+      ];
+  return (
+    <div className="tutorial">
+      <div className="tutorial__header">
+        <div><div className="tutorial__title">{title}</div><div className="tutorial__subtitle">{subtitle}</div></div>
+        <button className="tutorial__close" onClick={onClose} aria-label="Close guide"><IconX size={16} stroke={1.75} /></button>
+      </div>
+      <div className="tutorial__body"><div className="tutorial__content" style={{ width: "100%" }}>
+        <section className="tutorial__section"><h2 className="tutorial__h2">Quick start</h2><p className="tutorial__subtitle-inline">Follow the workflow below</p><ol>{sections.map(([heading, text]) => <li key={heading}><strong>{heading}:</strong> {text}</li>)}</ol></section>
+        <section className="tutorial__section"><h2 className="tutorial__h2">Notes</h2><div className="tutorial__callout tutorial__callout--info">{qpcr ? "qPCR uses spreadsheet data locally. Keep a copy of your original workbook before processing." : "TIFF conversion runs locally. Watermarks require ImageMagick when that feature is enabled."}</div></section>
+        <div className="tutorial__footer"><button type="button" className="btn btn-primary tutorial__done" onClick={onClose}>Start using Mynx</button></div>
+      </div></div>
+    </div>
+  );
+}
+
 /* ================================================================
  * 通用滚动监听 hook — 目录高亮当前可见章节
  * ================================================================ */
@@ -126,6 +159,7 @@ function useTutorialScroll(sections: { id: string }[]) {
  * ================================================================ */
 
 export function QpcrTutorial({ onClose }: { onClose: () => void }) {
+  const { language } = useLanguage();
   const sections = [
     { id: "intro", title: "📖 简介" },
     { id: "prep", title: "📋 准备 Excel" },
@@ -137,6 +171,7 @@ export function QpcrTutorial({ onClose }: { onClose: () => void }) {
   ];
 
   const { activeId, scrollRef, scrollTo } = useTutorialScroll(sections);
+  if (language === "en") return <EnglishToolTutorial type="qpcr" onClose={onClose} />;
 
   return (
     <div className="tutorial">
@@ -427,6 +462,7 @@ B02   SYBR   TNF      Sample_B     24.87`}</pre>
  * ================================================================ */
 
 export function TiffTutorial({ onClose }: { onClose: () => void }) {
+  const { language } = useLanguage();
   const sections = [
     { id: "intro", title: "📖 简介" },
     { id: "source", title: "① 选文件夹" },
@@ -437,6 +473,7 @@ export function TiffTutorial({ onClose }: { onClose: () => void }) {
   ];
 
   const { activeId, scrollRef, scrollTo } = useTutorialScroll(sections);
+  if (language === "en") return <EnglishToolTutorial type="tiff" onClose={onClose} />;
 
   return (
     <div className="tutorial">

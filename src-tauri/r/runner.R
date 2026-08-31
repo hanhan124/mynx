@@ -15,10 +15,14 @@
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 1) stop("用法:Rscript runner.R <params.json>")
 params_file <- normalizePath(args[1], mustWork = TRUE)
+script_arg <- commandArgs()[grep("^--file=", commandArgs())][1]
+script_dir <- if (!is.na(script_arg)) dirname(normalizePath(sub("^--file=", "", script_arg), mustWork = FALSE)) else getwd()
 
 suppressPackageStartupMessages({
   library(jsonlite)
 })
+source(file.path(script_dir, "modules", "config.R"), local = TRUE)
+source(file.path(script_dir, "modules", "io.R"), local = TRUE)
 # %||% 运算符(避免依赖 rlang):NULL 时取后备值
 `%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
 

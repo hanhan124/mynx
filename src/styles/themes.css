@@ -25,6 +25,11 @@
 
   /* 内容容器最大宽度:宽屏页/首页统一上限,避免超宽屏被拉得过开(默认 960 窗下不生效) */
   --content-max: 1120px;
+
+  /* 首页顶部装饰的安全默认值：主题属性写入前也保持深色协调 */
+  --home-hero-start: rgba(10, 132, 255, 0.16);
+  --home-hero-mid: rgba(48, 209, 88, 0.07);
+  --home-hero-end: transparent;
 }
 
 /* macOS 26 暗色 (Tahoe) */
@@ -83,6 +88,9 @@
   --shadow-accent: 0 4px 14px rgba(10, 132, 255, 0.28);
   --accent-gradient: linear-gradient(135deg, #0a84ff 0%, #0064d6 100%);
   --focus-ring: 0 0 0 3px rgba(10, 132, 255, 0.32);
+  --home-hero-start: rgba(10, 132, 255, 0.16);
+  --home-hero-mid: rgba(48, 209, 88, 0.07);
+  --home-hero-end: transparent;
 }
 
 /* macOS 26 亮色 (Tahoe) */
@@ -138,4 +146,7 @@
   --shadow-accent: 0 4px 14px rgba(0, 122, 255, 0.24);
   --accent-gradient: linear-gradient(135deg, #007aff 0%, #005ed4 100%);
   --focus-ring: 0 0 0 3px rgba(0, 122, 255, 0.28);
+  --home-hero-start: rgb(244, 244, 246);
+  --home-hero-mid: rgba(244, 244, 246, 0.62);
+  --home-hero-end: transparent;
 }

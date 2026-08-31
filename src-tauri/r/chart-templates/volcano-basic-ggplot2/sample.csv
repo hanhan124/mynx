@@ -1,0 +1,9 @@
+gene,log2FC,padj
+Gene_A,2.8,0.0004
+Gene_B,-2.3,0.0012
+Gene_C,1.6,0.018
+Gene_D,-1.4,0.031
+Gene_E,0.4,0.42
+Gene_F,-0.2,0.68
+Gene_G,3.2,0.00008
+Gene_H,-2.8,0.0003

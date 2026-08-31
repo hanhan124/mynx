@@ -12,9 +12,9 @@ import {
   readDirAny,
   readTextAny,
   statAny,
-} from "./io";
-import { defaultOutputBase } from "./runner";
-import type { Config, PlotFileContent, PlotFileItem, RunItem } from "./types";
+} from "./io.ts";
+import { defaultOutputBase } from "./runner.ts";
+import type { Config, PlotFileContent, PlotFileItem, RunItem } from "./types.ts";
 
 export const EXCEL_NAME = "RNAseq_Analysis_Results.xlsx";
 

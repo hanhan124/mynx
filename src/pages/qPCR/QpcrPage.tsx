@@ -10,8 +10,10 @@ import { saveExcelFile } from '@/lib/excel-io';
 import { generateChartsFromFile } from '@/lib/chart-gen';
 import { detectTransformedGenes } from '@/lib/qpcr-transform';
 import { showToast } from '@/components/Toast';
+import { useLanguage } from '@/lib/i18n';
 
 export default function QpcrPage() {
+  const { t, language } = useLanguage();
   const [file, setFile] = useState<ExcelFile | null>(null);
   const [sheetName, setSheetName] = useState('');
   const [geneNames, setGeneNames] = useState<string[]>([]);
@@ -47,7 +49,7 @@ export default function QpcrPage() {
       await saveExcelFile(file.workbook, file.path);
       return true;
     } catch (e) {
-      showToast(`自动保存失败: ${e instanceof Error ? e.message : String(e)}`, 'error');
+      showToast(t('qpcr.saveFailed', { detail: e instanceof Error ? e.message : String(e) }), 'error');
       return false;
     }
   }, [file]);
@@ -55,9 +57,10 @@ export default function QpcrPage() {
   const handleTransformComplete = useCallback(
     async (names: string[]) => {
       setGeneNames(names);
-      startStage('正在保存...', 'indeterminate');
+      startStage(t('qpcr.save'), 'indeterminate');
       try {
-        await silentSave();
+        const saved = await silentSave();
+        if (!saved) return;
       } finally {
         endStage();
       }
@@ -73,28 +76,28 @@ export default function QpcrPage() {
     ) => {
       if (!file) return;
       try {
-        startStage('正在保存...', 'indeterminate');
+        startStage(t('qpcr.save'), 'indeterminate');
         await silentSave();
 
-        startStage('正在生成图表...', 'determinate');
+        startStage(t('qpcr.generating'), 'determinate');
         const result = await generateChartsFromFile(
           file.path,
           repeatCount,
           chartColor,
           (current, total) => {
-            updateProgress(current, total, `正在生成图表 (${current}/${total})...`);
+            updateProgress(current, total, `${t('qpcr.generating')} (${current}/${total})...`);
           },
           methodOptions
         );
         if (result.success) {
           const created = result.chartsCreated ?? 0;
           const tail = result.reason ? `，${result.reason}` : '';
-          showToast(`已生成 ${created} 个图表${tail}`, 'success');
+          showToast(t('qpcr.chartComplete', { count: created, detail: tail }), 'success');
         } else {
-          showToast(`图表生成失败：${result.reason ?? '未知错误'}`, 'error');
+          showToast(t('qpcr.chartFailed', { detail: result.reason ?? (language === 'en' ? 'Unknown error' : '未知错误') }), 'error');
         }
       } catch (e) {
-        showToast(`图表生成出错：${String(e)}`, 'error');
+      showToast(t('qpcr.chartError', { detail: String(e) }), 'error');
       } finally {
         endStage();
       }
@@ -111,8 +114,8 @@ export default function QpcrPage() {
           <IconDna size={18} color="white" stroke={1.75} />
         </div>
         <div className="panel-title">
-          <h2>qPCR 分析</h2>
-          <p>转换数据，计算相对表达量</p>
+        <h2>{t('qpcr.title')}</h2>
+          <p>{t('qpcr.subtitle')}</p>
         </div>
         <div className="panel-actions">
           <HelpButton>{(close) => <QpcrTutorial onClose={close} />}</HelpButton>
@@ -123,7 +126,7 @@ export default function QpcrPage() {
       <div className="card">
         <div className="card-title">
           <IconFileSpreadsheet size={14} stroke={1.75} />
-          <span>数据文件</span>
+          <span>{t('qpcr.dataFile')}</span>
         </div>
         <div className="card-body">
           <FileSelect
@@ -152,7 +155,7 @@ export default function QpcrPage() {
         <div className="card">
           <div className="card-title">
             <span className="step-num">1</span>
-            <span>数据转换</span>
+            <span>{t('qpcr.transform')}</span>
           </div>
           <div className="card-body">
             <Transform
@@ -169,7 +172,7 @@ export default function QpcrPage() {
         <div className="card">
           <div className="card-title">
             <span className="step-num">2</span>
-            <span>qPCR 计算</span>
+            <span>{t('qpcr.calculate')}</span>
           </div>
           <div className="card-body">
             <Calculate

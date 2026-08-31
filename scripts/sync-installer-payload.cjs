@@ -11,6 +11,11 @@ const DST = path.join(ROOT, "installer", "src-tauri", "resources", "mynx.exe");
 const R_SRC = path.join(ROOT, "src-tauri", "r");
 const R_DST = path.join(ROOT, "installer", "src-tauri", "resources", "r");
 
+// Generate the Rust embedding list from the same source tree that is copied
+// below. This prevents newly added R/chart resources from silently missing
+// from the installer.
+require("./generate-installer-resources.cjs");
+
 if (!fs.existsSync(SRC)) {
   console.error(`❌ 找不到 ${SRC}`);
   console.error("   请先跑: npm run tauri build -- --no-bundle");
@@ -49,13 +54,4 @@ for (const f of files) {
 const totalKB = files.reduce((n, f) => n + fs.statSync(f.abs).size, 0);
 console.log(`✅ 已复制 ${files.length} 个 R 脚本 → installer/src-tauri/resources/r/ (${(totalKB / 1024).toFixed(1)} KB)`);
 
-// 与 install.rs 的 R_RESOURCES 清单比对,防止新增脚本后忘记登记
-const manifest = path.join(ROOT, "installer", "src-tauri", "src", "install.rs");
-const rust = fs.readFileSync(manifest, "utf8");
-const missing = files.filter((f) => !rust.includes(`"${f.relPath}"`));
-if (missing.length) {
-  console.error("❌ 以下 R 脚本未登记到 install.rs 的 R_RESOURCES(否则不会打进安装器):");
-  for (const m of missing) console.error(`   - ${m.relPath}`);
-  process.exit(1);
-}
-console.log("✅ R_RESOURCES 清单与 r/ 目录一致");
+console.log("✅ 已从源目录生成 R_RESOURCES 清单");

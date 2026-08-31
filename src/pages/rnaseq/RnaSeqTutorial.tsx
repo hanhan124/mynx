@@ -2,6 +2,7 @@
  * RNA-seq 使用教程 — 沿用 mynx 通用教程组件体系(tutorial__*)。
  */
 import { IconX } from "@tabler/icons-react";
+import { useLanguage } from "@/lib/i18n";
 
 const SECTIONS = [
   { id: "intro", title: "📖 简介" },
@@ -13,6 +14,8 @@ const SECTIONS = [
 ];
 
 export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
+  const { language } = useLanguage();
+  if (language === "en") return <EnglishRnaSeqTutorial onClose={onClose} />;
   const go = (id: string) => {
     const el = document.getElementById(`rtut-${id}`);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -239,6 +242,33 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
               </button>
             </div>
           </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EnglishRnaSeqTutorial({ onClose }: { onClose: () => void }) {
+  const sections = [
+    ["intro", "📖 Overview"], ["prep", "🧰 Preparation"], ["flow", "🚀 Workflow"],
+    ["methods", "🧪 Statistics"], ["output", "📦 Outputs"], ["faq", "❓ FAQ"],
+  ];
+  const go = (id: string) => document.getElementById(`rtut-en-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  return (
+    <div className="tutorial">
+      <div className="tutorial__header">
+        <div><div className="tutorial__title">RNA-seq analysis guide</div><div className="tutorial__subtitle">Import → groups → DEG → plot export</div></div>
+        <button type="button" className="tutorial__close" onClick={onClose} aria-label="Close"><IconX size={14} stroke={2} /></button>
+      </div>
+      <div className="tutorial__body">
+        <nav className="tutorial__nav"><div className="tutorial__nav-title">Contents</div><ul>{sections.map(([id, title]) => <li key={id}><button type="button" className="tutorial__nav-item" onClick={() => go(id)}>{title}</button></li>)}</ul><div className="tutorial__nav-tip">A methods summary is exported as Analysis_Report.md.</div></nav>
+        <div className="tutorial__content">
+          <section id="rtut-en-intro" className="tutorial__section"><h2 className="tutorial__h2">📖 Overview</h2><p className="tutorial__subtitle-inline">Differential expression and publication-ready plotting</p><p>Start with a gene-count matrix, configure groups and comparisons, run DEG analysis, then export heatmaps, PCA, volcano plots, enrichment plots, and other figures.</p><div className="tutorial__callout tutorial__callout--info">Computations run through local R packages including DESeq2, edgeR, clusterProfiler, and ComplexHeatmap. Results stay in your local output folder.</div></section>
+          <section id="rtut-en-prep" className="tutorial__section"><h2 className="tutorial__h2">🧰 Preparation</h2><p className="tutorial__subtitle-inline">R and raw count data</p><ol><li>Install <strong>R 4.0 or later</strong> from <code>https://cloud.r-project.org</code>.</li><li>Missing R packages can be installed on first use; the first run may take several minutes.</li><li>Use an <strong>integer raw-read count</strong> matrix. TPM, FPKM, and log-transformed data are not valid inputs for DESeq2 or edgeR.</li></ol></section>
+          <section id="rtut-en-flow" className="tutorial__section"><h2 className="tutorial__h2">🚀 Workflow</h2><p><strong>1. Import:</strong> choose a CSV, TSV, TXT, or XLSX counts file. Format presets clean featureCounts or HTSeq input automatically.</p><p><strong>2. Differential analysis:</strong> assign samples to groups, include the required groups, set Treatment vs Control comparisons, and run DEG. Add batches when the experiment needs a <code>~ batch + condition</code> design.</p><p><strong>3. Plot export:</strong> choose a chart type, adjust its scope and styling, use Quick preview, then export one chart or all chart types.</p></section>
+          <section id="rtut-en-methods" className="tutorial__section"><h2 className="tutorial__h2">🧪 Statistics</h2><div className="tutorial__table-wrap"><table className="tutorial__table"><thead><tr><th>Scenario</th><th>Engine</th><th>Notes</th></tr></thead><tbody><tr><td>At least two replicates per group</td><td><code>DESeq2</code></td><td>Wald test, VST, and lfcShrink</td></tr><tr><td>Any single-replicate group</td><td><code>edgeR</code></td><td>Fixed BCV with TREAT; exploratory only</td></tr><tr><td>Manual selection</td><td><code>edger_qlf</code></td><td>QL F-test with robust dispersion</td></tr></tbody></table></div><div className="tutorial__callout tutorial__callout--warn">Single-replicate p values are approximate. Do not treat them as equivalent to biological-replicate inference; validate important findings with qPCR or biological replicates.</div></section>
+          <section id="rtut-en-output" className="tutorial__section"><h2 className="tutorial__h2">📦 Outputs</h2><ul><li><code>RNAseq_Analysis_Results.xlsx</code> — normalized matrix, candidate genes, and per-comparison results</li><li><code>&lt;Comparison&gt;_DEGs.csv</code> — differential-gene tables</li><li><code>plots/</code> — exported PNG, SVG, and/or PDF figures</li><li><code>Analysis_Report.md</code> — generated methods summary</li><li><code>params.json</code> — reproducible run settings</li></ul></section>
+          <section id="rtut-en-faq" className="tutorial__section"><h2 className="tutorial__h2">❓ FAQ</h2><details className="tutorial__faq"><summary><span>Rscript is not found</span><span className="tutorial__faq-arrow">›</span></summary><div className="tutorial__faq-body">Install R, then click the Rscript status tag to check again. Standard R installation folders are scanned automatically; add a custom location to PATH.</div></details><details className="tutorial__faq"><summary><span>Analysis fails with an R error</span><span className="tutorial__faq-arrow">›</span></summary><div className="tutorial__faq-body">Check the live log. Common causes are missing packages, non-numeric sample columns, empty groups, and batch/group confounding.</div></details><details className="tutorial__faq"><summary><span>I want to change a figure size</span><span className="tutorial__faq-arrow">›</span></summary><div className="tutorial__faq-body">Use Journal size presets for all charts or open the Size section for a specific chart.</div></details><div className="tutorial__footer"><button type="button" className="btn btn-primary tutorial__done" onClick={onClose}>Start using Mynx</button></div></section>
         </div>
       </div>
     </div>

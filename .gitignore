@@ -63,3 +63,8 @@ scripts/build-portable.cjs
 scripts/build-singlefile.cjs
 
 RELEASE_GUIDE.md
+
+# Chart visual regression temporary output
+.visual-output/
+.visual-output-*/
+.visual-output-subset/

@@ -11,6 +11,7 @@ import {
 
 /* ========= WMO 天气码 → SVG 图标映射 ========= */
 import type { ComponentType } from "react";
+import { useLanguage } from "@/lib/i18n";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type IconType = ComponentType<any>;
@@ -44,6 +45,16 @@ const WEATHER_CODES: Record<number, { icon: IconType; label: string }> = {
   95: { icon: IconCloudBolt, label: "\u96F7\u9635\u96E8" },
   96: { icon: IconCloudBolt, label: "\u96F7\u9635\u96E8" },
   99: { icon: IconCloudBolt, label: "\u96F7\u9635\u96E8" },
+};
+
+const WEATHER_LABELS_EN: Record<number, string> = {
+  0: "Clear", 1: "Mostly clear", 2: "Partly cloudy", 3: "Overcast",
+  45: "Fog", 48: "Freezing fog", 51: "Drizzle", 53: "Drizzle", 55: "Drizzle",
+  56: "Freezing drizzle", 57: "Freezing drizzle", 61: "Light rain", 63: "Rain",
+  65: "Heavy rain", 66: "Freezing rain", 67: "Freezing rain", 71: "Light snow",
+  73: "Snow", 75: "Heavy snow", 77: "Snow grains", 80: "Rain showers",
+  81: "Rain showers", 82: "Heavy showers", 85: "Snow showers", 86: "Heavy snow showers",
+  95: "Thunderstorm", 96: "Thunderstorm", 99: "Thunderstorm",
 };
 
 interface WeatherInfo {
@@ -220,6 +231,7 @@ async function getWeather(lat: number, lon: number): Promise<Omit<WeatherInfo, "
 }
 
 export default function WeatherWidget() {
+  const { t, language } = useLanguage();
   const [status, setStatus] = useState<Status>(() => {
     return loadCache() ? "success" : "loading";
   });
@@ -286,7 +298,7 @@ export default function WeatherWidget() {
     return (
       <div className="weather-widget weather-widget--loading">
         <div className="weather-spinner" />
-        <span className="weather-loading-text">{"\u83B7\u53D6\u5929\u6C14\u4E2D"}</span>
+        <span className="weather-loading-text">{t("weather.loading")}</span>
       </div>
     );
   }
@@ -296,10 +308,10 @@ export default function WeatherWidget() {
       <button
         className="weather-widget weather-widget--error"
         onClick={handleRetry}
-        title="定位服务或天气数据请求失败，请检查网络后重试"
+        title={t("weather.errorTitle")}
       >
-        <span>天气暂不可用</span>
-        <small>检查网络后重试</small>
+        <span>{t("weather.unavailable")}</span>
+        <small>{t("weather.retry")}</small>
       </button>
     );
   }
@@ -313,7 +325,7 @@ export default function WeatherWidget() {
   return (
     <div
       className="weather-widget"
-      title={`\u4F53\u611F ${weather.temperature}\u00B0C \u00B7 \u6E7F\u5EA6 ${weather.humidity}% \u00B7 \u98CE\u901F ${weather.windSpeed} km/h`}
+      title={t("weather.feelsLike", { temperature: weather.temperature, humidity: weather.humidity, windSpeed: weather.windSpeed })}
     >
       <WeatherIcon
         size={22}
@@ -322,7 +334,7 @@ export default function WeatherWidget() {
       />
       <div className="weather-info">
         <span className="weather-temp">{weather.temperature}°</span>
-        <span className="weather-label">{info.label}</span>
+        <span className="weather-label">{language === "en" ? WEATHER_LABELS_EN[weather.weatherCode] ?? "Unknown" : info.label}</span>
       </div>
       <span className="weather-divider" />
       <span className="weather-city">

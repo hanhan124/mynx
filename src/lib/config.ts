@@ -55,13 +55,21 @@ export async function loadChartColor(): Promise<string> {
   return normalizeChartColor(await store.get<string>("chartColor"));
 }
 
-export async function loadAiSearchApiKey(): Promise<string> {
-  const store = await getStore();
-  return (await store.get<string>("aiSearchApiKey"))?.trim() ?? "";
+export interface ChartPreset {
+  id: string;
+  name: string;
+  config: Record<string, unknown>;
+  updatedAt: number;
 }
 
-export async function saveAiSearchApiKey(value: string): Promise<void> {
+export async function loadChartPresets(): Promise<ChartPreset[]> {
   const store = await getStore();
-  await store.set("aiSearchApiKey", value.trim());
+  const presets = await store.get<ChartPreset[]>("chartStudioPresets");
+  return Array.isArray(presets) ? presets : [];
+}
+
+export async function saveChartPresets(presets: ChartPreset[]): Promise<void> {
+  const store = await getStore();
+  await store.set("chartStudioPresets", presets);
   await store.save();
 }

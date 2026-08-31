@@ -7,11 +7,13 @@ import LoadingOverlay from "@/components/LoadingOverlay";
 import HelpButton, { TiffTutorial } from "@/components/HelpButton";
 import { showToast } from "@/components/Toast";
 import { useDropZone } from "@/hooks/useDropZone";
+import { useLanguage } from "@/lib/i18n";
 
 export default function TiffPage() {
+  const { t } = useLanguage();
   const [folder, setFolder] = useState<{ name: string; path: string } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState("转换中...");
+  const [loadingText, setLoadingText] = useState(t("tiff.converting"));
   const [progress, setProgress] = useState<number | null>(null);
 
   const handlePick = async () => {
@@ -27,27 +29,27 @@ export default function TiffPage() {
     if (!folder) return;
     setLoading(true);
     setProgress(0);
-    setLoadingText("准备转换...");
+    setLoadingText(t("tiff.prepare"));
     try {
       const result = await convertTiff(folder.path, options, (current, total) => {
         setProgress(total > 0 ? Math.round((current / total) * 100) : 0);
-        setLoadingText(`正在转换 (${current}/${total})...`);
+        setLoadingText(`${t("tiff.converting")} (${current}/${total})...`);
       });
       setProgress(100);
       if (result.failed < 0) {
-        showToast(`转换失败，请重试`, "error");
+        showToast(t("tiff.failed"), "error");
       } else if (result.ok === 0 && result.failed === 0) {
-        showToast(`未找到 TIFF 文件`, "info");
+        showToast(t("tiff.noFiles"), "info");
       } else if (result.failed > 0) {
-        showToast(`${result.ok} 个成功，${result.failed} 个失败`, "info");
+        showToast(t("tiff.summary", { ok: result.ok, failed: result.failed }), "info");
       } else {
-        showToast(`转换完成，${result.ok} 个文件`, "success");
+        showToast(t("tiff.complete", { count: result.ok }), "success");
       }
       if (result.watermarkSkipped) {
-        showToast(`水印需要 ImageMagick（brew install imagemagick），已跳过水印`, "info");
+        showToast(t("tiff.watermarkSkipped"), "info");
       }
     } catch (e) {
-      showToast(`转换失败：${e instanceof Error ? e.message : String(e)}`, "error");
+      showToast(`${t("tiff.failed")}: ${e instanceof Error ? e.message : String(e)}`, "error");
     } finally {
       setLoading(false);
       setProgress(null);
@@ -73,8 +75,8 @@ export default function TiffPage() {
           <IconPhotoFilled size={18} color="white" stroke={1.75} />
         </div>
         <div className="panel-title">
-          <h2>TIFF 转 JPG</h2>
-          <p>批量将 TIFF 转为 JPG</p>
+        <h2>{t("tiff.title")}</h2>
+          <p>{t("tiff.subtitle")}</p>
         </div>
         <div className="panel-actions">
           <HelpButton>{(close) => <TiffTutorial onClose={close} />}</HelpButton>
@@ -86,7 +88,7 @@ export default function TiffPage() {
         <div className="card">
           <div className="card-title">
             <IconFolderFilled size={14} stroke={1.75} />
-            <span>源文件夹</span>
+            <span>{t("tiff.source")}</span>
           </div>
           <div className="card-body">
             <div
@@ -97,13 +99,13 @@ export default function TiffPage() {
                 <IconFolderFilled size={20} color="white" stroke={1.75} />
               </div>
               <div className="file-info">
-                <div className="file-name">{folder ? folder.name : '未选择文件夹'}</div>
-                <div className="file-path">{folder ? folder.path : '.tif / .tiff 文件目录'}</div>
+                <div className="file-name">{folder ? folder.name : t("tiff.noFolder")}</div>
+                <div className="file-path">{folder ? folder.path : t("tiff.folderHint")}</div>
               </div>
-              {isDragOver && <span className="drop-hint">释放以导入</span>}
+              {isDragOver && <span className="drop-hint">{t("tiff.drop")}</span>}
             </div>
             <button className="btn btn-primary btn-full" onClick={handlePick}>
-              {folder ? '更换文件夹' : '选择文件夹'}
+              {folder ? t("tiff.changeFolder") : t("tiff.chooseFolder")}
             </button>
           </div>
         </div>
@@ -111,7 +113,7 @@ export default function TiffPage() {
         <div className="card">
           <div className="card-title">
             <IconAdjustmentsFilled size={14} stroke={1.75} />
-            <span>转换选项</span>
+            <span>{t("tiff.options")}</span>
           </div>
           <div className="card-body">
             <ConvertOptions onConvert={handleConvert} loading={loading} disabled={!folder} />

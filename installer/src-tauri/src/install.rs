@@ -17,17 +17,7 @@ pub const PAYLOAD_SIZE: u64 = MYNX_PAYLOAD.len() as u64;
 /// RNA-seq R 引擎脚本(运行时按 resourceDir()/r/... 解析,安装时释放到主程序旁)。
 /// 由 scripts/sync-installer-payload.cjs 同步并校验清单一致性 —— r/ 下新增
 /// 脚本后必须同步登记到这里,否则同步脚本会让构建失败。
-const R_RESOURCES: &[(&str, &[u8])] = &[
-    ("r/runner.R", include_bytes!("../resources/r/runner.R")),
-    (
-        "r/modules/enrich.R",
-        include_bytes!("../resources/r/modules/enrich.R"),
-    ),
-    (
-        "r/modules/gsea.R",
-        include_bytes!("../resources/r/modules/gsea.R"),
-    ),
-];
+include!("generated_resources.rs");
 
 use std::fs;
 use std::io::Write;

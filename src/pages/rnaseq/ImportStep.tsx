@@ -21,6 +21,7 @@ import { useRnaSeq } from "./store";
 import { importPage } from "@/lib/rnaseq/matrix";
 import { pathDir } from "@/lib/rnaseq/io";
 import type { PageData } from "@/lib/rnaseq/types";
+import { useLanguage } from "@/lib/i18n";
 
 const MATRIX_FORMAT_LABELS: Record<string, string> = {
   counts_matrix: "标准 Counts 矩阵",
@@ -110,6 +111,24 @@ const FORMAT_GUIDES: FmtGuide[] = [
   },
 ];
 
+const FORMAT_GUIDES_EN: Record<string, Pick<FmtGuide, "label" | "sub" | "when" | "points">> = {
+  counts_matrix: {
+    label: "Standard Counts matrix", sub: "Gene × sample counts · most common",
+    when: "The first column contains gene names; each following column is a sample and each row is an integer gene count.",
+    points: ["Use integer read counts, not TPM, FPKM, or percentages", "Duplicate gene names are merged by summation", "Column names become sample names and can be grouped automatically"],
+  },
+  featurecounts: {
+    label: "featureCounts output", sub: "Annotation columns included · no manual cleanup",
+    when: "Direct featureCounts output with Geneid followed by annotation columns and sample counts. Select this format to clean it automatically.",
+    points: ["Chr / Start / End / Strand / Length annotation columns are removed automatically", "Geneid and all sample count columns are retained", "Duplicate gene names are merged by summation"],
+  },
+  htseq: {
+    label: "Merged HTSeq matrix", sub: "Includes __ statistic rows · auto-filtered",
+    when: "A matrix merged from multiple htseq-count outputs. Statistic rows such as __no_feature are filtered automatically.",
+    points: ["Rows beginning with __ are filtered automatically", "The remaining data uses integer counts and merges duplicate genes", "For a cleaned HTSeq matrix, Standard Counts matrix is also suitable"],
+  },
+};
+
 const RUN_NAME_BAD = /[\\/:*?"<>|]/g;
 
 function fmtVal(v: unknown): string {
@@ -121,6 +140,8 @@ function fmtVal(v: unknown): string {
 }
 
 export default function ImportStep() {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => language === "en" ? en : zh;
   const st = useRnaSeq();
   const {
     config,
@@ -176,7 +197,7 @@ export default function ImportStep() {
         });
       }
     } catch (e) {
-      showToast(`读取失败:${e instanceof Error ? e.message : String(e)}`, "error");
+      showToast(`${l("读取失败:", "Read failed: ")}${e instanceof Error ? e.message : String(e)}`, "error");
     } finally {
       if (seq === pageReqSeq.current) setLoading(false);
     }
@@ -219,7 +240,7 @@ export default function ImportStep() {
     async (path?: string, force = false) => {
       const target = (path ?? displayPath)?.trim();
       if (!target) {
-        showToast("请先选择文件", "info");
+        showToast(l("请先选择文件", "Select a file first"), "info");
         return;
       }
       if (!force && target === importSourcePath && importData) {
@@ -254,7 +275,7 @@ export default function ImportStep() {
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         setImportError(msg);
-        showToast(`导入失败:${msg}`, "error");
+        showToast(`${l("导入失败:", "Import failed: ")}${msg}`, "error");
       } finally {
         setLoading(false);
       }
@@ -362,7 +383,7 @@ export default function ImportStep() {
 
   const onRunNameChange = (v: string) => {
     if (RUN_NAME_BAD.test(v)) {
-      showToast('运行名称不能包含 \\ / : * ? " < > | 等字符,已自动移除', "info");
+      showToast(l('运行名称不能包含 \\ / : * ? " < > | 等字符,已自动移除', 'Run name cannot contain \\ / : * ? " < > |; invalid characters were removed'), "info");
       updateConfig((c) => {
         c.run_name = v.replace(RUN_NAME_BAD, "");
       });
@@ -388,7 +409,7 @@ export default function ImportStep() {
       <div className="card">
         <div className="card-title">
           <IconFileSpreadsheet size={14} stroke={1.75} />
-          <span>Counts 数据文件</span>
+          <span>{l("Counts 数据文件", "Counts data file")}</span>
         </div>
         <div className="card-body" ref={dropRef}>
           {importData ? (
@@ -403,7 +424,7 @@ export default function ImportStep() {
                 <div className="file-name">{pathBase(importSourcePath)}</div>
                 <div className="file-path">{importSourcePath}</div>
               </div>
-              {isDragOver && <span className="drop-hint">释放以导入</span>}
+              {isDragOver && <span className="drop-hint">{l("释放以导入", "Drop to import")}</span>}
             </div>
           ) : (
             /* 空状态:唯一的文件入口(拖拽 / 点击均可),替代原先 占位框+引导块 两处重复 */
@@ -411,7 +432,7 @@ export default function ImportStep() {
               className={`rx-drop-hero${isDragOver ? " drag" : ""}`}
               role="button"
               tabIndex={0}
-              aria-label="导入 Counts 文件"
+              aria-label={l("导入 Counts 文件", "Import counts file")}
               onClick={() => {
                 if (!loading) browseData();
               }}
@@ -425,11 +446,11 @@ export default function ImportStep() {
               <span className="rx-drop-hero-icon">
                 <IconUpload size={24} stroke={1.5} />
               </span>
-              <strong>{loading ? "正在导入…" : "拖拽 Counts 文件到此处"}</strong>
+              <strong>{loading ? l("正在导入…", "Importing…") : l("拖拽 Counts 文件到此处", "Drop a counts file here")}</strong>
               <span className="rx-drop-hero-sub">
-                或点击选择 · 支持 CSV / TSV / TXT / Excel(.xlsx)
+                {l("或点击选择 · 支持 CSV / TSV / TXT / Excel(.xlsx)", "or click to select · CSV / TSV / TXT / Excel (.xlsx) supported")}
               </span>
-              {isDragOver && <span className="drop-hint">释放以导入</span>}
+              {isDragOver && <span className="drop-hint">{l("释放以导入", "Drop to import")}</span>}
             </div>
           )}
 
@@ -437,7 +458,7 @@ export default function ImportStep() {
             <input
               className="rx-path-input"
               type="text"
-              placeholder="也可粘贴文件路径,回车导入"
+              placeholder={l("也可粘贴文件路径,回车导入", "Paste a file path and press Enter to import")}
               value={displayPath}
               onChange={(e) => setDisplayPath(e.target.value)}
               onKeyDown={(e) => {
@@ -445,29 +466,30 @@ export default function ImportStep() {
               }}
             />
             <button className="btn" onClick={browseData} disabled={loading}>
-              <IconFolderOpen size={14} stroke={1.75} /> 选择文件
+              <IconFolderOpen size={14} stroke={1.75} /> {l("选择文件", "Choose file")}
             </button>
           </div>
 
           {/* 空状态:三步流程一览(导入后自动隐藏) */}
           {!importData && (
             <div className="rx-flow-strip">
-              <span className="rx-flow-step current">① 导入与质检</span>
+              <span className="rx-flow-step current">{l("① 导入与质检", "① Import & QC")}</span>
               <span className="rx-flow-arrow">→</span>
-              <span className="rx-flow-step">② 分组 · 运行 DEG</span>
+              <span className="rx-flow-step">{l("② 分组 · 运行 DEG", "② Groups · run DEG")}</span>
               <span className="rx-flow-arrow">→</span>
-              <span className="rx-flow-step">③ 绘图导出</span>
+              <span className="rx-flow-step">{l("③ 绘图导出", "③ Plot export")}</span>
             </div>
           )}
 
           <div className="form-group" style={{ marginTop: 10 }}>
             <label>
-              矩阵格式预设
-              <span className="rx-fmt-hint">按数据来源选,导入时自动做对应清理 · 不确定就选第一个</span>
+              {l("矩阵格式预设", "Matrix format preset")}
+              <span className="rx-fmt-hint">{l("按数据来源选,导入时自动做对应清理 · 不确定就选第一个", "Choose by data source; import cleanup is automatic · select the first option if unsure")}</span>
             </label>
-            <div className="rx-fmt-cards" role="radiogroup" aria-label="矩阵格式预设">
+            <div className="rx-fmt-cards" role="radiogroup" aria-label={l("矩阵格式预设", "Matrix format preset")}>
               {FORMAT_GUIDES.map((g) => {
                 const active = matrixFormat === g.id;
+                const display = language === "en" ? { ...g, ...FORMAT_GUIDES_EN[g.id] } : g;
                 return (
                   <button
                     key={g.id}
@@ -482,8 +504,8 @@ export default function ImportStep() {
                         <IconCheck size={11} stroke={3} />
                       </span>
                     )}
-                    <span className="rx-fmt-card-name">{g.label}</span>
-                    <span className="rx-fmt-card-sub">{g.sub}</span>
+                    <span className="rx-fmt-card-name">{display.label}</span>
+                    <span className="rx-fmt-card-sub">{display.sub}</span>
                   </button>
                 );
               })}
@@ -494,10 +516,10 @@ export default function ImportStep() {
                 g.cols.some((c) => c.dropped) || g.rows.some((r) => r.dropped);
               return (
                 <div className="rx-fmt-guide">
-                  <p className="rx-fmt-when">{g.when}</p>
+                  <p className="rx-fmt-when">{language === "en" ? FORMAT_GUIDES_EN[g.id].when : g.when}</p>
                   <div className="rx-fmt-example">
                     <div className="rx-fmt-example-cap">
-                      <IconFileText size={12} stroke={1.75} /> 文件应长这样(示例)
+                      <IconFileText size={12} stroke={1.75} /> {l("文件应长这样(示例)", "Expected file layout (example)")}
                     </div>
                     <div className="rx-fmt-table-wrap">
                       <table className="rx-fmt-table">
@@ -526,14 +548,14 @@ export default function ImportStep() {
                     {hasDropped && (
                       <div className="rx-fmt-legend">
                         <span className="rx-fmt-legend-item dropped">
-                          <s>删除线</s>
+                          <s>{l("删除线", "Strikethrough")}</s>
                         </span>
-                        <span>= 导入时自动丢弃,无需手工处理</span>
+                        <span>{l("= 导入时自动丢弃,无需手工处理", "= automatically discarded during import")}</span>
                       </div>
                     )}
                   </div>
                   <ul className="rx-fmt-points">
-                    {g.points.map((p, i) => (
+                    {(language === "en" ? FORMAT_GUIDES_EN[g.id].points : g.points).map((p, i) => (
                       <li key={i}>
                         <IconCheck size={12} stroke={2.2} /> {p}
                       </li>
@@ -545,23 +567,23 @@ export default function ImportStep() {
           </div>
 
           {importError && (
-            <div className="rx-alert rx-alert--error">导入失败:{importError}</div>
+            <div className="rx-alert rx-alert--error">{l("导入失败:", "Import failed:")}{importError}</div>
           )}
 
           {/* 数据摘要条 */}
           {importData && dims && (
             <div className="rx-dims">
               <span className="rx-dim-chip">
-                <b>{dims.rows.toLocaleString()}</b> 行(基因)
+                <b>{dims.rows.toLocaleString()}</b> {l("行(基因)", "rows (genes)")}
               </span>
               <span className="rx-dim-chip">
-                <b>{dims.cols}</b> 列
+                <b>{dims.cols}</b> {l("列", "columns")}
               </span>
               <span className="rx-dim-chip">
-                <b>{dims.samples}</b> 个样本
+                <b>{dims.samples}</b> {l("个样本", "samples")}
               </span>
               <span className="rx-dim-chip">
-                基因列 <code>{dims.geneCol}</code>
+                {l("基因列", "Gene column")} <code>{dims.geneCol}</code>
               </span>
               <span className="rx-dim-chip rx-dim-chip--fmt">
                 {importData.format === "excel" ? (
@@ -571,7 +593,7 @@ export default function ImportStep() {
                 )}
                 {formatLabel}
                 {matrixFormatLabel ? ` · ${matrixFormatLabel}` : ""}
-                {importData.converted && <em>已转换为 CSV 供分析</em>}
+                {importData.converted && <em>{l("已转换为 CSV 供分析", "Converted to CSV for analysis")}</em>}
               </span>
             </div>
           )}
@@ -589,11 +611,11 @@ export default function ImportStep() {
           {importData && (
             <div className="rx-import-info">
               <div className="rx-import-info-text">
-                检测到 <b>{importData.sample_cols.length}</b> 个样本列,共
-                <b>{importData.total_genes.toLocaleString()}</b> 个基因。
+                {l("检测到", "Detected ")} <b>{importData.sample_cols.length}</b> {l("个样本列,共", "sample columns and ")}
+                <b>{importData.total_genes.toLocaleString()}</b> {l("个基因。", "genes.")}
                 {importData.converted && config.data_file && (
                   <span className="rx-import-converted">
-                    实际分析文件(转换缓存):{config.data_file}
+                    {l("实际分析文件(转换缓存):", "Analysis file (converted cache): ")}{config.data_file}
                   </span>
                 )}
               </div>
@@ -602,7 +624,7 @@ export default function ImportStep() {
                 onClick={() => void doImportPath(importSourcePath, true)}
                 disabled={loading}
               >
-                <IconRefresh size={13} stroke={1.75} /> 重新导入
+                <IconRefresh size={13} stroke={1.75} /> {l("重新导入", "Re-import")}
               </button>
             </div>
           )}
@@ -614,13 +636,13 @@ export default function ImportStep() {
                 className="rx-collapse-toggle"
                 onClick={() => setCountPanelOpen(!countPanelOpen)}
               >
-                <span className="rx-collapse-title">样本计数概览</span>
+                <span className="rx-collapse-title">{l("样本计数概览", "Sample count overview")}</span>
                 <small className="rx-collapse-sub">
-                  每个样本的非零基因数(过低提示数据问题)
+                  {l("每个样本的非零基因数(过低提示数据问题)", "Non-zero genes per sample (low values can indicate a data issue)")}
                 </small>
                 {lowCountSamples.length > 0 && (
                   <span className="rx-tag rx-tag--warn">
-                    {lowCountSamples.length} 个样本偏低
+                    {lowCountSamples.length} {l("个样本偏低", "low-count samples")}
                   </span>
                 )}
                 <span
@@ -666,16 +688,16 @@ export default function ImportStep() {
       <div className="card">
         <div className="card-title">
           <IconFolderOpen size={14} stroke={1.75} />
-          <span>输出设置</span>
+          <span>{l("输出设置", "Output settings")}</span>
         </div>
         <div className="card-body">
           <div className="form-group">
-            <label>输出目录(留空 = 家目录/Mynx/rnaseq_runs)</label>
+            <label>{l("输出目录(留空 = 家目录/Mynx/rnaseq_runs)", "Output directory (blank = home/Mynx/rnaseq_runs)")}</label>
             <div className="rx-path-row">
               <input
                 className="rx-path-input"
                 type="text"
-                placeholder="输出目录"
+                placeholder={l("输出目录", "Output directory")}
                 value={config.output_dir}
                 onChange={(e) =>
                   updateConfig((c) => {
@@ -684,15 +706,15 @@ export default function ImportStep() {
                 }
               />
               <button className="btn" onClick={browseOutput}>
-                <IconFolderOpen size={14} stroke={1.75} /> 浏览
+                <IconFolderOpen size={14} stroke={1.75} /> {l("浏览", "Browse")}
               </button>
             </div>
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label>运行名称(留空 = RNA_seq + 时间戳)</label>
+            <label>{l("运行名称(留空 = RNA_seq + 时间戳)", "Run name (blank = RNA_seq + timestamp)")}</label>
             <input
               type="text"
-              placeholder="留空自动生成"
+              placeholder={l("留空自动生成", "Leave blank to generate automatically")}
               value={config.run_name}
               onChange={(e) => onRunNameChange(e.target.value)}
             />
@@ -705,13 +727,13 @@ export default function ImportStep() {
         <div className="card">
           <div className="card-title">
             <span className="step-num" style={{ visibility: "hidden" }} />
-            <span>数据预览</span>
+            <span>{l("数据预览", "Data preview")}</span>
             <div className="rx-preview-controls">
               <div className="rx-search-box">
                 <IconSearch size={13} stroke={1.75} />
                 <input
                   type="text"
-                  placeholder="搜索基因名"
+                  placeholder={l("搜索基因名", "Search gene names")}
                   value={searchInput}
                   onChange={(e) => onSearch(e.target.value)}
                 />

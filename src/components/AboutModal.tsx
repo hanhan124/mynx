@@ -6,6 +6,7 @@ import { showToast, type ToastType } from "@/components/Toast";
 import { showUpdateNotification } from "@/components/UpdateNotification";
 import { checkForUpdates } from "@/lib/updater";
 import { IconWorldFilled, IconLoader2 } from "@tabler/icons-react";
+import { useLanguage } from "@/lib/i18n";
 
 interface AboutModalProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface AboutModalProps {
 }
 
 export default function AboutModal({ open, onClose }: AboutModalProps) {
+  const { t } = useLanguage();
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [appVersion, setAppVersion] = useState("...");
 
@@ -28,15 +30,15 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
       if (result.found) {
         showUpdateNotification(result.info);
       } else {
-        showToast("当前已是最新版本", "success");
+        showToast(t("about.latest"), "success");
       }
     } catch (e) {
       const hint = e instanceof Error ? e.message : String(e);
       console.error("[AboutModal] checkForUpdates error:", e);
       const isNetworkError = hint.includes("fetch") || hint.includes("network") || hint.includes("Failed");
       showToast(isNetworkError
-        ? `网络连接失败，请检查网络后重试 (detail: ${hint.substring(0, 150)})`
-        : `检查更新失败: ${hint}`,
+        ? `${t("about.networkError")} (detail: ${hint.substring(0, 150)})`
+        : t("about.checkFailed", { detail: hint }),
         "error" as ToastType,
       );
     } finally {
@@ -45,26 +47,26 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="关于">
+    <Modal open={open} onClose={onClose} title={t("about.title")}>
       <div className="about-header">
         <AppMark size={48} />
         <div className="about-header-text">
           <div className="about-app-name">Mynx</div>
-          <div className="about-app-desc">好用的小工具，触手可及</div>
+          <div className="about-app-desc">{t("about.tagline")}</div>
         </div>
       </div>
 
       <div className="about-info">
         <div className="about-row">
-          <span>版本</span>
+          <span>{t("about.version")}</span>
           <span>v{appVersion}</span>
         </div>
         <div className="about-row">
-          <span>作者</span>
+          <span>{t("about.author")}</span>
           <span>Han</span>
         </div>
         <div className="about-row">
-          <span>技术栈</span>
+          <span>{t("about.stack")}</span>
           <span>Tauri · React · Rust</span>
         </div>
       </div>
@@ -91,10 +93,10 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
         {checkingUpdate ? (
           <>
             <IconLoader2 size={14} stroke={1.75} className="about-spin-icon" />
-            检查中...
+            {t("about.checking")}
           </>
         ) : (
-          "检查更新"
+          t("about.checkUpdate")
         )}
       </button>
 

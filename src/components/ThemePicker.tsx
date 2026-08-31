@@ -1,5 +1,6 @@
 import { IconCheck } from "@tabler/icons-react";
 import { THEMES, type ThemeId } from "@/lib/theme";
+import { useLanguage } from "@/lib/i18n";
 
 interface ThemePickerProps {
   value: ThemeId;
@@ -81,6 +82,7 @@ function SystemMockup() {
 }
 
 export default function ThemePicker({ value, onSelect }: ThemePickerProps) {
+  const { t } = useLanguage();
   return (
     <div className="theme-picker">
       {THEMES.map((theme) => {
@@ -98,8 +100,8 @@ export default function ThemePicker({ value, onSelect }: ThemePickerProps) {
             }
             <div className="theme-tile-info">
               <div className="theme-tile-labels">
-                <span className="theme-tile-name">{theme.name}</span>
-                <span className="theme-tile-desc">{theme.description}</span>
+                <span className="theme-tile-name">{t(`theme.${theme.id}.name`)}</span>
+                <span className="theme-tile-desc">{t(`theme.${theme.id}.description`)}</span>
               </div>
               <span className={`theme-tile-check ${active ? "theme-tile-check--active" : "theme-tile-check--inactive"}`}>
                 <IconCheck size={14} stroke={1.75} />

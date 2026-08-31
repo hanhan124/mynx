@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { IconCircleCheckFilled, IconCircleXFilled, IconInfoCircle } from '@tabler/icons-react';
 import type ExcelJS from 'exceljs';
-import { calculateQpcr, CALC_METHOD_LABELS, type CalcMethod } from '@/lib/qpcr-calculate';
+import { calculateQpcr, CALC_METHOD_LABELS, CALC_METHOD_LABELS_EN, type CalcMethod } from '@/lib/qpcr-calculate';
 import { detectTransformedGenes, detectTransformedGroups } from '@/lib/qpcr-transform';
 import { loadChartColor, saveChartColor } from '@/lib/config';
 import { DEFAULT_CHART_COLOR } from '@/lib/chart-gen';
+import { localizeErrorMessage, useLanguage } from '@/lib/i18n';
 
 interface CalculateProps {
   workbook: ExcelJS.Workbook | null;
@@ -21,6 +22,7 @@ interface CalculateProps {
 type Status = 'ready' | 'processing' | 'success' | 'error';
 
 export default function Calculate({ workbook, geneNames, onComplete, onProgress, onError }: CalculateProps) {
+  const { t, language } = useLanguage();
   const [repeatCount, setRepeatCount] = useState(2);
   // 重复处理：'0'=关闭；'best:N'=择优重复数；'outlier:K'=离群值剔除阈值（K×SD）。
   const [replicateOption, setReplicateOption] = useState('0');
@@ -89,7 +91,7 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
     try {
       setStatus('processing');
       setErrorMsg('');
-      onProgress?.(0, 2, '正在计算相对表达量...');
+      onProgress?.(0, 2, t('qpcr.calculating'));
 
       // Yield two animation frames so the browser actually paints the
       // "processing" overlay BEFORE we start the synchronous, CPU-heavy
@@ -116,9 +118,10 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
         selectNum,
         outlierSd,
       });
-      onProgress?.(2, 2, '计算完成');
+      onProgress?.(2, 2, t('qpcr.calculated'));
       setStatus('success');
-      setResultMsg(`计算完成（${CALC_METHOD_LABELS[method]}），${effectiveGeneNames.length} 个基因`);
+      const methodLabel = language === 'en' ? CALC_METHOD_LABELS_EN[method] : CALC_METHOD_LABELS[method];
+      setResultMsg(`${t('qpcr.calculated')}（${methodLabel}），${effectiveGeneNames.length} ${t('qpcr.genes')}`);
       onComplete(repeatCount, chartColor, {
         method,
         controlGroup: needsControl ? selectedControlGroup : undefined,
@@ -126,14 +129,14 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
     } catch (e) {
       onError?.();
       setStatus('error');
-      setErrorMsg(e instanceof Error ? e.message : '计算出错');
+      setErrorMsg(localizeErrorMessage(e instanceof Error ? e.message : t('qpcr.processingError'), language));
     }
   }
 
   if (!workbook) {
     return (
       <div style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '4px 0' }}>
-        请先选择数据文件
+        {t('qpcr.noFile')}
       </div>
     );
   }
@@ -144,19 +147,19 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
     <>
       <div className="form-row">
         <div className="form-group">
-          <label>计算方法</label>
+          <label>{t('qpcr.method')}</label>
           <select
             value={method}
             onChange={(e) => setMethod(e.target.value as CalcMethod)}
             disabled={status === 'processing'}
           >
-            <option value="ref-normalized">{CALC_METHOD_LABELS['ref-normalized']}（默认）</option>
+            <option value="ref-normalized">{CALC_METHOD_LABELS['ref-normalized']}（{t('qpcr.default')}）</option>
             <option value="control-relative">{CALC_METHOD_LABELS['control-relative']}（ΔΔCt）</option>
           </select>
         </div>
         {needsControl && (
           <div className="form-group">
-            <label>对照组</label>
+            <label>{t('qpcr.controlGroup')}</label>
             <select
               value={selectedControlGroup}
               onChange={(e) => setControlGroup(e.target.value)}
@@ -167,7 +170,7 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
                   <option key={g} value={g}>{g}</option>
                 ))
               ) : (
-                <option value="">请先转换数据</option>
+                <option value="">{t('qpcr.transformFirst')}</option>
               )}
             </select>
           </div>
@@ -176,7 +179,7 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
 
       <div className="form-row form-row--three">
         <div className="form-group">
-          <label>重复次数</label>
+          <label>{t('qpcr.repeats')}</label>
           <select
             value={repeatCount}
             onChange={(e) => {
@@ -196,7 +199,7 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
           </select>
         </div>
         <div className="form-group">
-          <label>参考基因</label>
+          <label>{t('qpcr.referenceGene')}</label>
           <select
             value={selectedRefGene}
             onChange={(e) => setRefGene(e.target.value)}
@@ -207,12 +210,12 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
                 <option key={g} value={g}>{g}</option>
               ))
             ) : (
-              <option value="">请先转换数据</option>
+              <option value="">{t('qpcr.transformFirst')}</option>
             )}
           </select>
         </div>
         <div className="form-group">
-          <label>柱状图颜色</label>
+          <label>{t('qpcr.chartColor')}</label>
           <div className="color-picker-row">
             <input
               type="color"
@@ -224,7 +227,7 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
                 // Persist on every change so the user's choice survives reloads
                 saveChartColor(next).catch(() => undefined);
               }}
-              aria-label="柱状图颜色"
+              aria-label={t('qpcr.chartColor')}
             />
             <span className="color-hex">{chartColor.toUpperCase()}</span>
           </div>
@@ -234,7 +237,7 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
       <div className="form-row">
         <div className="form-group">
           <label>
-            重复处理
+            {t('qpcr.replicateHandling')}
             <span
               title="重复处理：① 择优重复数 — 为每个样本挑选标准差最低的 K 个重复，生成 Summary_Best_Replicates（仅作内部 QC 参考，正式报告请用全部重复的 Summary_All_Genes）；② 离群值剔除 — 迭代剔除偏离组均值超过 K×SD 的重复，生成 Summary_Outlier_Removed（规则客观，可在方法学中披露）；选 0 关闭"
               style={{ cursor: 'help', marginLeft: 4, verticalAlign: 'middle' }}
@@ -247,13 +250,13 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
             onChange={(e) => setReplicateOption(e.target.value)}
             disabled={status === 'processing'}
           >
-            <option value="0">0 — 不启用</option>
-            <optgroup label="择优重复数（最低标准差组合）">
+            <option value="0">0 — {t('qpcr.disabled')}</option>
+            <optgroup label={t('qpcr.bestReplicates')}>
               {Array.from({ length: Math.max(0, repeatCount - 1) }, (_, i) => i + 2).map((n) => (
-                <option key={`best:${n}`} value={`best:${n}`}>{n} 个重复</option>
+                <option key={`best:${n}`} value={`best:${n}`}>{n} {t('qpcr.replicatesUnit')}</option>
               ))}
             </optgroup>
-            <optgroup label="离群值剔除（|Δ| > K×SD）">
+            <optgroup label={t('qpcr.outlierRemoval')}>
               <option value="outlier:1.5">±1.5 SD</option>
               <option value="outlier:2">±2 SD</option>
               <option value="outlier:3">±3 SD</option>
@@ -267,7 +270,7 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
         onClick={handleExecute}
         disabled={!canExecute}
       >
-        {status === 'processing' ? '正在计算...' : '执行计算'}
+        {status === 'processing' ? t('qpcr.calculating') : t('qpcr.calculateAction')}
       </button>
 
       {status === 'success' && resultMsg && (

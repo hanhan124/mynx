@@ -1,5 +1,10 @@
 import type { ComponentType } from "react";
-import { IconDna, IconPhotoFilled, IconMicroscope } from "@tabler/icons-react";
+import {
+  IconChartDots3,
+  IconDna,
+  IconPhotoFilled,
+  IconMicroscope,
+} from "@tabler/icons-react";
 import { lazy } from "react";
 
 /**
@@ -41,8 +46,20 @@ export interface Tool {
 const QpcrPage = lazy(() => import("@/pages/qPCR/QpcrPage"));
 const TiffPage = lazy(() => import("@/pages/tiff/TiffPage"));
 const RnaSeqPage = lazy(() => import("@/pages/rnaseq/RnaSeqPage"));
+const ChartStudioPage = lazy(() => import("@/pages/charts/ChartStudioPage"));
 
 export const tools: Tool[] = [
+  {
+    id: "charts",
+    title: "科研绘图",
+    description: "科研图表、统计标注与论文版式",
+    path: "/charts",
+    accent: "#ff9f0a",
+    icon: IconChartDots3,
+    component: ChartStudioPage,
+    navLabel: "科研绘图",
+    showInSidebar: true,
+  },
   {
     id: "qpcr",
     title: "qPCR 分析",

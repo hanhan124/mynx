@@ -4,12 +4,15 @@ import { platform } from "@tauri-apps/plugin-os";
 import { loadConfig, saveAlwaysOnTop } from "@/lib/config";
 import AppMark from "@/components/AppMark";
 import { IconMinus, IconSquare, IconPinFilled, IconX } from "@tabler/icons-react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/lib/i18n";
 
 interface TitleBarProps {
   title?: string;
 }
 
 export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
+  const { t } = useLanguage();
   const [pinned, setPinned] = useState(false);
   const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
   const appWindow = useMemo(
@@ -35,6 +38,7 @@ export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
         <span className="title-bar-text">{title}</span>
       </div>
       <div className={`title-bar-controls${isMac ? " title-bar-controls--left" : ""}`}>
+        <LanguageSwitcher />
         <button
           className={`title-bar-btn ${pinned ? "title-bar-btn--active" : ""}`}
           data-tauri-no-drag
@@ -44,17 +48,17 @@ export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
             await appWindow.setAlwaysOnTop(next);
             await saveAlwaysOnTop(next);
           }}
-          title="窗口置顶"
+          title={t("window.pin")}
         >
           <IconPinFilled size={14} stroke={1.75} />
         </button>
-        <button className="title-bar-btn" data-tauri-no-drag onClick={() => appWindow.minimize()} title="最小化">
+        <button className="title-bar-btn" data-tauri-no-drag onClick={() => appWindow.minimize()} title={t("window.minimize")}>
           <IconMinus size={14} stroke={1.75} />
         </button>
-        <button className="title-bar-btn" data-tauri-no-drag onClick={() => appWindow.toggleMaximize()} title="最大化">
+        <button className="title-bar-btn" data-tauri-no-drag onClick={() => appWindow.toggleMaximize()} title={t("window.maximize")}>
           <IconSquare size={14} stroke={1.75} />
         </button>
-        <button className="title-bar-btn title-bar-btn--close" data-tauri-no-drag onClick={() => appWindow.close()} title="关闭">
+        <button className="title-bar-btn title-bar-btn--close" data-tauri-no-drag onClick={() => appWindow.close()} title={t("window.close")}>
           <IconX size={14} stroke={1.75} />
         </button>
       </div>

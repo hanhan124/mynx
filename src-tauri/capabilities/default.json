@@ -29,7 +29,8 @@
         { "path": "$DOCUMENTS/**" },
         { "path": "$DOWNLOADS/**" },
         { "path": "$DESKTOP/**" },
-        { "path": "$TEMP/**" }
+        { "path": "$TEMP/**" },
+        { "path": "$RESOURCE/**" }
       ]
     },
     {
@@ -40,7 +41,8 @@
         { "path": "$DOCUMENTS/**" },
         { "path": "$DOWNLOADS/**" },
         { "path": "$DESKTOP/**" },
-        { "path": "$TEMP/**" }
+        { "path": "$TEMP/**" },
+        { "path": "$RESOURCE/**" }
       ]
     },
     {
@@ -135,9 +137,22 @@
           "name": "bash",
           "cmd": "bash",
           "args": true
+        },
+        {
+          "name": "winget",
+          "cmd": "winget.exe",
+          "args": [
+            "install",
+            "--id",
+            "RProject.R",
+            "--exact",
+            "--accept-package-agreements",
+            "--accept-source-agreements"
+          ]
         }
       ]
     },
+    "shell:allow-kill",
     "shell:allow-open",
 
     "store:default",

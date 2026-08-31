@@ -41,6 +41,7 @@ import {
 import { joinPath, openInShell } from "@/lib/rnaseq/io";
 import { plotFiles, readPlotFile } from "@/lib/rnaseq/runs";
 import type { PlotFileItem } from "@/lib/rnaseq/types";
+import { useLanguage } from "@/lib/i18n";
 
 interface ThumbContent {
   kind: "svg" | "png";
@@ -48,6 +49,23 @@ interface ThumbContent {
   name: string;
   fp: string;
 }
+
+const RNA_PLOT_EN: Record<string, { label: string; desc: string }> = {
+  pca: { label: "PCA plot", desc: "Principal components · sample clustering" },
+  heatmap: { label: "Global heatmap", desc: "Candidate-gene expression heatmap" },
+  select_heatmap: { label: "Selected-gene heatmap", desc: "Functional-cluster gene heatmap" },
+  volcano: { label: "Volcano plot", desc: "Per comparison · differential distribution" },
+  venn: { label: "Venn diagram", desc: "Sample/comparison intersections" },
+  ma: { label: "MA plot", desc: "Per comparison · expression vs FC" },
+  boxplot: { label: "Box plot", desc: "Expression distribution" },
+  deg_bar: { label: "DEG bar chart", desc: "Per comparison · up/down counts" },
+  top_genes: { label: "Top genes", desc: "Per comparison · significant-gene bars" },
+  dendrogram: { label: "Dendrogram", desc: "Sample clustering tree" },
+  enrich: { label: "Enrichment bar chart", desc: "GO/KEGG ORA" },
+  gsea: { label: "GSEA dot plot", desc: "Gene-set enrichment" },
+  violin: { label: "Violin plot", desc: "Single-gene expression distribution" },
+  density: { label: "Density plot", desc: "Expression density curve" },
+};
 
 /** 规范化 SVG:补 viewBox、去固定宽高,交给容器等比 contain */
 function normalizeSvg(svg: string): string {
@@ -73,6 +91,9 @@ function fmtSize(bytes: number): string {
 }
 
 export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => language === "en" ? en : zh;
+  const plotCopy = (plot: { id: string; label: string; desc: string }) => language === "en" ? RNA_PLOT_EN[plot.id] ?? plot : plot;
   const st = useRnaSeq();
   const {
     config,
@@ -154,15 +175,15 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
       const preview = !!opts.preview;
       const silent = !!opts.silent;
       if (!config.data_file) {
-        if (!silent) showToast("请先在「数据导入」中导入数据", "info");
+        if (!silent) showToast(l("请先在「数据导入」中导入数据", "Import data in Data import first"), "info");
         return;
       }
       if (config.selected_groups.length < 2) {
-        if (!silent) showToast("至少需要 2 个选定的组(差异分析页)", "info");
+        if (!silent) showToast(l("至少需要 2 个选定的组(差异分析页)", "Select at least two groups in Differential analysis"), "info");
         return;
       }
       if (config.comparisons.length === 0) {
-        if (!silent) showToast("至少需要 1 个比较(差异分析页)", "info");
+        if (!silent) showToast(l("至少需要 1 个比较(差异分析页)", "Add at least one comparison in Differential analysis"), "info");
         return;
       }
       let has = hasResult;
@@ -179,13 +200,13 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
         return;
       }
       if (plotStatus === "running" || exportingPlot) {
-        if (!silent) showToast("当前有导出/预览任务在进行,请稍候", "info");
+        if (!silent) showToast(l("当前有导出/预览任务在进行,请稍候", "An export or preview is already running; please wait"), "info");
         return;
       }
       const snap = plotOptionSnapshot(plotType);
       if (preview && lastPreviewSnap.current[plotType] === snap) {
         if (!silent)
-          showToast("参数未变化,预览已是最新;调整参数或点「导出此图」", "info");
+          showToast(l("参数未变化,预览已是最新;调整参数或点「导出此图」", "Parameters are unchanged and the preview is current; adjust parameters or export the plot"), "info");
         return;
       }
       setExportingPlot(plotType);
@@ -226,15 +247,15 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
 
   const exportAllPlots = async () => {
     if (!config.data_file) {
-      showToast("请先在「数据导入」中导入数据", "info");
+      showToast(l("请先在「数据导入」中导入数据", "Import data in Data import first"), "info");
       return;
     }
     if (config.selected_groups.length < 2) {
-      showToast("至少需要 2 个选定的组(差异分析页)", "info");
+      showToast(l("至少需要 2 个选定的组(差异分析页)", "Select at least two groups in Differential analysis"), "info");
       return;
     }
     if (config.comparisons.length === 0) {
-      showToast("至少需要 1 个比较(差异分析页)", "info");
+      showToast(l("至少需要 1 个比较(差异分析页)", "Add at least one comparison in Differential analysis"), "info");
       return;
     }
     let has = hasResult;
@@ -242,11 +263,11 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
       has = await checkResult();
     }
     if (!has) {
-      showToast("未检测到差异分析结果,请先运行 DEG 或选择结果文件夹。", "error");
+      showToast(l("未检测到差异分析结果,请先运行 DEG 或选择结果文件夹。", "No differential-analysis results found. Run DEG or select a results folder first."), "error");
       return;
     }
     if (plotStatus === "running" || exportingPlot) {
-      showToast("当前有导出任务在进行,请稍候", "info");
+      showToast(l("当前有导出任务在进行,请稍候", "An export is already running; please wait"), "info");
       return;
     }
     batchAbort.current = false;
@@ -274,13 +295,13 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
     const aborted = batchAbort.current;
     setBatch({ running: false, done: 0, total: 0, current: "" });
     void loadGallery(true);
-    if (aborted) showToast("已停止批量导出;已完成的图保留在输出目录", "info");
+    if (aborted) showToast(l("已停止批量导出;已完成的图保留在输出目录", "Batch export stopped; completed plots remain in the output directory"), "info");
     else if (failed.length) {
       showToast(
         `批量导出完成:${ids.length - failed.length} 成功 / ${failed.length} 失败(${failed.join("、")}),详见绘图日志`,
         "error",
       );
-    } else showToast(`已按当前参数导出全部 ${ids.length} 类图表`, "success");
+    } else showToast(l(`已按当前参数导出全部 ${ids.length} 类图表`, `Exported all ${ids.length} plot types with the current parameters`), "success");
   };
 
   const stopBatchExport = () => {
@@ -463,24 +484,24 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
       <div className="card">
         <div className="card-title">
           <IconFolderOpen size={14} stroke={1.75} />
-          <span>分析结果来源</span>
+          <span>{l("分析结果来源", "Analysis result source")}</span>
           <span
             className={`rx-tag ${dirStatus === "ok" ? "rx-tag--ok" : dirStatus === "err" ? "rx-tag--err" : ""}`}
           >
-            {dirStatus === "ok" ? "已就绪" : dirStatus === "err" ? "未找到" : "检测中"}
+            {dirStatus === "ok" ? l("已就绪", "Ready") : dirStatus === "err" ? l("未找到", "Not found") : l("检测中", "Checking")}
           </span>
         </div>
         <div className="card-body">
           <p className="rx-source-desc">
-            选择含 <code>RNAseq_Analysis_Results.xlsx</code> 的目录即可直接绘图;若有{" "}
-            <code>params.json</code> 会自动还原分组与比较。
+            {l("选择含", "Choose a directory containing ")}<code>RNAseq_Analysis_Results.xlsx</code>{l(" 的目录即可直接绘图;若有", " to plot directly. If ")}{" "}
+            <code>params.json</code>{l(" 会自动还原分组与比较。", " is present, groups and comparisons are restored automatically.")}
           </p>
           <div className="rx-path-row">
             <input
               className="rx-path-input"
               type="text"
               readOnly
-              placeholder="尚未指定结果目录 — 点右侧选择,或先运行 DEG"
+              placeholder={l("尚未指定结果目录 — 点右侧选择,或先运行 DEG", "No result directory selected — choose one or run DEG first")}
               value={
                 usingManualDir
                   ? analysisDir
@@ -494,18 +515,18 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
               disabled={dirChecking}
               onClick={() => void browseAnalysisDir()}
             >
-              <IconFolderOpen size={13} stroke={1.75} /> 选择结果文件夹
+              <IconFolderOpen size={13} stroke={1.75} /> {l("选择结果文件夹", "Choose result folder")}
             </button>
             <button
               className="btn"
               disabled={dirChecking}
               onClick={() => void checkResult()}
             >
-              <IconRefresh size={12} stroke={1.75} /> 重新检测
+              <IconRefresh size={12} stroke={1.75} /> {l("重新检测", "Check again")}
             </button>
             {usingManualDir && (
               <button className="btn" onClick={useAutoDetect}>
-                恢复自动检测
+                {l("恢复自动检测", "Restore auto-detection")}
               </button>
             )}
           </div>
@@ -513,7 +534,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
             <div className={`rx-dir-msg ${dirStatus === "err" ? "err" : ""}`}>
               {dirStatus === "err" && (
                 <button className="rx-link-btn" onClick={goAnalysis}>
-                  去运行 DEG →
+                  {l("去运行 DEG →", "Run DEG →")}
                 </button>
               )}
               {dirMsg}
@@ -526,7 +547,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
       <div className="card">
         <div className="card-body rx-global-row">
           <div className="rx-global-item">
-            <span className="rx-global-label">格式</span>
+            <span className="rx-global-label">{l("格式", "Format")}</span>
             <div className="rx-format-group">
               {["pdf", "svg", "png"].map((fmt) => (
                 <button
@@ -541,7 +562,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
             </div>
           </div>
           <div className="rx-global-item">
-            <span className="rx-global-label">尺寸</span>
+            <span className="rx-global-label">{l("尺寸", "Size")}</span>
             <select
               className="rx-size-select"
               value={config.size_mode}
@@ -551,8 +572,8 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                 })
               }
             >
-              <option value="auto">自动(启发式)</option>
-              <option value="manual">手动</option>
+              <option value="auto">{l("自动(启发式)", "Auto (heuristic)")}</option>
+              <option value="manual">{l("手动", "Manual")}</option>
             </select>
           </div>
           <div className="rx-global-item rx-global-item--batch">
@@ -565,19 +586,19 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
               }
               title={
                 hasResult
-                  ? "按当前各图参数与全局格式,顺序导出全部 14 类图表"
-                  : "请先运行 DEG 或加载结果"
+                  ? l("按当前各图参数与全局格式,顺序导出全部 14 类图表", "Export all 14 chart types with current settings and formats")
+                  : l("请先运行 DEG 或加载结果", "Run DEG or load results first")
               }
               onClick={exportAllPlots}
             >
               <IconDownload size={13} stroke={1.75} />
               {batch.running
-                ? `导出中 ${batch.done}/${batch.total} · ${batchCurrentLabel}`
-                : "导出全部图表"}
+                ? `${l("导出中", "Exporting")} ${batch.done}/${batch.total} · ${batchCurrentLabel}`
+                : l("导出全部图表", "Export all charts")}
             </button>
             {batch.running && (
               <button className="btn rx-cancel-btn" onClick={stopBatchExport}>
-                <IconPlayerStop size={12} stroke={1.75} /> 停止
+                <IconPlayerStop size={12} stroke={1.75} /> {l("停止", "Stop")}
               </button>
             )}
           </div>
@@ -589,13 +610,13 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
         <CollapseToggle onClick={() => setPresetExpanded(!presetExpanded)}>
           <span className="rx-preset-lead">
             <IconRuler size={14} stroke={1.75} />
-            <strong>期刊尺寸</strong>
+            <strong>{l("期刊尺寸", "Journal size")}</strong>
             {activePreset ? (
               <span className="rx-preset-val">
                 {activePreset.label} · {activePreset.w}" × {activePreset.h}"
               </span>
             ) : (
-              <span className="rx-preset-val muted">未选择</span>
+              <span className="rx-preset-val muted">{l("未选择", "Not selected")}</span>
             )}
           </span>
           <span className="rx-collapse-right">
@@ -607,7 +628,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                 if (activePreset) applyPreset(activePreset);
               }}
             >
-              应用到全部图
+              {l("应用到全部图", "Apply to all charts")}
             </button>
             <button
               className="btn"
@@ -616,7 +637,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                 setCustomOpen(true);
               }}
             >
-              自定义
+              {l("自定义", "Custom")}
             </button>
             <span className={`rx-collapse-arrow${presetExpanded ? " open" : ""}`}>
               <IconChevronDown size={15} stroke={2} />
@@ -655,7 +676,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
               </button>
             ))}
             <p className="rx-preset-hint">
-              单击选中 · 双击立即应用 · 或点「应用到全部图」
+              {l("单击选中 · 双击立即应用 · 或点「应用到全部图」", "Click to select · double-click to apply · or use Apply to all charts")}
             </p>
           </div>
         )}
@@ -663,15 +684,15 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
 
       {!checkingResult && !hasResult && (
         <div className="rx-alert rx-alert--warn">
-          未检测到差异分析结果:请先在「差异分析」页运行 DEG,或在上方选择结果文件夹。
+          {l("未检测到差异分析结果:请先在「差异分析」页运行 DEG,或在上方选择结果文件夹。", "No differential-analysis result found. Run DEG in Differential analysis or choose a result folder above.")}
         </div>
       )}
 
       {/* 主从工作台 */}
       <div className="rx-workbench">
-        <aside className="rx-rail" aria-label="图表类型">
+        <aside className="rx-rail" aria-label={l("图表类型", "Chart types")}>
           <div className="rx-rail-head">
-            <span>图表类型</span>
+            <span>{l("图表类型", "Chart types")}</span>
             <span className="rx-rail-count">{PLOT_GROUPS.length}</span>
           </div>
           <div className="rx-rail-list">
@@ -708,17 +729,17 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                           dangerouslySetInnerHTML={{ __html: thumb.data }}
                         />
                       ) : (
-                        <img key={galleryVersion} src={thumb.data} alt={g.label} />
+                        <img key={galleryVersion} src={thumb.data} alt={plotCopy(g).label} />
                       )
                     ) : (
                       <Icon size={16} stroke={1.75} />
                     )}
                   </span>
                   <span className="rx-rail-meta">
-                    <strong>{g.label}</strong>
-                    <small>{g.desc}</small>
+                    <strong>{plotCopy(g).label}</strong>
+                    <small>{plotCopy(g).desc}</small>
                   </span>
-                  {custom && <span className="rx-rail-dot" title="已自定义范围" />}
+                  {custom && <span className="rx-rail-dot" title={l("已自定义范围", "Custom scope")} />}
                 </button>
               );
             })}
@@ -739,8 +760,8 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                   })()}
                 </span>
                 <div>
-                  <strong>{activePlot.label}</strong>
-                  <small>{activePlot.desc}</small>
+                  <strong>{plotCopy(activePlot).label}</strong>
+                  <small>{plotCopy(activePlot).desc}</small>
                 </div>
               </div>
               <div className="rx-work-head-actions">
@@ -749,31 +770,31 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                   disabled={!!exportingPlot}
                   onClick={() => resetPlotOption(activePlot.id)}
                 >
-                  <IconRotate size={12} stroke={1.75} /> 恢复默认
+                  <IconRotate size={12} stroke={1.75} /> {l("恢复默认", "Reset")}
                 </button>
                 <button
                   className="btn"
                   disabled={!!exportingPlot || !hasResult || plotStatus === "running"}
                   title={
                     hasResult
-                      ? "立即低分辨率预览(参数未变会跳过)"
-                      : "请先运行 DEG 或加载结果"
+                      ? l("立即低分辨率预览(参数未变会跳过)", "Generate a low-resolution preview now (skips unchanged settings)")
+                      : l("请先运行 DEG 或加载结果", "Run DEG or load results first")
                   }
                   onClick={() => void exportSinglePlot(activePlot.id, { preview: true })}
                 >
-                  <IconBolt size={13} stroke={1.75} /> 快速预览
+                  <IconBolt size={13} stroke={1.75} /> {l("快速预览", "Quick preview")}
                 </button>
                 <button
                   className="btn btn-primary"
                   disabled={!!exportingPlot || !hasResult || plotStatus === "running"}
                   title={
                     hasResult
-                      ? `按当前格式导出 ${activePlot.label}`
-                      : "请先运行 DEG 或加载结果"
+                      ? `${l("按当前格式导出", "Export ")} ${plotCopy(activePlot).label} ${l("按当前格式", "with current formats")}`
+                      : l("请先运行 DEG 或加载结果", "Run DEG or load results first")
                   }
                   onClick={() => void exportSinglePlot(activePlot.id)}
                 >
-                  <IconDownload size={13} stroke={1.75} /> 导出此图
+                  <IconDownload size={13} stroke={1.75} /> {l("导出此图", "Export this chart")}
                 </button>
               </div>
             </header>
@@ -798,11 +819,11 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                     <img
                       key={`png-${activePreview.fp}-${galleryVersion}`}
                       src={activePreview.data}
-                      alt={activePlot.label}
+                      alt={plotCopy(activePlot).label}
                     />
                   )}
                   <span className="rx-preview-zoom">
-                    <IconEye size={13} stroke={1.75} /> 点击放大
+                    <IconEye size={13} stroke={1.75} /> {l("点击放大", "Click to enlarge")}
                   </span>
                   {activePreviewFile && (
                     <span className="rx-preview-name">
@@ -813,38 +834,38 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
               ) : (
                 <div className="rx-preview-empty">
                   <IconPhotoOff size={26} stroke={1.5} />
-                  <strong>尚无预览</strong>
-                  <span>调好参数后点「快速预览」查看效果;满意后再「导出此图」定稿</span>
+                  <strong>{l("尚无预览", "No preview yet")}</strong>
+                  <span>{l("调好参数后点「快速预览」查看效果;满意后再「导出此图」定稿", "Adjust settings, use Quick preview, then Export this chart when ready.")}</span>
                 </div>
               )}
               {previewRunning && (
                 <div className="rx-preview-busy">
                   <IconLoader2 size={17} stroke={2} className="rx-spin" />
-                  <span>{previewBusy ? "快速预览中…" : "导出中…"}</span>
+                  <span>{previewBusy ? l("快速预览中…", "Creating preview…") : l("导出中…", "Exporting…")}</span>
                 </div>
               )}
             </div>
 
             {/* 参数 */}
             <div className="rx-work-params">
-              <Collapse title="使用范围" defaultOpen>
+              <Collapse title={l("使用范围", "Scope")} defaultOpen>
                 <ScopeSection plotId={activePlot.id} dim={activePlot.dim} />
               </Collapse>
-              <Collapse title="本图专属" defaultOpen>
+              <Collapse title={l("本图专属", "Chart-specific")} defaultOpen>
                 <SpecificParams plotId={activePlot.id} />
               </Collapse>
               {isGgplotPlot(activePlot.id) && (
-                <Collapse title="ggplot 主题" defaultOpen>
+                <Collapse title={l("ggplot 主题", "ggplot theme")} defaultOpen>
                   <GgThemeSection plotId={activePlot.id} />
                 </Collapse>
               )}
-              <Collapse title="尺寸" defaultOpen>
+              <Collapse title={l("尺寸", "Size")} defaultOpen>
                 <SizeSection plotId={activePlot.id} />
               </Collapse>
-              <Collapse title="图例 · 标题 · 坐标轴">
+              <Collapse title={l("图例 · 标题 · 坐标轴", "Legend · title · axes")}>
                 <LabelsSection plotId={activePlot.id} />
               </Collapse>
-              <Collapse title="theme() 调节">
+              <Collapse title={l("theme() 调节", "theme() tuning")}>
                 <ThemeSection plotId={activePlot.id} />
               </Collapse>
             </div>
@@ -857,9 +878,9 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
         <CollapseToggle onClick={() => setGalleryOpen(!galleryOpen)}>
           <span className="rx-preset-lead">
             <IconPhoto size={14} stroke={1.75} />
-            <strong>结果画廊</strong>
+            <strong>{l("结果画廊", "Results gallery")}</strong>
             <small>
-              {gallery.length ? `${gallery.length} 个文件` : "当前 run 已生成的图"}
+              {gallery.length ? `${gallery.length} ${l("个文件", "files")}` : l("当前 run 已生成的图", "Charts from the current run")}
             </small>
           </span>
           <span className="rx-collapse-right">
@@ -871,7 +892,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                 void loadGallery(true);
               }}
             >
-              <IconRefresh size={12} stroke={1.75} /> 刷新
+              <IconRefresh size={12} stroke={1.75} /> {l("刷新", "Refresh")}
             </button>
             <button
               className="btn"
@@ -881,7 +902,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                 void openInShell(galleryDir);
               }}
             >
-              <IconFolderOpen size={12} stroke={1.75} /> 打开目录
+              <IconFolderOpen size={12} stroke={1.75} /> {l("打开目录", "Open folder")}
             </button>
           </span>
         </CollapseToggle>
@@ -890,14 +911,14 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
             {!hasResult ? (
               <div className="rx-empty-hero rx-empty-hero--slim">
                 <IconPhoto size={22} stroke={1.5} />
-                <strong>暂无结果</strong>
-                <span>先在「差异分析」页运行 DEG,再在工作台导出图表。</span>
+                <strong>{l("暂无结果", "No results")}</strong>
+                <span>{l("先在「差异分析」页运行 DEG,再在工作台导出图表。", "Run DEG in Differential analysis, then export charts here.")}</span>
               </div>
             ) : gallery.length === 0 && !galleryLoading ? (
               <div className="rx-empty-hero rx-empty-hero--slim">
                 <IconPhotoOff size={22} stroke={1.5} />
-                <strong>还没有生成任何图</strong>
-                <span>在右侧工作台点「导出此图」,生成后会出现在这里与预览区。</span>
+                <strong>{l("还没有生成任何图", "No charts generated yet")}</strong>
+                <span>{l("在右侧工作台点「导出此图」,生成后会出现在这里与预览区。", "Use Export this chart in the workbench; generated charts appear here and in the preview.")}</span>
               </div>
             ) : (
               <div className={`rx-gallery-grid${galleryLoading ? " rx-loading" : ""}`}>
@@ -921,7 +942,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                         ) : (
                           <div className="rx-thumb-pdf">
                             <IconPhoto size={24} stroke={1.5} />
-                            <span>PDF 请打开目录查看</span>
+                            <span>{l("PDF 请打开目录查看", "Open the output directory to view PDF")}</span>
                           </div>
                         )}
                         {thumb && (
@@ -949,22 +970,22 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
       {/* 绘图日志 */}
       <div className="card">
         <CollapseToggle onClick={() => setPlotLogOpen(!plotLogOpen)}>
-          <strong>绘图日志</strong>
+          <strong>{l("绘图日志", "Plot log")}</strong>
           <small>
             {plotLogs.length > 0
-              ? `最近导出:${plotLogs[plotLogs.length - 1].plotType}`
-              : "单图导出的实时日志"}
+              ? `${l("最近导出:", "Last export: ")}${plotLogs[plotLogs.length - 1].plotType}`
+              : l("单图导出的实时日志", "Live log for single-plot exports")}
           </small>
           <span
             className={`rx-tag ${plotStatus === "running" ? "rx-tag--run" : plotStatus === "done" ? "rx-tag--ok" : plotStatus === "failed" ? "rx-tag--err" : plotStatus === "cancelled" ? "rx-tag--warn" : ""}`}
           >
             {
               {
-                idle: "空闲",
-                running: "导出中",
-                done: "完成",
-                failed: "失败",
-                cancelled: "已取消",
+                idle: l("空闲", "Idle"),
+                running: l("导出中", "Exporting"),
+                done: l("完成", "Done"),
+                failed: l("失败", "Failed"),
+                cancelled: l("已取消", "Cancelled"),
               }[plotStatus]
             }
           </span>
@@ -977,14 +998,14 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                 disabled={!plotOutputDir}
                 onClick={() => plotOutputDir && void openInShell(plotOutputDir)}
               >
-                <IconFolderOpen size={12} stroke={1.75} /> 打开输出目录
+                <IconFolderOpen size={12} stroke={1.75} /> {l("打开输出目录", "Open output directory")}
               </button>
               <button
                 className="btn"
                 disabled={plotStatus === "running"}
                 onClick={st.clearPlotLogs}
               >
-                <IconTrash size={12} stroke={1.75} /> 清空日志
+                <IconTrash size={12} stroke={1.75} /> {l("清空日志", "Clear log")}
               </button>
             </div>
             <div ref={plotLogRef} className="rx-log-area">
@@ -996,7 +1017,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
               ))}
               {plotLogs.length === 0 && (
                 <div className="rx-empty-tip">
-                  暂无日志。在右侧工作台点「导出此图」后,实时日志显示在此处。
+                  {l("暂无日志。在右侧工作台点「导出此图」后,实时日志显示在此处。", "No logs yet. Click Export this plot in the workspace to see the live log here.")}
                 </div>
               )}
             </div>
@@ -1022,7 +1043,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
               ) : (
                 <div className="rx-preview-empty">
                   <IconPhotoOff size={26} stroke={1.5} />
-                  <span>该格式不支持内嵌预览,请打开输出目录查看</span>
+                  <span>{l("该格式不支持内嵌预览,请打开输出目录查看", "This format cannot be previewed here. Open the output directory to view it.")}</span>
                 </div>
               )}
             </div>
@@ -1031,10 +1052,10 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                 className="btn"
                 onClick={() => galleryDir && void openInShell(galleryDir)}
               >
-                <IconFolderOpen size={13} stroke={1.75} /> 打开所在目录
+                <IconFolderOpen size={13} stroke={1.75} /> {l("打开所在目录", "Open containing directory")}
               </button>
               <button className="btn btn-primary" onClick={() => setViewerFile(null)}>
-                关闭
+                {l("关闭", "Close")}
               </button>
             </div>
           </div>
@@ -1045,11 +1066,11 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
       <Modal open={customOpen} onClose={() => setCustomOpen(false)}>
         <div className="rx-custom-preset">
           <div className="modal-header">
-            <h3>自定义尺寸</h3>
+            <h3>{l("自定义尺寸", "Custom size")}</h3>
           </div>
           <div className="modal-body">
             <div className="form-group">
-              <label>宽度(inches,单栏 3.5 / 双栏 7 / 全幅 ~9)</label>
+              <label>{l("宽度(inches,单栏 3.5 / 双栏 7 / 全幅 ~9)", "Width (inches; single column 3.5 / double column 7 / full width ~9)")}</label>
               <input
                 type="number"
                 min={2}
@@ -1060,7 +1081,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
               />
             </div>
             <div className="form-group">
-              <label>高度(inches,通常 4–6)</label>
+              <label>{l("高度(inches,通常 4–6)", "Height (inches; usually 4–6)")}</label>
               <input
                 type="number"
                 min={2}

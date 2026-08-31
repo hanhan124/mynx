@@ -357,7 +357,7 @@ async function convertWithPowershell(
       });
 
       command.on("error", () => finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false }));
-      void command.spawn();
+      void command.spawn().catch(() => finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false }));
     } catch {
       finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false });
     }
@@ -429,8 +429,8 @@ async function convertWithShell(
         });
 
         command.on("error", () => finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false }));
-        void command.spawn();
-      });
+        void command.spawn().catch(() => finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false }));
+      }).catch(() => finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false }));
     } catch {
       finalize({ ok: 0, failed: -1, outputDir, watermarkSkipped: false });
     }

@@ -620,6 +620,84 @@
   animation: fadeIn 150ms var(--ease-out);
 }
 
+/* 图表工作台的生成反馈：不遮挡详情卡片的 Live Activity。 */
+.loading-overlay--live {
+  position: sticky;
+  inset: auto;
+  top: 10px;
+  z-index: 20;
+  display: flex;
+  width: min(100%, 640px);
+  min-height: 0;
+  margin: 0 auto 10px;
+  align-items: flex-start;
+  justify-content: flex-end;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+}
+
+.loading-overlay--live .loading-box {
+  display: grid;
+  width: min(100%, 560px);
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 0 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--stroke));
+  border-radius: var(--radius-lg);
+  text-align: left;
+  box-shadow: var(--shadow-flyout);
+  pointer-events: auto;
+  animation: modalIn 220ms var(--ease-out);
+}
+
+.loading-overlay--live .spinner {
+  grid-row: 1 / span 2;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.loading-overlay--live .loading-text {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 560;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loading-overlay--live .loading-progress-track {
+  grid-column: 2 / -1;
+  width: 100%;
+  margin-top: 7px;
+}
+
+.loading-overlay--live .loading-cancel {
+  grid-column: 3;
+  grid-row: 1;
+  margin: 0;
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 10px;
+}
+
+@media (max-width: 520px) {
+  .loading-overlay--live {
+    width: 100%;
+    padding: 0 10px;
+  }
+
+  .loading-overlay--live .loading-box {
+    width: 100%;
+  }
+}
+
 .loading-box {
   background: var(--bg-elevated);
   background-image: var(--surface-gradient);

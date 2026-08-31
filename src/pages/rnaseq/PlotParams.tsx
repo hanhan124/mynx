@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { IconGripVertical, IconRotate, IconPlus, IconBan } from "@tabler/icons-react";
 import { showToast } from "@/components/Toast";
 import { useRnaSeq } from "./store";
+import { useLanguage } from "@/lib/i18n";
 import {
   CheckChips,
   ColorField,
@@ -14,6 +15,7 @@ import {
   SelectField,
   SwitchField,
   TextField,
+  localizeFieldText,
 } from "./fields";
 import {
   ALL_DBS,
@@ -42,6 +44,8 @@ export function ScopeSection({
   plotId: string;
   dim: "group" | "comparison" | "both";
 }) {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => language === "en" ? en : zh;
   const { config, updateConfig } = useRnaSeq();
   const vennBySample =
     plotId === "venn" && (config.plot_options.venn ?? {}).by === "sample";
@@ -60,7 +64,7 @@ export function ScopeSection({
       {showGroups && (
         <div className="rx-subset-box">
           <label className="rx-subset-label">
-            使用哪些组<small>空 = 全部选定组</small>
+            {l("使用哪些组", "Groups to use")}<small>{l("空 = 全部选定组", "empty = all selected groups")}</small>
           </label>
           <CheckChips
             options={config.selected_groups}
@@ -73,14 +77,14 @@ export function ScopeSection({
                   : [...(po.groups ?? []), g];
               })
             }
-            emptyTip="先在「差异分析」页选择纳入分析的组。"
+            emptyTip={l("先在「差异分析」页选择纳入分析的组。", "Select groups to include in Differential analysis first.")}
           />
         </div>
       )}
       {showComps && (
         <div className="rx-subset-box">
           <label className="rx-subset-label">
-            使用哪些比较<small>空 = 全部比较</small>
+            {l("使用哪些比较", "Comparisons to use")}<small>{l("空 = 全部比较", "empty = all comparisons")}</small>
           </label>
           <CheckChips
             options={config.comparisons.map(compKey)}
@@ -101,12 +105,12 @@ export function ScopeSection({
               const [t, ctrl] = key.split("||");
               return `${t} vs ${ctrl}`;
             }}
-            emptyTip="先在「差异分析」页设置比较。"
+            emptyTip={l("先在「差异分析」页设置比较。", "Set comparisons in Differential analysis first.")}
           />
         </div>
       )}
       {dim === "both" && (
-        <p className="rx-subset-note">依据「统计依据」自动切换组/比较选择。</p>
+        <p className="rx-subset-note">{l("依据「统计依据」自动切换组/比较选择。", "The statistics basis automatically selects group or comparison scope.")}</p>
       )}
     </div>
   );
@@ -114,6 +118,8 @@ export function ScopeSection({
 
 // ── 基因设置(全局字段,多处编辑同一份数据) ──
 export function MarkerGenesField({ hint }: { hint: string }) {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => language === "en" ? en : zh;
   const { config, updateConfig } = useRnaSeq();
   const [text, setText] = useState(config.marker_genes.join(", "));
   useEffect(() => {
@@ -125,12 +131,12 @@ export function MarkerGenesField({ hint }: { hint: string }) {
   return (
     <div className="rx-field rx-field--wide">
       <label>
-        标记基因<small>{hint}</small>
+        {l("标记基因", "Marker genes")}<small>{localizeFieldText(hint, language)}</small>
       </label>
       <div className="rx-gene-row">
         <textarea
           rows={2}
-          placeholder="逗号/空格分隔,如:RPE65, MITF, BEST1"
+          placeholder={l("逗号/空格分隔,如:RPE65, MITF, BEST1", "Comma/space separated, e.g. RPE65, MITF, BEST1")}
           value={text}
           onChange={(e) => {
             setText(e.target.value);
@@ -167,10 +173,10 @@ export function MarkerGenesField({ hint }: { hint: string }) {
                 "RLBP1",
               ];
             });
-            showToast("已恢复默认标记基因(视网膜常用)", "success");
+            showToast(l("已恢复默认标记基因(视网膜常用)", "Default marker genes restored (retina panel)"), "success");
           }}
         >
-          <IconRotate size={12} stroke={1.75} /> 默认值
+          <IconRotate size={12} stroke={1.75} /> {l("默认值", "Defaults")}
         </button>
       </div>
     </div>
@@ -178,6 +184,8 @@ export function MarkerGenesField({ hint }: { hint: string }) {
 }
 
 export function ExcludedGenesField({ hint }: { hint: string }) {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => language === "en" ? en : zh;
   const { config, updateConfig } = useRnaSeq();
   const [text, setText] = useState(config.excluded_genes.join("\n"));
   useEffect(() => {
@@ -189,11 +197,11 @@ export function ExcludedGenesField({ hint }: { hint: string }) {
   return (
     <div className="rx-field rx-field--wide">
       <label>
-        排除基因<small>{hint}</small>
+        {l("排除基因", "Excluded genes")}<small>{localizeFieldText(hint, language)}</small>
       </label>
       <textarea
         rows={2}
-        placeholder="一行一个或逗号分隔"
+        placeholder={l("一行一个或逗号分隔", "One per line or comma separated")}
         value={text}
         onChange={(e) => {
           setText(e.target.value);
@@ -207,7 +215,7 @@ export function ExcludedGenesField({ hint }: { hint: string }) {
       />
       {config.excluded_genes.length > 0 && (
         <small className="rx-field-hint">
-          <IconBan size={10} /> 已排除 {config.excluded_genes.length} 个基因
+          <IconBan size={10} /> {l("已排除", "Excluded")} {config.excluded_genes.length} {l("个基因", "genes")}
         </small>
       )}
     </div>
@@ -216,6 +224,8 @@ export function ExcludedGenesField({ hint }: { hint: string }) {
 
 // ── 热图列顺序(组顺序拖拽) ──
 export function ColumnOrderField({ plotId }: { plotId: string }) {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => language === "en" ? en : zh;
   const { config, updateConfig } = useRnaSeq();
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
@@ -243,7 +253,7 @@ export function ColumnOrderField({ plotId }: { plotId: string }) {
   return (
     <div className="rx-field rx-field--wide">
       <label>
-        列顺序(组顺序)<small>拖拽调整 · 左→右绘制</small>
+        {l("列顺序(组顺序)", "Column order (group order)")}<small>{l("拖拽调整 · 左→右绘制", "Drag to reorder · drawn left to right")}</small>
       </label>
       <div className="rx-col-order" role="list">
         {order.map((g, i) => {
@@ -297,11 +307,11 @@ export function ColumnOrderField({ plotId }: { plotId: string }) {
             })
           }
         >
-          <IconRotate size={12} stroke={1.75} /> 重置
+          <IconRotate size={12} stroke={1.75} /> {l("重置", "Reset")}
         </button>
       </div>
       <small className="rx-field-hint">
-        拖动组芯片调整热图列顺序;绘制时按此顺序排列样本列
+        {l("拖动组芯片调整热图列顺序;绘制时按此顺序排列样本列", "Drag group chips to reorder heatmap columns; samples are drawn in this order")}
       </small>
     </div>
   );
@@ -309,13 +319,15 @@ export function ColumnOrderField({ plotId }: { plotId: string }) {
 
 // ── 基因功能簇编辑(select_heatmap) ──
 function GeneClustersEditor() {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => language === "en" ? en : zh;
   const { config, updateConfig } = useRnaSeq();
   const entries = Object.entries(config.gene_clusters);
   return (
     <div className="rx-gene-clusters">
       <div className="rx-gene-clusters-head">
         <label>
-          基因功能簇<small>本图按簇分块展示;每簇一行</small>
+          {l("基因功能簇", "Gene function clusters")}<small>{l("本图按簇分块展示;每簇一行", "Grouped by cluster; one row per cluster")}</small>
         </label>
         <div className="rx-title-actions">
           <button
@@ -327,7 +339,7 @@ function GeneClustersEditor() {
               })
             }
           >
-            <IconPlus size={12} stroke={1.75} /> 添加簇
+            <IconPlus size={12} stroke={1.75} /> {l("添加簇", "Add cluster")}
           </button>
           <button
             className="btn"
@@ -348,13 +360,13 @@ function GeneClustersEditor() {
               })
             }
           >
-            <IconRotate size={12} stroke={1.75} /> 默认值
+            <IconRotate size={12} stroke={1.75} /> {l("默认值", "Defaults")}
           </button>
         </div>
       </div>
       {entries.length === 0 && (
         <div className="rx-empty-tip">
-          点击「添加簇」创建,或加载默认值(视网膜等常用簇)。
+          {l("点击「添加簇」创建,或加载默认值(视网膜等常用簇)。", "Click Add cluster or load the defaults (common retina clusters).")}
         </div>
       )}
       {entries.map(([name, genes]) => (
@@ -363,12 +375,12 @@ function GeneClustersEditor() {
             className="rx-cluster-name"
             type="text"
             defaultValue={name}
-            placeholder="簇名"
+            placeholder={l("簇名", "Cluster name")}
             onBlur={(e) => {
               const newName = e.target.value.trim();
               if (!newName || newName === name) return;
               if (config.gene_clusters[newName]) {
-                showToast(`簇名「${newName}」已存在,改名被拒绝`, "info");
+                showToast(l(`簇名「${newName}」已存在,改名被拒绝`, `Cluster name “${newName}” already exists`), "info");
                 e.target.value = name;
                 return;
               }
@@ -383,7 +395,7 @@ function GeneClustersEditor() {
             className="rx-cluster-genes"
             type="text"
             defaultValue={genes.join(", ")}
-            placeholder="基因列表(逗号分隔)"
+                placeholder={l("基因列表(逗号分隔)", "Gene list (comma separated)")}
             onBlur={(e) =>
               updateConfig((c) => {
                 c.gene_clusters[name] = e.target.value.split(/[,;\s]+/).filter(Boolean);
@@ -399,7 +411,7 @@ function GeneClustersEditor() {
               })
             }
           >
-            删除
+            {l("删除", "Delete")}
           </button>
         </div>
       ))}
@@ -409,6 +421,8 @@ function GeneClustersEditor() {
 
 // ── 每类图专属参数 ──
 export function SpecificParams({ plotId }: { plotId: string }) {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => language === "en" ? en : zh;
   const { config, updateConfig } = useRnaSeq();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const o = usePlotOpt(plotId);
@@ -421,7 +435,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "pca":
       return (
         <>
-          <SectionLabel>PCA 设置</SectionLabel>
+          <SectionLabel>{l("PCA 设置", "PCA settings")}</SectionLabel>
           <div className="rx-param-row">
             <SwitchField
               label="正方形"
@@ -474,28 +488,28 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               label="X 轴范围(min)"
               value={(o.xlim ?? [])[0]}
               step={1}
-              placeholder="自动"
+              placeholder={l("自动", "Auto")}
               onChange={(v) => set("xlim", [v ?? null, (o.xlim ?? [])[1] ?? null])}
             />
             <NumField
               label="X 轴范围(max)"
               value={(o.xlim ?? [])[1]}
               step={1}
-              placeholder="自动"
+              placeholder={l("自动", "Auto")}
               onChange={(v) => set("xlim", [(o.xlim ?? [])[0] ?? null, v ?? null])}
             />
             <NumField
               label="Y 轴范围(min)"
               value={(o.ylim ?? [])[0]}
               step={1}
-              placeholder="自动"
+              placeholder={l("自动", "Auto")}
               onChange={(v) => set("ylim", [v ?? null, (o.ylim ?? [])[1] ?? null])}
             />
             <NumField
               label="Y 轴范围(max)"
               value={(o.ylim ?? [])[1]}
               step={1}
-              placeholder="自动"
+              placeholder={l("自动", "Auto")}
               onChange={(v) => set("ylim", [(o.ylim ?? [])[0] ?? null, v ?? null])}
             />
             <ExcludedGenesField hint="绘制前从表达矩阵剔除(如线粒体/低质量基因);也作用于整体热图" />
@@ -505,7 +519,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "heatmap":
       return (
         <>
-          <SectionLabel>热图设置</SectionLabel>
+          <SectionLabel>{l("热图设置", "Heatmap settings")}</SectionLabel>
           <div className="rx-param-row">
             <SwitchField
               label="显示所有基因"
@@ -581,7 +595,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "select_heatmap":
       return (
         <>
-          <SectionLabel>基因热图设置</SectionLabel>
+          <SectionLabel>{l("基因热图设置", "Selected-gene heatmap settings")}</SectionLabel>
           <div className="rx-param-row">
             <SwitchField
               label="显示基因名"
@@ -638,7 +652,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "volcano":
       return (
         <>
-          <SectionLabel>火山图设置</SectionLabel>
+          <SectionLabel>{l("火山图设置", "Volcano settings")}</SectionLabel>
           <div className="rx-param-row">
             <NumField
               label="标注 top N"
@@ -694,7 +708,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               label="Y 轴范围(max)"
               value={(o.ylim ?? [])[1]}
               step={1}
-              placeholder="自动"
+              placeholder={l("自动", "Auto")}
               onChange={(v) => set("ylim", [(o.ylim ?? [])[0] ?? null, v ?? null])}
             />
             <SelectField
@@ -737,7 +751,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "venn":
       return (
         <>
-          <SectionLabel>Venn 设置</SectionLabel>
+          <SectionLabel>{l("Venn 设置", "Venn settings")}</SectionLabel>
           <div className="rx-param-row">
             <SelectField
               label="统计依据"
@@ -762,7 +776,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "ma":
       return (
         <>
-          <SectionLabel>MA 图设置</SectionLabel>
+          <SectionLabel>{l("MA 图设置", "MA plot settings")}</SectionLabel>
           <div className="rx-param-row">
             <SwitchField
               label="阈值线"
@@ -803,7 +817,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "boxplot":
       return (
         <>
-          <SectionLabel>箱线图设置</SectionLabel>
+          <SectionLabel>{l("箱线图设置", "Box plot settings")}</SectionLabel>
           <div className="rx-param-row">
             <NumField
               label="X 轴文字旋转"
@@ -839,7 +853,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "deg_bar":
       return (
         <>
-          <SectionLabel>DEG 柱状图设置</SectionLabel>
+          <SectionLabel>{l("DEG 柱状图设置", "DEG bar chart settings")}</SectionLabel>
           <div className="rx-param-row">
             <SelectField
               label="柱子排列"
@@ -877,7 +891,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "top_genes":
       return (
         <>
-          <SectionLabel>Top 基因图设置</SectionLabel>
+          <SectionLabel>{l("Top 基因图设置", "Top genes settings")}</SectionLabel>
           <div className="rx-param-row">
             <NumField
               label="显示前 N 个"
@@ -910,7 +924,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "dendrogram":
       return (
         <>
-          <SectionLabel>树状图设置</SectionLabel>
+          <SectionLabel>{l("树状图设置", "Dendrogram settings")}</SectionLabel>
           <div className="rx-param-row">
             <SelectField
               label="聚类方法"
@@ -949,7 +963,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "enrich":
       return (
         <>
-          <SectionLabel>富集分析设置</SectionLabel>
+          <SectionLabel>{l("富集分析设置", "Enrichment settings")}</SectionLabel>
           <div className="rx-param-row">
             <SelectField
               label="物种"
@@ -1047,7 +1061,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "gsea":
       return (
         <>
-          <SectionLabel>GSEA 设置</SectionLabel>
+          <SectionLabel>{l("GSEA 设置", "GSEA settings")}</SectionLabel>
           <div className="rx-param-row">
             <SelectField
               label="物种"
@@ -1126,13 +1140,13 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "violin":
       return (
         <>
-          <SectionLabel>小提琴图设置</SectionLabel>
+          <SectionLabel>{l("小提琴图设置", "Violin plot settings")}</SectionLabel>
           <div className="rx-param-row">
             <div className="rx-field rx-field--wide">
-              <label>目标基因(逗号分隔)</label>
+              <label>{l("目标基因(逗号分隔)", "Target genes (comma separated)")}</label>
               <input
                 type="text"
-                placeholder="如:RPE65,MITF,BEST1(空=用标记基因)"
+                placeholder={l("如:RPE65,MITF,BEST1(空=用标记基因)", "e.g. RPE65, MITF, BEST1 (empty = marker genes)")}
                 defaultValue={(o.genes ?? []).join(", ")}
                 onBlur={(e) =>
                   set("genes", e.target.value.split(/[,;\s]+/).filter(Boolean))
@@ -1162,7 +1176,7 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "density":
       return (
         <>
-          <SectionLabel>密度图设置</SectionLabel>
+          <SectionLabel>{l("密度图设置", "Density plot settings")}</SectionLabel>
           <div className="rx-param-row">
             <SelectField
               label="分组依据"
@@ -1247,6 +1261,8 @@ export function SizeSection({ plotId }: { plotId: string }) {
 
 // ── 图例 / 标题 / 坐标轴段 ──
 export function LabelsSection({ plotId }: { plotId: string }) {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => language === "en" ? en : zh;
   const { updateConfig } = useRnaSeq();
   const o = usePlotOpt(plotId);
   const set = (key: string, value: unknown) =>
@@ -1256,7 +1272,7 @@ export function LabelsSection({ plotId }: { plotId: string }) {
   const has = (key: string) => o[key] !== undefined;
   return (
     <>
-      <SectionLabel>图例</SectionLabel>
+      <SectionLabel>{l("图例", "Legend")}</SectionLabel>
       <div className="rx-param-row">
         <SwitchField
           label="显示"
@@ -1286,7 +1302,7 @@ export function LabelsSection({ plotId }: { plotId: string }) {
         <TextField
           label="图例标题"
           value={o.legend_title ?? ""}
-          placeholder="空=自动"
+          placeholder={l("空=自动", "Empty = auto")}
           onChange={(v) => set("legend_title", v)}
         />
         <NumField
@@ -1304,7 +1320,7 @@ export function LabelsSection({ plotId }: { plotId: string }) {
       </div>
       {has("show_title") && (
         <>
-          <SectionLabel>标题</SectionLabel>
+          <SectionLabel>{l("标题", "Title")}</SectionLabel>
           <div className="rx-param-row">
             <SwitchField
               label="显示"
@@ -1314,7 +1330,7 @@ export function LabelsSection({ plotId }: { plotId: string }) {
             <TextField
               label="文本"
               value={o.title ?? ""}
-              placeholder="空=自动"
+              placeholder={l("空=自动", "Empty = auto")}
               onChange={(v) => set("title", v)}
             />
             <NumField
@@ -1341,7 +1357,7 @@ export function LabelsSection({ plotId }: { plotId: string }) {
           </div>
         </>
       )}
-      <SectionLabel>坐标轴</SectionLabel>
+      <SectionLabel>{l("坐标轴", "Axes")}</SectionLabel>
       <div className="rx-param-row">
         {has("show_xlab") && (
           <SwitchField
@@ -1398,6 +1414,8 @@ export function LabelsSection({ plotId }: { plotId: string }) {
 
 // ── theme() 调节段 ──
 export function ThemeSection({ plotId }: { plotId: string }) {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => language === "en" ? en : zh;
   const { updateConfig } = useRnaSeq();
   const o = usePlotOpt(plotId);
   const set = (key: string, value: unknown) =>
@@ -1448,8 +1466,8 @@ export function ThemeSection({ plotId }: { plotId: string }) {
         value={
           Array.isArray(o.plot_margin) ? o.plot_margin.join(",") : (o.plot_margin ?? "")
         }
-        placeholder="如:10,10,10,10 或留空"
-        hint="ggplot2::margin,单位 pt"
+        placeholder={l("如:10,10,10,10 或留空", "e.g. 10,10,10,10 or leave empty")}
+        hint={l("ggplot2::margin,单位 pt", "ggplot2::margin, in pt")}
         onChange={(v) =>
           set(
             "plot_margin",

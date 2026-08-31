@@ -3,6 +3,7 @@ import { type Update, type DownloadEvent } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { IconDownload, IconX, IconAlertTriangleFilled, IconLoader2 } from "@tabler/icons-react";
 import { checkForUpdates, type UpdateInfo } from "@/lib/updater";
+import { useLanguage } from "@/lib/i18n";
 
 /* ---- types ------------------------------------------------------------ */
 type NotifStatus = "idle" | "available" | "downloading" | "ready" | "error";
@@ -66,6 +67,7 @@ function toErrorText(e: unknown): string {
 
 /* ---- component --------------------------------------------------------- */
 export default function UpdateNotification() {
+  const { t } = useLanguage();
   const [state, setState] = useState<NotifState>({
     status: "idle",
     progress: 0,
@@ -223,7 +225,7 @@ export default function UpdateNotification() {
                 <IconDownload size={16} stroke={1.75} />
               </div>
               <div className="update-title-area">
-                <div className="update-title">发现新版本 v{state.version}</div>
+                <div className="update-title">{t("update.available", { version: state.version ?? "" })}</div>
                 {state.releaseNotes && (
                   <div className="update-body">{state.releaseNotes}</div>
                 )}
@@ -234,10 +236,10 @@ export default function UpdateNotification() {
             </div>
             <div className="update-actions">
               <button className="btn" onClick={handleDismiss}>
-                稍后提示
+                {t("update.later")}
               </button>
               <button className="btn btn-primary" onClick={handleUpdate}>
-                立即更新
+                {t("update.now")}
               </button>
             </div>
           </>
@@ -251,7 +253,7 @@ export default function UpdateNotification() {
                 <IconLoader2 size={16} stroke={1.75} />
               </div>
               <div className="update-title-area">
-                <div className="update-title">正在下载 v{state.version}</div>
+                <div className="update-title">{t("update.downloading", { version: state.version ?? "" })}</div>
               </div>
             </div>
             <div className="update-progress">
@@ -283,7 +285,7 @@ export default function UpdateNotification() {
                 <IconDownload size={16} stroke={1.75} />
               </div>
               <div className="update-title-area">
-                <div className="update-title">下载完成</div>
+                <div className="update-title">{t("update.complete")}</div>
               </div>
               <button className="update-close" onClick={handleDismiss}>
                 <IconX size={14} stroke={1.75} />
@@ -291,10 +293,10 @@ export default function UpdateNotification() {
             </div>
             <div className="update-actions">
               <button className="btn" onClick={handleDismiss}>
-                稍后
+                {t("update.restartLater")}
               </button>
               <button className="btn btn-primary" onClick={handleRestart}>
-                立即重启
+                {t("update.restartNow")}
               </button>
             </div>
           </>
@@ -311,7 +313,7 @@ export default function UpdateNotification() {
                 <IconAlertTriangleFilled size={16} stroke={1.75} />
               </div>
               <div className="update-title-area">
-                <div className="update-title">更新失败</div>
+                <div className="update-title">{t("update.failed")}</div>
                 {state.error && <div className="update-body">{state.error}</div>}
               </div>
               <button className="update-close" onClick={handleDismiss}>
@@ -320,10 +322,10 @@ export default function UpdateNotification() {
             </div>
             <div className="update-actions">
               <button className="btn" onClick={handleDismiss}>
-                关闭
+                {t("window.close")}
               </button>
               <button className="btn btn-primary" onClick={handleUpdate}>
-                重试
+                {t("update.retry")}
               </button>
             </div>
           </>

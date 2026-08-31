@@ -15,10 +15,14 @@
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 1) stop("用法:Rscript runner.R <params.json>")
 params_file <- normalizePath(args[1], mustWork = TRUE)
+script_arg <- commandArgs()[grep("^--file=", commandArgs())][1]
+script_dir <- if (!is.na(script_arg)) dirname(normalizePath(sub("^--file=", "", script_arg), mustWork = FALSE)) else getwd()
 
 suppressPackageStartupMessages({
   library(jsonlite)
 })
+source(file.path(script_dir, "modules", "config.R"), local = TRUE)
+source(file.path(script_dir, "modules", "io.R"), local = TRUE)
 # %||% 运算符(避免依赖 rlang):NULL 时取后备值
 `%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
 
@@ -37,8 +41,15 @@ group_info     <- as.list(cfg$groups)                # list(组名 = c(样本...
 group_display  <- cfg$group_display
 group_order    <- cfg$group_order
 selected_groups<- cfg$selected_groups
-comparisons    <- lapply(seq_len(nrow(cfg$comparisons)),
-                         function(i) as.character(cfg$comparisons[i, ]))
+comparison_raw <- cfg$comparisons
+if (is.null(comparison_raw) || length(comparison_raw) == 0) {
+  comparisons <- list()
+} else if (is.matrix(comparison_raw) || is.data.frame(comparison_raw)) {
+  comparisons <- lapply(seq_len(nrow(comparison_raw)),
+                        function(i) as.character(comparison_raw[i, ]))
+} else {
+  comparisons <- lapply(comparison_raw, as.character)
+}
 marker_genes   <- as.character(cfg$marker_genes)
 gene_clusters  <- as.list(cfg$gene_clusters)
 excluded_genes <- as.character(cfg$excluded_genes)
@@ -481,7 +492,12 @@ run_deg <- function() {
   }
   rownames(countData) <- countData[[gene_col]]
   countData[[gene_col]] <- NULL
-  countData[] <- lapply(countData, function(x) as.integer(round(x)))
+countData[] <- lapply(countData, function(x) as.integer(round(x)))
+
+  if (ncol(countData) == 0 || nrow(countData) == 0)
+    stop("Counts 矩阵为空:请确认第 1 列为基因名,其余列为样本原始整数计数。", call. = FALSE)
+  if (anyNA(countData) || any(!is.finite(as.matrix(countData))) || any(as.matrix(countData) < 0))
+    stop("Counts 矩阵含有非数值、缺失值或负数。RNA-seq 差异分析必须使用非负整数原始计数,不能直接使用 TPM/FPKM。", call. = FALSE)
 
   # 仅保留所选组样本
   selected_samples <- unlist(group_info[selected_groups])
@@ -489,6 +505,8 @@ run_deg <- function() {
   missing <- setdiff(unlist(group_info[selected_groups]), colnames(countData))
   if (length(missing) > 0) warning("缺失样本:", paste(missing, collapse = ", "))
   countData_sub <- countData[, selected_samples, drop = FALSE]
+  if (length(selected_samples) == 0)
+    stop("选定分组没有匹配到输入文件中的样本列,请检查样本名。", call. = FALSE)
 
   # 组名 sanitization:makeContrasts 要求 levels 为合法 R 名称(组名可能含空格/特殊字符)
   # 用 G1/G2... 作内部安全名,建双向映射,结果与日志再换回原名
@@ -499,10 +517,11 @@ run_deg <- function() {
   })
 
   # colData(用安全名作 condition)
+  actual_groups <- rep(selected_groups, sapply(group_info[selected_groups], function(x)
+    sum(x %in% selected_samples)))
   colData <- data.frame(
     row.names = selected_samples,
-    condition = factor(rep(safe_levels[selected_groups],
-                           sapply(group_info[selected_groups], length)),
+    condition = factor(safe_levels[actual_groups],
                        levels = as.character(safe_levels[selected_groups]))
   )
 
@@ -538,7 +557,14 @@ run_deg <- function() {
   # prep:过滤 + TMM + 设计矩阵 + 归一化矩阵(单重复 BCV 与 QLF 共用)
   prep_edger <- function() {
     y <- DGEList(counts = countData_sub, group = colData$condition)
-    keep <- filterByExpr(y, group = colData$condition, min.count = filter_min_count)
+    design <- build_design(colData, has_batch)
+    # 单重复没有残差自由度:沿用 edgeR 的 group 规则并固定 BCV;
+    # 有重复时使用完整设计矩阵,确保批次/条件结构参与表达过滤。
+    keep <- if (use_edgeR_single) {
+      filterByExpr(y, group = colData$condition, min.count = filter_min_count)
+    } else {
+      filterByExpr(y, design = design, min.count = filter_min_count)
+    }
     y <- y[keep, , keep.lib.sizes = FALSE]
     message("过滤后保留基因:", sum(keep), " / ", length(keep))
     # edgeR ≥3.27.1:calcNormFactors 已更名为 normLibSizes(旧名仍兼容但会 warning)
@@ -547,7 +573,6 @@ run_deg <- function() {
     } else {
       y <- calcNormFactors(y, method = "TMM")
     }
-    design <- build_design(colData, has_batch)
     norm_mat <- cpm(y, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
     baseMean_cpm <- rowMeans(cpm(y, normalized.lib.sizes = TRUE, log = FALSE))
     list(y = y, design = design, norm_mat = norm_mat, baseMean_cpm = baseMean_cpm)
@@ -760,6 +785,26 @@ run_deg <- function() {
   writeData(wb, sheet_meta, meta_df)
   saveWorkbook(wb, excel_file, overwrite = TRUE)
   message("\n[OK] Excel 已保存:", normalizePath(excel_file))
+
+  # 论文/内部审计用的机器可读 QC 摘要。保留单重复流程，但明确其统计语义。
+  qc_df <- data.frame(
+    Metric = c("analysis_mode", "engine_setting", "n_groups", "n_samples",
+               "n_genes_input", "n_genes_tested", "single_replicate",
+               "design_formula", "normalization", "filtering", "warning"),
+    Value = c(
+      mode_flag, engine, length(selected_groups), ncol(countData_sub),
+      nrow(countData), nrow(norm_mat), is_single,
+      if (has_batch) "~ batch + condition" else "~ condition",
+      if (use_edgeR) "TMM" else "DESeq2 median-of-ratios",
+      if (use_edgeR) paste0("filterByExpr(min.count=", filter_min_count, ")")
+        else paste0("rowSums(counts)>=", filter_rowsum),
+      if (is_single) "Exploratory only: fixed BCV; P-values are approximate" else ""
+    ),
+    stringsAsFactors = FALSE
+  )
+  write.csv(qc_df, file.path(output_dir, "QC_Summary.csv"), row.names = FALSE)
+  write.csv(meta_df, file.path(output_dir, "Analysis_Metadata.csv"), row.names = FALSE)
+  message("[OK] QC_Summary.csv 与 Analysis_Metadata.csv 已写出")
 
   # 二进制缓存:单图重绘时跳过 openxlsx 读表,显著加速二次出图
   # deg_params:DEG 相关参数指纹。单图导出加载缓存时对比当前参数,
@@ -1280,13 +1325,23 @@ run_select_heatmap <- function() {
   if (!("select_heatmap" %in% steps)) return(invisible(NULL))
   message("\n========== Step 3: 选定基因热图 ==========")
 
-  # 从原始计数读取 + edgeR TMM 标准化(不过滤,旧逻辑)
+  # 从原始计数读取 + edgeR TMM 标准化(不过滤)。重复基因必须与 DEG 主流程
+  # 使用相同的求和规则,否则选定基因热图可能与差异结果对应不上。
   raw <- read.csv(data_file, check.names = FALSE, stringsAsFactors = FALSE)
   gene_col <- colnames(raw)[1]
-  raw <- raw[!duplicated(raw[[gene_col]]), ]
+  raw <- raw[!is.na(raw[[gene_col]]) & trimws(raw[[gene_col]]) != "", ]
+  if (any(duplicated(raw[[gene_col]]))) {
+    num_cols <- setdiff(colnames(raw), gene_col)
+    raw <- raw %>%
+      group_by(!!sym(gene_col)) %>%
+      summarise(across(all_of(num_cols), ~ sum(suppressWarnings(as.numeric(.x)), na.rm = TRUE)), .groups = "drop") %>%
+      as.data.frame()
+  }
   rownames(raw) <- raw[[gene_col]]
   raw[[gene_col]] <- NULL
   raw[] <- lapply(raw, as.integer)
+  if (anyNA(raw) || any(!is.finite(as.matrix(raw))) || any(as.matrix(raw) < 0))
+    stop("选定基因热图输入含有非数值、缺失值或负数计数。", call. = FALSE)
 
   sel_samples <- unlist(group_info[plot_groups("select_heatmap")])
   sel_samples <- sel_samples[sel_samples %in% colnames(raw)]
@@ -1924,7 +1979,9 @@ if (!is.null(deg_env)) {
   run_select_heatmap()
   run_volcano(deg_env)
   run_extra_plots(deg_env)
-  if (exists("run_enrich"))  run_enrich(deg_env)
+  if (exists("run_enrich_directional") && isTRUE(po$enrich$split_direction %||% TRUE))
+    run_enrich_directional(deg_env)
+  else if (exists("run_enrich")) run_enrich(deg_env)
   if (exists("run_gsea"))   run_gsea(deg_env)
 }
 

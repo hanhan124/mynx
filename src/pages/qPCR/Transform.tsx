@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { IconInfoCircleFilled, IconCircleCheckFilled, IconCircleXFilled } from '@tabler/icons-react';
 import type ExcelJS from 'exceljs';
 import { transformQpcrData, detectTransformedGenes } from '@/lib/qpcr-transform';
+import { localizeErrorMessage, useLanguage } from '@/lib/i18n';
 
 interface TransformProps {
   workbook: ExcelJS.Workbook | null;
@@ -14,6 +15,7 @@ interface TransformProps {
 type Status = 'ready' | 'processing' | 'success' | 'error';
 
 export default function Transform({ workbook, sheetName, onComplete, onProgress, onError }: TransformProps) {
+  const { t, language } = useLanguage();
   const [status, setStatus] = useState<Status>('ready');
   const [errorMsg, setErrorMsg] = useState('');
   const [resultMsg, setResultMsg] = useState('');
@@ -44,7 +46,7 @@ export default function Transform({ workbook, sheetName, onComplete, onProgress,
     if (!workbook || !sheetName) return;
     try {
       setStatus('processing');
-      onProgress?.(0, 2, '正在转换数据...');
+      onProgress?.(0, 2, t('qpcr.transforming'));
 
       // Yield two animation frames so the "processing" overlay paints
       // before the synchronous ExcelJS row scan in transformQpcrData
@@ -54,15 +56,15 @@ export default function Transform({ workbook, sheetName, onComplete, onProgress,
       );
 
       const sourceSheet = workbook.getWorksheet(sheetName);
-      if (!sourceSheet) throw new Error('工作表未找到');
+      if (!sourceSheet) throw new Error(t('qpcr.sheetNotFound'));
       const { geneNames } = transformQpcrData(sourceSheet, workbook);
-      onProgress?.(2, 2, '转换完成');
+      onProgress?.(2, 2, t('qpcr.done'));
       setStatus('success');
-      setResultMsg(`转换完成，${geneNames.length} 个基因`);
+      setResultMsg(`${t('qpcr.done')}，${geneNames.length} ${t('qpcr.genes')}`);
       onComplete(geneNames);
     } catch (e) {
       onError?.();
-      setErrorMsg(e instanceof Error ? e.message : String(e));
+      setErrorMsg(localizeErrorMessage(e instanceof Error ? e.message : String(e), language));
       setStatus('error');
     }
   }
@@ -71,13 +73,13 @@ export default function Transform({ workbook, sheetName, onComplete, onProgress,
     <>
       <div className="notice">
         <IconInfoCircleFilled size={14} stroke={1.75} />
-        <span>转置数据为按样本分组，缺失值标黄</span>
+      <span>{t('qpcr.transformHint')}</span>
       </div>
 
       {showAlreadyTransformed && (
         <div className="result-success">
           <IconCircleCheckFilled size={14} stroke={1.75} />
-          <div>已转换（{existingGenes.length} 个基因），可直接计算</div>
+          <div>{t('qpcr.transformed', { count: existingGenes.length })}</div>
         </div>
       )}
 
@@ -86,7 +88,7 @@ export default function Transform({ workbook, sheetName, onComplete, onProgress,
         onClick={handleExecute}
         disabled={!canExecute}
       >
-        {status === 'processing' ? '执行中...' : alreadyTransformed ? '重新转换' : '执行转换'}
+        {status === 'processing' ? t('qpcr.executing') : alreadyTransformed ? t('qpcr.retransform') : t('qpcr.execute')}
       </button>
 
       {status === 'success' && resultMsg && (

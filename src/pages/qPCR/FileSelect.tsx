@@ -3,6 +3,7 @@ import { IconFileSpreadsheet } from '@tabler/icons-react';
 import { readExcelFile, getSheetNames, type ExcelFile } from '@/lib/excel-io';
 import { showToast } from '@/components/Toast';
 import { useDropZone } from '@/hooks/useDropZone';
+import { useLanguage } from '@/lib/i18n';
 
 interface FileSelectProps {
   file: ExcelFile | null;
@@ -12,6 +13,7 @@ interface FileSelectProps {
 }
 
 export default function FileSelect({ file, sheetName, onFileChange, onSheetChange }: FileSelectProps) {
+  const { t } = useLanguage();
   const sheets = file ? getSheetNames(file.workbook) : [];
 
   const handleDrop = async (paths: string[]) => {
@@ -27,7 +29,7 @@ export default function FileSelect({ file, sheetName, onFileChange, onSheetChang
       onSheetChange(names[0] ?? '');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      showToast(`文件导入失败: ${msg}`, 'error');
+      showToast(t('qpcr.importFailed', { detail: msg }), 'error');
     }
   };
 
@@ -48,7 +50,7 @@ export default function FileSelect({ file, sheetName, onFileChange, onSheetChang
       onSheetChange(names[0] ?? '');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      showToast(`文件打开失败: ${msg}`, 'error');
+      showToast(t('qpcr.openFailed', { detail: msg }), 'error');
     }
   }
 
@@ -62,27 +64,27 @@ export default function FileSelect({ file, sheetName, onFileChange, onSheetChang
           <IconFileSpreadsheet size={20} color="white" stroke={1.75} />
         </div>
         <div className="file-info">
-          <div className="file-name">{file ? file.name : '未选择文件'}</div>
+          <div className="file-name">{file ? file.name : t('qpcr.noFileSelected')}</div>
           <div className="file-path">{file ? file.path : 'xlsx / xls'}</div>
         </div>
-        {isDragOver && <span className="drop-hint">释放以导入</span>}
+        {isDragOver && <span className="drop-hint">{t('tiff.drop')}</span>}
       </div>
 
       <div className="btn-row">
-        <button className="btn btn-primary" onClick={handleOpen}>打开</button>
+        <button className="btn btn-primary" onClick={handleOpen}>{t('qpcr.open')}</button>
         {file && (
           <button className="btn" style={{ marginLeft: 'auto', color: 'var(--red)' }} onClick={() => {
             onSheetChange('');
             onFileChange(null);
           }}>
-            清空
+            {t('qpcr.clear')}
           </button>
         )}
       </div>
 
       {file && sheets.length > 0 && (
         <div className="form-group">
-          <label>工作表</label>
+          <label>{t('qpcr.sheet')}</label>
           <select value={sheetName} onChange={(e) => onSheetChange(e.target.value)}>
             {sheets.map((name) => (
               <option key={name} value={name}>{name}</option>

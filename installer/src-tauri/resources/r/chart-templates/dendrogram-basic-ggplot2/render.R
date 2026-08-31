@@ -1,0 +1,1 @@
+render_chart <- function(data, cfg, manifest) { nums <- data[vapply(data, is.numeric, logical(1))]; if (ncol(nums) < 2) stop("树状图至少需要两列数值列"); hc <- hclust(dist(scale(nums))); chart_open_device(cfg$outputPath, cfg$format); plot(hc, main = cfg$title %||% "层级聚类树状图", xlab = "", sub = ""); grDevices::dev.off(); cfg$outputPath }

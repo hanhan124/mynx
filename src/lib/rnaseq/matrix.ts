@@ -5,8 +5,16 @@
  *  - HTSeq 预设过滤 __no_feature 等特殊行
  *  - 重复基因名按原始计数求和合并
  */
-import { joinPath, pathBase, readBytesAny, readTextAny, statAny } from "./io";
-import type { ImportData, MatrixFormat, PageData } from "./types";
+import { joinPath, pathBase, readBytesAny, readTextAny, statAny } from "./io.ts";
+import type { ImportData, MatrixFormat, PageData } from "./types.ts";
+
+type ResolvedImport = Awaited<ReturnType<typeof resolveImportFile>>;
+const resolvedImportCache = new Map<string, { signature: string; value: ResolvedImport }>();
+const MAX_RESOLVED_CACHE = 4;
+
+function cacheSignature(meta: { size: number; mtimeMs: number }, matrixFormat: string): string {
+  return `${meta.size}:${meta.mtimeMs}:${normalizeMatrixFormat(matrixFormat)}`;
+}
 
 // ── CSV 解析(RFC4180 + 宽松引号,对齐 Go csv.Reader LazyQuotes) ──
 export function parseDelimited(text: string, delimiter: string): string[][] {
@@ -64,6 +72,25 @@ export function detectDelimiter(text: string): string {
     else if (ch === ",") commas++;
   }
   return tabs > commas ? "\t" : ",";
+}
+
+async function normalizeDelimitedAsync(text: string, preset: string) {
+  if (typeof Worker === 'undefined') {
+    return normalizeCountMatrix(parseDelimited(text, detectDelimiter(text)), preset);
+  }
+  return new Promise<ReturnType<typeof normalizeCountMatrix>>((resolve, reject) => {
+    const worker = new Worker(new URL('../../features/rnaseq/workers/matrix.worker.ts', import.meta.url), { type: 'module' });
+    const id = Date.now() + Math.random();
+    const cleanup = () => worker.terminate();
+    worker.onmessage = (event: MessageEvent<{ id: number; ok: boolean; result?: ReturnType<typeof normalizeCountMatrix>; error?: string }>) => {
+      if (event.data.id !== id) return;
+      cleanup();
+      if (event.data.ok && event.data.result) resolve(event.data.result);
+      else reject(new Error(event.data.error || '矩阵解析失败'));
+    };
+    worker.onerror = (event) => { cleanup(); reject(event.error || new Error(event.message)); };
+    worker.postMessage({ id, text, preset });
+  });
 }
 
 // ── 矩阵格式预设归一 ──
@@ -175,7 +202,6 @@ async function readXlsxRows(path: string): Promise<string[][]> {
   };
   const rows: string[][] = [];
   ws.eachRow({ includeEmpty: true }, (row) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const vals: string[] = [];
     row.eachCell({ includeEmpty: true }, (cell) => {
       vals.push(cellStr(cell.value));
@@ -414,14 +440,28 @@ export async function resolveImportFile(
     ok = (await statAny(p)) !== null;
   }
   if (!ok) throw new Error(`文件不存在: ${p}`);
+  const sourceMeta = await statAny(p);
+  const signature = sourceMeta ? cacheSignature(sourceMeta, matrixFormat) : "unknown";
+  const cached = resolvedImportCache.get(p);
+  if (cached?.signature === signature) return cached.value;
   const ext = pathExtLower(p);
   if (![".csv", ".tsv", ".txt", ".xlsx"].includes(ext)) {
     throw new Error(`不支持的文件格式 ${ext}(支持 .csv/.tsv/.txt/.xlsx)`);
   }
 
   const mf = normalizeMatrixFormat(matrixFormat);
-  const { rows, format } = await readTableRows(p);
-  const { headers, body, applied, warnings } = normalizeCountMatrix(rows, mf);
+  const extFormat = ['.csv', '.tsv', '.txt'].includes(ext) ? 'text' : 'excel';
+  const sourceText = extFormat === 'text' ? await readTextAny(p) : null;
+  const rows = sourceText !== null
+    ? parseDelimited(sourceText, detectDelimiter(sourceText))
+    : (await readTableRows(p)).rows;
+  const format = sourceText !== null
+    ? (detectDelimiter(sourceText) === '\t' ? 'tsv' : 'csv')
+    : 'excel';
+  const normalized = sourceText !== null
+    ? await normalizeDelimitedAsync(sourceText, mf)
+    : normalizeCountMatrix(rows, mf);
+  const { headers, body, applied, warnings } = normalized;
 
   // 标准 counts + 源已是 CSV 且列未变化:直接用原文件(更快)
   if (
@@ -436,7 +476,7 @@ export async function resolveImportFile(
       return raw === h;
     });
     if (same) {
-      return {
+      const result = {
         meta: {
           source_file: p,
           data_file: p,
@@ -450,13 +490,15 @@ export async function resolveImportFile(
         headers,
         body,
       };
+      resolvedImportCache.set(p, { signature, value: result });
+      return result;
     }
   }
 
   const dst = await cacheCSVPath(p, applied);
   const { writeFile } = await import("@tauri-apps/plugin-fs");
   await writeFile(dst, new TextEncoder().encode(toCsvText(headers, body)));
-  return {
+  const result = {
     meta: {
       source_file: p,
       data_file: dst,
@@ -470,6 +512,17 @@ export async function resolveImportFile(
     headers,
     body,
   };
+  resolvedImportCache.set(p, { signature, value: result });
+  while (resolvedImportCache.size > MAX_RESOLVED_CACHE) {
+    const first = resolvedImportCache.keys().next().value;
+    if (first) resolvedImportCache.delete(first);
+    else break;
+  }
+  return result;
+}
+
+export function clearMatrixImportCache(): void {
+  resolvedImportCache.clear();
 }
 
 function toNumber(v: string): number | string {
@@ -534,12 +587,10 @@ export async function importPage(
   const end = start + size;
   const searchLower = search.trim().toLowerCase();
 
-  let totalAll = 0;
   let totalFiltered = 0;
   const matched: Record<string, unknown>[] = [];
   for (let r = 1; r < rows.length; r++) {
     const row = rows[r];
-    totalAll++;
     if (searchLower) {
       const geneVal = (row[0] ?? "").toLowerCase();
       if (!geneVal.includes(searchLower)) continue;

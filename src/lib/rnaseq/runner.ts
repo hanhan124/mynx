@@ -6,8 +6,8 @@
  * 参数经 params.json 传递,与 r/runner.R 契约一致。
  */
 import { Command as ShellCommand } from "@tauri-apps/plugin-shell";
-import { isWindows, joinPath, psQuote, shQuote } from "./io";
-import type { Config } from "./types";
+import { isWindows, joinPath, psQuote, shQuote } from "./io.ts";
+import type { Config } from "./types.ts";
 
 export type LogLevel = "info" | "warning" | "error" | "success";
 
@@ -270,6 +270,11 @@ export async function runR(
       void command.spawn().then((spawned) => {
         child = spawned;
         childPid = spawned.pid ?? null;
+      }).catch((error) => {
+        result.status = "failed";
+        result.exitCode = 1;
+        callbacks.onLog?.("error", `启动失败: ${error instanceof Error ? error.message : String(error)}`);
+        settle();
       });
       cancelImpl = async () => {
         cancelled = true;
