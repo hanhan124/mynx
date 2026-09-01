@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
-import { IconDna, IconFileSpreadsheet } from '@tabler/icons-react';
+import { IconArrowRight, IconChartBar, IconDna, IconFileSpreadsheet, IconFlask } from '@tabler/icons-react';
 import FileSelect from './FileSelect';
 import Transform from './Transform';
 import Calculate from './Calculate';
+import QpcrPlotter from './QpcrPlotter';
 import LoadingOverlay from '@/components/LoadingOverlay';
 import HelpButton, { QpcrTutorial } from '@/components/HelpButton';
 import type { ExcelFile } from '@/lib/excel-io';
@@ -106,29 +107,53 @@ export default function QpcrPage() {
   );
 
   return (
-    <div className="page-shell page-shell--wide">
+    <div className="page-shell page-shell--wide qpcr-page">
       <LoadingOverlay visible={loading} text={loadingText} progress={progress} />
 
-      <div className="panel-header">
-        <div className="panel-icon" style={{ background: '#0a84ff' }}>
-          <IconDna size={18} color="white" stroke={1.75} />
+      <header className="qpcr-page-hero">
+        <div className="qpcr-hero-copy">
+          <div className="qpcr-hero-title-row">
+            <div className="panel-icon" style={{ background: '#0a84ff' }}>
+              <IconDna size={19} color="white" stroke={1.75} />
+            </div>
+            <div className="panel-title">
+              <h2>{t('qpcr.title')}</h2>
+              <p>{t('qpcr.subtitle')}</p>
+            </div>
+          </div>
         </div>
-        <div className="panel-title">
-        <h2>{t('qpcr.title')}</h2>
-          <p>{t('qpcr.subtitle')}</p>
-        </div>
-        <div className="panel-actions">
+        <div className="qpcr-hero-side">
           <HelpButton>{(close) => <QpcrTutorial onClose={close} />}</HelpButton>
+        </div>
+      </header>
+
+      <div className="qpcr-workflow-overview" aria-label="qPCR workflow">
+        <div className="qpcr-overview-step is-current">
+          <span className="qpcr-overview-index">01</span>
+          <span><strong>{t('qpcr.transform')}</strong></span>
+        </div>
+        <span className="qpcr-overview-connector"><IconArrowRight size={14} /></span>
+        <div className="qpcr-overview-step">
+          <span className="qpcr-overview-index">02</span>
+          <span><strong>{t('qpcr.calculate')}</strong></span>
+        </div>
+        <span className="qpcr-overview-connector"><IconArrowRight size={14} /></span>
+        <div className="qpcr-overview-step">
+          <span className="qpcr-overview-index"><IconChartBar size={13} /></span>
+          <span><strong>绘图与导出</strong></span>
         </div>
       </div>
 
       {/* 步骤 0: 文件 */}
-      <div className="card">
-        <div className="card-title">
-          <IconFileSpreadsheet size={14} stroke={1.75} />
-          <span>{t('qpcr.dataFile')}</span>
+      <section className="card qpcr-source-card">
+        <div className="qpcr-section-head">
+          <div className="qpcr-section-title">
+            <span className="qpcr-section-icon qpcr-section-icon--green"><IconFileSpreadsheet size={15} stroke={1.75} /></span>
+            <span><strong>{t('qpcr.dataFile')}</strong></span>
+          </div>
         </div>
-        <div className="card-body">
+        <div className="qpcr-source-layout">
+          <div className="qpcr-source-main">
           <FileSelect
             file={file}
             sheetName={sheetName}
@@ -146,18 +171,25 @@ export default function QpcrPage() {
             }}
             onSheetChange={setSheetName}
           />
+          </div>
+          <aside className="qpcr-source-guide">
+            <span className="qpcr-source-guide-label">文件格式</span>
+            <strong>Target / Gene · Sample / Group · Cq / Ct</strong>
+            <span>其他列自动忽略</span>
+          </aside>
         </div>
-      </div>
+      </section>
 
       {/* 步骤 1 + 2: 宽屏并排(转换 / 计算), 窄屏自动回退单列堆叠 */}
-      <div className="card-grid card-grid--2">
+      <div className="card-grid card-grid--2 qpcr-processing-grid">
         {/* 步骤 1: 转换 — 始终显示 */}
-        <div className="card">
-          <div className="card-title">
-            <span className="step-num">1</span>
-            <span>{t('qpcr.transform')}</span>
+        <section className="card qpcr-step-card qpcr-step-card--transform">
+          <div className="qpcr-step-head">
+            <span className="qpcr-step-index">01</span>
+            <span className="qpcr-step-heading"><strong>{t('qpcr.transform')}</strong></span>
+            <span className="qpcr-step-mark"><IconFlask size={14} /></span>
           </div>
-          <div className="card-body">
+          <div className="card-body qpcr-step-body">
             <Transform
               workbook={file?.workbook ?? null}
               sheetName={sheetName}
@@ -166,15 +198,16 @@ export default function QpcrPage() {
               onError={endStage}
             />
           </div>
-        </div>
+        </section>
 
         {/* 步骤 2: 计算 — 始终显示 */}
-        <div className="card">
-          <div className="card-title">
-            <span className="step-num">2</span>
-            <span>{t('qpcr.calculate')}</span>
+        <section className="card qpcr-step-card qpcr-step-card--calculate">
+          <div className="qpcr-step-head">
+            <span className="qpcr-step-index">02</span>
+            <span className="qpcr-step-heading"><strong>{t('qpcr.calculate')}</strong></span>
+            <span className="qpcr-step-mark"><IconDna size={14} /></span>
           </div>
-          <div className="card-body">
+          <div className="card-body qpcr-step-body">
             <Calculate
               workbook={file?.workbook ?? null}
               geneNames={geneNames}
@@ -183,8 +216,11 @@ export default function QpcrPage() {
               onError={endStage}
             />
           </div>
-        </div>
+        </section>
       </div>
+
+      {/* 步骤 3: 柱状图与热图 — 使用独立文件选框，避免与前两步的数据状态冲突 */}
+      <QpcrPlotter />
 
     </div>
   );

@@ -17,6 +17,7 @@ import {
 } from "@tabler/icons-react";
 import { isSearchEngine, SEARCH_ENGINES, type SearchEngine } from "@/lib/search-engines";
 import { useLanguage } from "@/lib/i18n";
+import AppMark from "@/components/AppMark";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const initialSearchParams = new URLSearchParams(window.location.hash.split("?")[1] ?? "");
@@ -204,7 +205,7 @@ export default function SearchWindow() {
       <div className="search-window-toolbar" data-tauri-drag-region onMouseDown={handleToolbarMouseDown}>
         {pageLoading && <span className="search-window-loading-line" aria-label={t("search.loading")} />}
         <div className="search-window-brand" aria-label={t("search.brand")}>
-          <span>Mynx <em>Search</em></span>
+          <AppMark size={24} />
         </div>
         <div className="search-window-nav">
           <button data-tauri-no-drag type="button" title={t("search.back")} onClick={() => runContentAction("back")}>

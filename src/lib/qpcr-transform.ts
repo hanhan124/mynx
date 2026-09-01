@@ -206,15 +206,18 @@ export function transformQpcrData(sourceSheet: ExcelJS.Worksheet, targetWorkbook
           continue;
         }
 
-        const valid = vals.find(v => !v.missing && v.value !== null);
+        // 缺失值按同一「样本 + 基因」的有效重复均值补齐；全部缺失时使用 50。
+        const validValues = vals
+          .filter(v => !v.missing && v.value !== null)
+          .map(v => v.value as number);
+        const fillValue = validValues.length > 0
+          ? validValues.reduce((sum, value) => sum + value, 0) / validValues.length
+          : 50;
         const item = vals[rep];
         if (item && !item.missing && item.value !== null) {
           cell.value = item.value;
-        } else if (valid) {
-          cell.value = valid.value;
-          cell.fill = YELLOW_FILL;
         } else {
-          cell.value = 50;
+          cell.value = fillValue;
           cell.fill = YELLOW_FILL;
         }
       }
