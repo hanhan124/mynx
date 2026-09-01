@@ -18,6 +18,58 @@ ensure("scales")
 cfg <- jsonlite::fromJSON(args[[1]], simplifyVector = FALSE)
 `%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
 
+# Convert the small inline markup used by the UI into a plotmath expression.
+# Keeping this in the runner lets exported PNG/PDF/SVG files retain emphasis
+# on only the gene name, e.g. "Normalize to <i>tbp</i>".
+rich_label_expression <- function(label) {
+  label <- as.character(label %||% "")
+  if (!nzchar(trimws(label))) return(NULL)
+  tag_re <- "<(bi|b|i)>|</(bi|b|i)>"
+  matches <- gregexpr(tag_re, label, perl = TRUE)[[1]]
+  parts <- list()
+  styles <- character()
+  cursor <- 1L
+  add_part <- function(text, style) {
+    if (!nzchar(text)) return()
+    encoded <- encodeString(text, quote = "\"")
+    if (identical(style, "bi")) encoded <- paste0("bolditalic(", encoded, ")")
+    else if (identical(style, "b")) encoded <- paste0("bold(", encoded, ")")
+    else if (identical(style, "i")) encoded <- paste0("italic(", encoded, ")")
+    parts[[length(parts) + 1L]] <<- encoded
+  }
+  if (length(matches) == 1L && matches[[1]] == -1L) {
+    add_part(label, "")
+  } else {
+    for (index in seq_along(matches)) {
+      start <- matches[[index]]
+      if (start > cursor) add_part(substr(label, cursor, start - 1L), if (length(styles)) styles[[length(styles)]] else "")
+      tag <- regmatches(label, gregexpr(tag_re, label, perl = TRUE))[[1]][[index]]
+      if (startsWith(tag, "</")) {
+        if (length(styles)) styles <- styles[-length(styles)]
+      } else {
+        styles <- c(styles, sub("[<>]", "", tag))
+      }
+      cursor <- start + attr(matches, "match.length")[[index]]
+    }
+    if (cursor <= nchar(label)) add_part(substr(label, cursor), if (length(styles)) styles[[length(styles)]] else "")
+  }
+  if (!length(parts)) return(NULL)
+  parse(text = paste0("paste(", paste(unlist(parts), collapse = ", "), ", sep=\"\")"))[[1]]
+}
+
+heatmap_palette_colors <- function(name) {
+  switch(as.character(name %||% "blue-white-red"),
+    viridis = c("#440154", "#3B528B", "#21918C", "#5DC863", "#FDE725"),
+    plasma = c("#0D0887", "#7E03A8", "#CC4778", "#F89540", "#F0F921"),
+    inferno = c("#000004", "#420A68", "#932667", "#DD513A", "#FBAE23", "#FCFFA4"),
+    cividis = c("#00204C", "#414C6D", "#787D85", "#B7A97A", "#FDE737"),
+    rdbu = c("#2166AC", "#67A9CF", "#F7F7F7", "#EF8A62", "#B2182B"),
+    spectral = c("#5E4FA2", "#3288BD", "#66C2A5", "#ABDDA4", "#E6F598", "#FFFFBF", "#FEE08B", "#FDAE61", "#F46D43", "#D53E4F", "#9E0142"),
+    `green-white-purple` = c("#1B7837", "#A6DBA0", "#F7F7F7", "#D8BFD8", "#762A83"),
+    c("#2166AC", "#F7F7F7", "#B2182B")
+  )
+}
+
 message("[data] 正在读取 qPCR 数据")
 if (!file.exists(cfg$filePath)) stop("找不到输入文件，请重新导入。")
 if (!dir.exists(cfg$outputDir)) dir.create(cfg$outputDir, recursive = TRUE)
@@ -205,9 +257,11 @@ if (identical(as.character(cfg$kind), "bar")) {
       if (nrow(pts)) p <- p + ggplot2::geom_point(data = pts, ggplot2::aes(x = Group_Name, y = value), position = ggplot2::position_jitter(width = 0.08, seed = 42), size = 1.6, colour = "black", alpha = 0.8)
     }
     if (nrow(ann)) p <- p + ggplot2::geom_segment(data = ann, ggplot2::aes(x = xa, xend = xb, y = y_line, yend = y_line), inherit.aes = FALSE, linewidth = as_num(cfg$bracketWidth, 0.35), colour = "black", lineend = "square") + ggplot2::geom_segment(data = ann, ggplot2::aes(x = xa, xend = xa, y = y_line, yend = y_tip), inherit.aes = FALSE, linewidth = as_num(cfg$bracketWidth, 0.35), colour = "black", lineend = "square") + ggplot2::geom_segment(data = ann, ggplot2::aes(x = xb, xend = xb, y = y_line, yend = y_tip), inherit.aes = FALSE, linewidth = as_num(cfg$bracketWidth, 0.35), colour = "black", lineend = "square") + ggplot2::geom_text(data = ann, ggplot2::aes(x = (xa + xb) / 2, y = y_lab, label = label), inherit.aes = FALSE, size = as_num(cfg$bracketTextSize, 6), vjust = 0, colour = "black")
-    y_label <- if (use_sci) sprintf("Relative expression (×10^%d)", exponent) else "Relative expression"
+    y_label <- as.character(cfg$yLabel %||% "Relative expression")
+    if (use_sci) y_label <- paste0(y_label, " (×10^", exponent, ")")
+    x_label <- as.character(cfg$xLabel %||% "")
     x_theme <- if (as_bool(cfg$showXTick, FALSE)) ggplot2::element_text(size = as_num(cfg$xTickSize, 9), angle = as_num(cfg$xAngle, 45), hjust = as_num(cfg$xHjust, 1), vjust = as_num(cfg$xVjust, 1), margin = ggplot2::margin(t = 4)) else ggplot2::element_blank()
-    p <- p + ggplot2::scale_y_continuous(limits = c(0, ys$upper), breaks = ys$breaks, expand = c(0, 0), labels = scales::label_number(accuracy = 0.01)) + ggplot2::labs(x = NULL, y = y_label, title = gene) + ggplot2::theme_classic() + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = as_num(cfg$titleSize, 26), vjust = as_num(cfg$titleVjust, 1), face = "bold.italic"), axis.title.y = ggplot2::element_text(size = as_num(cfg$yLabelSize, 15), margin = ggplot2::margin(r = 8)), axis.text.y = ggplot2::element_text(size = as_num(cfg$yTickSize, 13), margin = ggplot2::margin(r = 4)), axis.text.x = x_theme, axis.line = ggplot2::element_line(linewidth = as_num(cfg$axisWidth, 0.5), colour = "black"), axis.ticks = ggplot2::element_line(linewidth = as_num(cfg$axisWidth, 0.5), colour = "black"), axis.ticks.length = grid::unit(as_num(cfg$tickLength, 3), "pt"), plot.margin = ggplot2::margin(20, 15, 10, 10))
+    p <- p + ggplot2::scale_y_continuous(limits = c(0, ys$upper), breaks = ys$breaks, expand = c(0, 0), labels = scales::label_number(accuracy = 0.01)) + ggplot2::labs(x = rich_label_expression(x_label), y = rich_label_expression(y_label), title = gene) + ggplot2::theme_classic() + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = as_num(cfg$titleSize, 26), vjust = as_num(cfg$titleVjust, 1), face = "bold.italic"), axis.title.x = ggplot2::element_text(size = as_num(cfg$xTickSize, 9), margin = ggplot2::margin(t = 8)), axis.title.y = ggplot2::element_text(size = as_num(cfg$yLabelSize, 15), margin = ggplot2::margin(r = 8)), axis.text.y = ggplot2::element_text(size = as_num(cfg$yTickSize, 13), margin = ggplot2::margin(r = 4)), axis.text.x = x_theme, axis.line = ggplot2::element_line(linewidth = as_num(cfg$axisWidth, 0.5), colour = "black"), axis.ticks = ggplot2::element_line(linewidth = as_num(cfg$axisWidth, 0.5), colour = "black"), axis.ticks.length = grid::unit(as_num(cfg$tickLength, 3), "pt"), plot.margin = ggplot2::margin(20, 15, 10, 10))
     out <- file.path(cfg$outputDir, paste0(safe_name(gene), ".", format))
     sz <- smart_size(nrow(s), nrow(ann))
     ggplot2::ggsave(out, p, width = sz$w, height = sz$h, dpi = as_num(cfg$dpi, 300), device = if (format == "pdf") "pdf" else if (format == "svg") "svg" else "png")
@@ -234,8 +288,12 @@ if (identical(as.character(cfg$kind), "bar")) {
   if (as_bool(cfg$heatmapClusterRows, FALSE) && nrow(mat) > 2) mat <- mat[order.dendrogram(as.dendrogram(hclust(dist(mat)))), , drop = FALSE]
   if (as_bool(cfg$heatmapClusterCols, FALSE) && ncol(mat) > 2) mat <- mat[, order.dendrogram(as.dendrogram(hclust(dist(t(mat))))), drop = FALSE]
   grid <- expand.grid(row = rownames(mat), col = colnames(mat), stringsAsFactors = FALSE); grid$value <- as.vector(mat); grid$label <- as.vector(label_mat[rownames(mat), colnames(mat)]); grid$label_colour <- ifelse(abs(grid$value) > 0.85 * as_num(cfg$zlim, 2), "white", "grey10"); grid$row <- factor(grid$row, levels = rev(rownames(mat))); grid$col <- factor(if (as_bool(cfg$wrapPlus, FALSE)) wrap_plus(grid$col) else grid$col, levels = if (as_bool(cfg$wrapPlus, FALSE)) wrap_plus(colnames(mat)) else colnames(mat))
-  p <- ggplot2::ggplot(grid, ggplot2::aes(x = col, y = row, fill = value)) + ggplot2::geom_tile(colour = "white", linewidth = 0.25) + ggplot2::scale_fill_gradient2(low = "#2166AC", mid = "#F7F7F7", high = "#B2182B", midpoint = 0, limits = c(-as_num(cfg$zlim, 2), as_num(cfg$zlim, 2)), oob = scales::squish, na.value = "grey95") + ggplot2::labs(x = NULL, y = NULL, fill = "Z-score", title = "") + ggplot2::theme_minimal(base_size = as_num(cfg$baseSize, 10)) + ggplot2::theme(panel.grid = ggplot2::element_blank(), axis.text.x = ggplot2::element_text(angle = 45, hjust = 1), axis.text.y = ggplot2::element_text(face = "bold.italic"), axis.title = ggplot2::element_blank(), plot.margin = ggplot2::margin(8, 8, 8, 8))
-  if (as_bool(cfg$showCellValues, FALSE)) p <- p + ggplot2::geom_text(ggplot2::aes(label = sprintf("%.2f", label), colour = label_colour), size = as_num(cfg$cellTextSize, 5), fontface = "bold") + ggplot2::scale_colour_identity()
+  legend_position <- as.character(cfg$legendPosition %||% "right")
+  if (!legend_position %in% c("right", "bottom", "none")) legend_position <- "right"
+  x_theme <- if (as_bool(cfg$showColNames, TRUE)) ggplot2::element_text(size = as_num(cfg$xTickSize, 9), angle = as_num(cfg$xAngle, 45), hjust = as_num(cfg$xHjust, 1), margin = ggplot2::margin(t = 4)) else ggplot2::element_blank()
+  y_theme <- if (as_bool(cfg$showRowNames, TRUE)) ggplot2::element_text(size = as_num(cfg$yTickSize, 9), face = if (as_bool(cfg$rowLabelItalic, TRUE)) "bold.italic" else "plain") else ggplot2::element_blank()
+  p <- ggplot2::ggplot(grid, ggplot2::aes(x = col, y = row, fill = value)) + ggplot2::geom_tile(colour = as.character(cfg$tileBorder %||% "#FFFFFF"), linewidth = as_num(cfg$tileBorderWidth, 0.25)) + ggplot2::scale_fill_gradientn(colors = heatmap_palette_colors(cfg$heatmapPalette), limits = c(-as_num(cfg$zlim, 2), as_num(cfg$zlim, 2)), oob = scales::squish, na.value = "grey95") + ggplot2::labs(x = rich_label_expression(as.character(cfg$xLabel %||% "")), y = rich_label_expression(as.character(cfg$yLabel %||% "")), fill = as.character(cfg$legendTitle %||% "Z-score"), title = rich_label_expression(as.character(cfg$heatmapTitle %||% ""))) + ggplot2::theme_minimal(base_size = as_num(cfg$baseSize, 10)) + ggplot2::theme(panel.grid = ggplot2::element_blank(), axis.text.x = x_theme, axis.text.y = y_theme, axis.title.x = ggplot2::element_text(size = as_num(cfg$axisTitleSize, 11), margin = ggplot2::margin(t = 8)), axis.title.y = ggplot2::element_text(size = as_num(cfg$axisTitleSize, 11), margin = ggplot2::margin(r = 8)), legend.position = legend_position, plot.margin = ggplot2::margin(8, 8, 8, 8))
+  if (as_bool(cfg$showCellValues, FALSE)) p <- p + ggplot2::geom_text(ggplot2::aes(label = sprintf("%.2f", label), colour = label_colour), size = as_num(cfg$cellTextSize, 5), fontface = if (as_bool(cfg$cellTextBold, TRUE)) "bold" else "plain") + ggplot2::scale_colour_identity()
   export_png <- as_bool(cfg$exportPng, format == "png"); export_pdf <- as_bool(cfg$exportPdf, format == "pdf"); if (!export_png && !export_pdf && format %in% c("png", "pdf")) { export_png <- format == "png"; export_pdf <- format == "pdf" }
   if (export_png) { out <- file.path(cfg$outputDir, paste0(output_prefix, ".png")); ggplot2::ggsave(out, p, width = as_num(cfg$pngWidth, 4), height = as_num(cfg$pngHeight, 2), dpi = as_num(cfg$pngDpi, 300), device = "png"); message(sprintf("[save] %s", basename(out))) }
   if (export_pdf) { out <- file.path(cfg$outputDir, paste0(output_prefix, ".pdf")); ggplot2::ggsave(out, p, width = as_num(cfg$pdfWidth, 7), height = as_num(cfg$pdfHeight, 6), device = "pdf"); message(sprintf("[save] %s", basename(out))) }

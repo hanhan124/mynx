@@ -41,6 +41,7 @@ src-tauri/gen/
 
 # Internal docs (not for GitHub)
 docs/
+RELEASE_GUIDE.md
 
 # Workbuddy (local AI agent context)
 .workbuddy/
@@ -62,9 +63,8 @@ src-tauri/icons/ios/
 scripts/build-portable.cjs
 scripts/build-singlefile.cjs
 
-RELEASE_GUIDE.md
-
 # Chart visual regression temporary output
 .visual-output/
 .visual-output-*/
 .visual-output-subset/
+.audit-dist-*/

@@ -37,6 +37,8 @@ export interface QpcrPlotRunConfig {
   xTickSize: number;
   titleVjust: number;
   baseSize: number;
+  xLabel: string;
+  yLabel: string;
   wrapPlus: boolean;
   scientificNotation: boolean;
   autoSize: boolean;
@@ -56,6 +58,7 @@ export interface QpcrPlotRunConfig {
   bracketStep: number;
   customPairs: Array<{ gene: string; control: string; treatment: string }>;
   heatmapScale: "row" | "column" | "none";
+  heatmapPalette: string;
   exportPng: boolean;
   exportPdf: boolean;
   pngDpi: number;
@@ -67,7 +70,17 @@ export interface QpcrPlotRunConfig {
   heatmapClusterCols: boolean;
   showCellValues: boolean;
   cellTextSize: number;
+  cellTextBold: boolean;
   zlim: number;
+  heatmapTitle: string;
+  legendTitle: string;
+  legendPosition: "right" | "bottom" | "none";
+  showRowNames: boolean;
+  showColNames: boolean;
+  rowLabelItalic: boolean;
+  axisTitleSize: number;
+  tileBorder: string;
+  tileBorderWidth: number;
   useGeneClusters: boolean;
   geneClusters: Record<string, string[]>;
   installMissing: boolean;
@@ -103,7 +116,8 @@ export async function runQpcrPlot(
   if (!config.filePath.trim()) return { ok: false, error: "请先选择 qPCR 数据文件。" };
   if (!config.outputDir.trim()) return { ok: false, error: "请先选择输出文件夹。" };
   const rscript = await findRscript();
-  if (!rscript) return { ok: false, error: "尚未安装 R，请先安装 R 后再运行 qPCR 绘图。" };
+  if (!rscript)
+    return { ok: false, error: "尚未安装 R，请先安装 R 后再运行 qPCR 绘图。" };
 
   wasCancelled = false;
   const tmp = joinPath(await tempDir(), `mynx_qpcr_plot_${Date.now()}.json`);
@@ -115,7 +129,10 @@ export async function runQpcrPlot(
   const runner = joinPath(resources, "r", "qpcr_plot_runner.R");
   const inputBytes = await readFile(config.filePath);
   await writeFile(inputCopy, inputBytes);
-  await writeFile(tmp, new TextEncoder().encode(JSON.stringify({ ...config, filePath: inputCopy })));
+  await writeFile(
+    tmp,
+    new TextEncoder().encode(JSON.stringify({ ...config, filePath: inputCopy })),
+  );
 
   const win = await isWindows();
   const command = win
@@ -126,7 +143,10 @@ export async function runQpcrPlot(
         "-Command",
         `& ${psQuote(rscript)} ${psQuote(runner)} ${psQuote(tmp)}`,
       ])
-    : ShellCommand.create("bash", ["-c", `${shQuote(rscript)} ${shQuote(runner)} ${shQuote(tmp)}`]);
+    : ShellCommand.create("bash", [
+        "-c",
+        `${shQuote(rscript)} ${shQuote(runner)} ${shQuote(tmp)}`,
+      ]);
 
   let logs = "";
   let stdoutBuffer = "";
@@ -151,14 +171,22 @@ export async function runQpcrPlot(
     result = await new Promise<{ code: number | null }>((resolve, reject) => {
       command.once("close", (payload) => resolve({ code: payload.code }));
       command.once("error", (error) => reject(new Error(error)));
-      void command.spawn().then((child) => { activeChild = child; }).catch(reject);
+      void command
+        .spawn()
+        .then((child) => {
+          activeChild = child;
+        })
+        .catch(reject);
     });
   } catch (error) {
     activeChild = null;
     flush();
     await remove(tmp).catch(() => undefined);
     await remove(inputCopy).catch(() => undefined);
-    return { ok: false, error: logs.trim() || (error instanceof Error ? error.message : "R 进程启动失败") };
+    return {
+      ok: false,
+      error: logs.trim() || (error instanceof Error ? error.message : "R 进程启动失败"),
+    };
   }
   activeChild = null;
   flush();
@@ -168,13 +196,15 @@ export async function runQpcrPlot(
     wasCancelled = false;
     return { ok: false, error: "QPCR_PLOT_CANCELLED" };
   }
-  if (result.code !== 0) return { ok: false, error: logs.trim() || "R 未能生成 qPCR 图表" };
+  if (result.code !== 0)
+    return { ok: false, error: logs.trim() || "R 未能生成 qPCR 图表" };
 
-  const prefix = config.outputPrefix.trim() || `qpcr-${config.kind}`;
-  const settingsPath = joinPath(config.outputDir, `${prefix}-settings.json`);
-  await writeFile(settingsPath, new TextEncoder().encode(JSON.stringify(config, null, 2))).catch(() => undefined);
-  const statPath = config.kind === "bar"
-    ? joinPath(config.outputDir, config.sigFile.trim() || "statistical_analysis_summary.csv")
-    : undefined;
+  const statPath =
+    config.kind === "bar"
+      ? joinPath(
+          config.outputDir,
+          config.sigFile.trim() || "statistical_analysis_summary.csv",
+        )
+      : undefined;
   return { ok: true, outputDir: config.outputDir, statisticsFile: statPath };
 }

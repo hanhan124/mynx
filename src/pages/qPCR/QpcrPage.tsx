@@ -1,35 +1,41 @@
-import { useState, useCallback } from 'react';
-import { IconArrowRight, IconChartBar, IconDna, IconFileSpreadsheet, IconFlask } from '@tabler/icons-react';
-import FileSelect from './FileSelect';
-import Transform from './Transform';
-import Calculate from './Calculate';
-import QpcrPlotter from './QpcrPlotter';
-import LoadingOverlay from '@/components/LoadingOverlay';
-import HelpButton, { QpcrTutorial } from '@/components/HelpButton';
-import type { ExcelFile } from '@/lib/excel-io';
-import { saveExcelFile } from '@/lib/excel-io';
-import { generateChartsFromFile } from '@/lib/chart-gen';
-import { detectTransformedGenes } from '@/lib/qpcr-transform';
-import { showToast } from '@/components/Toast';
-import { useLanguage } from '@/lib/i18n';
+import { useState, useCallback } from "react";
+import {
+  IconArrowRight,
+  IconChartBar,
+  IconDna,
+  IconFileSpreadsheet,
+  IconFlask,
+} from "@tabler/icons-react";
+import FileSelect from "./FileSelect";
+import Transform from "./Transform";
+import Calculate from "./Calculate";
+import QpcrPlotter from "./QpcrPlotter";
+import LoadingOverlay from "@/components/LoadingOverlay";
+import HelpButton, { QpcrTutorial } from "@/components/HelpButton";
+import type { ExcelFile } from "@/lib/excel-io";
+import { saveExcelFile } from "@/lib/excel-io";
+import { generateChartsFromFile } from "@/lib/chart-gen";
+import { detectTransformedGenes } from "@/lib/qpcr-transform";
+import { showToast } from "@/components/Toast";
+import { useLanguage } from "@/lib/i18n";
 
 export default function QpcrPage() {
   const { t, language } = useLanguage();
   const [file, setFile] = useState<ExcelFile | null>(null);
-  const [sheetName, setSheetName] = useState('');
+  const [sheetName, setSheetName] = useState("");
   const [geneNames, setGeneNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState('');
+  const [loadingText, setLoadingText] = useState("");
   /** 0-100 determinate, or null for indeterminate. */
   const [progress, setProgress] = useState<number | null>(null);
 
   const startStage = useCallback(
-    (text: string, mode: 'determinate' | 'indeterminate' = 'indeterminate') => {
+    (text: string, mode: "determinate" | "indeterminate" = "indeterminate") => {
       setLoadingText(text);
-      setProgress(mode === 'indeterminate' ? null : 0);
+      setProgress(mode === "indeterminate" ? null : 0);
       setLoading(true);
     },
-    []
+    [],
   );
 
   const endStage = useCallback(() => {
@@ -50,7 +56,10 @@ export default function QpcrPage() {
       await saveExcelFile(file.workbook, file.path);
       return true;
     } catch (e) {
-      showToast(t('qpcr.saveFailed', { detail: e instanceof Error ? e.message : String(e) }), 'error');
+      showToast(
+        t("qpcr.saveFailed", { detail: e instanceof Error ? e.message : String(e) }),
+        "error",
+      );
       return false;
     }
   }, [file]);
@@ -58,7 +67,7 @@ export default function QpcrPage() {
   const handleTransformComplete = useCallback(
     async (names: string[]) => {
       setGeneNames(names);
-      startStage(t('qpcr.save'), 'indeterminate');
+      startStage(t("qpcr.save"), "indeterminate");
       try {
         const saved = await silentSave();
         if (!saved) return;
@@ -66,44 +75,56 @@ export default function QpcrPage() {
         endStage();
       }
     },
-    [silentSave, startStage, endStage]
+    [silentSave, startStage, endStage],
   );
 
   const handleCalculateComplete = useCallback(
     async (
       repeatCount: number,
       chartColor: string,
-      methodOptions: { method: 'ref-normalized' | 'control-relative'; controlGroup?: string }
+      methodOptions: {
+        method: "ref-normalized" | "control-relative";
+        controlGroup?: string;
+      },
     ) => {
       if (!file) return;
       try {
-        startStage(t('qpcr.save'), 'indeterminate');
+        startStage(t("qpcr.save"), "indeterminate");
         await silentSave();
 
-        startStage(t('qpcr.generating'), 'determinate');
+        startStage(t("qpcr.generating"), "determinate");
         const result = await generateChartsFromFile(
           file.path,
           repeatCount,
           chartColor,
           (current, total) => {
-            updateProgress(current, total, `${t('qpcr.generating')} (${current}/${total})...`);
+            updateProgress(
+              current,
+              total,
+              `${t("qpcr.generating")} (${current}/${total})...`,
+            );
           },
-          methodOptions
+          methodOptions,
         );
         if (result.success) {
           const created = result.chartsCreated ?? 0;
-          const tail = result.reason ? `，${result.reason}` : '';
-          showToast(t('qpcr.chartComplete', { count: created, detail: tail }), 'success');
+          const tail = result.reason ? `，${result.reason}` : "";
+          showToast(t("qpcr.chartComplete", { count: created, detail: tail }), "success");
         } else {
-          showToast(t('qpcr.chartFailed', { detail: result.reason ?? (language === 'en' ? 'Unknown error' : '未知错误') }), 'error');
+          showToast(
+            t("qpcr.chartFailed", {
+              detail: result.reason ?? (language === "en" ? "Unknown error" : "未知错误"),
+            }),
+            "error",
+          );
         }
       } catch (e) {
-      showToast(t('qpcr.chartError', { detail: String(e) }), 'error');
+        showToast(t("qpcr.chartError", { detail: String(e) }), "error");
       } finally {
         endStage();
       }
     },
-    [file, silentSave, startStage, endStage, updateProgress]
+    [file, silentSave, startStage, endStage, updateProgress],
   );
 
   return (
@@ -113,12 +134,12 @@ export default function QpcrPage() {
       <header className="qpcr-page-hero">
         <div className="qpcr-hero-copy">
           <div className="qpcr-hero-title-row">
-            <div className="panel-icon" style={{ background: '#0a84ff' }}>
+            <div className="panel-icon" style={{ background: "#0a84ff" }}>
               <IconDna size={19} color="white" stroke={1.75} />
             </div>
             <div className="panel-title">
-              <h2>{t('qpcr.title')}</h2>
-              <p>{t('qpcr.subtitle')}</p>
+              <h2>{t("qpcr.title")}</h2>
+              <p>{t("qpcr.subtitle")}</p>
             </div>
           </div>
         </div>
@@ -130,17 +151,29 @@ export default function QpcrPage() {
       <div className="qpcr-workflow-overview" aria-label="qPCR workflow">
         <div className="qpcr-overview-step is-current">
           <span className="qpcr-overview-index">01</span>
-          <span><strong>{t('qpcr.transform')}</strong></span>
+          <span>
+            <strong>{t("qpcr.transform")}</strong>
+          </span>
         </div>
-        <span className="qpcr-overview-connector"><IconArrowRight size={14} /></span>
+        <span className="qpcr-overview-connector">
+          <IconArrowRight size={14} />
+        </span>
         <div className="qpcr-overview-step">
           <span className="qpcr-overview-index">02</span>
-          <span><strong>{t('qpcr.calculate')}</strong></span>
+          <span>
+            <strong>{t("qpcr.calculate")}</strong>
+          </span>
         </div>
-        <span className="qpcr-overview-connector"><IconArrowRight size={14} /></span>
+        <span className="qpcr-overview-connector">
+          <IconArrowRight size={14} />
+        </span>
         <div className="qpcr-overview-step">
-          <span className="qpcr-overview-index"><IconChartBar size={13} /></span>
-          <span><strong>绘图与导出</strong></span>
+          <span className="qpcr-overview-index">
+            <IconChartBar size={13} />
+          </span>
+          <span>
+            <strong>绘图与导出</strong>
+          </span>
         </div>
       </div>
 
@@ -148,35 +181,34 @@ export default function QpcrPage() {
       <section className="card qpcr-source-card">
         <div className="qpcr-section-head">
           <div className="qpcr-section-title">
-            <span className="qpcr-section-icon qpcr-section-icon--green"><IconFileSpreadsheet size={15} stroke={1.75} /></span>
-            <span><strong>{t('qpcr.dataFile')}</strong></span>
+            <span className="qpcr-section-icon qpcr-section-icon--green">
+              <IconFileSpreadsheet size={15} stroke={1.75} />
+            </span>
+            <span>
+              <strong>{t("qpcr.dataFile")}</strong>
+            </span>
           </div>
         </div>
         <div className="qpcr-source-layout">
           <div className="qpcr-source-main">
-          <FileSelect
-            file={file}
-            sheetName={sheetName}
-            onFileChange={(f) => {
-              setFile(f);
-              if (f) {
-                // Auto-detect gene names if file already has Transformed Data sheet
-                const genes = detectTransformedGenes(f.workbook);
-                setGeneNames(genes);
-              } else {
-                setSheetName('');
-                setGeneNames([]);
-                endStage();
-              }
-            }}
-            onSheetChange={setSheetName}
-          />
+            <FileSelect
+              file={file}
+              sheetName={sheetName}
+              onFileChange={(f) => {
+                setFile(f);
+                if (f) {
+                  // Auto-detect gene names if file already has Transformed Data sheet
+                  const genes = detectTransformedGenes(f.workbook);
+                  setGeneNames(genes);
+                } else {
+                  setSheetName("");
+                  setGeneNames([]);
+                  endStage();
+                }
+              }}
+              onSheetChange={setSheetName}
+            />
           </div>
-          <aside className="qpcr-source-guide">
-            <span className="qpcr-source-guide-label">文件格式</span>
-            <strong>Target / Gene · Sample / Group · Cq / Ct</strong>
-            <span>其他列自动忽略</span>
-          </aside>
         </div>
       </section>
 
@@ -186,8 +218,12 @@ export default function QpcrPage() {
         <section className="card qpcr-step-card qpcr-step-card--transform">
           <div className="qpcr-step-head">
             <span className="qpcr-step-index">01</span>
-            <span className="qpcr-step-heading"><strong>{t('qpcr.transform')}</strong></span>
-            <span className="qpcr-step-mark"><IconFlask size={14} /></span>
+            <span className="qpcr-step-heading">
+              <strong>{t("qpcr.transform")}</strong>
+            </span>
+            <span className="qpcr-step-mark">
+              <IconFlask size={14} />
+            </span>
           </div>
           <div className="card-body qpcr-step-body">
             <Transform
@@ -204,8 +240,12 @@ export default function QpcrPage() {
         <section className="card qpcr-step-card qpcr-step-card--calculate">
           <div className="qpcr-step-head">
             <span className="qpcr-step-index">02</span>
-            <span className="qpcr-step-heading"><strong>{t('qpcr.calculate')}</strong></span>
-            <span className="qpcr-step-mark"><IconDna size={14} /></span>
+            <span className="qpcr-step-heading">
+              <strong>{t("qpcr.calculate")}</strong>
+            </span>
+            <span className="qpcr-step-mark">
+              <IconDna size={14} />
+            </span>
           </div>
           <div className="card-body qpcr-step-body">
             <Calculate
@@ -221,7 +261,6 @@ export default function QpcrPage() {
 
       {/* 步骤 3: 柱状图与热图 — 使用独立文件选框，避免与前两步的数据状态冲突 */}
       <QpcrPlotter />
-
     </div>
   );
 }
