@@ -142,6 +142,21 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      - name: Smoke check tauri CLI
+        shell: bash
+        run: |
+          set +e
+          echo "node: $(node -v)"
+          echo "npm:  $(npm -v)"
+          echo "npx:  $(npx -v)"
+          echo "--- tauri --version ---"
+          npx --no-install tauri --version
+          echo "exit=$?"
+          echo "--- which tauri ---"
+          npx --no-install which tauri || true
+          echo "--- tauri cli path ---"
+          ls -la node_modules/@tauri-apps/cli/ 2>&1 | head -20
+
       - name: Check Tauri updater signing secrets
         shell: bash
         env:
@@ -235,8 +250,17 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          set -euo pipefail
-          npx tauri build --target aarch64-apple-darwin --bundles app,dmg
+          set -uo pipefail
+          set -x
+          npx tauri build --target aarch64-apple-darwin --bundles app,dmg 2>&1 | tee /tmp/tauri-build.log
+          status=${PIPESTATUS[0]}
+          set +x
+          echo "tauri build exit status: $status"
+          if [ "$status" -ne 0 ]; then
+            echo "::error::tauri build failed (exit $status). See /tmp/tauri-build.log for full output."
+            tail -100 /tmp/tauri-build.log >&2 || true
+            exit "$status"
+          fi
 
           app_count=$(find src-tauri/target/aarch64-apple-darwin -name '*.app' -type d | wc -l | tr -d ' ')
           if [ "$app_count" -lt 1 ]; then
