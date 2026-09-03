@@ -252,15 +252,36 @@ jobs:
         run: |
           set -uo pipefail
           set -x
-          npx tauri build --target aarch64-apple-darwin --bundles app,dmg 2>&1 | tee /tmp/tauri-build.log
-          status=${PIPESTATUS[0]}
+          # Capture every byte of tauri build output for post-mortem analysis.
+          npx tauri build --target aarch64-apple-darwin --bundles app,dmg > /tmp/tauri-build.stdout 2> /tmp/tauri-build.stderr
+          status=$?
           set +x
           echo "tauri build exit status: $status"
+          {
+            echo "==== stdout (last 200) ===="
+            tail -200 /tmp/tauri-build.stdout 2>/dev/null || echo "(empty)"
+            echo "==== stderr (last 200) ===="
+            tail -200 /tmp/tauri-build.stderr 2>/dev/null || echo "(empty)"
+          } > /tmp/tauri-build.log
+          cat /tmp/tauri-build.log
           if [ "$status" -ne 0 ]; then
-            echo "::error::tauri build failed (exit $status). See /tmp/tauri-build.log for full output."
-            tail -100 /tmp/tauri-build.log >&2 || true
+            echo "::error::tauri build failed (exit $status)"
+            # Always upload diagnostic artifact, even on failure.
+            mkdir -p /tmp/diag
+            cp /tmp/tauri-build.log /tmp/diag/ || true
+            cp /tmp/tauri-build.stdout /tmp/diag/ || true
+            cp /tmp/tauri-build.stderr /tmp/diag/ || true
             exit "$status"
           fi
+
+      - name: Upload macOS build diagnostic on failure
+        if: failure() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build-diagnostic
+          path: /tmp/diag/
+          if-no-files-found: warn
+          retention-days: 7
 
           app_count=$(find src-tauri/target/aarch64-apple-darwin -name '*.app' -type d | wc -l | tr -d ' ')
           if [ "$app_count" -lt 1 ]; then
