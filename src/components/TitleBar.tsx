@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { platform } from "@tauri-apps/plugin-os";
 import { loadConfig, saveAlwaysOnTop } from "@/lib/config";
 import AppMark from "@/components/AppMark";
 import { IconMinus, IconSquare, IconPinFilled, IconX } from "@tabler/icons-react";
@@ -19,7 +18,6 @@ export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
     () => (isTauri ? getCurrentWindow() : null),
     [isTauri],
   );
-  const isMac = useMemo(() => isTauri && platform() === "macos", [isTauri]);
 
   useEffect(() => {
     if (!appWindow) return;
@@ -32,12 +30,12 @@ export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
   if (!appWindow) return null;
 
   return (
-    <div className={`title-bar${isMac ? " title-bar--mac" : ""}`} data-tauri-drag-region>
+    <div className="title-bar" data-tauri-drag-region>
       <div className="title-bar-left">
         <AppMark size={24} className="title-bar-mark" />
         <span className="title-bar-text">{title}</span>
       </div>
-      <div className={`title-bar-controls${isMac ? " title-bar-controls--left" : ""}`}>
+      <div className="title-bar-controls">
         <LanguageSwitcher />
         <button
           className={`title-bar-btn ${pinned ? "title-bar-btn--active" : ""}`}

@@ -34,7 +34,6 @@
   -webkit-backdrop-filter: blur(40px) saturate(200%);
   border-bottom: 0.5px solid var(--separator);
 }
-
 .title-bar-left {
   display: flex;
   align-items: center;
@@ -81,23 +80,6 @@
   color: var(--accent);
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent) 28%, var(--separator));
-}
-
-/* macOS: window controls on the left side */
-.title-bar-controls--left {
-  order: -1;
-  margin-right: auto;
-  padding-left: 0;
-}
-
-/* macOS: 标题随交通灯左对齐(而非被 space-between 推到最右),更贴近原生观感 */
-.title-bar--mac {
-  justify-content: flex-start;
-  gap: 12px;
-}
-
-.title-bar--mac .title-bar-controls--left {
-  margin-right: 0;
 }
 
 .title-bar-btn {
