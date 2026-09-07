@@ -4,6 +4,8 @@ mod services;
 mod tasks;
 
 use error::CommandError;
+use tauri::{DragDropEvent, RunEvent, WebviewEvent, WindowEvent};
+use tauri_plugin_fs::FsExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -33,10 +35,37 @@ pub fn run() {
             let _ = app;
             Ok(())
         })
-        .run(tauri::generate_context!())
+        .build(tauri::generate_context!())
         .map_err(|error| CommandError::Builder(error.to_string()))
         .unwrap_or_else(|error| {
             eprintln!("[mynx] fatal: {error}");
             std::process::exit(1);
+        })
+        .run(|app, event| {
+            // With the `unstable` feature, the main webview is a WindowChild,
+            // so drag-drop arrives as RunEvent::WebviewEvent — a route the fs
+            // plugin's own auto-grant (which only watches WindowEvent) misses.
+            // Grant dropped paths on the fs scope so readFile on e.g. a USB
+            // drive succeeds, mirroring what dialog-opened files already get.
+            match event {
+                RunEvent::WebviewEvent {
+                    event: WebviewEvent::DragDrop(DragDropEvent::Drop { paths, .. }),
+                    ..
+                }
+                | RunEvent::WindowEvent {
+                    event: WindowEvent::DragDrop(DragDropEvent::Drop { paths, .. }),
+                    ..
+                } => {
+                    let scope = app.fs_scope();
+                    for path in paths {
+                        if path.is_file() {
+                            let _ = scope.allow_file(path);
+                        } else {
+                            let _ = scope.allow_directory(path, true);
+                        }
+                    }
+                }
+                _ => {}
+            }
         });
 }
