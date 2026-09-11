@@ -21,7 +21,7 @@
     "installer:clean": "node scripts/clean-installer-artifacts.cjs",
     "lint": "eslint src/",
     "test": "npm run test:matrix && npm run charts:schema",
-    "test:rust": "cargo test --locked --offline --manifest-path src-tauri/Cargo.toml",
+    "test:rust": "cargo test --locked --manifest-path src-tauri/Cargo.toml",
     "test:r:numeric": "Rscript tests/r/rna-numeric-benchmark.R",
     "bench:matrix": "node --experimental-strip-types scripts/matrix-benchmark.ts",
     "check:release": "npm run test && npm run test:rust && npm run installer:payload",
