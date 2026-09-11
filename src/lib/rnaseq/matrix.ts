@@ -9,10 +9,16 @@ import { joinPath, pathBase, readBytesAny, readTextAny, statAny } from "./io.ts"
 import type { ImportData, MatrixFormat, PageData } from "./types.ts";
 
 type ResolvedImport = Awaited<ReturnType<typeof resolveImportFile>>;
-const resolvedImportCache = new Map<string, { signature: string; value: ResolvedImport }>();
+const resolvedImportCache = new Map<
+  string,
+  { signature: string; value: ResolvedImport }
+>();
 const MAX_RESOLVED_CACHE = 4;
 
-function cacheSignature(meta: { size: number; mtimeMs: number }, matrixFormat: string): string {
+function cacheSignature(
+  meta: { size: number; mtimeMs: number },
+  matrixFormat: string,
+): string {
   return `${meta.size}:${meta.mtimeMs}:${normalizeMatrixFormat(matrixFormat)}`;
 }
 
@@ -75,20 +81,33 @@ export function detectDelimiter(text: string): string {
 }
 
 async function normalizeDelimitedAsync(text: string, preset: string) {
-  if (typeof Worker === 'undefined') {
+  if (typeof Worker === "undefined") {
     return normalizeCountMatrix(parseDelimited(text, detectDelimiter(text)), preset);
   }
   return new Promise<ReturnType<typeof normalizeCountMatrix>>((resolve, reject) => {
-    const worker = new Worker(new URL('../../features/rnaseq/workers/matrix.worker.ts', import.meta.url), { type: 'module' });
+    const worker = new Worker(
+      new URL("../../features/rnaseq/workers/matrix.worker.ts", import.meta.url),
+      { type: "module" },
+    );
     const id = Date.now() + Math.random();
     const cleanup = () => worker.terminate();
-    worker.onmessage = (event: MessageEvent<{ id: number; ok: boolean; result?: ReturnType<typeof normalizeCountMatrix>; error?: string }>) => {
+    worker.onmessage = (
+      event: MessageEvent<{
+        id: number;
+        ok: boolean;
+        result?: ReturnType<typeof normalizeCountMatrix>;
+        error?: string;
+      }>,
+    ) => {
       if (event.data.id !== id) return;
       cleanup();
       if (event.data.ok && event.data.result) resolve(event.data.result);
-      else reject(new Error(event.data.error || '矩阵解析失败'));
+      else reject(new Error(event.data.error || "矩阵解析失败"));
     };
-    worker.onerror = (event) => { cleanup(); reject(event.error || new Error(event.message)); };
+    worker.onerror = (event) => {
+      cleanup();
+      reject(event.error || new Error(event.message));
+    };
     worker.postMessage({ id, text, preset });
   });
 }
@@ -367,9 +386,14 @@ export function normalizeCountMatrix(
   if (checked > 50) {
     const fracRatio = fractional / checked;
     const intRatio = integerish / checked;
+    if (fractional > 0) {
+      warnings.push(
+        `抽样检测到 ${fractional} 个小数 Counts；分析时会四舍五入为整数，并在结果的 Analysis_Meta 中记录。请确认文件不是 TPM、FPKM 或 log 转换数据。`,
+      );
+    }
     if (fracRatio > 0.35 && intRatio < 0.7) {
       warnings.push(
-        "检测到大量非整数值。DESeq2/edgeR 需要原始 read counts;若这是 TPM/FPKM/log 矩阵请改用原始计数文件",
+        "检测到大量非整数值。虽然软件会取整以继续计算，但 TPM、FPKM 或 log 转换矩阵不能用于 DESeq2/edgeR；请改用原始或 estimated counts。",
       );
     }
     if (negative > 0) {
@@ -450,17 +474,22 @@ export async function resolveImportFile(
   }
 
   const mf = normalizeMatrixFormat(matrixFormat);
-  const extFormat = ['.csv', '.tsv', '.txt'].includes(ext) ? 'text' : 'excel';
-  const sourceText = extFormat === 'text' ? await readTextAny(p) : null;
-  const rows = sourceText !== null
-    ? parseDelimited(sourceText, detectDelimiter(sourceText))
-    : (await readTableRows(p)).rows;
-  const format = sourceText !== null
-    ? (detectDelimiter(sourceText) === '\t' ? 'tsv' : 'csv')
-    : 'excel';
-  const normalized = sourceText !== null
-    ? await normalizeDelimitedAsync(sourceText, mf)
-    : normalizeCountMatrix(rows, mf);
+  const extFormat = [".csv", ".tsv", ".txt"].includes(ext) ? "text" : "excel";
+  const sourceText = extFormat === "text" ? await readTextAny(p) : null;
+  const rows =
+    sourceText !== null
+      ? parseDelimited(sourceText, detectDelimiter(sourceText))
+      : (await readTableRows(p)).rows;
+  const format =
+    sourceText !== null
+      ? detectDelimiter(sourceText) === "\t"
+        ? "tsv"
+        : "csv"
+      : "excel";
+  const normalized =
+    sourceText !== null
+      ? await normalizeDelimitedAsync(sourceText, mf)
+      : normalizeCountMatrix(rows, mf);
   const { headers, body, applied, warnings } = normalized;
 
   // 标准 counts + 源已是 CSV 且列未变化:直接用原文件(更快)

@@ -2,7 +2,7 @@
  * 绘图参数面板 — 「使用范围」「本图专属」「ggplot 主题」「尺寸」「图例/标题/坐标轴」「theme() 调节」。
  * 基因设置(标记基因/功能簇/排除基因)是全局字段,编辑入口放在使用它的图面板内。
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { IconGripVertical, IconRotate, IconPlus, IconBan } from "@tabler/icons-react";
 import { showToast } from "@/components/Toast";
 import { useRnaSeq } from "./store";
@@ -45,7 +45,7 @@ export function ScopeSection({
   dim: "group" | "comparison" | "both";
 }) {
   const { language } = useLanguage();
-  const l = (zh: string, en: string) => language === "en" ? en : zh;
+  const l = (zh: string, en: string) => (language === "en" ? en : zh);
   const { config, updateConfig } = useRnaSeq();
   const vennBySample =
     plotId === "venn" && (config.plot_options.venn ?? {}).by === "sample";
@@ -64,7 +64,8 @@ export function ScopeSection({
       {showGroups && (
         <div className="rx-subset-box">
           <label className="rx-subset-label">
-            {l("使用哪些组", "Groups to use")}<small>{l("空 = 全部选定组", "empty = all selected groups")}</small>
+            {l("使用哪些组", "Groups to use")}
+            <small>{l("空 = 全部选定组", "empty = all selected groups")}</small>
           </label>
           <CheckChips
             options={config.selected_groups}
@@ -77,14 +78,18 @@ export function ScopeSection({
                   : [...(po.groups ?? []), g];
               })
             }
-            emptyTip={l("先在「差异分析」页选择纳入分析的组。", "Select groups to include in Differential analysis first.")}
+            emptyTip={l(
+              "先在「差异分析」页选择纳入分析的组。",
+              "Select groups to include in Differential analysis first.",
+            )}
           />
         </div>
       )}
       {showComps && (
         <div className="rx-subset-box">
           <label className="rx-subset-label">
-            {l("使用哪些比较", "Comparisons to use")}<small>{l("空 = 全部比较", "empty = all comparisons")}</small>
+            {l("使用哪些比较", "Comparisons to use")}
+            <small>{l("空 = 全部比较", "empty = all comparisons")}</small>
           </label>
           <CheckChips
             options={config.comparisons.map(compKey)}
@@ -105,12 +110,20 @@ export function ScopeSection({
               const [t, ctrl] = key.split("||");
               return `${t} vs ${ctrl}`;
             }}
-            emptyTip={l("先在「差异分析」页设置比较。", "Set comparisons in Differential analysis first.")}
+            emptyTip={l(
+              "先在「差异分析」页设置比较。",
+              "Set comparisons in Differential analysis first.",
+            )}
           />
         </div>
       )}
       {dim === "both" && (
-        <p className="rx-subset-note">{l("依据「统计依据」自动切换组/比较选择。", "The statistics basis automatically selects group or comparison scope.")}</p>
+        <p className="rx-subset-note">
+          {l(
+            "依据「统计依据」自动切换组/比较选择。",
+            "The statistics basis automatically selects group or comparison scope.",
+          )}
+        </p>
       )}
     </div>
   );
@@ -119,7 +132,7 @@ export function ScopeSection({
 // ── 基因设置(全局字段,多处编辑同一份数据) ──
 export function MarkerGenesField({ hint }: { hint: string }) {
   const { language } = useLanguage();
-  const l = (zh: string, en: string) => language === "en" ? en : zh;
+  const l = (zh: string, en: string) => (language === "en" ? en : zh);
   const { config, updateConfig } = useRnaSeq();
   const [text, setText] = useState(config.marker_genes.join(", "));
   useEffect(() => {
@@ -131,12 +144,16 @@ export function MarkerGenesField({ hint }: { hint: string }) {
   return (
     <div className="rx-field rx-field--wide">
       <label>
-        {l("标记基因", "Marker genes")}<small>{localizeFieldText(hint, language)}</small>
+        {l("标记基因", "Marker genes")}
+        <small>{localizeFieldText(hint, language)}</small>
       </label>
       <div className="rx-gene-row">
         <textarea
           rows={2}
-          placeholder={l("逗号/空格分隔,如:RPE65, MITF, BEST1", "Comma/space separated, e.g. RPE65, MITF, BEST1")}
+          placeholder={l(
+            "逗号/空格分隔,如:RPE65, MITF, BEST1",
+            "Comma/space separated, e.g. RPE65, MITF, BEST1",
+          )}
           value={text}
           onChange={(e) => {
             setText(e.target.value);
@@ -173,7 +190,13 @@ export function MarkerGenesField({ hint }: { hint: string }) {
                 "RLBP1",
               ];
             });
-            showToast(l("已恢复默认标记基因(视网膜常用)", "Default marker genes restored (retina panel)"), "success");
+            showToast(
+              l(
+                "已恢复默认标记基因(视网膜常用)",
+                "Default marker genes restored (retina panel)",
+              ),
+              "success",
+            );
           }}
         >
           <IconRotate size={12} stroke={1.75} /> {l("默认值", "Defaults")}
@@ -185,7 +208,7 @@ export function MarkerGenesField({ hint }: { hint: string }) {
 
 export function ExcludedGenesField({ hint }: { hint: string }) {
   const { language } = useLanguage();
-  const l = (zh: string, en: string) => language === "en" ? en : zh;
+  const l = (zh: string, en: string) => (language === "en" ? en : zh);
   const { config, updateConfig } = useRnaSeq();
   const [text, setText] = useState(config.excluded_genes.join("\n"));
   useEffect(() => {
@@ -197,7 +220,8 @@ export function ExcludedGenesField({ hint }: { hint: string }) {
   return (
     <div className="rx-field rx-field--wide">
       <label>
-        {l("排除基因", "Excluded genes")}<small>{localizeFieldText(hint, language)}</small>
+        {l("排除基因", "Excluded genes")}
+        <small>{localizeFieldText(hint, language)}</small>
       </label>
       <textarea
         rows={2}
@@ -215,7 +239,8 @@ export function ExcludedGenesField({ hint }: { hint: string }) {
       />
       {config.excluded_genes.length > 0 && (
         <small className="rx-field-hint">
-          <IconBan size={10} /> {l("已排除", "Excluded")} {config.excluded_genes.length} {l("个基因", "genes")}
+          <IconBan size={10} /> {l("已排除", "Excluded")} {config.excluded_genes.length}{" "}
+          {l("个基因", "genes")}
         </small>
       )}
     </div>
@@ -225,19 +250,69 @@ export function ExcludedGenesField({ hint }: { hint: string }) {
 // ── 热图列顺序(组顺序拖拽) ──
 export function ColumnOrderField({ plotId }: { plotId: string }) {
   const { language } = useLanguage();
-  const l = (zh: string, en: string) => language === "en" ? en : zh;
+  const l = (zh: string, en: string) => (language === "en" ? en : zh);
   const { config, updateConfig } = useRnaSeq();
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
 
   const o = (config.plot_options as Record<string, Opt>)[plotId] ?? {};
-  const active = ((o.groups?.length ? o.groups : config.selected_groups) ??
-    []) as string[];
-  const saved = (o.column_group_order ?? []) as string[];
-  const order = [
-    ...saved.filter((g) => active.includes(g)),
-    ...active.filter((g) => !saved.includes(g)),
-  ];
+  const order = useMemo(() => {
+    const active = ((o.groups?.length ? o.groups : config.selected_groups) ??
+      []) as string[];
+    const saved = (o.column_group_order ?? []) as string[];
+    return [
+      ...saved.filter((g) => active.includes(g)),
+      ...active.filter((g) => !saved.includes(g)),
+    ];
+  }, [config.selected_groups, o.column_group_order, o.groups]);
+
+  const moveGroup = useCallback((from: number, to: number) => {
+    if (from === to || from < 0 || to < 0 || from >= order.length || to >= order.length)
+      return;
+    const next = [...order];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    updateConfig((c) => {
+      ((c.plot_options as Record<string, Opt>)[plotId] ??= {}).column_group_order = next;
+    });
+  }, [order, plotId, updateConfig]);
+
+  // Tauri 的原生窗口拖放会接管 HTML5 DragEvent；组芯片改用 PointerEvent，
+  // 让鼠标和触屏的排序都留在 WebView 内，不与文件拖放竞争。
+  useEffect(() => {
+    if (dragFrom === null) return;
+
+    const findChipIndex = (target: EventTarget | null) => {
+      if (!(target instanceof Element)) return null;
+      const value = target.closest<HTMLElement>("[data-column-group-index]")?.dataset
+        .columnGroupIndex;
+      const index = value === undefined ? Number.NaN : Number(value);
+      return Number.isInteger(index) ? index : null;
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      const index = findChipIndex(document.elementFromPoint(event.clientX, event.clientY));
+      if (index !== null) setDragOver(index);
+    };
+    const finishDrag = (event: PointerEvent) => {
+      const index = findChipIndex(document.elementFromPoint(event.clientX, event.clientY));
+      if (index !== null) moveGroup(dragFrom, index);
+      setDragFrom(null);
+      setDragOver(null);
+    };
+    const cancelDrag = () => {
+      setDragFrom(null);
+      setDragOver(null);
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", finishDrag, { once: true });
+    window.addEventListener("pointercancel", cancelDrag, { once: true });
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", finishDrag);
+      window.removeEventListener("pointercancel", cancelDrag);
+    };
+  }, [dragFrom, moveGroup]);
 
   const GROUP_COLORS = [
     "#0a84ff",
@@ -253,7 +328,10 @@ export function ColumnOrderField({ plotId }: { plotId: string }) {
   return (
     <div className="rx-field rx-field--wide">
       <label>
-        {l("列顺序(组顺序)", "Column order (group order)")}<small>{l("拖拽调整 · 左→右绘制", "Drag to reorder · drawn left to right")}</small>
+        {l("列顺序(组顺序)", "Column order (group order)")}
+        <small>
+          {l("拖拽调整 · 左→右绘制", "Drag to reorder · drawn left to right")}
+        </small>
       </label>
       <div className="rx-col-order" role="list">
         {order.map((g, i) => {
@@ -265,31 +343,27 @@ export function ColumnOrderField({ plotId }: { plotId: string }) {
               key={g}
               className={`rx-col-chip${dragFrom === i ? " dragging" : ""}${dragOver === i ? " over" : ""}`}
               style={{ "--chip-color": color } as React.CSSProperties}
-              draggable
+              data-column-group-index={i}
               role="listitem"
-              onDragStart={() => setDragFrom(i)}
-              onDragOver={(e) => {
+              tabIndex={0}
+              aria-label={l(
+                `${g}，第 ${i + 1} 列组，可拖动调整顺序`,
+                `${g}, column group ${i + 1}, draggable`,
+              )}
+              onPointerDown={(e) => {
+                if (e.button !== 0) return;
                 e.preventDefault();
+                setDragFrom(i);
                 setDragOver(i);
               }}
-              onDragLeave={() => setDragOver(null)}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (dragFrom !== null && dragFrom !== i) {
-                  const next = [...order];
-                  const [item] = next.splice(dragFrom, 1);
-                  next.splice(i, 0, item);
-                  updateConfig((c) => {
-                    ((c.plot_options as Record<string, Opt>)[plotId] ??=
-                      {}).column_group_order = next;
-                  });
+              onKeyDown={(e) => {
+                if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+                  e.preventDefault();
+                  moveGroup(i, i - 1);
+                } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+                  e.preventDefault();
+                  moveGroup(i, i + 1);
                 }
-                setDragFrom(null);
-                setDragOver(null);
-              }}
-              onDragEnd={() => {
-                setDragFrom(null);
-                setDragOver(null);
               }}
             >
               <IconGripVertical size={12} stroke={1.75} className="rx-col-grip" />
@@ -311,7 +385,10 @@ export function ColumnOrderField({ plotId }: { plotId: string }) {
         </button>
       </div>
       <small className="rx-field-hint">
-        {l("拖动组芯片调整热图列顺序;绘制时按此顺序排列样本列", "Drag group chips to reorder heatmap columns; samples are drawn in this order")}
+        {l(
+          "拖动组芯片调整热图列顺序;绘制时按此顺序排列样本列",
+          "Drag group chips to reorder heatmap columns; samples are drawn in this order",
+        )}
       </small>
     </div>
   );
@@ -320,14 +397,17 @@ export function ColumnOrderField({ plotId }: { plotId: string }) {
 // ── 基因功能簇编辑(select_heatmap) ──
 function GeneClustersEditor() {
   const { language } = useLanguage();
-  const l = (zh: string, en: string) => language === "en" ? en : zh;
+  const l = (zh: string, en: string) => (language === "en" ? en : zh);
   const { config, updateConfig } = useRnaSeq();
   const entries = Object.entries(config.gene_clusters);
   return (
     <div className="rx-gene-clusters">
       <div className="rx-gene-clusters-head">
         <label>
-          {l("基因功能簇", "Gene function clusters")}<small>{l("本图按簇分块展示;每簇一行", "Grouped by cluster; one row per cluster")}</small>
+          {l("基因功能簇", "Gene function clusters")}
+          <small>
+            {l("本图按簇分块展示;每簇一行", "Grouped by cluster; one row per cluster")}
+          </small>
         </label>
         <div className="rx-title-actions">
           <button
@@ -366,7 +446,10 @@ function GeneClustersEditor() {
       </div>
       {entries.length === 0 && (
         <div className="rx-empty-tip">
-          {l("点击「添加簇」创建,或加载默认值(视网膜等常用簇)。", "Click Add cluster or load the defaults (common retina clusters).")}
+          {l(
+            "点击「添加簇」创建,或加载默认值(视网膜等常用簇)。",
+            "Click Add cluster or load the defaults (common retina clusters).",
+          )}
         </div>
       )}
       {entries.map(([name, genes]) => (
@@ -380,7 +463,13 @@ function GeneClustersEditor() {
               const newName = e.target.value.trim();
               if (!newName || newName === name) return;
               if (config.gene_clusters[newName]) {
-                showToast(l(`簇名「${newName}」已存在,改名被拒绝`, `Cluster name “${newName}” already exists`), "info");
+                showToast(
+                  l(
+                    `簇名「${newName}」已存在,改名被拒绝`,
+                    `Cluster name “${newName}” already exists`,
+                  ),
+                  "info",
+                );
                 e.target.value = name;
                 return;
               }
@@ -395,7 +484,7 @@ function GeneClustersEditor() {
             className="rx-cluster-genes"
             type="text"
             defaultValue={genes.join(", ")}
-                placeholder={l("基因列表(逗号分隔)", "Gene list (comma separated)")}
+            placeholder={l("基因列表(逗号分隔)", "Gene list (comma separated)")}
             onBlur={(e) =>
               updateConfig((c) => {
                 c.gene_clusters[name] = e.target.value.split(/[,;\s]+/).filter(Boolean);
@@ -422,7 +511,7 @@ function GeneClustersEditor() {
 // ── 每类图专属参数 ──
 export function SpecificParams({ plotId }: { plotId: string }) {
   const { language } = useLanguage();
-  const l = (zh: string, en: string) => language === "en" ? en : zh;
+  const l = (zh: string, en: string) => (language === "en" ? en : zh);
   const { config, updateConfig } = useRnaSeq();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const o = usePlotOpt(plotId);
@@ -433,9 +522,14 @@ export function SpecificParams({ plotId }: { plotId: string }) {
 
   switch (plotId) {
     case "pca":
+    case "mds":
       return (
         <>
-          <SectionLabel>{l("PCA 设置", "PCA settings")}</SectionLabel>
+          <SectionLabel>
+            {plotId === "pca"
+              ? l("PCA 设置", "PCA settings")
+              : l("MDS 设置", "MDS settings")}
+          </SectionLabel>
           <div className="rx-param-row">
             <SwitchField
               label="正方形"
@@ -462,6 +556,24 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               ]}
               onChange={(v) => set("label_text", v)}
             />
+            {plotId === "pca" && (
+              <>
+                <NumField
+                  label="PCA 高变基因数"
+                  value={o.top_var_genes}
+                  step={100}
+                  min={0}
+                  placeholder={l("全部", "All")}
+                  onChange={(v) => set("top_var_genes", v ?? 0)}
+                />
+                <SwitchField
+                  label="逐基因 Z 标准化"
+                  checked={o.scale_genes ?? false}
+                  hint="VST/log2-CPM 后默认关闭；开启会让每个基因对 PCA 的权重相同，适合作为敏感性分析"
+                  onChange={(v) => set("scale_genes", v)}
+                />
+              </>
+            )}
             <NumField
               label="点大小"
               value={o.point_size}
@@ -524,16 +636,61 @@ export function SpecificParams({ plotId }: { plotId: string }) {
             <SwitchField
               label="显示所有基因"
               checked={o.use_all_genes}
-              hint="不过滤,显示全部基因"
+              hint="不过滤，显示全部基因。超过 5,000 个基因时，请明确选择 K-means 或不聚类；SVG/PDF 可保持矢量热图"
               onChange={(v) => set("use_all_genes", v)}
             />
             <NumField
-              label="聚类数 k"
-              value={o.k_clusters}
-              step={1}
-              min={1}
-              onChange={(v) => set("k_clusters", v)}
+              label="最多基因数"
+              value={o.max_genes}
+              step={100}
+              min={0}
+              placeholder={l("不限制", "Unlimited")}
+              onChange={(v) => set("max_genes", v ?? 0)}
             />
+            <SelectField
+              label="行聚类方法"
+              value={o.row_clustering_method ?? "hierarchical"}
+              options={[
+                { value: "hierarchical", label: l("层次聚类（Euclidean + Ward.D2）", "Hierarchical (Euclidean + Ward.D2)") },
+                { value: "kmeans", label: l("K-means 分簇（大矩阵可用）", "K-means clustering (large matrices)") },
+                { value: "none", label: l("不聚类", "No clustering") },
+              ]}
+              onChange={(v) => set("row_clustering_method", v)}
+            />
+            <SelectField
+              label="行排序"
+              value={o.row_order ?? "cluster_first_column_desc"}
+              options={(o.row_clustering_method ?? "hierarchical") === "none"
+                ? [
+                    { value: "input", label: l("保留输入顺序", "Keep input order") },
+                    { value: "first_column_desc", label: l("首列高到低", "First column high→low") },
+                    { value: "first_column_asc", label: l("首列低到高", "First column low→high") },
+                  ]
+                : [
+                    { value: "cluster_first_column_desc", label: l("簇优先·首列高到低", "Clusters, first column high→low") },
+                    { value: "cluster", label: l("仅按聚类顺序", "Cluster order only") },
+                    { value: "first_column_desc", label: l("首列高到低", "First column high→low") },
+                    { value: "first_column_asc", label: l("首列低到高", "First column low→high") },
+                  ]}
+              onChange={(v) => set("row_order", v)}
+            />
+            <SwitchField
+              label="栅格化热图"
+              checked={o.use_raster}
+              onChange={(v) => set("use_raster", v)}
+            />
+            {(o.row_clustering_method ?? "hierarchical") !== "none" && (
+              <NumField
+                label={(o.row_clustering_method ?? "hierarchical") === "kmeans" ? "K-means 簇数 k" : "树切分簇数 k"}
+                value={o.k_clusters}
+                step={1}
+                min={1}
+                hint={(o.row_clustering_method ?? "hierarchical") === "kmeans"
+                  ? "K-means 的聚类中心数；固定随机种子以保证可复现"
+                  : "将层次聚类树切分为 k 个展示簇，不代表统计显著性"}
+                onChange={(v) => set("k_clusters", v)}
+              />
+            )}
             <SwitchField
               label="标记基因标签"
               checked={o.show_marker_labels}
@@ -555,6 +712,41 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               checked={o.show_row_names}
               onChange={(v) => set("show_row_names", v)}
             />
+            <NumField
+              label="基因名字号"
+              value={o.row_names_size}
+              step={1}
+              min={1}
+              onChange={(v) => set("row_names_size", v)}
+            />
+            <NumField
+              label="分组名字号"
+              value={o.column_names_size}
+              step={1}
+              min={1}
+              onChange={(v) => set("column_names_size", v)}
+            />
+            <NumField
+              label="标记基因字号"
+              value={o.marker_label_size}
+              step={1}
+              min={1}
+              onChange={(v) => set("marker_label_size", v)}
+            />
+            <NumField
+              label="图例标题字号"
+              value={o.legend_title_size}
+              step={1}
+              min={1}
+              onChange={(v) => set("legend_title_size", v)}
+            />
+            <NumField
+              label="图例文字字号"
+              value={o.legend_text_size}
+              step={1}
+              min={1}
+              onChange={(v) => set("legend_text_size", v)}
+            />
             <SelectField
               label="热图配色"
               value={o.heatmap_palette ?? "Blue-Red 2"}
@@ -573,12 +765,27 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               step={0.5}
               onChange={(v) => set("zscore_max", v)}
             />
-            <SwitchField
-              label="Cluster 注释"
-              checked={o.show_cluster_annotation}
-              onChange={(v) => set("show_cluster_annotation", v)}
+            <NumField
+              label="颜色中心 Z 值"
+              value={o.zscore_center}
+              step={0.1}
+              hint="调色板中点（通常为白色）对应的 Z 值；需位于上下限之间"
+              onChange={(v) => set("zscore_center", v)}
             />
-            {o.show_cluster_annotation && (
+            {(o.row_clustering_method ?? "hierarchical") !== "none" && <>
+              <SwitchField
+                label="Cluster 注释"
+                checked={o.show_cluster_annotation}
+                onChange={(v) => set("show_cluster_annotation", v)}
+              />
+              <SwitchField
+                label="显示簇名称图例"
+                checked={o.show_cluster_legend ?? false}
+                hint="显示右侧 Cluster 图例中的簇名称，不影响注释色条"
+                onChange={(v) => set("show_cluster_legend", v)}
+              />
+            </>}
+            {(o.row_clustering_method ?? "hierarchical") !== "none" && o.show_cluster_annotation && (
               <SelectField
                 label="Cluster 配色"
                 value={o.cluster_palette ?? "Catppuccin Mocha"}
@@ -592,10 +799,100 @@ export function SpecificParams({ plotId }: { plotId: string }) {
           </div>
         </>
       );
+    case "qc":
+      return (
+        <>
+          <SectionLabel>{l("样本 QC 设置", "Sample QC settings")}</SectionLabel>
+          <div className="rx-param-row">
+            <SwitchField
+              label="文库深度"
+              checked={o.show_library_size}
+              onChange={(v) => set("show_library_size", v)}
+            />
+            <SwitchField
+              label="检测基因数"
+              checked={o.show_detected_genes}
+              onChange={(v) => set("show_detected_genes", v)}
+            />
+            <SwitchField
+              label="表达分布"
+              checked={o.show_expression_distribution}
+              onChange={(v) => set("show_expression_distribution", v)}
+            />
+            <SwitchField
+              label="相关性热图"
+              checked={o.show_correlation}
+              onChange={(v) => set("show_correlation", v)}
+            />
+            <SwitchField
+              label="距离热图"
+              checked={o.show_distance}
+              onChange={(v) => set("show_distance", v)}
+            />
+            <SelectField
+              label="分组配色"
+              value={o.color_palette ?? "reference"}
+              options={PALETTES.map((p) => ({ value: p.id, label: p.label }))}
+              onChange={(v) => set("color_palette", v)}
+            />
+            <NumField
+              label="柱图宽度"
+              value={o.qc_width}
+              step={0.5}
+              min={1}
+              onChange={(v) => set("qc_width", v)}
+            />
+            <NumField
+              label="柱图最小高度"
+              value={o.qc_height_min}
+              step={0.5}
+              min={1}
+              onChange={(v) => set("qc_height_min", v)}
+            />
+            <NumField
+              label="每样本高度"
+              value={o.qc_height_per_sample}
+              step={0.05}
+              min={0}
+              onChange={(v) => set("qc_height_per_sample", v)}
+            />
+            <NumField
+              label="相关性图宽度"
+              value={o.correlation_width}
+              step={0.5}
+              min={1}
+              onChange={(v) => set("correlation_width", v)}
+            />
+            <NumField
+              label="相关性图高度"
+              value={o.correlation_height}
+              step={0.5}
+              min={1}
+              onChange={(v) => set("correlation_height", v)}
+            />
+            <NumField
+              label="距离图宽度"
+              value={o.distance_width}
+              step={0.5}
+              min={1}
+              onChange={(v) => set("distance_width", v)}
+            />
+            <NumField
+              label="距离图高度"
+              value={o.distance_height}
+              step={0.5}
+              min={1}
+              onChange={(v) => set("distance_height", v)}
+            />
+          </div>
+        </>
+      );
     case "select_heatmap":
       return (
         <>
-          <SectionLabel>{l("基因热图设置", "Selected-gene heatmap settings")}</SectionLabel>
+          <SectionLabel>
+            {l("基因热图设置", "Selected-gene heatmap settings")}
+          </SectionLabel>
           <div className="rx-param-row">
             <SwitchField
               label="显示基因名"
@@ -607,11 +904,52 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               checked={o.show_group_names}
               onChange={(v) => set("show_group_names", v)}
             />
+            <SwitchField
+              label="显示 counts 数值"
+              checked={o.show_cell_text ?? false}
+              hint="按附件参考，在单元格中叠加显示原始 counts"
+              onChange={(v) => set("show_cell_text", v)}
+            />
+            <NumField
+              label="counts 字号"
+              value={o.cell_text_size}
+              step={0.5}
+              min={0.5}
+              onChange={(v) => set("cell_text_size", v)}
+            />
             <NumField
               label="基因名旋转角"
               value={o.gene_label_rot}
               step={15}
               onChange={(v) => set("gene_label_rot", v)}
+            />
+            <NumField
+              label="基因名字号"
+              value={o.gene_names_size}
+              step={1}
+              min={1}
+              onChange={(v) => set("gene_names_size", v)}
+            />
+            <NumField
+              label="分组名字号"
+              value={o.group_names_size}
+              step={1}
+              min={1}
+              onChange={(v) => set("group_names_size", v)}
+            />
+            <NumField
+              label="图例标题字号"
+              value={o.legend_title_size}
+              step={1}
+              min={1}
+              onChange={(v) => set("legend_title_size", v)}
+            />
+            <NumField
+              label="图例文字字号"
+              value={o.legend_text_size}
+              step={1}
+              min={1}
+              onChange={(v) => set("legend_text_size", v)}
             />
             <SelectField
               label="热图配色"
@@ -631,10 +969,29 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               step={0.5}
               onChange={(v) => set("zscore_max", v)}
             />
+            <NumField
+              label="颜色中心 Z 值"
+              value={o.zscore_center}
+              step={0.1}
+              hint="调色板中点（通常为白色）对应的 Z 值；需位于上下限之间"
+              onChange={(v) => set("zscore_center", v)}
+            />
             <SwitchField
               label="Cluster 注释"
               checked={o.show_cluster_annotation}
               onChange={(v) => set("show_cluster_annotation", v)}
+            />
+            <SwitchField
+              label="显示簇名称图例"
+              checked={o.show_cluster_legend ?? true}
+              hint="显示右侧 Cluster 图例中的簇名称，不影响左侧簇色条"
+              onChange={(v) => set("show_cluster_legend", v)}
+            />
+            <SwitchField
+              label="栅格化热图"
+              checked={o.use_raster ?? true}
+              hint="按附件参考默认开启；关闭后便于矢量编辑"
+              onChange={(v) => set("use_raster", v)}
             />
             {o.show_cluster_annotation && (
               <SelectField
@@ -769,6 +1126,27 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               min={2}
               max={6}
               onChange={(v) => set("max_sets", v)}
+            />
+            <NumField
+              label="集合名字号"
+              value={o.set_name_size}
+              step={0.5}
+              min={0.5}
+              onChange={(v) => set("set_name_size", v)}
+            />
+            <NumField
+              label="交集数字字号"
+              value={o.text_size}
+              step={0.5}
+              min={0.5}
+              onChange={(v) => set("text_size", v)}
+            />
+            <NumField
+              label="标题字号"
+              value={o.title_size}
+              step={1}
+              min={1}
+              onChange={(v) => set("title_size", v)}
             />
           </div>
         </>
@@ -956,6 +1334,20 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               step={0.1}
               min={0}
               onChange={(v) => set("cex_axis", v)}
+            />
+            <NumField
+              label="主标题字号"
+              value={o.cex_main}
+              step={0.1}
+              min={0}
+              onChange={(v) => set("cex_main", v)}
+            />
+            <NumField
+              label="坐标轴标题字号"
+              value={o.cex_lab}
+              step={0.1}
+              min={0}
+              onChange={(v) => set("cex_lab", v)}
             />
           </div>
         </>
@@ -1146,7 +1538,10 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               <label>{l("目标基因(逗号分隔)", "Target genes (comma separated)")}</label>
               <input
                 type="text"
-                placeholder={l("如:RPE65,MITF,BEST1(空=用标记基因)", "e.g. RPE65, MITF, BEST1 (empty = marker genes)")}
+                placeholder={l(
+                  "如:RPE65,MITF,BEST1(空=用标记基因)",
+                  "e.g. RPE65, MITF, BEST1 (empty = marker genes)",
+                )}
                 defaultValue={(o.genes ?? []).join(", ")}
                 onBlur={(e) =>
                   set("genes", e.target.value.split(/[,;\s]+/).filter(Boolean))
@@ -1262,7 +1657,7 @@ export function SizeSection({ plotId }: { plotId: string }) {
 // ── 图例 / 标题 / 坐标轴段 ──
 export function LabelsSection({ plotId }: { plotId: string }) {
   const { language } = useLanguage();
-  const l = (zh: string, en: string) => language === "en" ? en : zh;
+  const l = (zh: string, en: string) => (language === "en" ? en : zh);
   const { updateConfig } = useRnaSeq();
   const o = usePlotOpt(plotId);
   const set = (key: string, value: unknown) =>
@@ -1415,7 +1810,7 @@ export function LabelsSection({ plotId }: { plotId: string }) {
 // ── theme() 调节段 ──
 export function ThemeSection({ plotId }: { plotId: string }) {
   const { language } = useLanguage();
-  const l = (zh: string, en: string) => language === "en" ? en : zh;
+  const l = (zh: string, en: string) => (language === "en" ? en : zh);
   const { updateConfig } = useRnaSeq();
   const o = usePlotOpt(plotId);
   const set = (key: string, value: unknown) =>

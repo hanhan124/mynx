@@ -17,6 +17,7 @@ import { defaultConfig, defaultPlotOptions, deepMerge } from "@/lib/rnaseq/defau
 import { importCounts as importCountsApi } from "@/lib/rnaseq/matrix";
 import {
   checkRscript,
+  resetRDependencyCache,
   resetRscriptCache,
   runR,
   type LogLevel,
@@ -276,6 +277,7 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
 
   const recheckRscript = useCallback(async () => {
     resetRscriptCache();
+    resetRDependencyCache();
     setRscriptFound(null);
     try {
       const r = await checkRscript();
@@ -396,7 +398,11 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
         setPlotStatus(r.status);
         pushPlotLog(
           plotType,
-          r.status === "done" ? "success" : r.status === "cancelled" ? "warning" : "error",
+          r.status === "done"
+            ? "success"
+            : r.status === "cancelled"
+              ? "warning"
+              : "error",
           r.status === "done"
             ? `[OK] ${plotType} 导出完成`
             : r.status === "cancelled"
@@ -670,7 +676,10 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
       };
       try {
         const { writeFile } = await import("@tauri-apps/plugin-fs");
-        await writeFile(path, new TextEncoder().encode(JSON.stringify(serializable, null, 2)));
+        await writeFile(
+          path,
+          new TextEncoder().encode(JSON.stringify(serializable, null, 2)),
+        );
         return { saved: true, path };
       } catch (e) {
         return { saved: false, path, error: e instanceof Error ? e.message : String(e) };

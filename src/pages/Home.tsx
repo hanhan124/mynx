@@ -45,7 +45,7 @@ export default function Home() {
   }
 
   return (
-    <div className="home-shell">
+    <div className="home-shell unified-home">
       <div className="home-head">
         <header className="home-top">
           <div className="home-brand">

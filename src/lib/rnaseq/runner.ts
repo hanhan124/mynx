@@ -97,6 +97,168 @@ export function resetRscriptCache(): void {
   rscriptCache = null;
 }
 
+/** RNA-seq 核心流程所需依赖；高级单图仍由 R 端按需检查。 */
+export const RNA_SEQ_REQUIRED_PACKAGES = [
+  "jsonlite",
+  "dplyr",
+  "tibble",
+  "tidyr",
+  "ggplot2",
+  "ggrepel",
+  "paletteer",
+  "ggsci",
+  "svglite",
+  "edgeR",
+  "DESeq2",
+  "openxlsx",
+  "pheatmap",
+  "ComplexHeatmap",
+  "circlize",
+  "ggvenn",
+] as const;
+
+export interface RDependencyStatus {
+  rscriptFound: boolean;
+  missing: string[];
+  error?: string;
+}
+
+let dependencyCache: { rscript: string; status: RDependencyStatus } | null = null;
+
+export function resetRDependencyCache(): void {
+  dependencyCache = null;
+}
+
+async function executeRExpression(
+  rscript: string,
+  expression: string,
+  args: readonly string[] = [],
+) {
+  const win = await isWindows();
+  const quotedArgs = args.map((arg) => (win ? psQuote(arg) : shQuote(arg))).join(" ");
+  const invocation = win
+    ? `& ${psQuote(rscript)} --vanilla -e ${psQuote(expression)}${quotedArgs ? ` ${quotedArgs}` : ""}`
+    : `${shQuote(rscript)} --vanilla -e ${shQuote(expression)}${quotedArgs ? ` ${quotedArgs}` : ""}`;
+  return ShellCommand.create(
+    win ? "powershell" : "bash",
+    win
+      ? ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", invocation]
+      : ["-lc", invocation],
+  ).execute();
+}
+
+/** 在不加载包的前提下检查安装状态，避免首次运行直接落入难读的 R 错误日志。 */
+export async function checkRDependencies(): Promise<RDependencyStatus> {
+  const rscript = await findRscript();
+  if (!rscript) return { rscriptFound: false, missing: [] };
+  if (dependencyCache?.rscript === rscript) return dependencyCache.status;
+  const expression = [
+    "pkgs <- commandArgs(trailingOnly = TRUE)",
+    "missing <- pkgs[!vapply(pkgs, requireNamespace, quietly = TRUE, FUN.VALUE = logical(1))]",
+    "writeLines(missing)",
+  ].join("; ");
+  try {
+    const result = await executeRExpression(
+      rscript,
+      expression,
+      RNA_SEQ_REQUIRED_PACKAGES,
+    );
+    if (result.code !== 0) {
+      return {
+        rscriptFound: true,
+        missing: [],
+        error: (result.stderr || result.stdout || "R 依赖检测失败").trim(),
+      };
+    }
+    const status = {
+      rscriptFound: true,
+      missing: (result.stdout || "")
+        .split(/\r?\n/)
+        .map((x) => x.trim())
+        .filter(Boolean),
+    };
+    dependencyCache = { rscript, status };
+    return status;
+  } catch (error) {
+    return {
+      rscriptFound: true,
+      missing: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/** 通过系统包管理器安装 R；仅由用户确认后调用。 */
+export async function installRRuntime(): Promise<{ ok: boolean; error?: string }> {
+  const win = await isWindows();
+  const command = win
+    ? "winget install --id RProject.R --exact --accept-package-agreements --accept-source-agreements"
+    : "brew install --cask r";
+  try {
+    const result = await ShellCommand.create(
+      win ? "powershell" : "bash",
+      win
+        ? ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command]
+        : ["-lc", command],
+    ).execute();
+    resetRscriptCache();
+    resetRDependencyCache();
+    return result.code === 0
+      ? { ok: true }
+      : { ok: false, error: (result.stderr || result.stdout || "R 安装未完成").trim() };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/** 安装 CRAN 与 Bioconductor 依赖；不升级已存在的包。 */
+export async function installRDependencies(
+  packages: readonly string[] = RNA_SEQ_REQUIRED_PACKAGES,
+): Promise<{ ok: boolean; error?: string }> {
+  const rscript = await findRscript();
+  if (!rscript) return { ok: false, error: "未找到 Rscript" };
+  const bioc = packages.filter((pkg) =>
+    ["edgeR", "DESeq2", "ComplexHeatmap"].includes(pkg),
+  );
+  const cran = packages.filter((pkg) => !bioc.includes(pkg));
+  try {
+    if (cran.length > 0) {
+      const cranResult = await executeRExpression(
+        rscript,
+        "args <- commandArgs(trailingOnly = TRUE); repo <- args[1]; pkgs <- args[-1]; options(repos = c(CRAN = repo)); if (length(pkgs)) install.packages(pkgs, dependencies = TRUE)",
+        ["https://cloud.r-project.org", ...cran],
+      );
+      if (cranResult.code !== 0) {
+        return {
+          ok: false,
+          error: (cranResult.stderr || cranResult.stdout || "R 包安装未完成").trim(),
+        };
+      }
+    }
+    if (bioc.length > 0) {
+      const biocResult = await executeRExpression(
+        rscript,
+        "args <- commandArgs(trailingOnly = TRUE); manager <- args[1]; installer <- args[2]; pkgs <- args[-c(1, 2)]; if (!requireNamespace(manager, quietly = TRUE)) install.packages(manager); if (length(pkgs)) getExportedValue(manager, installer)(pkgs, ask = FALSE, update = FALSE)",
+        ["BiocManager", "install", ...bioc],
+      );
+      if (biocResult.code !== 0) {
+        return {
+          ok: false,
+          error: (
+            biocResult.stderr ||
+            biocResult.stdout ||
+            "Bioconductor 包安装未完成"
+          ).trim(),
+        };
+      }
+    }
+    resetRDependencyCache();
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
 // ── runner.R 资源定位(开发与打包均为 resourceDir()/r/runner.R) ──
 export async function resolveRunnerR(): Promise<string> {
   const { resourceDir } = await import("@tauri-apps/api/path");
@@ -267,15 +429,21 @@ export async function runR(
         settle();
       });
 
-      void command.spawn().then((spawned) => {
-        child = spawned;
-        childPid = spawned.pid ?? null;
-      }).catch((error) => {
-        result.status = "failed";
-        result.exitCode = 1;
-        callbacks.onLog?.("error", `启动失败: ${error instanceof Error ? error.message : String(error)}`);
-        settle();
-      });
+      void command
+        .spawn()
+        .then((spawned) => {
+          child = spawned;
+          childPid = spawned.pid ?? null;
+        })
+        .catch((error) => {
+          result.status = "failed";
+          result.exitCode = 1;
+          callbacks.onLog?.(
+            "error",
+            `启动失败: ${error instanceof Error ? error.message : String(error)}`,
+          );
+          settle();
+        });
       cancelImpl = async () => {
         cancelled = true;
         callbacks.onLog?.("warning", "收到取消请求,正在终止 R 进程…");

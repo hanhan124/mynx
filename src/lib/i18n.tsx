@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type Language = "zh" | "en";
 
@@ -74,7 +81,7 @@ const zh: Dictionary = {
   "tiff.converting": "正在转换",
   "tiff.prepare": "准备转换...",
   "rnaseq.title": "RNA-seq 分析",
-  "rnaseq.subtitle": "差异分析(DESeq2 / edgeR)与图表导出",
+  "rnaseq.subtitle": "原始 Counts 差异表达与结果图",
   "rnaseq.import": "数据导入",
   "rnaseq.analysis": "差异分析",
   "rnaseq.plots": "绘图导出",
@@ -218,8 +225,10 @@ const en: Dictionary = {
   "weather.loading": "Getting weather",
   "weather.unavailable": "Weather unavailable",
   "weather.retry": "Check your network and retry",
-  "weather.errorTitle": "Location or weather data request failed. Check your network and retry",
-  "weather.feelsLike": "Feels like {temperature}°C · Humidity {humidity}% · Wind {windSpeed} km/h",
+  "weather.errorTitle":
+    "Location or weather data request failed. Check your network and retry",
+  "weather.feelsLike":
+    "Feels like {temperature}°C · Humidity {humidity}% · Wind {windSpeed} km/h",
   "tool.charts.title": "Scientific plotting",
   "tool.charts.description": "Charts, statistics, and publication layouts",
   "tool.qpcr.title": "qPCR analysis",
@@ -247,7 +256,7 @@ const en: Dictionary = {
   "tiff.converting": "Converting",
   "tiff.prepare": "Preparing conversion...",
   "rnaseq.title": "RNA-seq analysis",
-  "rnaseq.subtitle": "Differential analysis (DESeq2 / edgeR) and chart export",
+  "rnaseq.subtitle": "Raw-count differential expression and result plots",
   "rnaseq.import": "Data import",
   "rnaseq.analysis": "Differential analysis",
   "rnaseq.plots": "Plot export",
@@ -335,7 +344,8 @@ const en: Dictionary = {
   "tiff.noFiles": "No TIFF files found",
   "tiff.summary": "{ok} succeeded, {failed} failed",
   "tiff.complete": "Conversion complete: {count} files",
-  "tiff.watermarkSkipped": "ImageMagick is required for watermarks; the watermark was skipped",
+  "tiff.watermarkSkipped":
+    "ImageMagick is required for watermarks; the watermark was skipped",
   "qpcr.saveFailed": "Auto-save failed: {detail}",
   "qpcr.chartComplete": "Generated {count} charts{detail}",
   "qpcr.chartFailed": "Chart generation failed: {detail}",
@@ -373,17 +383,28 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, [language]);
   const setLanguage = (next: Language) => {
     setLanguageState(next);
-    try { localStorage.setItem("mynx-language", next); } catch { /* storage unavailable */ }
+    try {
+      localStorage.setItem("mynx-language", next);
+    } catch {
+      /* storage unavailable */
+    }
     document.documentElement.lang = next === "en" ? "en" : "zh-CN";
   };
-  const value = useMemo<LanguageContextValue>(() => ({
-    language,
-    setLanguage,
-    t: (key, values) => {
-      const raw = (language === "en" ? en : zh)[key] ?? zh[key] ?? key;
-      return values ? raw.replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? `{${name}}`)) : raw;
-    },
-  }), [language]);
+  const value = useMemo<LanguageContextValue>(
+    () => ({
+      language,
+      setLanguage,
+      t: (key, values) => {
+        const raw = (language === "en" ? en : zh)[key] ?? zh[key] ?? key;
+        return values
+          ? raw.replace(/\{(\w+)\}/g, (_, name: string) =>
+              String(values[name] ?? `{${name}}`),
+            )
+          : raw;
+      },
+    }),
+    [language],
+  );
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
@@ -401,21 +422,31 @@ export function localizeErrorMessage(message: string, language: Language): strin
     "未找到 Sample/Group/样本/分组 列": "Sample/Group column was not found",
     "未找到 Cq/Ct 列": "Cq/Ct column was not found",
     "重复次数必须是大于等于 1 的整数": "Replicate count must be an integer of at least 1",
-    "相对对照方法需要指定对照组": "The control-relative method requires a control group",
-    "择优重复数与离群值剔除不能同时启用，请只选一种": "Best-replicate selection and outlier removal cannot both be enabled",
+    相对对照方法需要指定对照组: "The control-relative method requires a control group",
+    "择优重复数与离群值剔除不能同时启用，请只选一种":
+      "Best-replicate selection and outlier removal cannot both be enabled",
     "Transformed Data sheet not found": "Transformed Data sheet not found",
   };
   if (exact[message]) return exact[message];
   return message
-    .replace("择优重复数必须是 0（关闭）或大于等于 2 的整数", "Best-replicate count must be 0 (off) or an integer of at least 2")
+    .replace(
+      "择优重复数必须是 0（关闭）或大于等于 2 的整数",
+      "Best-replicate count must be 0 (off) or an integer of at least 2",
+    )
     .replace("择优重复数 ", "Best-replicate count ")
     .replace(" 不能大于重复次数 ", " cannot exceed replicate count ")
-    .replace("离群值剔除阈值必须是大于 0 的数（或 0 关闭）", "Outlier threshold must be greater than 0 (or 0 to disable)")
+    .replace(
+      "离群值剔除阈值必须是大于 0 的数（或 0 关闭）",
+      "Outlier threshold must be greater than 0 (or 0 to disable)",
+    )
     .replace("分组 ", "Group ")
     .replace("从第 ", " starting at row ")
     .replace(" 行开始有 ", " has ")
     .replace(" 个重复，但当前设置为 ", " replicates, but the current setting is ")
-    .replace(" 个。请检查重复次数或 Transformed Data 数据。", ". Check the replicate count or Transformed Data.")
+    .replace(
+      " 个。请检查重复次数或 Transformed Data 数据。",
+      ". Check the replicate count or Transformed Data.",
+    )
     .replace("未找到对照组", "No valid data found for control group")
     .replace("的有效数据（基因 ", " (gene ")
     .replace("）", ")")

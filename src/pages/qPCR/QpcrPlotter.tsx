@@ -389,9 +389,12 @@ function HeatmapPreview({
   settings: HeatmapSettings;
 }) {
   const genes = Array.from(new Set(rows.map((row) => row.gene))).slice(0, 12);
-  const groups = Array.from(new Set(rows.map((row) => row.group))).slice(0, 8);
-  if (!genes.length || !groups.length)
+  const sourceGroups = Array.from(new Set(rows.map((row) => row.group))).slice(0, 8);
+  if (!genes.length || !sourceGroups.length)
     return <EmptyPreview label="导入含 Gene / Group_Name / Average 的结果表后预览" />;
+  const groups = settings.heatmapClusterCols
+    ? clusterHeatmapGroups(rows, genes, sourceGroups, settings.heatmapScale)
+    : sourceGroups;
   const values = genes.flatMap((gene) =>
     groups.map(
       (group) =>
@@ -487,6 +490,84 @@ function HeatmapPreview({
       )}
     </svg>
   );
+}
+
+/**
+ * 小型预览使用的列聚类：采用 complete linkage 层次聚类，保留每个簇的叶序。
+ * 导出图由 R 的 hclust 负责；这里保持同样的“先聚类、再绘制”语义，
+ * 避免设置开启后预览仍沿用原始样本顺序。
+ */
+function clusterHeatmapGroups(
+  rows: RecordRow[],
+  genes: string[],
+  groups: string[],
+  scale: HeatmapSettings["heatmapScale"],
+) {
+  if (groups.length < 3) return groups;
+  const raw = genes.map((gene) =>
+    groups.map(
+      (group) => rows.find((row) => row.gene === gene && row.group === group)?.average ?? 0,
+    ),
+  );
+  const matrix = raw.map((values) => {
+    if (scale === "none") return values;
+    const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+    const variance = values.reduce((sum, value) => sum + (value - mean) ** 2, 0) /
+      Math.max(values.length - 1, 1);
+    const sd = Math.sqrt(variance);
+    return sd > 0 ? values.map((value) => (value - mean) / sd) : values.map(() => 0);
+  });
+  if (scale === "column") {
+    const columnStats = groups.map((_, column) => {
+      const values = raw.map((row) => row[column]);
+      const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+      const variance = values.reduce((sum, value) => sum + (value - mean) ** 2, 0) /
+        Math.max(values.length - 1, 1);
+      return { mean, sd: Math.sqrt(variance) };
+    });
+    for (let row = 0; row < matrix.length; row += 1) {
+      for (let column = 0; column < groups.length; column += 1) {
+        const stats = columnStats[column];
+        matrix[row][column] = stats.sd > 0 ? (raw[row][column] - stats.mean) / stats.sd : 0;
+      }
+    }
+  }
+  const vectors = groups.map((_, column) => matrix.map((row) => row[column]));
+  let clusters = groups.map((_, index) => [index]);
+  const distance = (left: number[], right: number[]) => {
+    const sum = left.reduce((total, value, index) => total + (value - right[index]) ** 2, 0);
+    return Math.sqrt(sum);
+  };
+  while (clusters.length > 1) {
+    let bestLeft = 0;
+    let bestRight = 1;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (let left = 0; left < clusters.length - 1; left += 1) {
+      for (let right = left + 1; right < clusters.length; right += 1) {
+        let linkageDistance = 0;
+        for (const leftIndex of clusters[left]) {
+          for (const rightIndex of clusters[right]) {
+            linkageDistance = Math.max(
+              linkageDistance,
+              distance(vectors[leftIndex], vectors[rightIndex]),
+            );
+          }
+        }
+        if (linkageDistance < bestDistance) {
+          bestDistance = linkageDistance;
+          bestLeft = left;
+          bestRight = right;
+        }
+      }
+    }
+    clusters = clusters
+      .filter((_, index) => index !== bestLeft && index !== bestRight)
+      .concat([[
+        ...clusters[bestLeft],
+        ...clusters[bestRight],
+      ]]);
+  }
+  return clusters[0].map((index) => groups[index]);
 }
 
 function EmptyPreview({ label }: { label: string }) {
@@ -1452,6 +1533,12 @@ function BarSettingsPanel({
             </select>
           </span>
         </div>
+        <div className="qpcr-setting-inline-note">
+          {l(
+            "关闭 X 轴标签时，仍会在输出文件夹生成实际样本顺序 CSV。",
+            "When X labels are hidden, the actual sample order is still exported as a CSV.",
+          )}
+        </div>
       </SettingSection>
       <SettingSection title={l("字体与间距", "Typography & spacing")}>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
@@ -2011,6 +2098,12 @@ function HeatmapSettingsPanel({
               onChange={(value) => update("rowLabelItalic", value)}
             />
           </div>
+        </div>
+        <div className="qpcr-setting-inline-note">
+          {l(
+            "关闭列标签时，仍会输出实际样本顺序 CSV；启用列聚类时以聚类结果为准。",
+            "When column labels are hidden, the sample order is exported as CSV; with column clustering, the clustered order is used.",
+          )}
         </div>
       </SettingSection>
       <SettingSection title={l("颜色与图例", "Colors & legend")}>

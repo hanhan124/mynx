@@ -15,7 +15,13 @@ export interface AnalysisParams {
   engine?: "auto" | "deseq2" | "edger_qlf";
   /** 低表达过滤阈值(edgeR filterByExpr min.count / DESeq2 rowSums 下限) */
   filter_min_count?: number;
+  /** 至少达到 filter_min_count 的样本数；与附件流程的统一预过滤一致 */
+  filter_min_samples?: number;
   filter_rowsum?: number;
+  /** 小数 Counts 默认拒绝；仅确认是计数器舍入误差时可明确选择 round。 */
+  count_rounding?: "stop" | "round";
+  /** 富集注释所用输入基因 ID 类型；auto 自动识别 Ensembl 基因 ID。 */
+  gene_id_type?: "auto" | "symbol" | "ensembl";
 }
 
 // ── 通用作图选项(所有 ggplot 图共享) ──
@@ -78,9 +84,28 @@ export interface PcaOptions extends CommonPlotOptions {
   shape_by_group?: boolean;
   show_n?: boolean;
   scale_genes?: boolean;
+  /** 仅取方差最高的基因做 PCA；空值/0 表示使用全部变换后的基因 */
+  top_var_genes?: number;
+}
+
+export interface QcOptions extends CommonPlotOptions {
+  qc_width?: number;
+  qc_height_min?: number;
+  qc_height_per_sample?: number;
+  correlation_width?: number;
+  correlation_height?: number;
+  distance_width?: number;
+  distance_height?: number;
+  show_library_size?: boolean;
+  show_detected_genes?: boolean;
+  show_expression_distribution?: boolean;
+  show_correlation?: boolean;
+  show_distance?: boolean;
 }
 
 export interface HeatmapOptions {
+  /** 行聚类算法；必须显式指定，避免因矩阵大小自动改变统计方法 */
+  row_clustering_method?: "hierarchical" | "kmeans" | "none";
   k_clusters?: number;
   show_marker_labels?: boolean;
   show_legend?: boolean;
@@ -88,6 +113,12 @@ export interface HeatmapOptions {
   show_column_names?: boolean;
   column_names_rot?: number;
   show_row_names?: boolean;
+  /** 整体热图：基因行名、组列名、标记基因标注的字号(pt) */
+  row_names_size?: number;
+  column_names_size?: number;
+  marker_label_size?: number;
+  legend_title_size?: number;
+  legend_text_size?: number;
   use_all_genes?: boolean;
   width?: number;
   height?: number;
@@ -95,9 +126,24 @@ export interface HeatmapOptions {
   heatmap_palette?: string;
   zscore_min?: number;
   zscore_max?: number;
+  /** 调色板中点（通常为白色）对应的 Z 值，必须位于上下限之间 */
+  zscore_center?: number;
   cluster_palette?: string;
   show_cluster_annotation?: boolean;
+  /** 是否显示整体热图的 Cluster 图例(与注释条独立控制) */
+  show_cluster_legend?: boolean;
   column_group_order?: string[];
+  /** 发表热图保留的最多基因数；NULL/空值表示不封顶 */
+  max_genes?: number;
+  /** 大热图是否以栅格绘制；PDF 编辑需求时建议关闭 */
+  use_raster?: boolean;
+  /** 自动热图行排序策略 */
+  row_order?:
+    | "cluster"
+    | "cluster_first_column_desc"
+    | "first_column_desc"
+    | "first_column_asc"
+    | "input";
 }
 
 export interface SelectHeatmapOptions {
@@ -108,12 +154,26 @@ export interface SelectHeatmapOptions {
   legend_position?: string;
   show_gene_names?: boolean;
   show_group_names?: boolean;
+  /** 选定基因热图的文字字号(pt) */
+  gene_names_size?: number;
+  group_names_size?: number;
+  legend_title_size?: number;
+  legend_text_size?: number;
+  /** 在热图单元格中显示原始 counts */
+  show_cell_text?: boolean;
+  cell_text_size?: number;
+  /** 按附件参考使用栅格化绘制 */
+  use_raster?: boolean;
   groups?: string[];
   heatmap_palette?: string;
   zscore_min?: number;
   zscore_max?: number;
+  /** 调色板中点（通常为白色）对应的 Z 值，必须位于上下限之间 */
+  zscore_center?: number;
   cluster_palette?: string;
   show_cluster_annotation?: boolean;
+  /** 是否显示选定基因热图的 Cluster 图例(与注释条独立控制) */
+  show_cluster_legend?: boolean;
   column_group_order?: string[];
 }
 
@@ -136,6 +196,9 @@ export interface VennOptions {
   title?: string;
   show_stats?: boolean;
   stroke_size?: number;
+  set_name_size?: number;
+  text_size?: number;
+  title_size?: number;
   width?: number;
   height?: number;
   groups?: string[];
@@ -165,6 +228,8 @@ export interface DendrogramOptions {
   label_cex?: number;
   hang?: number;
   cex_axis?: number;
+  cex_main?: number;
+  cex_lab?: number;
   show_title?: boolean;
   title?: string;
   show_xlab?: boolean;
@@ -213,6 +278,9 @@ export interface DensityOptions extends CommonPlotOptions {
 
 export interface PlotOptions {
   pca?: PcaOptions;
+  mds?: PcaOptions;
+  /** 样本文库、检测基因数、表达分布及样本间关系的一组质控图 */
+  qc?: QcOptions;
   heatmap?: HeatmapOptions;
   select_heatmap?: SelectHeatmapOptions;
   volcano?: VolcanoOptions;

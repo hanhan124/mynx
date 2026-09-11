@@ -1,0 +1,224 @@
+/* ================================================================
+   统一页面视觉语言
+   以 RNA-seq / qPCR 工作台为基准：柔和的 Tahoe 材质、清晰的层级、
+   统一的控件尺寸。这里只处理外观，不参与任何业务状态或交互。
+   ================================================================ */
+
+/* 宽屏工具页共享容器：让 TIFF 与图表工作室和工作台保持同一呼吸感。 */
+.unified-page {
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 20px 24px 28px;
+  animation: fadeInShell 220ms var(--ease-out) both;
+}
+
+.unified-page .panel-header {
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 1px 2px 14px;
+  border-bottom: 1px solid var(--separator);
+}
+
+.unified-page .panel-icon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 14px;
+  box-shadow: var(--shadow-accent);
+}
+
+.unified-page .panel-title h2 {
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.unified-page .panel-title p {
+  margin-top: 3px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.unified-page .panel-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.unified-page .card-grid {
+  gap: 12px;
+}
+
+.unified-page--tiff .card,
+.unified-page--chart .card {
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.unified-page--qpcr .card,
+.unified-page--rnaseq .card {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.unified-page .card-title {
+  min-height: 48px;
+  padding: 13px 16px 8px;
+  border-bottom: 1px solid var(--separator);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.unified-page .card-body {
+  padding: 16px;
+}
+
+.unified-page .form-group {
+  margin-bottom: 12px;
+}
+
+.unified-page .form-group label {
+  margin-bottom: 5px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.unified-page .form-group select,
+.unified-page .form-group input,
+.unified-page .form-group textarea {
+  border-radius: var(--radius-md);
+  background-color: var(--bg-card);
+  border-color: var(--stroke-strong);
+}
+
+.unified-page .form-group select:focus,
+.unified-page .form-group input:focus,
+.unified-page .form-group textarea:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.unified-page .file-display {
+  min-height: 62px;
+  padding: 11px 12px;
+  border-color: var(--stroke);
+  border-radius: var(--radius-md);
+}
+
+.unified-page .btn-row {
+  gap: 8px;
+}
+
+.unified-page .notice,
+.unified-page .result-success {
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--stroke));
+  border-radius: var(--radius-md);
+}
+
+/* 图表工作室：目录、设置与结果卡片使用同一层级，避免旧页面过于紧凑。 */
+.unified-page--chart .chart-studio__layout {
+  gap: 16px;
+}
+
+.unified-page--chart .chart-studio__catalog,
+.unified-page--chart .chart-studio__work > .card {
+  box-shadow: var(--shadow-sm);
+}
+
+.unified-page--chart .chart-studio__families {
+  padding: 0 16px 12px;
+}
+
+.unified-page--chart .chart-studio__templates {
+  padding: 8px;
+}
+
+.unified-page--chart .chart-studio__search {
+  margin-right: 16px;
+  margin-left: 16px;
+}
+
+.unified-page--chart .chart-studio__work {
+  gap: 12px;
+}
+
+.unified-page--chart .chart-studio__work > .card:first-child .card-body {
+  padding: 14px 16px;
+}
+
+.unified-page--chart .chart-studio__appearance {
+  margin-top: 16px;
+}
+
+/* TIFF：沿用工作台的绿色语义色，但保持公共卡片/控件节奏。 */
+.unified-page--tiff .panel-icon {
+  box-shadow: 0 7px 16px rgba(var(--green-rgb), 0.22);
+}
+
+.unified-page--tiff .file-display {
+  margin-bottom: 12px;
+}
+
+/* qPCR / RNA-seq 已有更完整的专属布局，仅补齐页标识与响应式安全边界。 */
+.unified-page--qpcr,
+.unified-page--rnaseq {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .unified-page {
+    padding: 18px 16px 24px;
+  }
+
+  .unified-page .panel-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .unified-page .panel-title {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .unified-page--chart .panel-actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .unified-page .panel-title h2 {
+    font-size: 18px;
+  }
+
+  .unified-page .card-body {
+    padding: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unified-page {
+    animation: none;
+  }
+}
+
+/* 首页保留品牌化入口，但让背景、最大宽度和其他页面共享同一套令牌。 */
+.unified-home {
+  color: var(--text-primary);
+}
+
+.unified-home .home-tools-head {
+  border-color: var(--separator);
+}
+
+.unified-home .home-tools-count {
+  color: var(--text-tertiary);
+}

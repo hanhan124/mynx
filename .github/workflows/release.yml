@@ -142,6 +142,13 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      - name: Verify version and shared contracts
+        run: |
+          npm run version:check
+          npm run resources:check
+          npm run test
+          npm run test:rust
+
       - name: Check Tauri updater signing secrets
         shell: bash
         env:

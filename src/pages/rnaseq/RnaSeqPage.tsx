@@ -6,7 +6,7 @@
  * 设计体系完全沿用 mynx(Tahoe 令牌 / surface 渐变 / tabler 图标 / spring 动效)。
  */
 import { useMemo, useState } from "react";
-import { open } from "@tauri-apps/plugin-dialog";
+import { ask, open } from "@tauri-apps/plugin-dialog";
 import {
   IconMicroscope,
   IconFileImport,
@@ -23,6 +23,7 @@ import AnalysisStep from "./AnalysisStep";
 import PlotsStep from "./PlotsStep";
 import { RnaSeqTutorial } from "./RnaSeqTutorial";
 import { useLanguage } from "@/lib/i18n";
+import { installRRuntime } from "@/lib/rnaseq/runner";
 
 type StepId = "import" | "analysis" | "plots";
 
@@ -32,7 +33,7 @@ function StepContent({ step, goStep }: { step: StepId; goStep: (s: StepId) => vo
   return <PlotsStep goAnalysis={() => goStep("analysis")} />;
 }
 
-/** 步骤就绪状态(未就绪时 tab 上给灰点,可点击但引导先完成前置步骤) */
+/** 步骤就绪状态。步骤只在其前提完成后开放，避免用户跳到没有可执行操作的页面。 */
 function useStepReadiness() {
   const st = useRnaSeq();
   return useMemo(() => {
@@ -47,57 +48,6 @@ function useStepReadiness() {
   }, [st.importData, st.config, st.hasResult, st.successfulImportPath]);
 }
 
-function RnaSeqStatusStrip() {
-  const { language } = useLanguage();
-  const l = (zh: string, en: string) => language === "en" ? en : zh;
-  const st = useRnaSeq();
-  const selected = st.config.selected_groups;
-  const sampleCount = selected.reduce(
-    (n, group) => n + (st.config.groups[group]?.length ?? 0),
-    0,
-  );
-  const singleRep = selected.some(
-    (group) => (st.config.groups[group]?.length ?? 0) < 2,
-  );
-  const mode = selected.length < 2
-    ? l("待设置", "Needs setup")
-    : singleRep
-      ? l("单重复 · 探索性", "Single replicate · exploratory")
-      : st.config.params.engine === "edger_qlf"
-        ? "edgeR QL"
-        : st.config.params.engine === "deseq2"
-          ? "DESeq2"
-          : l("自动选择", "Auto")
-  const items = [
-    { label: "Counts", value: st.importData ? `${st.importData.total_genes.toLocaleString()} genes` : l("未导入", "Not imported"), tone: st.importData ? "ok" : "muted" },
-    { label: "Samples", value: sampleCount ? `${sampleCount} samples` : l("未分配", "Unassigned"), tone: sampleCount ? "ok" : "muted" },
-    { label: "Design", value: selected.length ? `${selected.length} groups` : l("未设置", "Not set"), tone: selected.length >= 2 ? "ok" : "muted" },
-    { label: "Contrast", value: st.config.comparisons.length ? `${validComparisonsOf(st.config).length} valid` : l("未设置", "Not set"), tone: validComparisonsOf(st.config).length ? "ok" : "muted" },
-  ];
-  return (
-    <div className={`rx-status-strip${singleRep ? " rx-status-strip--exploratory" : ""}`}>
-      <div className="rx-status-mode">
-        <span className="rx-status-pulse" />
-        <span className="rx-status-mode-label">{l("分析模式", "Analysis mode")}</span>
-        <strong>{mode}</strong>
-      </div>
-      <div className="rx-status-metrics">
-        {items.map((item) => (
-          <div className="rx-status-metric" key={item.label}>
-            <span>{item.label}</span>
-            <b className={`rx-status-value rx-status-value--${item.tone}`}>{item.value}</b>
-          </div>
-        ))}
-      </div>
-      {singleRep && (
-        <div className="rx-status-note">
-          {l("单重复结果用于内部探索，P 值为近似值，不应作为正式生物学重复推断。", "Single-replicate results are exploratory. P values are approximate and should not be used as formal biological-replicate inference.")}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function RnaSeqInner() {
   const { t } = useLanguage();
   const steps: { id: StepId; label: string; icon: typeof IconFileImport }[] = [
@@ -106,17 +56,18 @@ function RnaSeqInner() {
     { id: "plots", label: t("rnaseq.plots"), icon: IconPalette },
   ];
   const [step, setStep] = useState<StepId>("import");
-  const [betaNoteOpen, setBetaNoteOpen] = useState(true);
   const st = useRnaSeq();
   const readiness = useStepReadiness();
   const stepIndex = steps.findIndex((s) => s.id === step);
 
   const goStep = (s: StepId) => {
     if (s === "analysis" && !readiness.importReady && !st.hasResult) {
-      showToast("建议先在「数据导入」完成 Counts 文件导入", "info");
+      showToast("请先完成 Counts 数据导入", "info");
+      return;
     }
     if (s === "plots" && !st.hasResult) {
       showToast("绘图需要差异分析结果:先运行 DEG,或在结果来源处选择历史目录", "info");
+      return;
     }
     setStep(s);
   };
@@ -177,12 +128,21 @@ function RnaSeqInner() {
         role="button"
         title="点击重新检测(安装 R 后无需重启)"
         onClick={async () => {
+          const consent = await ask("未检测到 R。是否现在通过系统包管理器安装？", {
+            title: "安装 R",
+            kind: "info",
+          });
+          if (!consent) return;
+          showToast("正在安装 R，完成后会自动重新检测…", "info");
+          const installed = await installRRuntime();
+          if (!installed.ok) {
+            showToast(installed.error || "R 安装未完成", "error");
+            return;
+          }
           const ok = await st.recheckRscript();
           showToast(
-            ok
-              ? "已检测到 Rscript"
-              : "仍未找到 Rscript:请安装 R(https://cloud.r-project.org)后重试",
-            ok ? "success" : "error",
+            ok ? "已检测到 Rscript" : "R 已安装但尚未被检测到，请重新打开软件后再试",
+            ok ? "success" : "info",
           );
         }}
       >
@@ -192,18 +152,13 @@ function RnaSeqInner() {
   };
 
   return (
-    <div className="page-shell page-shell--wide">
+    <div className="page-shell page-shell--wide unified-page unified-page--rnaseq">
       <div className="panel-header">
         <div className="panel-icon" style={{ background: "#af52de" }}>
           <IconMicroscope size={18} color="white" stroke={1.75} />
         </div>
         <div className="panel-title">
-        <h2>
-            {t("rnaseq.title")}
-            <span className="rx-tag rx-tag--warn" title={t("rnaseq.beta")}>
-              {t("rnaseq.beta")}
-            </span>
-          </h2>
+          <h2>{t("rnaseq.title")}</h2>
           <p>{t("rnaseq.subtitle")}</p>
         </div>
         <div className="panel-actions">
@@ -212,25 +167,7 @@ function RnaSeqInner() {
         </div>
       </div>
 
-      {betaNoteOpen && (
-        <div className="rx-beta-note">
-          <span className="rx-beta-note-text">
-            测试版功能,仍在开发完善中:流程与界面可能调整,重要数据请保留原始文件备份;遇到问题可点右上角「帮助」查看指引。
-          </span>
-          <button
-            type="button"
-            className="rx-beta-note-close"
-            aria-label="关闭提示"
-            onClick={() => setBetaNoteOpen(false)}
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      <RnaSeqStatusStrip />
-
-      {/* 三步 tab(macOS 分段控件) */}
+      {/* 三步工作流:只开放已满足前置条件的下一步，避免进入空页面。 */}
       <div className="rx-steps" role="tablist">
         <span
           className="rx-steps-indicator"
@@ -259,25 +196,29 @@ function RnaSeqInner() {
               </span>
               <span
                 className={`rx-steps-dot${ready ? " ready" : ""}`}
-                title={ready ? "已就绪" : "未就绪"}
+                title={ready ? "已完成" : i > stepIndex ? "完成上一步后开放" : "待完成"}
               />
             </button>
           );
         })}
       </div>
 
-      {/* 配置存取工具条:加载配置 / 加载结果 / 保存配置 */}
-      <div className="rx-config-bar">
-        <button type="button" className="btn" onClick={() => void onLoadConfig()}>
-          <IconFileImport size={13} stroke={1.75} /> {t("rnaseq.loadConfig")}
-        </button>
-        <button type="button" className="btn" onClick={() => void onLoadResult()}>
-          <IconFolderOpen size={13} stroke={1.75} /> {t("rnaseq.loadResult")}
-        </button>
-        <button type="button" className="btn" onClick={() => void onSaveConfig()}>
-          <IconDeviceFloppy size={13} stroke={1.75} /> {t("rnaseq.saveConfig")}
-        </button>
-      </div>
+      <details className="rx-project-menu">
+        <summary>
+          {t("rnaseq.loadConfig")} / {t("rnaseq.loadResult")}
+        </summary>
+        <div className="rx-project-menu-actions">
+          <button type="button" className="btn" onClick={() => void onLoadConfig()}>
+            <IconFileImport size={13} stroke={1.75} /> {t("rnaseq.loadConfig")}
+          </button>
+          <button type="button" className="btn" onClick={() => void onLoadResult()}>
+            <IconFolderOpen size={13} stroke={1.75} /> {t("rnaseq.loadResult")}
+          </button>
+          <button type="button" className="btn" onClick={() => void onSaveConfig()}>
+            <IconDeviceFloppy size={13} stroke={1.75} /> {t("rnaseq.saveConfig")}
+          </button>
+        </div>
+      </details>
 
       <StepContent step={step} goStep={goStep} />
     </div>

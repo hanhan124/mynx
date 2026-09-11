@@ -105,6 +105,9 @@ npm run installer:build
 # macOS Apple Silicon: .app + .dmg + updater tarball
 npm run mac:build
 # 产物: src-tauri/target/aarch64-apple-darwin/release/bundle/
+
+# Intel Mac: 开发环境兼容性构建（当前不作为正式发布产物）
+npm run mac:build:intel
 ```
 
 ### 项目结构

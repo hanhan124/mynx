@@ -67,7 +67,7 @@ export default function TiffPage() {
   const { dropRef, isDragOver } = useDropZone(handleDrop);
 
   return (
-    <div className="page-shell page-shell--wide">
+    <div className="page-shell page-shell--wide unified-page unified-page--tiff">
       <LoadingOverlay visible={loading} text={loadingText} progress={progress} />
 
       <div className="panel-header">

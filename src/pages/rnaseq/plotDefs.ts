@@ -4,6 +4,7 @@
 import type { ComponentType } from "react";
 import {
   IconChartDots,
+  IconChartBubble,
   IconGrid4x4,
   IconLayoutGrid,
   IconChartScatter,
@@ -42,6 +43,22 @@ export const PLOT_GROUPS: PlotGroupDef[] = [
     icon: IconChartDots,
     dim: "group",
     color: "#0a84ff",
+  },
+  {
+    id: "mds",
+    label: "MDS 图",
+    desc: "距离降维·样本结构核验",
+    icon: IconChartBubble,
+    dim: "group",
+    color: "#64d2ff",
+  },
+  {
+    id: "qc",
+    label: "样本 QC",
+    desc: "文库、表达与样本关系",
+    icon: IconChartBar,
+    dim: "group",
+    color: "#30d158",
   },
   {
     id: "heatmap",
@@ -152,6 +169,8 @@ export const PLOT_GROUPS: PlotGroupDef[] = [
 /** 卡片 id → 输出文件名前缀(R 端 save_plot/save_ggplot 命名规则) */
 export const PLOT_FILE_PREFIX: Record<string, string[]> = {
   pca: ["pca."],
+  mds: ["mds."],
+  qc: ["QC_", "sample_correlation", "sample_distance"],
   heatmap: ["heatmap."],
   select_heatmap: ["heatmap_selected_genes"],
   volcano: ["volcano_"],
@@ -276,7 +295,7 @@ export const PALETTES: { id: string; label: string; colors: string[] }[] = [
   },
 ];
 
-/** 热图渐变色板(grDevices 连续色阶) */
+/** 热图渐变色板(grDevices 连续色阶)。ID 必须与 runner.R 的 paletteer_c 调用一致。 */
 export const HEAT_PALETTES: { id: string; label: string; gradient: string }[] = [
   {
     id: "Blue-Red 2",
@@ -285,8 +304,43 @@ export const HEAT_PALETTES: { id: string; label: string; gradient: string }[] = 
   },
   {
     id: "RdBu",
-    label: "RdBu 红-蓝",
+    label: "RdBu 红-白-蓝",
     gradient: "linear-gradient(to right, #ca0020, #f7f7f7, #0571b0)",
+  },
+  {
+    id: "PiYG",
+    label: "PiYG 洋红-白-绿",
+    gradient: "linear-gradient(to right, #c51b7d, #f7f7f7, #4d9221)",
+  },
+  {
+    id: "PRGn",
+    label: "PRGn 紫-白-绿",
+    gradient: "linear-gradient(to right, #762a83, #f7f7f7, #1b7837)",
+  },
+  {
+    id: "BrBG",
+    label: "BrBG 棕-白-青绿",
+    gradient: "linear-gradient(to right, #8c510a, #f5f5f5, #01665e)",
+  },
+  {
+    id: "PuOr",
+    label: "PuOr 紫-白-橙",
+    gradient: "linear-gradient(to right, #542788, #f7f7f7, #b35806)",
+  },
+  {
+    id: "RdGy",
+    label: "RdGy 红-白-灰",
+    gradient: "linear-gradient(to right, #ca0020, #f7f7f7, #4d4d4d)",
+  },
+  {
+    id: "RdYlBu",
+    label: "RdYlBu 红-黄-蓝",
+    gradient: "linear-gradient(to right, #d73027, #ffffbf, #4575b4)",
+  },
+  {
+    id: "RdYlGn",
+    label: "RdYlGn 红-黄-绿",
+    gradient: "linear-gradient(to right, #d73027, #ffffbf, #1a9850)",
   },
   {
     id: "Viridis",
@@ -313,7 +367,32 @@ export const HEAT_PALETTES: { id: string; label: string; gradient: string }[] = 
     label: "Spectral",
     gradient: "linear-gradient(to right, #9e0142, #f5d96b, #5e4fa2)",
   },
+  {
+    id: "Cividis",
+    label: "Cividis（色盲友好）",
+    gradient: "linear-gradient(to right, #00204c, #7d7c78, #fee838)",
+  },
+  {
+    id: "YlGnBu",
+    label: "YlGnBu 黄-绿-蓝",
+    gradient: "linear-gradient(to right, #ffffd9, #41b6c4, #081d58)",
+  },
+  {
+    id: "YlOrRd",
+    label: "YlOrRd 黄-橙-红",
+    gradient: "linear-gradient(to right, #ffffb2, #fd8d3c, #bd0026)",
+  },
+  {
+    id: "BuGn",
+    label: "BuGn 蓝-绿",
+    gradient: "linear-gradient(to right, #f7fcfd, #66c2a4, #00441b)",
+  },
 ];
+
+// 配色下拉框由多处复用；开发期尽早拦截重复选项，避免同名样式混入配置。
+if (new Set(HEAT_PALETTES.map((palette) => palette.id)).size !== HEAT_PALETTES.length) {
+  throw new Error("HEAT_PALETTES contains duplicate palette IDs");
+}
 
 /** Cluster 注释配色(离散分类) */
 export const CLUSTER_PALETTES: { id: string; label: string; colors: string[] }[] = [
@@ -413,6 +492,7 @@ export const GG_THEMES = [
 /** 走 build_theme 的图(展示 ggplot 主题选项) */
 export const GGPLOT_PLOT_IDS = new Set([
   "pca",
+  "mds",
   "volcano",
   "ma",
   "boxplot",

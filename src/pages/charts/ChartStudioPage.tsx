@@ -42,7 +42,15 @@ import LoadingOverlay from "@/components/LoadingOverlay";
 import { showToast } from "@/components/Toast";
 import { useDropZone } from "@/hooks/useDropZone";
 import { useLanguage } from "@/lib/i18n";
-import type { ChartConfig, ChartResult, RunEvent, GgplotTheme, LegendPosition, PublicationPreset, PaletteId } from "@/features/charts/model";
+import type {
+  ChartConfig,
+  ChartResult,
+  RunEvent,
+  GgplotTheme,
+  LegendPosition,
+  PublicationPreset,
+  PaletteId,
+} from "@/features/charts/model";
 import { useChartStudioState } from "@/features/charts/application/useChartStudioState";
 
 function ChartTemplateIcon({
@@ -76,77 +84,253 @@ function ChartTemplateIcon({
 }
 
 const CHART_FAMILY_EN: Record<string, string> = {
-  "基础比较": "Basic comparison", "趋势与关系": "Trends & relationships", "分布": "Distribution",
-  "组成": "Composition", "矩阵与层级": "Matrices & hierarchy", "空间与网络": "Spatial & networks",
-  "高级图": "Advanced", "流向图": "Flow diagrams", "表格与集合": "Tables & sets",
+  基础比较: "Basic comparison",
+  趋势与关系: "Trends & relationships",
+  分布: "Distribution",
+  组成: "Composition",
+  矩阵与层级: "Matrices & hierarchy",
+  空间与网络: "Spatial & networks",
+  高级图: "Advanced",
+  流向图: "Flow diagrams",
+  表格与集合: "Tables & sets",
 };
 
 const CHART_TEMPLATE_EN: Record<string, { name: string; description: string }> = {
-  "bar-basic-ggplot2": { name: "Basic bar chart", description: "A basic ggplot2 bar chart from R Graph Gallery" },
-  "line-basic-ggplot2": { name: "Basic line chart", description: "A basic ggplot2 line chart from R Graph Gallery" },
-  "scatter-basic-ggplot2": { name: "Basic scatter plot", description: "A basic ggplot2 scatter plot from R Graph Gallery" },
-  "histogram-basic-ggplot2": { name: "Basic histogram", description: "A basic ggplot2 histogram from R Graph Gallery" },
-  "boxplot-basic-ggplot2": { name: "Basic box plot", description: "A basic ggplot2 box plot from R Graph Gallery" },
-  "density-basic-ggplot2": { name: "Basic density plot", description: "A basic ggplot2 density plot from R Graph Gallery" },
-  "violin-basic-ggplot2": { name: "Basic violin plot", description: "A basic ggplot2 violin plot from R Graph Gallery" },
-  "pie-basic-ggplot2": { name: "Basic pie chart", description: "A basic ggplot2 pie chart from R Graph Gallery" },
-  "heatmap-basic-ggplot2": { name: "Basic heatmap", description: "A basic ggplot2 heatmap from R Graph Gallery" },
-  "radar-basic-ggplot2": { name: "Basic radar chart", description: "A basic radar chart in the R Graph Gallery style" },
-  "area-basic-ggplot2": { name: "Basic area chart", description: "A basic area chart from R Graph Gallery" },
-  "regression-basic-ggplot2": { name: "Regression scatter plot", description: "Scatter points with a linear trend band" },
-  "lollipop-basic-ggplot2": { name: "Lollipop chart", description: "A clean ranking with lines and dots" },
-  "donut-basic-ggplot2": { name: "Donut chart", description: "A hollow pie chart with room for a center annotation" },
-  "circular-bar-basic-ggplot2": { name: "Circular bar chart", description: "Category bars arranged around a circle" },
-  "grouped-bar-basic-ggplot2": { name: "Grouped bar chart", description: "Use color to compare bars across groups" },
-  "stacked-bar-basic-ggplot2": { name: "Stacked bar chart", description: "Show totals and group composition" },
-  "bubble-basic-ggplot2": { name: "Bubble chart", description: "Use point size for a third numeric dimension" },
-  "correlogram-basic-ggplot2": { name: "Correlation matrix", description: "Inspect correlations among numeric variables" },
-  "dendrogram-basic-ggplot2": { name: "Dendrogram", description: "Show hierarchical clustering of samples or variables" },
-  "parallel-basic-ggplot2": { name: "Parallel coordinates", description: "Compare record profiles across multiple metrics" },
-  "network-basic-ggplot2": { name: "Network graph", description: "Show a relationship network with nodes and links" },
-  "sankey-basic-ggplot2": { name: "Sankey diagram", description: "Show flow and scale between categories" },
-  "chord-basic-ggplot2": { name: "Chord diagram", description: "Show two-way connections between groups" },
-  "map-points-basic-ggplot2": { name: "Longitude-latitude point map", description: "Plot locations and values in geographic coordinates" },
-  "wordcloud-basic": { name: "Word cloud", description: "Emphasize keywords by frequency" },
-  "venn-basic": { name: "Venn diagram", description: "Show intersections of two or three sets" },
-  "connected-scatter-basic-ggplot2": { name: "Connected scatter plot", description: "Connect points to show the direction of change" },
-  "slope-basic-ggplot2": { name: "Slope chart", description: "Compare the same object at two time points" },
+  "bar-basic-ggplot2": {
+    name: "Basic bar chart",
+    description: "A basic ggplot2 bar chart from R Graph Gallery",
+  },
+  "line-basic-ggplot2": {
+    name: "Basic line chart",
+    description: "A basic ggplot2 line chart from R Graph Gallery",
+  },
+  "scatter-basic-ggplot2": {
+    name: "Basic scatter plot",
+    description: "A basic ggplot2 scatter plot from R Graph Gallery",
+  },
+  "histogram-basic-ggplot2": {
+    name: "Basic histogram",
+    description: "A basic ggplot2 histogram from R Graph Gallery",
+  },
+  "boxplot-basic-ggplot2": {
+    name: "Basic box plot",
+    description: "A basic ggplot2 box plot from R Graph Gallery",
+  },
+  "density-basic-ggplot2": {
+    name: "Basic density plot",
+    description: "A basic ggplot2 density plot from R Graph Gallery",
+  },
+  "violin-basic-ggplot2": {
+    name: "Basic violin plot",
+    description: "A basic ggplot2 violin plot from R Graph Gallery",
+  },
+  "pie-basic-ggplot2": {
+    name: "Basic pie chart",
+    description: "A basic ggplot2 pie chart from R Graph Gallery",
+  },
+  "heatmap-basic-ggplot2": {
+    name: "Basic heatmap",
+    description: "A basic ggplot2 heatmap from R Graph Gallery",
+  },
+  "radar-basic-ggplot2": {
+    name: "Basic radar chart",
+    description: "A basic radar chart in the R Graph Gallery style",
+  },
+  "area-basic-ggplot2": {
+    name: "Basic area chart",
+    description: "A basic area chart from R Graph Gallery",
+  },
+  "regression-basic-ggplot2": {
+    name: "Regression scatter plot",
+    description: "Scatter points with a linear trend band",
+  },
+  "lollipop-basic-ggplot2": {
+    name: "Lollipop chart",
+    description: "A clean ranking with lines and dots",
+  },
+  "donut-basic-ggplot2": {
+    name: "Donut chart",
+    description: "A hollow pie chart with room for a center annotation",
+  },
+  "circular-bar-basic-ggplot2": {
+    name: "Circular bar chart",
+    description: "Category bars arranged around a circle",
+  },
+  "grouped-bar-basic-ggplot2": {
+    name: "Grouped bar chart",
+    description: "Use color to compare bars across groups",
+  },
+  "stacked-bar-basic-ggplot2": {
+    name: "Stacked bar chart",
+    description: "Show totals and group composition",
+  },
+  "bubble-basic-ggplot2": {
+    name: "Bubble chart",
+    description: "Use point size for a third numeric dimension",
+  },
+  "correlogram-basic-ggplot2": {
+    name: "Correlation matrix",
+    description: "Inspect correlations among numeric variables",
+  },
+  "dendrogram-basic-ggplot2": {
+    name: "Dendrogram",
+    description: "Show hierarchical clustering of samples or variables",
+  },
+  "parallel-basic-ggplot2": {
+    name: "Parallel coordinates",
+    description: "Compare record profiles across multiple metrics",
+  },
+  "network-basic-ggplot2": {
+    name: "Network graph",
+    description: "Show a relationship network with nodes and links",
+  },
+  "sankey-basic-ggplot2": {
+    name: "Sankey diagram",
+    description: "Show flow and scale between categories",
+  },
+  "chord-basic-ggplot2": {
+    name: "Chord diagram",
+    description: "Show two-way connections between groups",
+  },
+  "map-points-basic-ggplot2": {
+    name: "Longitude-latitude point map",
+    description: "Plot locations and values in geographic coordinates",
+  },
+  "wordcloud-basic": {
+    name: "Word cloud",
+    description: "Emphasize keywords by frequency",
+  },
+  "venn-basic": {
+    name: "Venn diagram",
+    description: "Show intersections of two or three sets",
+  },
+  "connected-scatter-basic-ggplot2": {
+    name: "Connected scatter plot",
+    description: "Connect points to show the direction of change",
+  },
+  "slope-basic-ggplot2": {
+    name: "Slope chart",
+    description: "Compare the same object at two time points",
+  },
   "table-basic": { name: "Data table", description: "Export a data table as an image" },
-  "ridgeline-basic": { name: "Ridgeline plot", description: "Compare distribution shapes across groups" },
-  "beeswarm-basic": { name: "Beeswarm plot", description: "Show every observation while avoiding overlap" },
+  "ridgeline-basic": {
+    name: "Ridgeline plot",
+    description: "Compare distribution shapes across groups",
+  },
+  "beeswarm-basic": {
+    name: "Beeswarm plot",
+    description: "Show every observation while avoiding overlap",
+  },
   "waffle-basic": { name: "Waffle chart", description: "Use a grid to show composition" },
-  "treemap-basic": { name: "Treemap", description: "Use area to show hierarchical composition" },
-  "alluvial-basic": { name: "Alluvial diagram", description: "Track category flow across stages" },
-  "upset-basic": { name: "UpSet plot", description: "Compare intersections across multiple sets" },
-  "hexbin-basic": { name: "Hexbin density plot", description: "Aggregate many scatter points into hexagons" },
-  "bubble-map-basic": { name: "Bubble map", description: "Use bubble size to show values at geographic points" },
-  "choropleth-basic": { name: "Choropleth map", description: "Shade polygon areas by values" },
-  "density2d-basic-ggplot2": { name: "2D density plot", description: "Use contours for density of two numeric variables" },
-  "arc-basic": { name: "Arc diagram", description: "Show links between nodes along a baseline" },
-  "edge-bundling-basic": { name: "Edge-bundling graph", description: "Bundle related links into curved paths" },
-  "stacked-area-basic-ggplot2": { name: "Stacked area chart", description: "Show cumulative change of categories over time" },
-  "streamchart-basic-ggplot2": { name: "Streamgraph", description: "Show composition trends with smooth flow bands" },
-  "circular-packing-basic": { name: "Circle packing", description: "Use nested circles for hierarchy and scale" },
-  "time-series-basic-ggplot2": { name: "Time-series chart", description: "Show continuous trends by date" },
-  "connection-basic": { name: "Connection plot", description: "Show relationships between two node sets" },
-  "cartogram-basic": { name: "Grid cartogram", description: "Use equal-area cells to compare regional values" },
-  "dotplot-basic-ggplot2": { name: "Dot plot", description: "Compact comparison of category values with dots" },
-  "cleveland-basic-ggplot2": { name: "Cleveland dot plot", description: "Compare category values across two groups" },
-  "volcano-basic-ggplot2": { name: "Volcano plot", description: "Show fold change and significance together" },
-  "ma-basic-ggplot2": { name: "MA plot", description: "Inspect expression level versus fold change" },
-  "pca-basic-ggplot2": { name: "PCA plot", description: "Show overall sample differences using principal components" },
-  "forest-basic-ggplot2": { name: "Forest plot", description: "Show estimates and confidence intervals" },
-  "enrichment-dotplot-ggplot2": { name: "Enrichment dot plot", description: "Show pathway ratio, significance, and hit count" },
-  "km-survival-ggplot2": { name: "Kaplan–Meier survival curve", description: "Show survival probability, censoring, and group differences" },
-  "gsea-curve-ggplot2": { name: "GSEA enrichment curve", description: "Show running enrichment score through a ranked gene list" },
+  "treemap-basic": {
+    name: "Treemap",
+    description: "Use area to show hierarchical composition",
+  },
+  "alluvial-basic": {
+    name: "Alluvial diagram",
+    description: "Track category flow across stages",
+  },
+  "upset-basic": {
+    name: "UpSet plot",
+    description: "Compare intersections across multiple sets",
+  },
+  "hexbin-basic": {
+    name: "Hexbin density plot",
+    description: "Aggregate many scatter points into hexagons",
+  },
+  "bubble-map-basic": {
+    name: "Bubble map",
+    description: "Use bubble size to show values at geographic points",
+  },
+  "choropleth-basic": {
+    name: "Choropleth map",
+    description: "Shade polygon areas by values",
+  },
+  "density2d-basic-ggplot2": {
+    name: "2D density plot",
+    description: "Use contours for density of two numeric variables",
+  },
+  "arc-basic": {
+    name: "Arc diagram",
+    description: "Show links between nodes along a baseline",
+  },
+  "edge-bundling-basic": {
+    name: "Edge-bundling graph",
+    description: "Bundle related links into curved paths",
+  },
+  "stacked-area-basic-ggplot2": {
+    name: "Stacked area chart",
+    description: "Show cumulative change of categories over time",
+  },
+  "streamchart-basic-ggplot2": {
+    name: "Streamgraph",
+    description: "Show composition trends with smooth flow bands",
+  },
+  "circular-packing-basic": {
+    name: "Circle packing",
+    description: "Use nested circles for hierarchy and scale",
+  },
+  "time-series-basic-ggplot2": {
+    name: "Time-series chart",
+    description: "Show continuous trends by date",
+  },
+  "connection-basic": {
+    name: "Connection plot",
+    description: "Show relationships between two node sets",
+  },
+  "cartogram-basic": {
+    name: "Grid cartogram",
+    description: "Use equal-area cells to compare regional values",
+  },
+  "dotplot-basic-ggplot2": {
+    name: "Dot plot",
+    description: "Compact comparison of category values with dots",
+  },
+  "cleveland-basic-ggplot2": {
+    name: "Cleveland dot plot",
+    description: "Compare category values across two groups",
+  },
+  "volcano-basic-ggplot2": {
+    name: "Volcano plot",
+    description: "Show fold change and significance together",
+  },
+  "ma-basic-ggplot2": {
+    name: "MA plot",
+    description: "Inspect expression level versus fold change",
+  },
+  "pca-basic-ggplot2": {
+    name: "PCA plot",
+    description: "Show overall sample differences using principal components",
+  },
+  "forest-basic-ggplot2": {
+    name: "Forest plot",
+    description: "Show estimates and confidence intervals",
+  },
+  "enrichment-dotplot-ggplot2": {
+    name: "Enrichment dot plot",
+    description: "Show pathway ratio, significance, and hit count",
+  },
+  "km-survival-ggplot2": {
+    name: "Kaplan–Meier survival curve",
+    description: "Show survival probability, censoring, and group differences",
+  },
+  "gsea-curve-ggplot2": {
+    name: "GSEA enrichment curve",
+    description: "Show running enrichment score through a ranked gene list",
+  },
 };
 
 function localizedTemplate(template: ChartTemplate, language: "zh" | "en") {
-  return language === "en" ? CHART_TEMPLATE_EN[template.id] ?? { name: template.name, description: template.description } : { name: template.name, description: template.description };
+  return language === "en"
+    ? (CHART_TEMPLATE_EN[template.id] ?? {
+        name: template.name,
+        description: template.description,
+      })
+    : { name: template.name, description: template.description };
 }
 
 function localizedFamily(family: string, language: "zh" | "en") {
-  return language === "en" ? CHART_FAMILY_EN[family] ?? family : family;
+  return language === "en" ? (CHART_FAMILY_EN[family] ?? family) : family;
 }
 
 const publicationPresets: Record<
@@ -428,22 +612,55 @@ const templateDefaults: Record<
   "ma-basic-ggplot2": { x: "baseMean", y: "log2FC", group: "padj" },
   "pca-basic-ggplot2": { x: "", y: "", group: "group" },
   "forest-basic-ggplot2": { x: "term", y: "estimate", size: "low", group: "high" },
-  "enrichment-dotplot-ggplot2": { x: "term", y: "geneRatio", group: "padj", size: "count" },
+  "enrichment-dotplot-ggplot2": {
+    x: "term",
+    y: "geneRatio",
+    group: "padj",
+    size: "count",
+  },
   "km-survival-ggplot2": { x: "time", y: "event", group: "group" },
   "gsea-curve-ggplot2": { x: "rank", y: "score", group: "inSet" },
 };
 
 export default function ChartStudioPage() {
   const { language } = useLanguage();
-  const l = (zh: string, en: string) => language === "en" ? en : zh;
+  const l = (zh: string, en: string) => (language === "en" ? en : zh);
   const templateCopy = (template: ChartTemplate) => localizedTemplate(template, language);
   const studio = useChartStudioState(initial, verifiedChartTemplates[0]);
-  const { cfg, setCfg, family, setFamily, search, setSearch, presets, setPresets,
-    running, setRunning, installingR, setInstallingR, cancelling, setCancelling,
-    columns, setColumns, runStage, setRunStage, runProgress, setRunProgress,
-    runEvents, setRunEvents, log, setLog, referenceImage, setReferenceImage,
-    referenceLoadError, setReferenceLoadError, lastResult, setLastResult,
-    rscriptFound, setRscriptFound } = studio;
+  const {
+    cfg,
+    setCfg,
+    family,
+    setFamily,
+    search,
+    setSearch,
+    presets,
+    setPresets,
+    running,
+    setRunning,
+    installingR,
+    setInstallingR,
+    cancelling,
+    setCancelling,
+    columns,
+    setColumns,
+    runStage,
+    setRunStage,
+    runProgress,
+    setRunProgress,
+    runEvents,
+    setRunEvents,
+    log,
+    setLog,
+    referenceImage,
+    setReferenceImage,
+    referenceLoadError,
+    setReferenceLoadError,
+    lastResult,
+    setLastResult,
+    rscriptFound,
+    setRscriptFound,
+  } = studio;
   /*
   const [family, setFamily] = useState("全部");
   const [search, setSearch] = useState("");
@@ -509,17 +726,29 @@ export default function ChartStudioPage() {
       const result = await checkRscript();
       setRscriptFound(result.found);
       showToast(
-        result.found ? l("已检测到 Rscript", "Rscript detected") : l("仍未找到 Rscript，请安装 R 后重试。", "Rscript was not found. Install R and retry."),
+        result.found
+          ? l("已检测到 Rscript", "Rscript detected")
+          : l(
+              "仍未找到 Rscript，请安装 R 后重试。",
+              "Rscript was not found. Install R and retry.",
+            ),
         result.found ? "success" : "error",
       );
     } catch {
       setRscriptFound(false);
-      showToast(l("Rscript 检测失败，请稍后重试。", "Rscript check failed. Please retry."), "error");
+      showToast(
+        l("Rscript 检测失败，请稍后重试。", "Rscript check failed. Please retry."),
+        "error",
+      );
     }
   };
   const rscriptTag = () => {
     if (rscriptFound === null) {
-      return <span className="rx-tag" role="status">{l("Rscript 检测中…", "Checking Rscript…")}</span>;
+      return (
+        <span className="rx-tag" role="status">
+          {l("Rscript 检测中…", "Checking Rscript…")}
+        </span>
+      );
     }
     return (
       <span
@@ -532,7 +761,9 @@ export default function ChartStudioPage() {
           if (event.key === "Enter" || event.key === " ") void recheckRscript();
         }}
       >
-        {rscriptFound ? l("Rscript 就绪", "Rscript ready") : l("Rscript 未找到", "Rscript not found")}
+        {rscriptFound
+          ? l("Rscript 就绪", "Rscript ready")
+          : l("Rscript 未找到", "Rscript not found")}
       </span>
     );
   };
@@ -587,17 +818,33 @@ export default function ChartStudioPage() {
     {
       running: l("正在生成，请稍候。", "Generating, please wait."),
       installing: l("正在安装 R，可以取消。", "Installing R; you can cancel."),
-      cancelling: l("正在取消，当前任务不会写入新结果。", "Cancelling; this task will not write a new result."),
+      cancelling: l(
+        "正在取消，当前任务不会写入新结果。",
+        "Cancelling; this task will not write a new result.",
+      ),
       success: l("结果已保存。", "Result saved."),
       cancelled: l("本次未生成新结果。", "No new result was generated."),
-      error: l("请检查字段和数据格式后重试。", "Check fields and data format, then retry."),
+      error: l(
+        "请检查字段和数据格式后重试。",
+        "Check fields and data format, then retry.",
+      ),
       idle: l("载入示例或导入数据。", "Load an example or import data."),
     } as const
   )[runState];
   const runPercent = runStage === 4 ? 100 : Math.max(0, runProgress ?? 0);
   const runSteps = installingR
-    ? [l("准备环境", "Prepare environment"), l("安装 R", "Install R"), l("重新检测", "Check again"), l("继续生成", "Continue")]
-    : [l("检查环境", "Check environment"), l("读取数据", "Read data"), l("渲染图表", "Render chart"), l("保存结果", "Save result")];
+    ? [
+        l("准备环境", "Prepare environment"),
+        l("安装 R", "Install R"),
+        l("重新检测", "Check again"),
+        l("继续生成", "Continue"),
+      ]
+    : [
+        l("检查环境", "Check environment"),
+        l("读取数据", "Read data"),
+        l("渲染图表", "Render chart"),
+        l("保存结果", "Save result"),
+      ];
   const runStageLabels: Record<string, string> = {
     environment: l("运行环境", "Environment"),
     data: l("数据准备", "Data preparation"),
@@ -694,7 +941,13 @@ export default function ChartStudioPage() {
       throw new Error("不支持的文件类型");
     } catch {
       setColumns([]);
-      showToast(l("未能读取数据表头，请确认首行是字段名称且文件未被占用。", "Could not read the data header. Make sure the first row contains field names and the file is not in use."), "error");
+      showToast(
+        l(
+          "未能读取数据表头，请确认首行是字段名称且文件未被占用。",
+          "Could not read the data header. Make sure the first row contains field names and the file is not in use.",
+        ),
+        "error",
+      );
       return false;
     }
   };
@@ -710,7 +963,13 @@ export default function ChartStudioPage() {
         await profileFile(picked);
       }
     } catch {
-      showToast(l("打开数据文件失败，请检查文件权限后重试。", "Could not open the data file. Check file permissions and retry."), "error");
+      showToast(
+        l(
+          "打开数据文件失败，请检查文件权限后重试。",
+          "Could not open the data file. Check file permissions and retry.",
+        ),
+        "error",
+      );
     }
   };
   const clearData = () => {
@@ -724,7 +983,13 @@ export default function ChartStudioPage() {
       const picked = await open({ directory: true, multiple: false });
       if (typeof picked === "string") change("outputDir", picked);
     } catch {
-      showToast(l("打开输出目录失败，请检查目录权限后重试。", "Could not open the output directory. Check directory permissions and retry."), "error");
+      showToast(
+        l(
+          "打开输出目录失败，请检查目录权限后重试。",
+          "Could not open the output directory. Check directory permissions and retry.",
+        ),
+        "error",
+      );
     }
   };
   const useDemo = async () => {
@@ -744,7 +1009,13 @@ export default function ChartStudioPage() {
       );
       showToast(l("示例数据已载入", "Example data loaded"), "success");
     } catch {
-      showToast(l("示例数据写入失败，请检查临时文件夹权限后重试。", "Could not write example data. Check temporary-folder permissions and retry."), "error");
+      showToast(
+        l(
+          "示例数据写入失败，请检查临时文件夹权限后重试。",
+          "Could not write example data. Check temporary-folder permissions and retry.",
+        ),
+        "error",
+      );
     }
   };
   const downloadSample = async () => {
@@ -757,22 +1028,37 @@ export default function ChartStudioPage() {
       const { writeFile } = await import("@tauri-apps/plugin-fs");
       await writeFile(path, new TextEncoder().encode(samples[cfg.template.id]));
       showToast(l("示例数据已保存", "Example data saved"), "success");
-      if (window.confirm(l("同时保存 R 脚本和模板说明？", "Save the R script and template notes too?"))) await downloadTemplate();
+      if (
+        window.confirm(
+          l("同时保存 R 脚本和模板说明？", "Save the R script and template notes too?"),
+        )
+      )
+        await downloadTemplate();
     } catch {
-      showToast(l("示例数据下载失败，请检查目标文件夹权限后重试。", "Could not download example data. Check the target-folder permissions and retry."), "error");
+      showToast(
+        l(
+          "示例数据下载失败，请检查目标文件夹权限后重试。",
+          "Could not download example data. Check the target-folder permissions and retry.",
+        ),
+        "error",
+      );
     }
   };
   const handleDataDrop = async (paths: string[]) => {
     if (running) return;
     const dataPath = paths.find((path) => /\.(csv|tsv|xlsx|xls)$/i.test(path));
     if (!dataPath) {
-      showToast(l("请拖入 CSV、TSV 或 Excel 数据文件。", "Drop a CSV, TSV, or Excel data file."), "info");
+      showToast(
+        l("请拖入 CSV、TSV 或 Excel 数据文件。", "Drop a CSV, TSV, or Excel data file."),
+        "info",
+      );
       return;
     }
     change("filePath", dataPath);
     await profileFile(dataPath);
   };
-  const { dropRef: dataDropRef, isDragOver: isDataDragOver } = useDropZone(handleDataDrop);
+  const { dropRef: dataDropRef, isDragOver: isDataDragOver } =
+    useDropZone(handleDataDrop);
   const downloadTemplate = async () => {
     try {
       const path = await save({
@@ -783,12 +1069,7 @@ export default function ChartStudioPage() {
       const base = joinPath(await resourceDir(), "r", "chart-templates", cfg.template.id);
       const { readTextFile, writeFile } = await import("@tauri-apps/plugin-fs");
       const zip = new JSZip();
-      for (const file of [
-        "manifest.json",
-        "sample.csv",
-        "render.R",
-        "README.zh-CN.md",
-      ]) {
+      for (const file of ["manifest.json", "sample.csv", "render.R", "README.zh-CN.md"]) {
         try {
           zip.file(file, await readTextFile(joinPath(base, file)));
         } catch {
@@ -805,7 +1086,10 @@ export default function ChartStudioPage() {
     }
   };
   const savePreset = async () => {
-    const name = window.prompt(l("为这组参数命名", "Name this parameter set"), cfg.template.name);
+    const name = window.prompt(
+      l("为这组参数命名", "Name this parameter set"),
+      cfg.template.name,
+    );
     if (!name?.trim()) return;
     const next = [
       {
@@ -821,18 +1105,30 @@ export default function ChartStudioPage() {
       setPresets(next);
       showToast(l("参数模板已保存", "Parameter preset saved"), "success");
     } catch {
-      showToast(l("参数保存失败，请检查本地存储权限后重试。", "Could not save the preset. Check local-storage permissions and retry."), "error");
+      showToast(
+        l(
+          "参数保存失败，请检查本地存储权限后重试。",
+          "Could not save the preset. Check local-storage permissions and retry.",
+        ),
+        "error",
+      );
     }
   };
   const deletePreset = async (preset: ChartPreset) => {
-    if (!window.confirm(l(`删除参数“${preset.name}”？`, `Delete preset “${preset.name}”?`))) return;
+    if (
+      !window.confirm(l(`删除参数“${preset.name}”？`, `Delete preset “${preset.name}”?`))
+    )
+      return;
     const next = presets.filter((item) => item.id !== preset.id);
     try {
       await saveChartPresets(next);
       setPresets(next);
       showToast(l("参数模板已删除", "Parameter preset deleted"), "success");
     } catch {
-      showToast(l("参数删除失败，请稍后重试。", "Could not delete the preset. Retry later."), "error");
+      showToast(
+        l("参数删除失败，请稍后重试。", "Could not delete the preset. Retry later."),
+        "error",
+      );
     }
   };
   const exportPresets = async () => {
@@ -846,7 +1142,13 @@ export default function ChartStudioPage() {
       await writeTextFile(path, JSON.stringify(presets, null, 2));
       showToast(l("参数已导出", "Presets exported"), "success");
     } catch {
-      showToast(l("参数导出失败，请检查目标文件夹权限后重试。", "Could not export presets. Check the target-folder permissions and retry."), "error");
+      showToast(
+        l(
+          "参数导出失败，请检查目标文件夹权限后重试。",
+          "Could not export presets. Check the target-folder permissions and retry.",
+        ),
+        "error",
+      );
     }
   };
   const importPresets = async () => {
@@ -879,7 +1181,10 @@ export default function ChartStudioPage() {
       ];
       await saveChartPresets(next);
       setPresets(next);
-      showToast(l(`已导入 ${valid.length} 条参数`, `${valid.length} presets imported`), "success");
+      showToast(
+        l(`已导入 ${valid.length} 条参数`, `${valid.length} presets imported`),
+        "success",
+      );
     } catch (error) {
       showToast(
         `导入失败：${error instanceof Error ? error.message : String(error)}`,
@@ -895,17 +1200,29 @@ export default function ChartStudioPage() {
       });
       if (typeof picked !== "string") return;
       const { readTextFile } = await import("@tauri-apps/plugin-fs");
-      const raw = JSON.parse(await readTextFile(picked)) as { config?: Record<string, unknown> };
-      if (!raw.config || typeof raw.config !== "object") throw new Error("没有找到可用的图表参数");
+      const raw = JSON.parse(await readTextFile(picked)) as {
+        config?: Record<string, unknown>;
+      };
+      if (!raw.config || typeof raw.config !== "object")
+        throw new Error("没有找到可用的图表参数");
       const savedId = String(raw.config.template ?? "");
       const migratedId = legacyTemplateMigration[savedId] ?? savedId;
       const template = verifiedChartTemplates.find((item) => item.id === migratedId);
       if (!template) throw new Error("参数清单中的模板在当前版本不可用");
       setCfg({ ...initial(), ...raw.config, template } as ChartConfig);
       resetRunStatus();
-      showToast(l(`已恢复“${template.name}”的出图参数`, `Chart settings for “${template.name}” restored`), "success");
+      showToast(
+        l(
+          `已恢复“${template.name}”的出图参数`,
+          `Chart settings for “${template.name}” restored`,
+        ),
+        "success",
+      );
     } catch (error) {
-      showToast(`参数清单读取失败：${error instanceof Error ? error.message : String(error)}`, "error");
+      showToast(
+        `参数清单读取失败：${error instanceof Error ? error.message : String(error)}`,
+        "error",
+      );
     }
   };
   const loadPreset = (preset: ChartPreset) => {
@@ -918,7 +1235,7 @@ export default function ChartStudioPage() {
       verifiedChartTemplates[0];
     setCfg({ ...initial(), ...saved, template } as ChartConfig);
     resetRunStatus();
-      showToast(
+    showToast(
       template.id === savedId
         ? `已载入“${preset.name}”`
         : `“${preset.name}”已切换到对应图表模板`,
@@ -966,7 +1283,13 @@ export default function ChartStudioPage() {
       }
       showToast(l("诊断信息已复制", "Diagnostics copied"), "success");
     } catch {
-      showToast(l("复制失败，请展开详细日志后手动复制", "Copy failed. Expand the detailed log and copy it manually."), "error");
+      showToast(
+        l(
+          "复制失败，请展开详细日志后手动复制",
+          "Copy failed. Expand the detailed log and copy it manually.",
+        ),
+        "error",
+      );
     }
   };
   const copySourceNote = async () => {
@@ -977,14 +1300,26 @@ export default function ChartStudioPage() {
       await navigator.clipboard.writeText(note);
       showToast(l("来源说明已复制", "Source note copied"), "success");
     } catch {
-      showToast(l("复制来源说明失败，请手动复制页脚链接。", "Could not copy the source note. Copy the footer link manually."), "error");
+      showToast(
+        l(
+          "复制来源说明失败，请手动复制页脚链接。",
+          "Could not copy the source note. Copy the footer link manually.",
+        ),
+        "error",
+      );
     }
   };
   const openResult = async () => {
     try {
       await openInShell(outputPath);
     } catch {
-      showToast(l("无法打开结果文件，请确认文件仍在原位置。", "Could not open the result file. Make sure it is still in its original location."), "error");
+      showToast(
+        l(
+          "无法打开结果文件，请确认文件仍在原位置。",
+          "Could not open the result file. Make sure it is still in its original location.",
+        ),
+        "error",
+      );
     }
   };
   const copySvgSource = async () => {
@@ -994,9 +1329,21 @@ export default function ChartStudioPage() {
       const svg = await readTextFile(lastResult.path);
       if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
       await navigator.clipboard.writeText(svg);
-      showToast(l("SVG 源码已复制，可粘贴到矢量编辑器", "SVG source copied; paste it into a vector editor."), "success");
+      showToast(
+        l(
+          "SVG 源码已复制，可粘贴到矢量编辑器",
+          "SVG source copied; paste it into a vector editor.",
+        ),
+        "success",
+      );
     } catch {
-      showToast(l("复制 SVG 失败，请直接打开结果文件。", "Could not copy SVG. Open the result file directly."), "error");
+      showToast(
+        l(
+          "复制 SVG 失败，请直接打开结果文件。",
+          "Could not copy SVG. Open the result file directly.",
+        ),
+        "error",
+      );
     }
   };
   const exportResultPackage = async () => {
@@ -1005,12 +1352,18 @@ export default function ChartStudioPage() {
       const { readFile, writeFile } = await import("@tauri-apps/plugin-fs");
       const zip = new JSZip();
       const outputBytes = await readFile(lastResult.path);
-      const outputName = lastResult.path.split(/[\\/]/).pop() || `mynx-result.${lastResult.format}`;
+      const outputName =
+        lastResult.path.split(/[\\/]/).pop() || `mynx-result.${lastResult.format}`;
       zip.file(outputName, outputBytes);
       if (cfg.template.status === "verified") {
         try {
           const resources = await resourceDir();
-          const templateDir = joinPath(resources, "r", "chart-templates", cfg.template.id);
+          const templateDir = joinPath(
+            resources,
+            "r",
+            "chart-templates",
+            cfg.template.id,
+          );
           for (const file of ["manifest.json", "render.R", "README.zh-CN.md"]) {
             zip.file(`template/${file}`, await readFile(joinPath(templateDir, file)));
           }
@@ -1019,7 +1372,10 @@ export default function ChartStudioPage() {
         }
       }
       zip.file("README.txt", "Mynx 科研绘图结果包\n包含图表文件和模板说明。\n");
-      const archive = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
+      const archive = await zip.generateAsync({
+        type: "uint8array",
+        compression: "DEFLATE",
+      });
       const target = await save({
         defaultPath: joinPath(cfg.outputDir, "mynx-figure-package.zip"),
         filters: [{ name: "ZIP 结果包", extensions: ["zip"] }],
@@ -1028,7 +1384,10 @@ export default function ChartStudioPage() {
       await writeFile(target, archive);
       showToast(l("结果包已导出", "Result package exported"), "success");
     } catch (error) {
-      showToast(`结果包导出失败：${error instanceof Error ? error.message : String(error)}`, "error");
+      showToast(
+        `结果包导出失败：${error instanceof Error ? error.message : String(error)}`,
+        "error",
+      );
     }
   };
   const requestCancel = async () => {
@@ -1037,12 +1396,24 @@ export default function ChartStudioPage() {
     try {
       if (!(await cancelChartRun())) {
         setCancelling(false);
-        showToast(l("当前任务已经结束，请稍候查看结果。", "The current task has finished; check the result shortly."), "info");
+        showToast(
+          l(
+            "当前任务已经结束，请稍候查看结果。",
+            "The current task has finished; check the result shortly.",
+          ),
+          "info",
+        );
         return;
       }
     } catch {
       setCancelling(false);
-      showToast(l("取消请求未能发送，请稍后重试。", "Could not send the cancellation request. Retry later."), "error");
+      showToast(
+        l(
+          "取消请求未能发送，请稍后重试。",
+          "Could not send the cancellation request. Retry later.",
+        ),
+        "error",
+      );
       return;
     }
     setLog((v) => `${v}\n正在取消本次生成…`.trim());
@@ -1051,11 +1422,20 @@ export default function ChartStudioPage() {
   };
   const generate = async () => {
     if (cfg.template.status !== "verified") {
-      showToast(l("该模板暂不可用，请选择其他图表模板。", "This template is unavailable. Choose another chart template."), "info");
+      showToast(
+        l(
+          "该模板暂不可用，请选择其他图表模板。",
+          "This template is unavailable. Choose another chart template.",
+        ),
+        "info",
+      );
       return;
     }
     if (!cfg.filePath) {
-      showToast(l("请先导入数据，或使用内置示例", "Import data or use a built-in example first"), "info");
+      showToast(
+        l("请先导入数据，或使用内置示例", "Import data or use a built-in example first"),
+        "info",
+      );
       return;
     }
     const fixedColumns = [
@@ -1075,7 +1455,9 @@ export default function ChartStudioPage() {
       "enrichment",
       "gsea",
     ].includes(cfg.template.kind);
-    const requiresSize = ["bubble", "bubble_map", "alluvial", "enrichment"].includes(cfg.template.kind);
+    const requiresSize = ["bubble", "bubble_map", "alluvial", "enrichment"].includes(
+      cfg.template.kind,
+    );
     if (columns.length > 0) {
       const required: Array<[string, string, boolean]> = [
         ["X / 分类列", cfg.x, !fixedColumns],
@@ -1086,12 +1468,18 @@ export default function ChartStudioPage() {
       const missing = required.find(([, value, requiredRole]) => requiredRole && !value);
       const unknown = required.find(([, value]) => value && !columns.includes(value));
       if (missing) {
-        showToast(l(`请先填写${missing[0]}`, `Please fill in ${missing[0]} first`), "info");
+        showToast(
+          l(`请先填写${missing[0]}`, `Please fill in ${missing[0]} first`),
+          "info",
+        );
         return;
       }
       if (unknown) {
         showToast(
-          l(`${unknown[0]}“${unknown[1]}”不在当前数据中，请从已识别字段中选择`, `${unknown[0]} “${unknown[1]}” is not in the current data. Choose a recognized field`),
+          l(
+            `${unknown[0]}“${unknown[1]}”不在当前数据中，请从已识别字段中选择`,
+            `${unknown[0]} “${unknown[1]}” is not in the current data. Choose a recognized field`,
+          ),
           "info",
         );
         return;
@@ -1186,17 +1574,29 @@ export default function ChartStudioPage() {
       try {
         return await run();
       } catch (error) {
-        return { ok: false, error: error instanceof Error ? error.message : String(error) };
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
       }
     };
     let res = await safeRun();
     if (
       !res.ok &&
       res.error?.includes("尚未安装 R") &&
-      window.confirm(l("生成图表需要 R。现在通过 Windows 包管理器安装 R 吗？", "R is required to generate charts. Install it now through the Windows package manager?"))
+      window.confirm(
+        l(
+          "生成图表需要 R。现在通过 Windows 包管理器安装 R 吗？",
+          "R is required to generate charts. Install it now through the Windows package manager?",
+        ),
+      )
     ) {
       setInstallingR(true);
-      appendRunEvent({ message: l("正在安装 R", "Installing R"), tone: "info", stage: "dependencies" });
+      appendRunEvent({
+        message: l("正在安装 R", "Installing R"),
+        tone: "info",
+        stage: "dependencies",
+      });
       const installed = await installR((line) =>
         setLog((v) => `${v}\n${localizeEvent(line)}`.trim()),
       );
@@ -1215,8 +1615,15 @@ export default function ChartStudioPage() {
       setLastResult(result);
       setRunStage(4);
       setRunProgress(100);
-      setLog((v) => `${v}\n${l("完成：图表和参数清单已保存。", "Done: chart and settings manifest saved.")}`);
-      appendRunEvent({ message: l("图表和参数清单已保存", "Chart and settings manifest saved"), tone: "success", stage: "save" });
+      setLog(
+        (v) =>
+          `${v}\n${l("完成：图表和参数清单已保存。", "Done: chart and settings manifest saved.")}`,
+      );
+      appendRunEvent({
+        message: l("图表和参数清单已保存", "Chart and settings manifest saved"),
+        tone: "success",
+        stage: "save",
+      });
       showToast(l("图表已生成", "Chart generated"), "success");
     } else {
       const wasCancelled =
@@ -1233,7 +1640,7 @@ export default function ChartStudioPage() {
     }
   };
   return (
-    <div className="page-shell page-shell--wide chart-studio">
+    <div className="page-shell page-shell--wide chart-studio unified-page unified-page--chart">
       <LoadingOverlay
         visible={running}
         variant="live"
@@ -1248,7 +1655,9 @@ export default function ChartStudioPage() {
         onCancel={() => {
           void requestCancel();
         }}
-        cancelLabel={cancelling ? l("正在取消…", "Cancelling…") : l("取消生成", "Cancel generation")}
+        cancelLabel={
+          cancelling ? l("正在取消…", "Cancelling…") : l("取消生成", "Cancel generation")
+        }
         cancelDisabled={cancelling}
       />
       <div className="panel-header">
@@ -1257,7 +1666,12 @@ export default function ChartStudioPage() {
         </div>
         <div className="panel-title">
           <h2>{l("科研绘图", "Scientific plotting")}</h2>
-          <p>{l("导入数据，按论文版式完成图形与导出", "Import data and export publication-ready figures")}</p>
+          <p>
+            {l(
+              "导入数据，按设定版式完成图形与导出",
+              "Import data and export formatted figures",
+            )}
+          </p>
         </div>
         <div className="panel-actions">
           {rscriptTag()}
@@ -1284,7 +1698,10 @@ export default function ChartStudioPage() {
             className="btn btn-ghost"
             onClick={() => void importConfigSidecar()}
             disabled={running}
-            title={l("加载某次出图自动保存的 JSON 参数清单", "Load the JSON settings saved with a chart result")}
+            title={l(
+              "加载某次出图自动保存的 JSON 参数清单",
+              "Load the JSON settings saved with a chart result",
+            )}
           >
             <IconUpload size={14} />
             {l("加载出图参数", "Load chart settings")}
@@ -1302,12 +1719,17 @@ export default function ChartStudioPage() {
       </div>
       <div className="chart-studio__notice">
         <IconSparkles size={16} />
-        <span>{l("按需准备 R 环境；只安装当前图形需要的依赖。", "Prepare R on demand; only dependencies required by the current chart are installed.")}</span>
+        <span>
+          {l(
+            "按需准备 R 环境；只安装当前图形需要的依赖。",
+            "Prepare R on demand; only dependencies required by the current chart are installed.",
+          )}
+        </span>
       </div>
       <div className="chart-studio__layout">
         <aside className="card chart-studio__catalog">
           <div className="card-title">
-            {l("图表模板", "Chart templates")} {" "}
+            {l("图表模板", "Chart templates")}{" "}
             <small className="chart-studio__result-count">
               {visible.length}/{verifiedChartTemplates.length}
             </small>
@@ -1370,7 +1792,10 @@ export default function ChartStudioPage() {
               ))
             ) : (
               <div className="chart-studio__empty">
-                {l("没有匹配的模板，试试“分布”“地图”或“关系”。", "No templates match. Try distribution, map, or relationship.")}
+                {l(
+                  "没有匹配的模板，试试“分布”“地图”或“关系”。",
+                  "No templates match. Try distribution, map, or relationship.",
+                )}
               </div>
             )}
           </div>
@@ -1391,13 +1816,18 @@ export default function ChartStudioPage() {
                 </div>
                 <div className="file-info">
                   <div className="file-name">
-                    {cfg.filePath ? cfg.filePath.split(/[\\/]/).pop() : l("未选择文件", "No file selected")}
+                    {cfg.filePath
+                      ? cfg.filePath.split(/[\\/]/).pop()
+                      : l("未选择文件", "No file selected")}
                   </div>
                   <div className="file-path">
-                    {cfg.filePath || l("拖入 CSV、TSV 或 Excel 文件", "Drop a CSV, TSV, or Excel file")}
+                    {cfg.filePath ||
+                      l("拖入 CSV、TSV 或 Excel 文件", "Drop a CSV, TSV, or Excel file")}
                   </div>
                 </div>
-                {isDataDragOver && <span className="drop-hint">{l("释放以导入", "Drop to import")}</span>}
+                {isDataDragOver && (
+                  <span className="drop-hint">{l("释放以导入", "Drop to import")}</span>
+                )}
               </div>
               <div className="chart-studio__data-actions btn-row">
                 <button
@@ -1440,7 +1870,9 @@ export default function ChartStudioPage() {
               </div>
               <div className="form-row chart-studio__mapping-row">
                 <div className="form-group">
-                  <label htmlFor="chart-x">{l("X / 分类列", "X / category column")}</label>
+                  <label htmlFor="chart-x">
+                    {l("X / 分类列", "X / category column")}
+                  </label>
                   <input
                     id="chart-x"
                     value={cfg.x}
@@ -1460,7 +1892,9 @@ export default function ChartStudioPage() {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="chart-group">{l("分组 / 颜色列（可选）", "Group / color column (optional)")}</label>
+                  <label htmlFor="chart-group">
+                    {l("分组 / 颜色列（可选）", "Group / color column (optional)")}
+                  </label>
                   <input
                     id="chart-group"
                     value={cfg.group}
@@ -1519,12 +1953,17 @@ export default function ChartStudioPage() {
                 <ChartTemplateIcon template={cfg.template} size={17} />
               </span>
               {templateCopy(cfg.template).name}{" "}
-              <span className="chart-studio__kind">{localizedFamily(cfg.template.family, language)}</span>
+              <span className="chart-studio__kind">
+                {localizedFamily(cfg.template.family, language)}
+              </span>
             </div>
             <div className="card-body">
               <p className="chart-studio__description">
                 {templateCopy(cfg.template).description}
-                {l("。设置字段和外观后生成。", ". Set the fields and appearance, then generate.")}
+                {l(
+                  "。设置字段和外观后生成。",
+                  ". Set the fields and appearance, then generate.",
+                )}
               </p>
               {(referenceImage || referenceLoadError) && (
                 <div className="chart-studio__reference">
@@ -1548,7 +1987,10 @@ export default function ChartStudioPage() {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      {l("本地参考图暂时无法读取，打开参考页面", "Local reference image is unavailable; open reference page")}
+                      {l(
+                        "本地参考图暂时无法读取，打开参考页面",
+                        "Local reference image is unavailable; open reference page",
+                      )}
                       <IconExternalLink size={13} />
                     </a>
                   )}
@@ -1566,27 +2008,39 @@ export default function ChartStudioPage() {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="chart-subtitle">{l("副标题（可选）", "Subtitle (optional)")}</label>
+                  <label htmlFor="chart-subtitle">
+                    {l("副标题（可选）", "Subtitle (optional)")}
+                  </label>
                   <input
                     id="chart-subtitle"
                     value={cfg.subtitle}
                     onChange={(e) => change("subtitle", e.target.value)}
-                    placeholder={l("例如：处理组与对照组的差异", "e.g. Difference between treatment and control")}
+                    placeholder={l(
+                      "例如：处理组与对照组的差异",
+                      "e.g. Difference between treatment and control",
+                    )}
                     disabled={running}
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="chart-caption">{l("图注（可选）", "Caption (optional)")}</label>
+                  <label htmlFor="chart-caption">
+                    {l("图注（可选）", "Caption (optional)")}
+                  </label>
                   <input
                     id="chart-caption"
                     value={cfg.caption}
                     onChange={(e) => change("caption", e.target.value)}
-                    placeholder={l("例如：数据为均值 ± 标准误", "e.g. Values are mean ± SEM")}
+                    placeholder={l(
+                      "例如：数据为均值 ± 标准误",
+                      "e.g. Values are mean ± SEM",
+                    )}
                     disabled={running}
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="chart-plot-tag">{l("面板标记（可选）", "Panel tag (optional)")}</label>
+                  <label htmlFor="chart-plot-tag">
+                    {l("面板标记（可选）", "Panel tag (optional)")}
+                  </label>
                   <input
                     id="chart-plot-tag"
                     value={cfg.plotTag}
@@ -1619,16 +2073,20 @@ export default function ChartStudioPage() {
                     disabled={running}
                   >
                     <option value="png">{l("PNG（位图）", "PNG (raster)")}</option>
-                    <option value="tiff">{l("TIFF（投稿位图）", "TIFF (publication raster)")}</option>
+                    <option value="tiff">
+                      {l("TIFF（投稿位图）", "TIFF (publication raster)")}
+                    </option>
                     <option value="svg">{l("SVG（矢量）", "SVG (vector)")}</option>
                     <option value="pdf">{l("PDF（矢量）", "PDF (vector)")}</option>
                     <option value="eps">{l("EPS（矢量）", "EPS (vector)")}</option>
-                    </select>
+                  </select>
                 </div>
               </div>
               <div className="form-row chart-studio__publication-row">
                 <div className="form-group">
-                  <label htmlFor="chart-publication-preset">{l("论文规格", "Publication preset")}</label>
+                  <label htmlFor="chart-publication-preset">
+                    {l("论文规格", "Publication preset")}
+                  </label>
                   <select
                     id="chart-publication-preset"
                     value={cfg.publicationPreset}
@@ -1644,7 +2102,10 @@ export default function ChartStudioPage() {
                     ))}
                   </select>
                   <small className="form-hint">
-                    {l("按最终排版宽度设置，生成后仍可微调。", "Set by final layout width; you can refine it after generation.")}
+                    {l(
+                      "按最终排版宽度设置，生成后仍可微调。",
+                      "Set by final layout width; you can refine it after generation.",
+                    )}
                   </small>
                 </div>
               </div>
@@ -1680,7 +2141,9 @@ export default function ChartStudioPage() {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="chart-dpi">{l("PNG 清晰度（DPI）", "PNG resolution (DPI)")}</label>
+                  <label htmlFor="chart-dpi">
+                    {l("PNG 清晰度（DPI）", "PNG resolution (DPI)")}
+                  </label>
                   <input
                     id="chart-dpi"
                     type="number"
@@ -1699,7 +2162,9 @@ export default function ChartStudioPage() {
                 </div>
               </div>
               <div className="chart-studio__appearance">
-                <div className="chart-studio__appearance-title">{l("ggplot 外观", "ggplot appearance")}</div>
+                <div className="chart-studio__appearance-title">
+                  {l("ggplot 外观", "ggplot appearance")}
+                </div>
                 <div className="chart-studio__appearance-grid">
                   <div className="form-group">
                     <label htmlFor="chart-gg-theme">{l("主题", "Theme")}</label>
@@ -1750,7 +2215,9 @@ export default function ChartStudioPage() {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label htmlFor="chart-base-size">{l("基础字号", "Base font size")}</label>
+                    <label htmlFor="chart-base-size">
+                      {l("基础字号", "Base font size")}
+                    </label>
                     <input
                       id="chart-base-size"
                       type="number"
@@ -1768,7 +2235,9 @@ export default function ChartStudioPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="chart-legend-position">{l("图例位置", "Legend position")}</label>
+                    <label htmlFor="chart-legend-position">
+                      {l("图例位置", "Legend position")}
+                    </label>
                     <select
                       id="chart-legend-position"
                       value={cfg.showLegend ? cfg.legendPosition : "none"}
@@ -1787,7 +2256,9 @@ export default function ChartStudioPage() {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label htmlFor="chart-title-size">{l("标题字号", "Title font size")}</label>
+                    <label htmlFor="chart-title-size">
+                      {l("标题字号", "Title font size")}
+                    </label>
                     <input
                       id="chart-title-size"
                       type="number"
@@ -1805,7 +2276,9 @@ export default function ChartStudioPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="chart-title-align">{l("标题对齐", "Title alignment")}</label>
+                    <label htmlFor="chart-title-align">
+                      {l("标题对齐", "Title alignment")}
+                    </label>
                     <select
                       id="chart-title-align"
                       value={String(cfg.titleHjust)}
@@ -1818,7 +2291,9 @@ export default function ChartStudioPage() {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label htmlFor="chart-axis-text-size">{l("刻度字号", "Tick font size")}</label>
+                    <label htmlFor="chart-axis-text-size">
+                      {l("刻度字号", "Tick font size")}
+                    </label>
                     <input
                       id="chart-axis-text-size"
                       type="number"
@@ -1836,7 +2311,9 @@ export default function ChartStudioPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="chart-axis-title-size">{l("坐标轴字号", "Axis title size")}</label>
+                    <label htmlFor="chart-axis-title-size">
+                      {l("坐标轴字号", "Axis title size")}
+                    </label>
                     <input
                       id="chart-axis-title-size"
                       type="number"
@@ -1908,7 +2385,9 @@ export default function ChartStudioPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="chart-axis-line-width">{l("轴线宽度", "Axis line width")}</label>
+                    <label htmlFor="chart-axis-line-width">
+                      {l("轴线宽度", "Axis line width")}
+                    </label>
                     <input
                       id="chart-axis-line-width"
                       type="number"
@@ -1926,7 +2405,9 @@ export default function ChartStudioPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="chart-grid-line-width">{l("网格线宽度", "Grid line width")}</label>
+                    <label htmlFor="chart-grid-line-width">
+                      {l("网格线宽度", "Grid line width")}
+                    </label>
                     <input
                       id="chart-grid-line-width"
                       type="number"
@@ -2032,12 +2513,20 @@ export default function ChartStudioPage() {
                     <option value="none">{l("不校正", "No adjustment")}</option>
                   </select>
                 </div>
-                {(cfg.template.kind === "heatmap" || cfg.template.kind === "correlogram") && (
+                {(cfg.template.kind === "heatmap" ||
+                  cfg.template.kind === "correlogram") && (
                   <div className="chart-studio__heatmap-options">
-                    <span className="chart-studio__stats-title">{l("热图设置", "Heatmap settings")}</span>
+                    <span className="chart-studio__stats-title">
+                      {l("热图设置", "Heatmap settings")}
+                    </span>
                     <select
                       value={cfg.heatmapScale}
-                      onChange={(e) => change("heatmapScale", e.target.value as ChartConfig["heatmapScale"])}
+                      onChange={(e) =>
+                        change(
+                          "heatmapScale",
+                          e.target.value as ChartConfig["heatmapScale"],
+                        )
+                      }
                       disabled={running}
                       aria-label={l("热图标准化方式", "Heatmap scaling")}
                     >
@@ -2073,7 +2562,10 @@ export default function ChartStudioPage() {
                   onChange={(e) => change("installMissing", e.target.checked)}
                   disabled={running}
                 />
-                {l("允许按需安装缺少的 R 包（仅本次所需）", "Allow installation of missing R packages (only for this run)")}
+                {l(
+                  "允许按需安装缺少的 R 包（仅本次所需）",
+                  "Allow installation of missing R packages (only for this run)",
+                )}
               </label>
               <button
                 type="button"
@@ -2121,12 +2613,17 @@ export default function ChartStudioPage() {
                   aria-valuemax={100}
                   aria-valuenow={installingR ? undefined : Math.round(runPercent)}
                   aria-valuetext={
-                    installingR ? l("正在安装 R", "Installing R") : `${Math.round(runPercent)}%`
+                    installingR
+                      ? l("正在安装 R", "Installing R")
+                      : `${Math.round(runPercent)}%`
                   }
                 >
                   <span style={installingR ? undefined : { width: `${runPercent}%` }} />
                 </div>
-                <ol className="chart-studio__run-steps" aria-label={l("生成步骤", "Generation steps")}>
+                <ol
+                  className="chart-studio__run-steps"
+                  aria-label={l("生成步骤", "Generation steps")}
+                >
                   {runSteps.map((label, index) => {
                     const state = installingR
                       ? index === 0
@@ -2168,8 +2665,11 @@ export default function ChartStudioPage() {
                         <div>
                           <strong>{event.message}</strong>
                           <small>
-                            {index === 0 ? l("最新状态 · ", "Latest · ") : l("本次生成 · ", "This run · ")}
-                            {runStageLabels[event.stage] ?? l("科研绘图", "Scientific plotting")}
+                            {index === 0
+                              ? l("最新状态 · ", "Latest · ")
+                              : l("本次生成 · ", "This run · ")}
+                            {runStageLabels[event.stage] ??
+                              l("科研绘图", "Scientific plotting")}
                           </small>
                         </div>
                       </div>
@@ -2184,7 +2684,12 @@ export default function ChartStudioPage() {
             ) : (
               <div className="chart-studio__run-empty">
                 <IconSparkles size={15} />
-                <span>{l("生成后，这里会显示进度、运行记录和结果状态。", "After generation, progress, activity, and result status appear here.")}</span>
+                <span>
+                  {l(
+                    "生成后，这里会显示进度、运行记录和结果状态。",
+                    "After generation, progress, activity, and result status appear here.",
+                  )}
+                </span>
               </div>
             )}
           </section>
@@ -2281,13 +2786,23 @@ export default function ChartStudioPage() {
             <div className="card chart-studio__result">
               <div className="card-title">
                 <IconCircleCheckFilled size={15} />
-                {currentResult ? l("最近生成结果", "Latest result") : l("上一次可用结果", "Previous available result")}{" "}
-                <span className="chart-studio__kind">{language === "en" ? (CHART_TEMPLATE_EN[lastResult.templateId]?.name ?? lastResult.templateName) : lastResult.templateName}</span>
+                {currentResult
+                  ? l("最近生成结果", "Latest result")
+                  : l("上一次可用结果", "Previous available result")}{" "}
+                <span className="chart-studio__kind">
+                  {language === "en"
+                    ? (CHART_TEMPLATE_EN[lastResult.templateId]?.name ??
+                      lastResult.templateName)
+                    : lastResult.templateName}
+                </span>
               </div>
               <div className="card-body">
                 {!currentResult && (
                   <p className="chart-studio__result-note">
-                    {l("本次没有产生新的图表，下面保留的是之前成功生成的结果。", "No new chart was created in this run. The previous successful result is retained below.")}
+                    {l(
+                      "本次没有产生新的图表，下面保留的是之前成功生成的结果。",
+                      "No new chart was created in this run. The previous successful result is retained below.",
+                    )}
                   </p>
                 )}
                 {outputImage ? (
@@ -2299,12 +2814,18 @@ export default function ChartStudioPage() {
                 ) : (
                   <p className="chart-studio__result-note">
                     {lastResult.format.toUpperCase()}{" "}
-                    {l("文件已生成，可用外部软件打开或插入论文。", "The file was created. Open it in another app or insert it into a manuscript.")}
+                    {l(
+                      "文件已生成，可用外部软件打开或插入论文。",
+                      "The file was created. Open it in another app or insert it into a manuscript.",
+                    )}
                   </p>
                 )}
                 <small title={outputPath}>{outputPath}</small>
                 <small className="chart-studio__result-note">
-                  {l("同目录已保存可复现参数清单（JSON）。", "A reproducible JSON settings file is saved in the same folder.")}
+                  {l(
+                    "同目录已保存可复现参数清单（JSON）。",
+                    "A reproducible JSON settings file is saved in the same folder.",
+                  )}
                 </small>
                 <button
                   type="button"
@@ -2320,7 +2841,10 @@ export default function ChartStudioPage() {
                   onClick={() => void exportResultPackage()}
                 >
                   <IconDownload size={14} />
-                  {l("导出结果包（图表 + 模板说明）", "Export result package (chart + template notes)")}
+                  {l(
+                    "导出结果包（图表 + 模板说明）",
+                    "Export result package (chart + template notes)",
+                  )}
                 </button>
                 {lastResult.format === "svg" && (
                   <button
@@ -2329,14 +2853,14 @@ export default function ChartStudioPage() {
                     onClick={() => void copySvgSource()}
                   >
                     <IconCopy size={14} />
-                  {l("复制 SVG 源码", "Copy SVG source")}
+                    {l("复制 SVG 源码", "Copy SVG source")}
                   </button>
                 )}
               </div>
             </div>
           )}
           <footer className="chart-studio__credit">
-            {l("图表来源：", "Chart source:")} {" "}
+            {l("图表来源：", "Chart source:")}{" "}
             <a href={cfg.template.galleryUrl} target="_blank" rel="noreferrer">
               R Graph Gallery
             </a>
@@ -2349,7 +2873,10 @@ export default function ChartStudioPage() {
               <IconExternalLink size={13} />
               {l("浏览全部示例", "Browse all examples")}
             </a>
-            {l("。官方示例代码与数据版权按原项目许可执行。", ". Example code and data remain subject to their original licenses.")}
+            {l(
+              "。官方示例代码与数据版权按原项目许可执行。",
+              ". Example code and data remain subject to their original licenses.",
+            )}
           </footer>
         </section>
       </div>

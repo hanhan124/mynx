@@ -45,7 +45,7 @@ const FORMAT_GUIDES: FmtGuide[] = [
     id: "counts_matrix",
     label: "标准 Counts 矩阵",
     sub: "基因 × 样本计数表 · 最常见",
-    when: "第 1 列是基因名,后面每列一个样本、每行一个基因的整数计数 —— R/Python 整理好的矩阵、GEO 下载的 counts、上游流程的最终输出都是这种。",
+    when: "第一列为基因名，其余列为样本的整数 counts。",
     cols: [
       { name: "gene" },
       { name: "WT_1" },
@@ -68,7 +68,7 @@ const FORMAT_GUIDES: FmtGuide[] = [
     id: "featurecounts",
     label: "featureCounts 输出",
     sub: "含注释列 · 免手工删列",
-    when: "subread/featureCounts 的直接输出(第 1 列 Geneid,后跟 Chr/Start/End/Strand/Length 等注释列,再是各样本计数列)—— 不用自己删列,选它即可。",
+    when: "featureCounts 原始输出；注释列会自动删除，保留样本 counts。",
     cols: [
       { name: "Geneid" },
       { name: "Chr", dropped: true },
@@ -95,7 +95,7 @@ const FORMAT_GUIDES: FmtGuide[] = [
     id: "htseq",
     label: "HTSeq 合并矩阵",
     sub: "含 __ 统计行 · 自动过滤",
-    when: "多个 htseq-count 输出按样本合并的矩阵(第 1 列基因名,后续每列一个样本)—— 文件底部那批 __no_feature 等统计行不用删,会自动过滤。",
+    when: "多个 htseq-count 输出合并的矩阵；底部 __ 统计行会自动过滤。",
     cols: [{ name: "gene" }, { name: "WT_1" }, { name: "WT_2" }, { name: "KO_1" }],
     rows: [
       { cells: ["GAPDH", "1204", "1188", "1102"] },
@@ -454,37 +454,31 @@ export default function ImportStep() {
             </div>
           )}
 
-          <div className="rx-path-row" style={{ marginTop: importData ? 0 : 10 }}>
-            <input
-              className="rx-path-input"
-              type="text"
-              placeholder={l("也可粘贴文件路径,回车导入", "Paste a file path and press Enter to import")}
-              value={displayPath}
-              onChange={(e) => setDisplayPath(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void doImportPath();
-              }}
-            />
-            <button className="btn" onClick={browseData} disabled={loading}>
-              <IconFolderOpen size={14} stroke={1.75} /> {l("选择文件", "Choose file")}
-            </button>
-          </div>
-
-          {/* 空状态:三步流程一览(导入后自动隐藏) */}
           {!importData && (
-            <div className="rx-flow-strip">
-              <span className="rx-flow-step current">{l("① 导入与质检", "① Import & QC")}</span>
-              <span className="rx-flow-arrow">→</span>
-              <span className="rx-flow-step">{l("② 分组 · 运行 DEG", "② Groups · run DEG")}</span>
-              <span className="rx-flow-arrow">→</span>
-              <span className="rx-flow-step">{l("③ 绘图导出", "③ Plot export")}</span>
-            </div>
+            <details className="rx-import-advanced">
+              <summary>{l("粘贴本机文件路径", "Paste a local file path")}</summary>
+              <div className="rx-path-row">
+                <input
+                  className="rx-path-input"
+                  type="text"
+                  placeholder={l("粘贴路径后按 Enter 导入", "Paste a path and press Enter to import")}
+                  value={displayPath}
+                  onChange={(e) => setDisplayPath(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void doImportPath();
+                  }}
+                />
+                <button className="btn" onClick={browseData} disabled={loading}>
+                  <IconFolderOpen size={14} stroke={1.75} /> {l("选择文件", "Choose file")}
+                </button>
+              </div>
+            </details>
           )}
 
           <div className="form-group" style={{ marginTop: 10 }}>
             <label>
-              {l("矩阵格式预设", "Matrix format preset")}
-              <span className="rx-fmt-hint">{l("按数据来源选,导入时自动做对应清理 · 不确定就选第一个", "Choose by data source; import cleanup is automatic · select the first option if unsure")}</span>
+              {l("Counts 文件类型", "Counts file type")}
+              <span className="rx-fmt-hint">{l("不确定时保留第一个", "Keep the first option if unsure")}</span>
             </label>
             <div className="rx-fmt-cards" role="radiogroup" aria-label={l("矩阵格式预设", "Matrix format preset")}>
               {FORMAT_GUIDES.map((g) => {
@@ -510,6 +504,8 @@ export default function ImportStep() {
                 );
               })}
             </div>
+            <details className="rx-format-help">
+              <summary>{l("查看格式说明与示例", "View format notes and examples")}</summary>
             {(() => {
               const g = FORMAT_GUIDES.find((x) => x.id === matrixFormat) ?? FORMAT_GUIDES[0];
               const hasDropped =
@@ -564,6 +560,7 @@ export default function ImportStep() {
                 </div>
               );
             })()}
+            </details>
           </div>
 
           {importError && (
@@ -685,11 +682,12 @@ export default function ImportStep() {
       </div>
 
       {/* 输出设置 */}
-      <div className="card">
-        <div className="card-title">
+      <details className="card rx-output-details">
+        <summary className="card-title">
           <IconFolderOpen size={14} stroke={1.75} />
-          <span>{l("输出设置", "Output settings")}</span>
-        </div>
+          <span>{l("保存位置(可选)", "Save location (optional)")}</span>
+          <small>{l("默认自动保存", "Saved automatically by default")}</small>
+        </summary>
         <div className="card-body">
           <div className="form-group">
             <label>{l("输出目录(留空 = 家目录/Mynx/rnaseq_runs)", "Output directory (blank = home/Mynx/rnaseq_runs)")}</label>
@@ -720,7 +718,7 @@ export default function ImportStep() {
             />
           </div>
         </div>
-      </div>
+      </details>
 
       {/* 数据预览 */}
       {importData && (

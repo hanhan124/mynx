@@ -1,7 +1,7 @@
 {
   "name": "mynx",
   "private": true,
-  "version": "2.3.5",
+  "version": "2.3.6",
   "type": "module",
   "repository": "https://github.com/hanhan124/mynx",
   "scripts": {
@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "mac:build": "tauri build --target aarch64-apple-darwin",
+    "mac:build:intel": "tauri build --target x86_64-apple-darwin",
     "version": "node scripts/sync-version.cjs",
+    "version:check": "node scripts/sync-version.cjs --check",
+    "resources:check": "node scripts/check-r-resources.cjs",
     "prebuild": "node scripts/sync-version.cjs",
     "installer:payload": "node scripts/sync-installer-payload.cjs",
     "installer:dev": "cd installer && npm run tauri:dev",

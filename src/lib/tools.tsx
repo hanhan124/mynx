@@ -88,7 +88,6 @@ export const tools: Tool[] = [
     description: "差异分析与图表导出",
     path: "/rnaseq",
     accent: "#af52de",
-    badge: "Beta",
     icon: IconMicroscope,
     component: RnaSeqPage,
     navLabel: "RNA-seq",

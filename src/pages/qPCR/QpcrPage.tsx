@@ -128,7 +128,7 @@ export default function QpcrPage() {
   );
 
   return (
-    <div className="page-shell page-shell--wide qpcr-page">
+    <div className="page-shell page-shell--wide qpcr-page unified-page unified-page--qpcr">
       <LoadingOverlay visible={loading} text={loadingText} progress={progress} />
 
       <header className="qpcr-page-hero">

@@ -129,6 +129,7 @@ if (identical(as.character(cfg$kind), "bar")) {
   genes <- unique(data[[gene_col]])
   if (!identical(selected_gene, "ALL") && selected_gene %in% genes) genes <- selected_gene
   all_stats <- list()
+  sample_order_rows <- list()
 
   fmt_p <- function(p) {
     if (is.na(p)) return("NA")
@@ -234,6 +235,13 @@ if (identical(as.character(cfg$kind), "bar")) {
     factor_value <- if (use_sci) 10^(-exponent) else 1
     s$y <- s[[avg_col]] * factor_value; s$err <- s[[sd_col]] * factor_value; s$ymax <- s$y + s$err
     groups <- as.character(s[[group_col]])
+    sample_order <- unique(groups)
+    sample_order_rows[[length(sample_order_rows) + 1L]] <- data.frame(
+      Gene = gene,
+      Order = seq_along(sample_order),
+      Sample = sample_order,
+      stringsAsFactors = FALSE
+    )
     pd <- data.frame(Group_Name = factor(if (as_bool(cfg$wrapPlus, FALSE)) wrap_plus(groups) else groups, levels = if (as_bool(cfg$wrapPlus, FALSE)) wrap_plus(groups) else groups), y = s$y, ymax = s$ymax)
     stats <- run_stats(s, gene)
     show_ns <- as_bool(cfg$showNs, TRUE)
@@ -269,6 +277,11 @@ if (identical(as.character(cfg$kind), "bar")) {
   }
   stats_name <- safe_name(as.character(cfg$sigFile %||% "statistical_analysis_summary.csv")); if (!nzchar(stats_name)) stats_name <- "statistical_analysis_summary.csv"
   if (length(all_stats)) utils::write.csv(do.call(rbind, all_stats), file.path(cfg$outputDir, stats_name), row.names = FALSE, fileEncoding = "UTF-8") else utils::write.csv(data.frame(), file.path(cfg$outputDir, stats_name), row.names = FALSE)
+  if (!as_bool(cfg$showXTick, FALSE) && length(sample_order_rows)) {
+    order_path <- file.path(cfg$outputDir, paste0(output_prefix, "-sample-order.csv"))
+    utils::write.csv(do.call(rbind, sample_order_rows), order_path, row.names = FALSE, fileEncoding = "UTF-8")
+    message(sprintf("[save] %s", basename(order_path)))
+  }
 } else {
   message("[heatmap] 正在计算 Z-score 并生成热图")
   output_prefix <- as.character(cfg$outputPrefix %||% "qpcr-heatmap")
@@ -285,8 +298,20 @@ if (identical(as.character(cfg$kind), "bar")) {
   if (as_bool(cfg$useGeneClusters, FALSE)) {
     clusters <- cfg$geneClusters %||% list(); ordered <- unlist(clusters, use.names = FALSE); ordered <- ordered[ordered %in% rownames(mat)]; if (length(ordered)) { genes <- unique(ordered); mat <- mat[genes, , drop = FALSE]; label_mat <- label_mat[genes, , drop = FALSE] }
   }
-  if (as_bool(cfg$heatmapClusterRows, FALSE) && nrow(mat) > 2) mat <- mat[order.dendrogram(as.dendrogram(hclust(dist(mat)))), , drop = FALSE]
-  if (as_bool(cfg$heatmapClusterCols, FALSE) && ncol(mat) > 2) mat <- mat[, order.dendrogram(as.dendrogram(hclust(dist(t(mat))))), drop = FALSE]
+  if (as_bool(cfg$heatmapClusterRows, FALSE) && nrow(mat) > 2) {
+    row_cluster_mat <- mat
+    row_cluster_mat[!is.finite(row_cluster_mat)] <- 0
+    row_order <- order.dendrogram(as.dendrogram(hclust(dist(row_cluster_mat))))
+    mat <- mat[row_order, , drop = FALSE]
+    label_mat <- label_mat[row_order, , drop = FALSE]
+  }
+  if (as_bool(cfg$heatmapClusterCols, FALSE) && ncol(mat) > 2) {
+    col_cluster_mat <- mat
+    col_cluster_mat[!is.finite(col_cluster_mat)] <- 0
+    col_order <- order.dendrogram(as.dendrogram(hclust(dist(t(col_cluster_mat)))))
+    mat <- mat[, col_order, drop = FALSE]
+    label_mat <- label_mat[, col_order, drop = FALSE]
+  }
   grid <- expand.grid(row = rownames(mat), col = colnames(mat), stringsAsFactors = FALSE); grid$value <- as.vector(mat); grid$label <- as.vector(label_mat[rownames(mat), colnames(mat)]); grid$label_colour <- ifelse(abs(grid$value) > 0.85 * as_num(cfg$zlim, 2), "white", "grey10"); grid$row <- factor(grid$row, levels = rev(rownames(mat))); grid$col <- factor(if (as_bool(cfg$wrapPlus, FALSE)) wrap_plus(grid$col) else grid$col, levels = if (as_bool(cfg$wrapPlus, FALSE)) wrap_plus(colnames(mat)) else colnames(mat))
   legend_position <- as.character(cfg$legendPosition %||% "right")
   if (!legend_position %in% c("right", "bottom", "none")) legend_position <- "right"
@@ -299,5 +324,10 @@ if (identical(as.character(cfg$kind), "bar")) {
   if (export_pdf) { out <- file.path(cfg$outputDir, paste0(output_prefix, ".pdf")); ggplot2::ggsave(out, p, width = as_num(cfg$pdfWidth, 7), height = as_num(cfg$pdfHeight, 6), device = "pdf"); message(sprintf("[save] %s", basename(out))) }
   if (identical(format, "svg") && !export_png && !export_pdf) { out <- file.path(cfg$outputDir, paste0(output_prefix, ".svg")); ggplot2::ggsave(out, p, width = as_num(cfg$width, 7), height = as_num(cfg$height, 6), device = "svg"); message(sprintf("[save] %s", basename(out))) }
   utils::write.csv(data.frame(Gene = rownames(mat)), file.path(cfg$outputDir, paste0(output_prefix, "-row-order.csv")), row.names = FALSE, fileEncoding = "UTF-8")
+  if (!as_bool(cfg$showColNames, TRUE)) {
+    order_path <- file.path(cfg$outputDir, paste0(output_prefix, "-sample-order.csv"))
+    utils::write.csv(data.frame(Order = seq_along(colnames(mat)), Sample = colnames(mat)), order_path, row.names = FALSE, fileEncoding = "UTF-8")
+    message(sprintf("[save] %s", basename(order_path)))
+  }
 }
 message("[done] qPCR 绘图完成")
