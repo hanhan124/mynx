@@ -221,6 +221,14 @@
 }
 
 .app-main .home-search-box::before { display: none; }
+.app-main .home-search-input,
+.app-main .home-search-input:hover,
+.app-main .home-search-input:focus {
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
 .app-main .home-search-box:hover,
 .app-main .home-search-box:focus-within {
   border-color: color-mix(in srgb, var(--accent) 48%, var(--gg-hairline));
@@ -250,7 +258,44 @@
 .app-main .tool-card:hover {
   border-color: color-mix(in srgb, var(--tile-accent) 48%, var(--gg-hairline));
   box-shadow: 0 1px rgba(255, 255, 255, .28) inset, 0 14px 30px rgba(0, 0, 0, .09);
-  transform: translateY(-2px);
+  transform: none;
+}
+
+.app-main .tool-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px; }
+
+.app-main .home-head {
+  flex: 0 0 var(--home-header-height);
+  min-height: 128px;
+  justify-content: center;
+}
+
+.app-main .home-divider {
+  position: relative;
+  width: min(1120px, 100%);
+  height: 16px;
+  margin: 4px auto 8px;
+  cursor: row-resize;
+  touch-action: none;
+  background: transparent;
+  outline: none;
+}
+
+.app-main .home-divider::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--gg-hairline);
+  transition: background-color 160ms var(--ease-smooth), box-shadow 160ms var(--ease-smooth), transform 160ms var(--ease-smooth);
+}
+
+.app-main .home-divider:hover::before,
+.app-main .home-divider:focus-visible::before {
+  background: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent), 0 0 10px rgba(var(--accent-rgb), .28);
+  transform: scaleY(2);
 }
 
 /* Overlays and title bar use legible Liquid Glass, not opaque application chrome. */

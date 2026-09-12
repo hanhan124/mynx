@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { CSSProperties } from "react";
-import { IconArrowBadgeRight, IconSearch, IconX, IconChevronDown } from "@tabler/icons-react";
+import {
+  IconArrowBadgeRight,
+  IconSearch,
+  IconX,
+  IconChevronDown,
+} from "@tabler/icons-react";
 import AppMark from "@/components/AppMark";
 import WeatherWidget from "@/components/WeatherWidget";
 import { tools } from "@/lib/tools";
@@ -12,6 +17,11 @@ import { getToolTranslationKey, useLanguage } from "@/lib/i18n";
 export default function Home() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const homeShellRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(() => {
+    const saved = Number(localStorage.getItem("mynx-home-header-height"));
+    return Number.isFinite(saved) && saved >= 128 ? saved : 192;
+  });
   const [query, setQuery] = useState("");
   const [searchEngine, setSearchEngine] = useState<SearchEngine>(() => {
     const saved = localStorage.getItem("mynx-search-engine");
@@ -20,23 +30,53 @@ export default function Home() {
   const [engineMenuOpen, setEngineMenuOpen] = useState(false);
   const enginePickerRef = useRef<HTMLDivElement>(null);
 
+  const resizeHeader = (nextHeight: number) => {
+    const shell = homeShellRef.current;
+    if (!shell) return;
+    const maximum = Math.max(128, shell.clientHeight - 180);
+    const clampedHeight = Math.min(maximum, Math.max(128, Math.round(nextHeight)));
+    setHeaderHeight(clampedHeight);
+    localStorage.setItem("mynx-home-header-height", String(clampedHeight));
+  };
+
+  const beginResize = (event: React.PointerEvent<HTMLDivElement>) => {
+    const shell = homeShellRef.current;
+    if (!shell) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const shellTop = shell.getBoundingClientRect().top;
+    const update = (clientY: number) => resizeHeader(clientY - shellTop - 18);
+    update(event.clientY);
+
+    const onMove = (moveEvent: PointerEvent) => update(moveEvent.clientY);
+    const onEnd = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onEnd);
+      window.removeEventListener("pointercancel", onEnd);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onEnd);
+    window.addEventListener("pointercancel", onEnd);
+  };
+
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
-      if (!enginePickerRef.current?.contains(event.target as Node)) setEngineMenuOpen(false);
+      if (!enginePickerRef.current?.contains(event.target as Node))
+        setEngineMenuOpen(false);
     };
     document.addEventListener("mousedown", closeMenu);
     return () => document.removeEventListener("mousedown", closeMenu);
   }, []);
 
   const kw = query.trim().toLowerCase();
-  const filtered =
-    kw
-      ? tools.filter(
-          (tool) =>
-            t(getToolTranslationKey(tool.path, "title")).toLowerCase().includes(kw) ||
-            t(getToolTranslationKey(tool.path, "description")).toLowerCase().includes(kw),
-        )
-      : tools;
+  const filtered = kw
+    ? tools.filter(
+        (tool) =>
+          t(getToolTranslationKey(tool.path, "title")).toLowerCase().includes(kw) ||
+          t(getToolTranslationKey(tool.path, "description")).toLowerCase().includes(kw),
+      )
+    : tools;
 
   function openSearch() {
     const q = query.trim();
@@ -45,7 +85,11 @@ export default function Home() {
   }
 
   return (
-    <div className="home-shell unified-home">
+    <div
+      ref={homeShellRef}
+      className="home-shell unified-home"
+      style={{ "--home-header-height": `${headerHeight}px` } as CSSProperties}
+    >
       <div className="home-head">
         <header className="home-top">
           <div className="home-brand">
@@ -74,12 +118,19 @@ export default function Home() {
                 aria-expanded={engineMenuOpen}
                 title={t("home.chooseEngine")}
               >
-              <IconSearch size={18} stroke={1.8} aria-hidden="true" />
-              <IconChevronDown className="home-search-engine-chevron" size={12} stroke={2} aria-hidden="true" />
+                <IconSearch size={18} stroke={1.8} aria-hidden="true" />
+                <IconChevronDown
+                  className="home-search-engine-chevron"
+                  size={12}
+                  stroke={2}
+                  aria-hidden="true"
+                />
               </button>
               {engineMenuOpen && (
                 <div className="home-search-engine-menu" role="menu">
-                  <div className="home-search-engine-menu-title">{t("home.chooseEngine")}</div>
+                  <div className="home-search-engine-menu-title">
+                    {t("home.chooseEngine")}
+                  </div>
                   {SEARCH_ENGINES.map((engine) => (
                     <button
                       key={engine.id}
@@ -105,7 +156,9 @@ export default function Home() {
                           event.currentTarget.src = `https://icons.duckduckgo.com/ip3/${engine.fallback}.ico`;
                         }}
                       />
-                      {searchEngine === engine.id && <span className="home-search-engine-check">✓</span>}
+                      {searchEngine === engine.id && (
+                        <span className="home-search-engine-check">✓</span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -138,7 +191,25 @@ export default function Home() {
         </form>
       </div>
 
-      <div className="home-divider" />
+      <div
+        className="home-divider"
+        role="separator"
+        aria-label="Resize home sections"
+        aria-orientation="horizontal"
+        aria-valuemin={128}
+        aria-valuenow={headerHeight}
+        tabIndex={0}
+        onPointerDown={beginResize}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowUp") {
+            event.preventDefault();
+            resizeHeader(headerHeight - 12);
+          } else if (event.key === "ArrowDown") {
+            event.preventDefault();
+            resizeHeader(headerHeight + 12);
+          }
+        }}
+      />
 
       <div className="home-workspace">
         <section className="home-tools">
@@ -147,7 +218,11 @@ export default function Home() {
               <span className="home-tools-count">{filtered.length}</span>
               <span className="home-tools-unit">{t("home.tools")}</span>
             </div>
-            {kw && <span className="home-tools-hint">{t("home.related", { query: query.trim() })}</span>}
+            {kw && (
+              <span className="home-tools-hint">
+                {t("home.related", { query: query.trim() })}
+              </span>
+            )}
           </div>
           <div className="tool-grid">
             {filtered.length > 0 ? (
@@ -166,9 +241,13 @@ export default function Home() {
                     <div className="tool-card-body">
                       <span className="tool-card-title">
                         {t(getToolTranslationKey(tool.path, "title"))}
-                        {tool.badge && <em className="tool-card-badge">{t("tool.beta")}</em>}
+                        {tool.badge && (
+                          <em className="tool-card-badge">{t("tool.beta")}</em>
+                        )}
                       </span>
-                      <span className="tool-card-desc">{t(getToolTranslationKey(tool.path, "description"))}</span>
+                      <span className="tool-card-desc">
+                        {t(getToolTranslationKey(tool.path, "description"))}
+                      </span>
                     </div>
                     <IconArrowBadgeRight
                       size={16}
@@ -183,7 +262,6 @@ export default function Home() {
             )}
           </div>
         </section>
-
       </div>
 
       <footer className="home-footer">
