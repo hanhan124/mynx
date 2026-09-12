@@ -4,6 +4,7 @@
 @import "./components.css";
 @import "./rnaseq.css";
 @import "./unified.css";
+@import "./ant-overrides.css";
 
 * {
   margin: 0;

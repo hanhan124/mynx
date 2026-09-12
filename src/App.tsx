@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ConfigProvider, theme as antdTheme } from "antd";
 import { HashRouter, Routes, Route, useLocation } from "react-router-dom";
 import TitleBar from "@/components/TitleBar";
 import Sidebar from "@/components/Sidebar";
@@ -8,6 +9,7 @@ import UpdateNotification from "@/components/UpdateNotification";
 import { tools, getPageTitle } from "@/lib/tools";
 import SearchWindow from "@/pages/SearchWindow";
 import { LanguageProvider, getToolTranslationKey, useLanguage } from "@/lib/i18n";
+import { useTheme } from "@/hooks/useTheme";
 
 function Layout() {
   const location = useLocation();
@@ -48,12 +50,27 @@ function Layout() {
 }
 
 function App() {
+  const { resolvedTheme } = useTheme();
+
   return (
-    <HashRouter>
-      <LanguageProvider>
-        <Layout />
-      </LanguageProvider>
-    </HashRouter>
+    <ConfigProvider
+      theme={{
+        algorithm: resolvedTheme === "graphite" ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: {
+          colorPrimary: "#1677ff",
+          borderRadius: 6,
+          controlHeight: 32,
+          fontSize: 13,
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+        },
+      }}
+    >
+      <HashRouter>
+        <LanguageProvider>
+          <Layout />
+        </LanguageProvider>
+      </HashRouter>
+    </ConfigProvider>
   );
 }
 

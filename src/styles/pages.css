@@ -550,7 +550,7 @@
   transition: color 160ms var(--ease-smooth), background 160ms var(--ease-smooth);
 }
 .home-search-engine-trigger:hover,
-.home-search-engine-trigger[aria-expanded="true"] { color: var(--accent); background: var(--bg-hover); }
+.home-search-engine-trigger[aria-expanded="true"] { color: var(--accent); background: transparent; }
 .home-search-engine-chevron { flex: 0 0 auto; pointer-events: none; }
 .home-search-engine-menu {
   position: absolute;
