@@ -1,5 +1,5 @@
-import { type ReactNode } from "react";
-import { Modal as AntModal } from "antd";
+import { useEffect, type ReactNode } from "react";
+import { IconX } from "@tabler/icons-react";
 
 interface ModalProps {
   open: boolean;
@@ -10,18 +10,33 @@ interface ModalProps {
 }
 
 export default function Modal({ open, onClose, title, wide, children }: ModalProps) {
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
   return (
-    <AntModal
-      className={wide ? "mynx-ant-modal mynx-ant-modal--wide" : "mynx-ant-modal"}
-      centered
-      destroyOnHidden
-      footer={null}
-      open={open}
-      onCancel={onClose}
-      title={title}
-      width={wide ? 760 : 420}
-    >
-      {children}
-    </AntModal>
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className={`modal-box${wide ? " modal-box--wide" : ""}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        {title && (
+          <div className="modal-header">
+            <h3>{title}</h3>
+            <button className="modal-close-btn" onClick={onClose} aria-label="Close">
+              <IconX size={15} stroke={1.7} />
+            </button>
+          </div>
+        )}
+        <div className="modal-body">{children}</div>
+      </div>
+    </div>
   );
 }

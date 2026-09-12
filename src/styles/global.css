@@ -4,7 +4,7 @@
 @import "./components.css";
 @import "./rnaseq.css";
 @import "./unified.css";
-@import "./ant-overrides.css";
+@import "./golden-gate.css";
 
 * {
   margin: 0;
