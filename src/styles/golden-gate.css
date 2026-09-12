@@ -31,7 +31,7 @@
 .title-bar,
 .modal-overlay,
 .search-window-shell {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI Variable", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   letter-spacing: -.012em;
 }
 
@@ -221,13 +221,15 @@
 }
 
 .app-main .home-search-box::before { display: none; }
-.app-main .home-search-input,
-.app-main .home-search-input:hover,
-.app-main .home-search-input:focus {
+/* This is a content field inside the search capsule, not a nested control. */
+.app-main input.home-search-input,
+.app-main input.home-search-input:hover,
+.app-main input.home-search-input:focus {
   min-height: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
+  height: auto;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 .app-main .home-search-box:hover,
 .app-main .home-search-box:focus-within {
@@ -253,6 +255,23 @@
   box-shadow: 0 1px rgba(255, 255, 255, .20) inset, 0 8px 24px rgba(0, 0, 0, .045);
   backdrop-filter: blur(24px) saturate(145%);
   -webkit-backdrop-filter: blur(24px) saturate(145%);
+}
+
+.app-main .tool-grid {
+  /* A scroll container clips its children's soft shadows.  This inset is the
+     dedicated optical bleed area, so the first and last icons stay rounded. */
+  padding: 10px 14px 16px;
+  margin: -10px -14px -16px;
+}
+
+.app-main .tool-card-icon {
+  box-shadow: none;
+  filter: drop-shadow(0 5px 9px rgba(0, 0, 0, .16));
+}
+
+.app-main .tool-card:hover .tool-card-icon {
+  box-shadow: none;
+  filter: drop-shadow(0 6px 11px rgba(0, 0, 0, .18));
 }
 
 .app-main .tool-card:hover {
@@ -322,6 +341,20 @@
 .search-window-nav button:hover,
 .search-window-address button:hover,
 .search-window-window-controls button:hover { background: color-mix(in srgb, var(--text-primary) 7%, transparent); }
+
+.search-window-brand,
+.search-window-nav button,
+.search-window-window-controls button,
+.search-window-tab { color: var(--text-secondary); }
+.search-window-tab:hover { color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 6%, transparent); }
+.search-window-tab.is-active { color: var(--accent); background: color-mix(in srgb, var(--bg-card) 90%, transparent); border-color: var(--gg-hairline); }
+.search-window-address input {
+  min-height: 0;
+  color: var(--text-primary);
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
 
 .modal-overlay { background: rgba(15, 18, 24, .25); backdrop-filter: blur(18px) saturate(135%); -webkit-backdrop-filter: blur(18px) saturate(135%); }
 .modal-box { background: color-mix(in srgb, var(--gg-glass) 90%, var(--bg-elevated)); border-color: rgba(255, 255, 255, .22); border-radius: 18px; box-shadow: 0 20px 56px rgba(0, 0, 0, .24), 0 1px rgba(255, 255, 255, .26) inset; backdrop-filter: blur(36px) saturate(165%); -webkit-backdrop-filter: blur(36px) saturate(165%); }
