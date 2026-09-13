@@ -34,6 +34,7 @@
   -webkit-backdrop-filter: blur(40px) saturate(200%);
   border-bottom: 0.5px solid var(--separator);
 }
+
 .title-bar-left {
   display: flex;
   align-items: center;

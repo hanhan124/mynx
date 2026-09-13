@@ -1,12 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { loadConfig, saveTheme } from "@/lib/config";
-import { DEFAULT_THEME, resolveTheme, getSystemTheme, type ThemeId, type ResolvedTheme } from "@/lib/theme";
+import { DEFAULT_THEME, normalizeTheme, resolveTheme, getSystemTheme, type ThemeId, type ResolvedTheme } from "@/lib/theme";
+
+function getInitialTheme(): ThemeId {
+  try {
+    return normalizeTheme(localStorage.getItem("mynx-theme"));
+  } catch {
+    return DEFAULT_THEME;
+  }
+}
 
 export function useTheme() {
   // 用户选择的偏好（可能是 "system"）
-  const [preference, setPreference] = useState<ThemeId>(DEFAULT_THEME);
+  const [preference, setPreference] = useState<ThemeId>(getInitialTheme);
   // 实际生效的主题
-  const [resolved, setResolved] = useState<ResolvedTheme>(getSystemTheme());
+  const [resolved, setResolved] = useState<ResolvedTheme>(() => resolveTheme(getInitialTheme()));
 
   // 从 store 加载
   useEffect(() => {

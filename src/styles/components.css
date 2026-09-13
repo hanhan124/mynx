@@ -1,4 +1,23 @@
 /* ========= Modal — macOS 风格 ========= */
+
+.help-center-intro,
+.help-center-note {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.help-center-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 16px 0 12px;
+}
+
+.help-center-actions .btn {
+  min-height: 34px;
+  text-align: left;
+}
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -68,16 +87,16 @@
 
 /* ========= 主题选择器 ========= */
 .theme-picker {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .theme-tile {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
+  gap: 7px;
+  padding: 8px;
   border-radius: var(--radius-md);
   border: 1.5px solid transparent;
   background: var(--bg-hover);
@@ -102,7 +121,7 @@
 
 .theme-tile-mockup {
   width: 100%;
-  height: 64px;
+  height: 58px;
   border-radius: var(--radius-sm);
   overflow: hidden;
   display: flex;
@@ -149,24 +168,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2px;
-}
-
-.theme-tile-labels {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+  padding: 0 1px;
 }
 
 .theme-tile-name {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
-}
-
-.theme-tile-desc {
-  font-size: 11px;
-  color: var(--text-secondary);
 }
 
 .theme-tile-check {
@@ -187,6 +195,10 @@
 .theme-tile-check--inactive {
   background: var(--bg-hover);
   color: transparent;
+}
+
+@media (max-width: 760px) {
+  .theme-picker { grid-template-columns: 1fr; }
 }
 
 /* ========= 关于 ========= */

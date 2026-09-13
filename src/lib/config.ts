@@ -36,6 +36,11 @@ export async function saveTheme(theme: ThemeId): Promise<void> {
   const store = await getStore();
   await store.set("theme", theme);
   await store.save();
+  try {
+    localStorage.setItem("mynx-theme", theme);
+  } catch {
+    /* storage unavailable */
+  }
 }
 
 export async function saveAlwaysOnTop(value: boolean): Promise<void> {

@@ -4,7 +4,10 @@ mod services;
 mod tasks;
 
 use error::CommandError;
-use tauri::{DragDropEvent, RunEvent, WebviewEvent, WindowEvent};
+use tauri::{
+    menu::{AboutMetadata, MenuBuilder, SubmenuBuilder},
+    DragDropEvent, Emitter, Manager, RunEvent, WebviewEvent, WindowEvent,
+};
 use tauri_plugin_fs::FsExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -30,9 +33,85 @@ pub fn run() {
             commands::weather::weather_by_ip
         ])
         .setup(|app| {
-            // Command state is currently stateless. Future long-running work
-            // can be registered here through app.manage(...).
-            let _ = app;
+            let handle = app.handle();
+            let app_menu = SubmenuBuilder::new(handle, "Mynx")
+                .about(Some(AboutMetadata {
+                    name: Some("Mynx".into()),
+                    version: Some(env!("CARGO_PKG_VERSION").into()),
+                    ..Default::default()
+                }))
+                .separator()
+                .text("app-toggle-language", "Switch Language")
+                .separator()
+                .services()
+                .separator()
+                .hide()
+                .hide_others()
+                .show_all()
+                .separator()
+                .quit()
+                .build()?;
+            let file_menu = SubmenuBuilder::new(handle, "File")
+                .text("file-home", "Home")
+                .separator()
+                .close_window()
+                .build()?;
+            let edit_menu = SubmenuBuilder::new(handle, "Edit")
+                .undo()
+                .redo()
+                .separator()
+                .cut()
+                .copy()
+                .paste()
+                .select_all()
+                .build()?;
+            let view_menu = SubmenuBuilder::new(handle, "View")
+                .text("view-home", "Show Home")
+                .separator()
+                .fullscreen()
+                .build()?;
+            let window_menu = SubmenuBuilder::new(handle, "Window")
+                .minimize()
+                .maximize()
+                .separator()
+                .text("window-always-on-top", "Keep Window on Top")
+                .build()?;
+            let help_menu = SubmenuBuilder::new(handle, "Help")
+                .text("help-guide", "User Guide")
+                .text("help-about", "About Mynx")
+                .build()?;
+            let menu = MenuBuilder::new(handle)
+                .item(&app_menu)
+                .item(&file_menu)
+                .item(&edit_menu)
+                .item(&view_menu)
+                .item(&window_menu)
+                .item(&help_menu)
+                .build()?;
+            app.set_menu(menu)?;
+            app.on_menu_event(|app, event| match event.id().as_ref() {
+                "file-home" | "view-home" => {
+                    let _ = app.emit_to("main", "mynx://navigate", "/");
+                }
+                "window-always-on-top" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        if let Ok(is_on_top) = window.is_always_on_top() {
+                            let _ = window.set_always_on_top(!is_on_top);
+                            let _ = app.emit_to("main", "mynx://always-on-top", !is_on_top);
+                        }
+                    }
+                }
+                "app-toggle-language" => {
+                    let _ = app.emit_to("main", "mynx://toggle-language", ());
+                }
+                "help-guide" => {
+                    let _ = app.emit_to("main", "mynx://help", ());
+                }
+                "help-about" => {
+                    let _ = app.emit_to("main", "mynx://about", ());
+                }
+                _ => {}
+            });
             Ok(())
         })
         .build(tauri::generate_context!())

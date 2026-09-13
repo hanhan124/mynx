@@ -593,10 +593,13 @@ function Toggle({
       type="button"
       className={`qpcr-toggle${checked ? " on" : ""}`}
       aria-pressed={checked}
+      aria-label={label}
       onClick={() => onChange(!checked)}
     >
-      <span className="qpcr-toggle-dot" />
-      {label}
+      <span className="qpcr-toggle-label">{label}</span>
+      <span className="qpcr-toggle-track" aria-hidden="true">
+        <span className="qpcr-toggle-knob" />
+      </span>
     </button>
   );
 }
@@ -1028,7 +1031,7 @@ export default function QpcrPlotter() {
             </div>
             <button
               type="button"
-              className={`qpcr-file-chip${isDragOver ? " drag" : ""}${file ? " loaded" : ""}`}
+              className={`qpcr-file-chip qpcr-file-input${isDragOver ? " drag qpcr-file-input--drag" : ""}${file ? " loaded qpcr-file-input--loaded" : ""}`}
               onClick={() => void chooseFile()}
               title={l("点击选择 Excel，或拖入文件", "Choose or drop an Excel file")}
             >

@@ -402,6 +402,7 @@ export function SwitchField({
         type="button"
         role="switch"
         aria-checked={!!checked}
+        aria-label={label}
         className={`rx-switch${checked ? " on" : ""}`}
         onClick={() => onChange(!checked)}
       >

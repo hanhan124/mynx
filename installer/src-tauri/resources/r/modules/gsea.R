@@ -41,6 +41,12 @@ run_gsea <- function(deg_env) {
   gsea_cnames <- intersect(plot_cnames("gsea"), names(deg_env$results_list))
   for (nm in gsea_cnames) {
     res_df <- deg_env$results_list[[nm]]
+    # 固定 BCV 的单重复检验不具备可用于通路推断的经验离散度；避免将探索性
+    # P 值放大为可投稿的 GSEA 结论。
+    if ("analysis_mode" %in% colnames(res_df) && any(grepl("^edgeR_BCV", res_df$analysis_mode))) {
+      message("[WARN] ", nm, " 为单重复固定 BCV 的探索性结果，跳过 GSEA")
+      next
+    }
     res_clean <- res_df %>% filter(!is.na(log2FoldChange))
     # 排序指标(GSEA 要求按统计量排序):优先 Wald stat(DESeq2 结果自带);
     # edgeR 单重复结果无 stat 列 → sign(log2FC)·(-log10 p)(limma/edgeR 社区惯例)
@@ -53,23 +59,20 @@ run_gsea <- function(deg_env) {
       metric_label <- "sign(log2FC) * -log10(p)"
     }
     message("GSEA 排序指标(", nm, "):", metric_label)
-    # 基因符号 → Entrez ID(用 bitr,可能失败)
-    entrez <- tryCatch(
-      bitr(res_clean$GeneSymbol, fromType="SYMBOL", toType="ENTREZID", OrgDb=org_db),
-      error = function(e) { message("[WARN] 基因符号映射失败:", conditionMessage(e)); NULL }
-    )
-    if (is.null(entrez) || nrow(entrez) == 0) {
+    # 输入 ID → Entrez ID（与 ORA 共用 Symbol / Ensembl 自动识别规则）
+    entrez <- map_ids_to_entrez(res_clean$GeneSymbol, org_db)
+    if (nrow(entrez) == 0) {
       message("[WARN] ", nm, " 无基因可映射,跳过")
       next
     }
     # ID 映射丢失率:>10% 提示(排序列表覆盖可能不完整,对齐 ORA 模块)
-    loss_g <- 1 - length(unique(entrez$SYMBOL)) / nrow(res_clean)
+    loss_g <- 1 - length(unique(entrez$InputID)) / nrow(res_clean)
     if (loss_g > 0.1)
       message("[WARN] ", round(loss_g * 100), "% 的基因符号未能映射到 Entrez ID,",
               "GSEA 排序列表覆盖可能不完整(多数为非编码/别名符号,属正常损耗)")
     # 合并排序指标
     ranked <- res_clean %>%
-      left_join(entrez, by=c("GeneSymbol"="SYMBOL")) %>%
+      left_join(entrez, by=c("GeneSymbol"="InputID")) %>%
       filter(!is.na(ENTREZID), !is.na(rank_metric)) %>%
       group_by(ENTREZID) %>%
       slice_max(abs(rank_metric), n=1) %>%  # 去重取 |metric| 最大

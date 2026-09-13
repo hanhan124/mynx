@@ -1,10 +1,5 @@
-import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useTheme } from "@/hooks/useTheme";
-import Modal from "@/components/Modal";
-import ThemePicker from "@/components/ThemePicker";
-import AboutModal from "@/components/AboutModal";
-import { IconHomeFilled, IconWorldFilled, IconPaletteFilled, IconInfoCircleFilled } from "@tabler/icons-react";
+import { IconHomeFilled, IconSettings } from "@tabler/icons-react";
 import { tools } from "@/lib/tools";
 import { useLanguage, getToolTranslationKey } from "@/lib/i18n";
 
@@ -18,10 +13,7 @@ const navItems = [
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { theme, setTheme } = useTheme();
   const { t } = useLanguage();
-  const [showAbout, setShowAbout] = useState(false);
-  const [showThemes, setShowThemes] = useState(false);
 
   return (
     <>
@@ -48,60 +40,16 @@ export default function Sidebar() {
 
         <div className="sidebar-footer">
           <button
-            className="sidebar-btn"
-            title={t("nav.website")}
-            onClick={() => {
-              import("@tauri-apps/plugin-shell").then(({ open }) =>
-                open("https://www.fanguanghan.homes"),
-              );
-            }}
+            className={`sidebar-btn ${location.pathname === "/settings" ? "sidebar-btn--active" : ""}`}
+            title={t("nav.settings")}
+            aria-label={t("nav.settings")}
+            aria-current={location.pathname === "/settings" ? "page" : undefined}
+            onClick={() => navigate("/settings")}
           >
-            <IconWorldFilled size={16} stroke={2} />
-          </button>
-          <button
-            className="sidebar-btn"
-            title={t("nav.theme")}
-            onClick={() => setShowThemes(true)}
-          >
-            <IconPaletteFilled size={16} stroke={2} />
-          </button>
-          <button
-            className="sidebar-btn"
-            title={t("nav.about")}
-            onClick={() => setShowAbout(true)}
-          >
-            <IconInfoCircleFilled size={16} stroke={2} />
+            <IconSettings size={17} stroke={2} />
           </button>
         </div>
       </div>
-
-      <Modal
-        open={showThemes}
-        onClose={() => setShowThemes(false)}
-        title={t("theme.title")}
-      >
-        <div
-          style={{
-            marginBottom: 12,
-            fontSize: 12,
-            color: "var(--text-secondary)",
-          }}
-        >
-          {t("theme.choose")}
-        </div>
-        <ThemePicker
-          value={theme}
-          onSelect={(next) => {
-            setTheme(next);
-            setShowThemes(false);
-          }}
-        />
-      </Modal>
-
-      <AboutModal
-        open={showAbout}
-        onClose={() => setShowAbout(false)}
-      />
     </>
   );
 }

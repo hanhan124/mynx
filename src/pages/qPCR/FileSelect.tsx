@@ -58,7 +58,7 @@ export default function FileSelect({ file, sheetName, onFileChange, onSheetChang
     <>
       <div
         ref={dropRef}
-        className={`file-display${isDragOver ? ' file-display--drag' : ''}`}
+        className={`file-display qpcr-file-input${isDragOver ? ' file-display--drag qpcr-file-input--drag' : ''}${file ? ' qpcr-file-input--loaded' : ''}`}
       >
         <div className="file-icon" style={{ background: '#34c759' }}>
           <IconFileSpreadsheet size={20} color="white" stroke={1.75} />

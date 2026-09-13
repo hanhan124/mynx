@@ -48,6 +48,30 @@ ensure_org_pkg <- function(organism) {
   requireNamespace(pkg, quietly=TRUE)
 }
 
+# 统一的输入 ID → Entrez 映射，供 ORA 与 GSEA 共用。auto 模式只在多数 ID
+# 符合 Ensembl 基因 ID 格式时判为 Ensembl，避免把普通 Symbol 误改写。
+map_ids_to_entrez <- function(ids, org_db) {
+  input_ids <- unique(trimws(as.character(ids)))
+  input_ids <- input_ids[!is.na(input_ids) & nzchar(input_ids)]
+  if (length(input_ids) == 0) return(data.frame(InputID = character(), ENTREZID = character()))
+  looks_ensembl <- grepl("^ENS[A-Z]*G[0-9]+(?:\\.[0-9]+)?$", input_ids, ignore.case = TRUE)
+  from_type <- if (identical(gene_id_type, "ensembl") ||
+                   (identical(gene_id_type, "auto") && mean(looks_ensembl) >= 0.5)) "ENSEMBL" else "SYMBOL"
+  lookup_ids <- if (identical(from_type, "ENSEMBL")) sub("\\..*$", "", input_ids) else input_ids
+  mapped <- tryCatch(
+    clusterProfiler::bitr(lookup_ids, fromType = from_type, toType = "ENTREZID", OrgDb = org_db),
+    error = function(e) {
+      message("[WARN] ", from_type, " → Entrez ID 映射失败: ", conditionMessage(e))
+      NULL
+    }
+  )
+  if (is.null(mapped) || nrow(mapped) == 0) return(data.frame(InputID = character(), ENTREZID = character()))
+  mapped$InputID <- input_ids[match(as.character(mapped[[from_type]]), lookup_ids)]
+  mapped <- mapped[!is.na(mapped$InputID) & !is.na(mapped$ENTREZID), c("InputID", "ENTREZID"), drop = FALSE]
+  message("[INFO] 富集 ID 映射: ", from_type, " → ENTREZID，", nrow(mapped), " 条映射")
+  mapped
+}
+
 run_enrich <- function(deg_env) {
   if (!("enrich" %in% steps)) return(invisible(NULL))
   message("\n========== Step: ORA 富集分析 ==========")
@@ -82,6 +106,16 @@ run_enrich <- function(deg_env) {
 
   # 收集所选比较子集的 DEG(up + down 合并);空=全部比较
   enrich_cnames <- intersect(plot_cnames("enrich"), names(deg_env$results_list))
+  # 固定 BCV 的单重复 exactTest 仅用于候选筛查，不能自动产生可投稿解释的
+  # ORA 结论。若用户需要探索，请先补充生物学重复后重跑。
+  enrich_cnames <- enrich_cnames[!vapply(enrich_cnames, function(nm) {
+    r <- deg_env$results_list[[nm]]
+    "analysis_mode" %in% colnames(r) && any(grepl("^edgeR_BCV", r$analysis_mode))
+  }, logical(1))]
+  if (length(enrich_cnames) == 0) {
+    message("[WARN] 所选比较均为单重复固定 BCV 的探索性结果，已跳过 ORA 富集；请使用生物学重复后再作通路结论")
+    return(invisible(NULL))
+  }
   all_degs <- unique(unlist(lapply(deg_env$results_list[enrich_cnames], function(r)
     r$GeneSymbol[r$regulation %in% c("up","down")])))
   if (length(all_degs) < 5) {
@@ -90,12 +124,9 @@ run_enrich <- function(deg_env) {
   }
   message("DEG 基因数:", length(all_degs))
 
-  # 基因符号 → Entrez ID(可能因符号无效而失败)
-  entrez <- tryCatch(
-    bitr(all_degs, fromType="SYMBOL", toType="ENTREZID", OrgDb=org_db),
-    error = function(e) { message("[WARN] 基因符号映射失败:", conditionMessage(e)); NULL }
-  )
-  if (is.null(entrez) || nrow(entrez) == 0) {
+  # 输入 ID → Entrez ID（支持 Symbol 与带版本号的 Ensembl gene ID）
+  entrez <- map_ids_to_entrez(all_degs, org_db)
+  if (nrow(entrez) == 0) {
     message("[WARN] 无基因可映射到 Entrez ID,跳过富集分析")
     return(invisible(NULL))
   }
@@ -112,10 +143,7 @@ run_enrich <- function(deg_env) {
   # universe = 进入检验的背景基因集(clusterProfiler 官方推荐:所有参与 DE 检验的基因,
   # 而非 OrgDb 全基因背景;否则会系统性低估富集显著性)
   tested_genes <- unique(unlist(lapply(deg_env$results_list[enrich_cnames], function(r) r$GeneSymbol)))
-  universe_ids <- tryCatch({
-    u <- bitr(tested_genes, fromType="SYMBOL", toType="ENTREZID", OrgDb=org_db)
-    unique(u$ENTREZID)
-  }, error = function(e) NULL)
+  universe_ids <- unique(map_ids_to_entrez(tested_genes, org_db)$ENTREZID)
   if (is.null(universe_ids) || length(universe_ids) < 10) {
     message("[WARN] 背景基因集映射失败,退回默认全基因背景")
     universe_ids <- NULL
@@ -300,9 +328,13 @@ run_enrich_directional <- function(deg_env) {
 
   for (nm in cmps) {
     res <- deg_env$results_list[[nm]]
+    if ("analysis_mode" %in% colnames(res) && any(grepl("^edgeR_BCV", res$analysis_mode))) {
+      message("[WARN] ", nm, " 为单重复固定 BCV 的探索性结果，跳过方向性 ORA")
+      next
+    }
     tested <- unique(res$GeneSymbol[!is.na(res$GeneSymbol)])
-    universe <- tryCatch(unique(bitr(tested, fromType="SYMBOL", toType="ENTREZID", OrgDb=org_db)$ENTREZID), error=function(e) NULL)
-    if (is.null(universe) || length(universe) < 10) {
+    universe <- unique(map_ids_to_entrez(tested, org_db)$ENTREZID)
+    if (length(universe) < 10) {
       message("[WARN] ", nm, " 背景基因映射不足,跳过方向性富集")
       next
     }
@@ -314,8 +346,8 @@ run_enrich_directional <- function(deg_env) {
         message("[INFO] ", nm, " ", direction, " DEG 少于 5 个,跳过该方向")
         next
       }
-      ids <- tryCatch(unique(bitr(symbols, fromType="SYMBOL", toType="ENTREZID", OrgDb=org_db)$ENTREZID), error=function(e) NULL)
-      if (is.null(ids) || length(ids) < 3) next
+      ids <- unique(map_ids_to_entrez(symbols, org_db)$ENTREZID)
+      if (length(ids) < 3) next
       direction_res <- list()
       if ("GO" %in% databases) for (ont in ontologies) {
         ego <- tryCatch(enrichGO(ids, universe=universe, OrgDb=org_db, ont=ont,

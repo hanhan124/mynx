@@ -31,7 +31,7 @@
 .title-bar,
 .modal-overlay,
 .search-window-shell {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI Variable", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-family: var(--font);
   letter-spacing: -.012em;
 }
 
@@ -44,12 +44,10 @@
 .app-main .chart-studio__work > .card,
 .app-main .file-display,
 .app-main .qpcr-setting-section {
-  background-color: color-mix(in srgb, var(--gg-glass) 86%, var(--bg-card));
-  background-image: linear-gradient(135deg, rgba(255, 255, 255, .18), transparent 42%), var(--surface-gradient);
+  background-color: var(--bg-card);
+  background-image: var(--surface-gradient);
   border-color: var(--gg-hairline);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, .04), 0 10px 30px rgba(0, 0, 0, .055);
-  backdrop-filter: blur(28px) saturate(150%);
-  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  box-shadow: var(--shadow-card);
 }
 
 [data-theme="graphite"] .app-main .card,
@@ -61,7 +59,7 @@
 [data-theme="graphite"] .app-main .chart-studio__work > .card,
 [data-theme="graphite"] .app-main .file-display,
 [data-theme="graphite"] .app-main .qpcr-setting-section {
-  box-shadow: 0 1px rgba(255, 255, 255, .05) inset, 0 14px 34px rgba(0, 0, 0, .16);
+  box-shadow: var(--shadow-card);
 }
 
 /* Universal parameter controls, including TIFF, qPCR, RNA-seq and chart tools. */
@@ -146,21 +144,62 @@
 .app-main .rx-field-label,
 .app-main .form-group label { color: var(--text-secondary); font-weight: 560; }
 
+/* qPCR has two file pickers (analysis input and plotter input). Keep their
+   geometry, hover lift, drag feedback and loaded state identical. */
+.app-main .qpcr-file-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  min-height: 62px;
+  padding: 11px 12px;
+  color: var(--text-primary);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--bg-hover);
+  text-align: left;
+  transition: background 180ms var(--ease-smooth), border-color 180ms var(--ease-smooth), box-shadow 180ms var(--ease-smooth), transform 180ms var(--ease-spring);
+}
+
+.app-main button.qpcr-file-input { cursor: pointer; }
+
+.app-main .qpcr-file-input:hover {
+  border-color: var(--stroke);
+  background: color-mix(in srgb, var(--accent-soft) 72%, var(--bg-hover));
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.app-main .qpcr-file-input--drag {
+  border: 1.5px dashed var(--accent);
+  background: var(--accent-soft);
+  box-shadow: var(--shadow-sm);
+  transform: none;
+}
+
+.app-main .qpcr-file-input--loaded { border-color: color-mix(in srgb, var(--green) 25%, transparent); }
+.app-main .qpcr-file-input:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 28%, transparent); outline-offset: 2px; transform: none; }
+.app-main .qpcr-file-input .file-icon,
+.app-main .qpcr-file-input .qpcr-io-icon { width: 36px; height: 36px; min-width: 36px; flex: 0 0 36px; border-radius: var(--radius-md); }
+.app-main .qpcr-file-input .file-name,
+.app-main .qpcr-file-input .qpcr-io-copy strong { font-size: 12px; font-weight: 600; }
+.app-main .qpcr-file-input .file-path,
+.app-main .qpcr-file-input .qpcr-io-copy small { font-size: 10px; }
+
 /* Toggles, choices and compact settings use macOS' softly raised control language. */
-.app-main .qpcr-toggle,
 .app-main .rx-chip,
 .app-main .rx-format-btn,
 .app-main .rx-pager-btn,
 .app-main .qpcr-add-pair,
 .app-main .chart-studio__families button,
 .app-main .chart-studio__templates button {
-  border-radius: 999px;
+  border-radius: var(--gg-radius-control);
   border-color: color-mix(in srgb, var(--text-primary) 11%, transparent);
-  background: color-mix(in srgb, var(--bg-card) 70%, transparent);
+  background: var(--bg-card);
   box-shadow: 0 1px rgba(255, 255, 255, .12) inset;
 }
 
-.app-main .qpcr-toggle.on,
 .app-main .rx-chip.on,
 .app-main .rx-format-btn.on,
 .app-main .rx-pager-btn.active,
@@ -168,7 +207,7 @@
 .app-main .chart-studio__templates button.active {
   color: #fff;
   border-color: transparent;
-  background: linear-gradient(135deg, #4ba1ff, var(--accent));
+  background: var(--accent);
   box-shadow: 0 3px 10px rgba(var(--accent-rgb), .25), inset 0 1px rgba(255, 255, 255, .30);
 }
 
@@ -181,8 +220,8 @@
 .app-main .btn-primary,
 .modal-box .btn-primary {
   border-color: rgba(255, 255, 255, .25);
-  background: linear-gradient(180deg, #50a6ff, var(--accent));
-  box-shadow: 0 1px rgba(255, 255, 255, .34) inset, 0 5px 14px rgba(var(--accent-rgb), .24);
+  background: var(--accent);
+  box-shadow: 0 1px rgba(255, 255, 255, .24) inset;
 }
 
 .app-main .btn-primary:hover:not(:disabled),
@@ -251,10 +290,8 @@
 .app-main .tool-card {
   border: 1px solid var(--gg-hairline);
   border-radius: 16px;
-  background: color-mix(in srgb, var(--gg-glass) 82%, var(--bg-card));
-  box-shadow: 0 1px rgba(255, 255, 255, .20) inset, 0 8px 24px rgba(0, 0, 0, .045);
-  backdrop-filter: blur(24px) saturate(145%);
-  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
 }
 
 .app-main .tool-grid {
@@ -276,7 +313,7 @@
 
 .app-main .tool-card:hover {
   border-color: color-mix(in srgb, var(--tile-accent) 48%, var(--gg-hairline));
-  box-shadow: 0 1px rgba(255, 255, 255, .28) inset, 0 14px 30px rgba(0, 0, 0, .09);
+  box-shadow: var(--shadow-flyout);
   transform: none;
 }
 
@@ -356,13 +393,84 @@
   box-shadow: none !important;
 }
 
-.modal-overlay { background: rgba(15, 18, 24, .25); backdrop-filter: blur(18px) saturate(135%); -webkit-backdrop-filter: blur(18px) saturate(135%); }
-.modal-box { background: color-mix(in srgb, var(--gg-glass) 90%, var(--bg-elevated)); border-color: rgba(255, 255, 255, .22); border-radius: 18px; box-shadow: 0 20px 56px rgba(0, 0, 0, .24), 0 1px rgba(255, 255, 255, .26) inset; backdrop-filter: blur(36px) saturate(165%); -webkit-backdrop-filter: blur(36px) saturate(165%); }
-.modal-header { padding: 16px 18px 12px; border-bottom: 1px solid var(--separator); }
+.modal-overlay {
+  background:
+    radial-gradient(circle at 50% -12%, rgba(var(--accent-rgb), .14), transparent 46%),
+    rgba(15, 18, 24, .24);
+  backdrop-filter: blur(20px) saturate(125%);
+  -webkit-backdrop-filter: blur(20px) saturate(125%);
+}
+
+[data-theme="pearl"] .modal-overlay {
+  background:
+    radial-gradient(circle at 50% -12%, rgba(var(--accent-rgb), .12), transparent 46%),
+    rgba(30, 34, 42, .16);
+}
+[data-theme="graphite"] .modal-overlay {
+  background:
+    radial-gradient(circle at 50% -12%, rgba(var(--accent-rgb), .18), transparent 46%),
+    rgba(0, 0, 0, .40);
+}
+
+.modal-box {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, 0) 48%),
+    rgba(255, 255, 255, .68);
+  border-color: rgba(255, 255, 255, .72);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .22), 0 1px rgba(255, 255, 255, .30) inset;
+  backdrop-filter: blur(30px) saturate(150%);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
+}
+
+[data-theme="graphite"] .modal-box {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, 0) 48%),
+    rgba(39, 39, 43, .76);
+  border-color: rgba(255, 255, 255, .14);
+  box-shadow: 0 26px 72px rgba(0, 0, 0, .40), 0 1px rgba(255, 255, 255, .14) inset;
+}
+
+.modal-header { padding: 17px 20px 11px; border-bottom: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent); }
 .modal-header h3 { font-weight: 680; }
-.modal-close-btn { background: color-mix(in srgb, var(--text-primary) 8%, transparent); }
+.modal-body { padding: 12px 20px 20px; }
+.modal-close-btn { width: 28px; height: 28px; background: color-mix(in srgb, var(--text-primary) 8%, transparent); }
 
 /* macOS 27 elevates glass while retaining contrast: respect reduced motion. */
 @media (prefers-reduced-motion: reduce) {
   .app-main *, .modal-box *, .search-window-shell * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+
+/* Accessibility preferences take precedence over decorative material. The
+   attribute variants cover WebViews that expose a system choice without a
+   corresponding media query. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  .title-bar,
+  .search-window-toolbar,
+  .modal-box,
+  .modal-overlay,
+  .app-main .home-search-box,
+  .app-main .home-search-engine-menu {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+:root[data-reduced-transparency] .title-bar,
+:root[data-reduced-transparency] .search-window-toolbar,
+:root[data-reduced-transparency] .modal-box,
+:root[data-reduced-transparency] .modal-overlay,
+:root[data-high-contrast] .title-bar,
+:root[data-high-contrast] .search-window-toolbar,
+:root[data-high-contrast] .modal-box,
+:root[data-high-contrast] .modal-overlay {
+  background: var(--bg-elevated);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-high-contrast] .app-main :is(button, input, select, textarea),
+:root[data-forced-colors] .app-main :is(button, input, select, textarea) {
+  border-color: currentColor;
+  box-shadow: none;
 }

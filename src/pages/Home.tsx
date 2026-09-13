@@ -264,16 +264,6 @@ export default function Home() {
         </section>
       </div>
 
-      <footer className="home-footer">
-        <a
-          className="home-footer-link"
-          href="https://github.com/hanhan124/mynx"
-          target="_blank"
-          rel="noreferrer"
-        >
-          {t("home.license")}
-        </a>
-      </footer>
     </div>
   );
 }

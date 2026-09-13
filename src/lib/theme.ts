@@ -24,7 +24,7 @@ export type ThemeId = typeof THEMES[number]["id"];
 /** 实际生效的主题（不含 system） */
 export type ResolvedTheme = "graphite" | "pearl";
 
-export const DEFAULT_THEME: ThemeId = "system";
+export const DEFAULT_THEME: ThemeId = "pearl";
 
 const THEME_IDS = new Set<string>(THEMES.map((theme) => theme.id));
 

@@ -1,12 +1,29 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN" data-theme="pearl">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mynx</title>
+    <script>
+      (() => {
+        try {
+          const saved = localStorage.getItem("mynx-theme");
+          const theme = saved === "graphite" || saved === "pearl"
+            ? saved
+            : saved === "system"
+              ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "graphite" : "pearl")
+              : "pearl";
+          document.documentElement.dataset.theme = theme;
+          document.documentElement.style.colorScheme = theme === "graphite" ? "dark" : "light";
+        } catch {
+          document.documentElement.dataset.theme = "pearl";
+          document.documentElement.style.colorScheme = "light";
+        }
+      })();
+    </script>
     <style>
-      body { margin: 0; background: #1a1a1c; }
+      body { margin: 0; background: #f4f4f6; }
       #root:empty {
         display: flex;
         align-items: center;
@@ -18,8 +35,8 @@
         content: "";
         width: 32px;
         height: 32px;
-        border: 3px solid rgba(255,255,255,0.1);
-        border-top-color: #8AB4F8;
+        border: 3px solid rgba(0,0,0,0.08);
+        border-top-color: #007aff;
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
       }

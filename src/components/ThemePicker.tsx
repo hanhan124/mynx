@@ -84,7 +84,7 @@ function SystemMockup() {
 export default function ThemePicker({ value, onSelect }: ThemePickerProps) {
   const { t } = useLanguage();
   return (
-    <div className="theme-picker">
+    <div className="theme-picker" role="radiogroup" aria-label={t("theme.title")}>
       {THEMES.map((theme) => {
         const active = theme.id === value;
         const isSystem = theme.id === "system";
@@ -93,6 +93,8 @@ export default function ThemePicker({ value, onSelect }: ThemePickerProps) {
             key={theme.id}
             className={`theme-tile ${active ? "theme-tile--active" : ""}`}
             onClick={() => onSelect(theme.id)}
+            role="radio"
+            aria-checked={active}
           >
             {isSystem
               ? <SystemMockup />
@@ -101,7 +103,6 @@ export default function ThemePicker({ value, onSelect }: ThemePickerProps) {
             <div className="theme-tile-info">
               <div className="theme-tile-labels">
                 <span className="theme-tile-name">{t(`theme.${theme.id}.name`)}</span>
-                <span className="theme-tile-desc">{t(`theme.${theme.id}.description`)}</span>
               </div>
               <span className={`theme-tile-check ${active ? "theme-tile-check--active" : "theme-tile-check--inactive"}`}>
                 <IconCheck size={14} stroke={1.75} />
