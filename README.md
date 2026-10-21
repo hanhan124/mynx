@@ -170,3 +170,5 @@ mynx/
 Mynx 使用 MIT 许可证，详见 [LICENSE](./LICENSE)。
 
 Copyright © 2024-2026 Han
+
+本项目由 https://www.relixapi.top/ 支持并提供优质 token。
