@@ -7,6 +7,7 @@ import { IconGripVertical, IconRotate, IconPlus, IconBan } from "@tabler/icons-r
 import { showToast } from "@/components/Toast";
 import { useRnaSeq } from "./store";
 import { useLanguage } from "@/lib/i18n";
+import { cleanGeneList } from "@/lib/rnaseq/defaults";
 import {
   CheckChips,
   ColorField,
@@ -158,10 +159,10 @@ export function MarkerGenesField({ hint }: { hint: string }) {
           onChange={(e) => {
             setText(e.target.value);
             updateConfig((c) => {
-              c.marker_genes = e.target.value
-                .split(/[,;\s]+/)
-                .map((s) => s.trim())
-                .filter(Boolean);
+              // 顺带去掉用户从论文/Excel 粘贴时带来的引号
+              c.marker_genes = cleanGeneList(
+                e.target.value.split(/[,;\s]+/).map((s) => s.trim()),
+              );
             });
           }}
         />
@@ -631,12 +632,12 @@ export function SpecificParams({ plotId }: { plotId: string }) {
     case "heatmap":
       return (
         <>
-          <SectionLabel>{l("热图设置", "Heatmap settings")}</SectionLabel>
+          <SectionLabel>{l("基因行集", "Gene set")}</SectionLabel>
           <div className="rx-param-row">
             <SwitchField
               label="显示所有基因"
               checked={o.use_all_genes}
-              hint="不过滤，显示全部基因。超过 5,000 个基因时，请明确选择 K-means 或不聚类；SVG/PDF 可保持矢量热图"
+              hint="关闭时只画候选 DEG，与参考脚本一致。用于探索性查看全转录组"
               onChange={(v) => set("use_all_genes", v)}
             />
             <NumField
@@ -645,8 +646,18 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               step={100}
               min={0}
               placeholder={l("不限制", "Unlimited")}
+              hint="0 = 不限制。层次聚类上限 5000 行，超出会自动按表达方差截断"
               onChange={(v) => set("max_genes", v ?? 0)}
             />
+            <SwitchField
+              label="强制保留标记基因"
+              checked={o.include_markers ?? false}
+              hint="把标记基因一并加入行集，即使它们未通过 DEG 阈值"
+              onChange={(v) => set("include_markers", v)}
+            />
+          </div>
+          <SectionLabel>{l("行聚类与分簇", "Row clustering")}</SectionLabel>
+          <div className="rx-param-row">
             <SelectField
               label="行聚类方法"
               value={o.row_clustering_method ?? "hierarchical"}
@@ -657,28 +668,6 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               ]}
               onChange={(v) => set("row_clustering_method", v)}
             />
-            <SelectField
-              label="行排序"
-              value={o.row_order ?? "cluster_first_column_desc"}
-              options={(o.row_clustering_method ?? "hierarchical") === "none"
-                ? [
-                    { value: "input", label: l("保留输入顺序", "Keep input order") },
-                    { value: "first_column_desc", label: l("首列高到低", "First column high→low") },
-                    { value: "first_column_asc", label: l("首列低到高", "First column low→high") },
-                  ]
-                : [
-                    { value: "cluster_first_column_desc", label: l("簇优先·首列高到低", "Clusters, first column high→low") },
-                    { value: "cluster", label: l("仅按聚类顺序", "Cluster order only") },
-                    { value: "first_column_desc", label: l("首列高到低", "First column high→low") },
-                    { value: "first_column_asc", label: l("首列低到高", "First column low→high") },
-                  ]}
-              onChange={(v) => set("row_order", v)}
-            />
-            <SwitchField
-              label="栅格化热图"
-              checked={o.use_raster}
-              onChange={(v) => set("use_raster", v)}
-            />
             {(o.row_clustering_method ?? "hierarchical") !== "none" && (
               <NumField
                 label={(o.row_clustering_method ?? "hierarchical") === "kmeans" ? "K-means 簇数 k" : "树切分簇数 k"}
@@ -687,15 +676,60 @@ export function SpecificParams({ plotId }: { plotId: string }) {
                 min={1}
                 hint={(o.row_clustering_method ?? "hierarchical") === "kmeans"
                   ? "K-means 的聚类中心数；固定随机种子以保证可复现"
-                  : "将层次聚类树切分为 k 个展示簇，不代表统计显著性"}
+                  : "将层次聚类树切分为 k 个展示簇，不代表统计显著性；参考脚本默认为 3"}
                 onChange={(v) => set("k_clusters", v)}
               />
             )}
+            {(o.row_clustering_method ?? "hierarchical") !== "none" && <>
+              <SwitchField
+                label="Cluster 注释"
+                checked={o.show_cluster_annotation}
+                onChange={(v) => set("show_cluster_annotation", v)}
+              />
+              <SwitchField
+                label="显示簇名称图例"
+                checked={o.show_cluster_legend ?? false}
+                hint="显示右侧 Cluster 图例中的簇名称，不影响注释色条"
+                onChange={(v) => set("show_cluster_legend", v)}
+              />
+            </>}
+            {(o.row_clustering_method ?? "hierarchical") !== "none" && o.show_cluster_annotation && (
+              <SelectField
+                label="Cluster 配色"
+                value={o.cluster_palette ?? "default_igv"}
+                options={CLUSTER_PALETTES.map((p) => ({ value: p.id, label: p.label }))}
+                onChange={(v) => set("cluster_palette", v)}
+              />
+            )}
+          </div>
+          <SectionLabel>{l("基因标注", "Gene labels")}</SectionLabel>
+          <div className="rx-param-row">
             <SwitchField
               label="标记基因标签"
               checked={o.show_marker_labels}
               onChange={(v) => set("show_marker_labels", v)}
             />
+            <NumField
+              label="标记基因字号"
+              value={o.marker_label_size}
+              step={1}
+              min={1}
+              onChange={(v) => set("marker_label_size", v)}
+            />
+            <SwitchField
+              label="行名(基因名)"
+              checked={o.show_row_names}
+              onChange={(v) => set("show_row_names", v)}
+            />
+            {o.show_row_names && (
+              <NumField
+                label="基因名字号"
+                value={o.row_names_size}
+                step={1}
+                min={1}
+                onChange={(v) => set("row_names_size", v)}
+              />
+            )}
             <SwitchField
               label="列名(分组)"
               checked={o.show_column_names}
@@ -707,18 +741,6 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               step={15}
               onChange={(v) => set("column_names_rot", v)}
             />
-            <SwitchField
-              label="行名(基因名)"
-              checked={o.show_row_names}
-              onChange={(v) => set("show_row_names", v)}
-            />
-            <NumField
-              label="基因名字号"
-              value={o.row_names_size}
-              step={1}
-              min={1}
-              onChange={(v) => set("row_names_size", v)}
-            />
             <NumField
               label="分组名字号"
               value={o.column_names_size}
@@ -726,27 +748,9 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               min={1}
               onChange={(v) => set("column_names_size", v)}
             />
-            <NumField
-              label="标记基因字号"
-              value={o.marker_label_size}
-              step={1}
-              min={1}
-              onChange={(v) => set("marker_label_size", v)}
-            />
-            <NumField
-              label="图例标题字号"
-              value={o.legend_title_size}
-              step={1}
-              min={1}
-              onChange={(v) => set("legend_title_size", v)}
-            />
-            <NumField
-              label="图例文字字号"
-              value={o.legend_text_size}
-              step={1}
-              min={1}
-              onChange={(v) => set("legend_text_size", v)}
-            />
+          </div>
+          <SectionLabel>{l("色阶", "Color scale")}</SectionLabel>
+          <div className="rx-param-row">
             <SelectField
               label="热图配色"
               value={o.heatmap_palette ?? "Blue-Red 2"}
@@ -772,27 +776,9 @@ export function SpecificParams({ plotId }: { plotId: string }) {
               hint="调色板中点（通常为白色）对应的 Z 值；需位于上下限之间"
               onChange={(v) => set("zscore_center", v)}
             />
-            {(o.row_clustering_method ?? "hierarchical") !== "none" && <>
-              <SwitchField
-                label="Cluster 注释"
-                checked={o.show_cluster_annotation}
-                onChange={(v) => set("show_cluster_annotation", v)}
-              />
-              <SwitchField
-                label="显示簇名称图例"
-                checked={o.show_cluster_legend ?? false}
-                hint="显示右侧 Cluster 图例中的簇名称，不影响注释色条"
-                onChange={(v) => set("show_cluster_legend", v)}
-              />
-            </>}
-            {(o.row_clustering_method ?? "hierarchical") !== "none" && o.show_cluster_annotation && (
-              <SelectField
-                label="Cluster 配色"
-                value={o.cluster_palette ?? "Catppuccin Mocha"}
-                options={CLUSTER_PALETTES.map((p) => ({ value: p.id, label: p.label }))}
-                onChange={(v) => set("cluster_palette", v)}
-              />
-            )}
+          </div>
+          <SectionLabel>{l("列顺序与基因集", "Columns & genes")}</SectionLabel>
+          <div className="rx-param-row">
             <ColumnOrderField plotId={plotId} />
             <MarkerGenesField hint="热图行标注;也用于火山图标注与小提琴图默认基因" />
             <ExcludedGenesField hint="绘制前从表达矩阵剔除;也作用于 PCA" />

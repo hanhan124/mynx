@@ -397,6 +397,11 @@ if (new Set(HEAT_PALETTES.map((palette) => palette.id)).size !== HEAT_PALETTES.l
 /** Cluster 注释配色(离散分类) */
 export const CLUSTER_PALETTES: { id: string; label: string; colors: string[] }[] = [
   {
+    id: "default_igv",
+    label: "IGV Default",
+    colors: ["#5050FF", "#CE3D32", "#749B58", "#F0E685", "#466983", "#BA6338"],
+  },
+  {
     id: "npg",
     label: "NPG",
     colors: ["#E64B35", "#4DBBD5", "#00A087", "#3C5488", "#F39B7F", "#8491B4"],

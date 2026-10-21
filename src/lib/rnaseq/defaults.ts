@@ -148,31 +148,39 @@ export function defaultPlotOptions(): PlotOptions {
       ...subset,
       row_clustering_method: "hierarchical",
       k_clusters: 3,
-      show_marker_labels: false,
+      // 与 2.heatmap.R 一致：默认展示左侧关键基因标记。
+      show_marker_labels: true,
+      // 与 2.heatmap.R 一致：热图行集只取候选 DEG。开启后强制保留标记基因。
+      include_markers: false,
       show_legend: true,
       legend_position: "right",
       show_column_names: true,
       column_names_rot: 0,
       show_row_names: false,
       row_names_size: 6,
-      column_names_size: 9,
-      marker_label_size: 6,
+      column_names_size: 16,
+      marker_label_size: 12,
       legend_title_size: 10,
       legend_text_size: 9,
       use_all_genes: false,
-      width: 7.5,
-      height: 10,
+      // 与 2.heatmap.R 的 pdf(width=8, height=12) 一致。
+      width: 8,
+      height: 12,
       heatmap_palette: "Blue-Red 2",
       zscore_min: -2,
       zscore_max: 2,
       zscore_center: 0,
-      cluster_palette: "Catppuccin Mocha",
+      // 参考脚本使用 ggsci::default_igv 作为 Cluster 色带。
+      cluster_palette: "default_igv",
       show_cluster_annotation: true,
       show_cluster_legend: false,
       column_group_order: [] as string[],
+      // 0 = 不限制。全基因模式下行数可达 1.8 万，超过 5000 行时层次聚类
+      // 会因 O(n²) 距离矩阵直接失败，因此默认给一个与聚类上限匹配的上限；
+      // 需要更高上限可手动调大，或把行聚类方法改为 K-means / 不聚类。
       max_genes: 2000,
       use_raster: false,
-      row_order: "cluster_first_column_desc",
+      row_order: "cluster",
     },
     select_heatmap: {
       ...subset,
@@ -486,7 +494,8 @@ export function defaultConfig(): Config {
     gene_clusters: JSON.parse(JSON.stringify(DEFAULT_GENE_CLUSTERS)),
     excluded_genes: [],
     steps: ALL_STEPS.map((s) => s.id),
-    plot_formats: ["pdf", "png"],
+    // 参考脚本默认导出 300 DPI PNG；PDF 仍可由用户在导出设置中主动选择。
+    plot_formats: ["png"],
     size_mode: "auto",
     plot_options: defaultPlotOptions(),
     font_family: "sans",
@@ -503,4 +512,28 @@ export function deepMerge<T>(base: T, patch: unknown): T {
     out[k] = deepMerge(out[k], (patch as Record<string, unknown>)[k]);
   }
   return out as T;
+}
+
+/**
+ * 清洗基因名列表:去掉首尾空白与包裹的引号。
+ * 历史 params.json 里出现过 `"RPE65"`（含字面双引号）这类值,会让基因名
+ * 匹配全部失效。与 R 端 norm_gene_names 保持一致。
+ */
+export function cleanGeneList(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((v) => String(v ?? "").trim())
+    .map((v) => v.replace(/^["']+|["']+$/g, "").trim())
+    .filter(Boolean);
+}
+
+/** 清洗 gene_clusters:每个簇的基因列表同样去引号 */
+export function cleanGeneClusters(input: unknown): Record<string, string[]> {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return {};
+  const out: Record<string, string[]> = {};
+  for (const [k, v] of Object.entries(input as Record<string, unknown>)) {
+    const genes = cleanGeneList(v);
+    if (genes.length > 0) out[k] = genes;
+  }
+  return out;
 }

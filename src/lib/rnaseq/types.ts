@@ -108,6 +108,8 @@ export interface HeatmapOptions {
   row_clustering_method?: "hierarchical" | "kmeans" | "none";
   k_clusters?: number;
   show_marker_labels?: boolean;
+  /** 强制把标记基因/功能簇基因保留在热图行集内，即使它们未通过 DEG 筛选 */
+  include_markers?: boolean;
   show_legend?: boolean;
   legend_position?: string;
   show_column_names?: boolean;
@@ -140,7 +142,6 @@ export interface HeatmapOptions {
   /** 自动热图行排序策略 */
   row_order?:
     | "cluster"
-    | "cluster_first_column_desc"
     | "first_column_desc"
     | "first_column_asc"
     | "input";

@@ -145,12 +145,18 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
     updateConfig((c) => {
       const po = c.plot_options as Record<string, Record<string, number>>;
       for (const id of Object.keys(po)) {
+        // 参考热图脚本固定为 8 × 12 in；期刊版式预设不应覆盖它。
+        if (id === "heatmap") {
+          po[id].width = 8;
+          po[id].height = 12;
+          continue;
+        }
         po[id].width = p.w;
         po[id].height = p.h;
       }
     });
     showToast(
-      `已应用「${p.label}」预设到全部 ${Object.keys(config.plot_options).length} 种图`,
+      `已应用「${p.label}」预设；整体热图保持参考脚本的 8 × 12 英寸`,
       "success",
     );
   };
@@ -239,12 +245,14 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
         return;
       }
       const snap = plotOptionSnapshot(plotType);
+      // 参数未变时不必重跑 R(每次预览要几秒),但必须给用户明确反馈——
+      // 静默 return 会让人以为「点了没反应」。已生成的图会保持在预览位。
       if (preview && lastPreviewSnap.current[plotType] === snap) {
         if (!silent)
           showToast(
             l(
-              "参数未变化,预览已是最新;调整参数或点「导出此图」",
-              "Parameters are unchanged and the preview is current; adjust parameters or export the plot",
+              "参数未变化,当前预览已是最新;调整参数后会重新生成",
+              "Parameters unchanged — the current preview is up to date. Adjust parameters to regenerate.",
             ),
             "info",
           );
@@ -267,10 +275,11 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
         }
         if (preview) lastPreviewSnap.current[plotType] = snap;
         if (!silent) {
+          const imageDir = joinPath(result.outputDir, "figures");
           showToast(
             preview
               ? `快速预览 ${plotLabel(plotType)}(低分辨率 PNG)`
-              : `正在导出 ${plotLabel(plotType)},日志见下方`,
+              : `已导出 ${plotLabel(plotType)}；图片在 ${imageDir}`,
             "success",
           );
         }
@@ -541,6 +550,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
 
   const activePreview = activeId ? cardThumb(activeId) : null;
   const activePreviewFile = activeId ? latestPlotFile(activeId) : null;
+  const plotFilesDir = plotOutputDir ? joinPath(plotOutputDir, "figures") : null;
   const previewRunning =
     !!exportingPlot &&
     exportingPlot === activeId &&
@@ -972,9 +982,22 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
               </div>
             </header>
 
+            {plotFilesDir && (
+              <div className="rx-export-location">
+                <span>
+                  <IconFolderOpen size={13} stroke={1.75} />
+                  {l("导出图片文件夹", "Exported images folder")}
+                </span>
+                <code title={plotFilesDir}>{plotFilesDir}</code>
+                <button className="btn" onClick={() => void openInShell(plotFilesDir)}>
+                  <IconFolderOpen size={12} stroke={1.75} /> {l("打开", "Open")}
+                </button>
+              </div>
+            )}
+
             {/* 预览 */}
             <div
-              className={`rx-work-preview${activePreview ? "" : " empty"}${previewRunning ? " running" : ""}`}
+              className={`rx-work-preview${activePreview ? "" : " empty"}${previewRunning ? " running" : ""}${activePlot?.id === "heatmap" ? " heatmap-preview" : ""}`}
               onClick={() => {
                 if (activePreview && !previewRunning && activePreviewFile)
                   setViewerFile(activePreviewFile);
@@ -1195,11 +1218,11 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
             <div className="rx-title-actions" style={{ marginBottom: 8 }}>
               <button
                 className="btn"
-                disabled={!plotOutputDir}
-                onClick={() => plotOutputDir && void openInShell(plotOutputDir)}
+                disabled={!plotFilesDir}
+                onClick={() => plotFilesDir && void openInShell(plotFilesDir)}
               >
                 <IconFolderOpen size={12} stroke={1.75} />{" "}
-                {l("打开输出目录", "Open output directory")}
+                {l("打开图片文件夹", "Open images folder")}
               </button>
               <button
                 className="btn"

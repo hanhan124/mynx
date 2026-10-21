@@ -322,13 +322,38 @@ export async function runR(
   const outputDir = joinPath(outputBase, runName);
 
   // params.json 先写到临时目录(fs 插件可写),再由包装 shell 复制到目标
-  // (目标目录可在任意磁盘,绕开 fs 作用域限制)
+  // (目标目录可在任意磁盘,绕开 fs 作用域限制)。Rscript 始终读取临时文件。
+  // 部分 Windows R 运行时无法读取含中文字符的工作目录；此时把整次运算
+  // 放到 ASCII 临时目录，成功后由 PowerShell 复制回用户选定的输出位置。
   const { writeFile, remove } = await import("@tauri-apps/plugin-fs");
   const { tempDir } = await import("@tauri-apps/api/path");
   const tmp = await tempDir();
-  const tmpParams = joinPath(tmp, `mynx_rnaseq_params_${Date.now()}.json`);
-  await writeFile(tmpParams, new TextEncoder().encode(JSON.stringify(cfg, null, 2)));
-  const paramsPath = joinPath(outputDir, "params.json");
+  const hasNonAsciiOutput = [...outputDir].some((ch) => (ch.codePointAt(0) ?? 0) > 127);
+  const useWindowsAsciiStage = win && hasNonAsciiOutput;
+  const stageBase = useWindowsAsciiStage
+    ? joinPath(tmp, `mynx_rnaseq_stage_${taskId}`)
+    : "";
+  const stageOutputDir = useWindowsAsciiStage ? joinPath(stageBase, runName) : "";
+  const runnerCfg: Config = useWindowsAsciiStage
+    ? { ...cfg, output_dir: stageBase }
+    : cfg;
+  const tmpRunnerParams = joinPath(tmp, `mynx_rnaseq_runner_${taskId}.json`);
+  const tmpTargetParams = useWindowsAsciiStage
+    ? joinPath(tmp, `mynx_rnaseq_target_${taskId}.json`)
+    : tmpRunnerParams;
+  await writeFile(
+    tmpRunnerParams,
+    new TextEncoder().encode(JSON.stringify(runnerCfg, null, 2)),
+  );
+  if (tmpTargetParams !== tmpRunnerParams) {
+    await writeFile(
+      tmpTargetParams,
+      new TextEncoder().encode(JSON.stringify(cfg, null, 2)),
+    );
+  }
+  // 脚本标准布局：可供 GUI 复用的 JSON 放在 prepared/，根目录保留
+  // analysis_parameters.txt 供人工审阅；runs.ts 对旧版根目录 params.json 仍兼容读取。
+  const paramsPath = joinPath(outputDir, "prepared", "params.json");
 
   // 取消实现占位:promise executor 内替换
   let cancelImpl: () => Promise<void> = async () => {};
@@ -345,7 +370,10 @@ export async function runR(
     const settle = () => {
       if (settled) return;
       settled = true;
-      void remove(tmpParams).catch(() => {});
+      void remove(tmpRunnerParams).catch(() => {});
+      if (tmpTargetParams !== tmpRunnerParams) {
+        void remove(tmpTargetParams).catch(() => {});
+      }
       resolve(result);
     };
 
@@ -363,6 +391,12 @@ export async function runR(
     callbacks.onLog?.("info", `输出目录: ${outputDir}`);
     callbacks.onLog?.("info", `步骤: ${cfg.steps.join(", ")}`);
     callbacks.onLog?.("info", `图格式: ${(cfg.plot_formats ?? []).join(", ") || "png"}`);
+    if (useWindowsAsciiStage) {
+      callbacks.onLog?.(
+        "info",
+        "输出路径含中文字符：将在临时工作目录运行 R，完成后自动复制回此处",
+      );
+    }
     callbacks.onLog?.("info", "─".repeat(50));
 
     let cancelled = false;
@@ -378,10 +412,33 @@ export async function runR(
       if (win) {
         // 注意:New-Item 在 Windows PowerShell 5.1 没有 -LiteralPath,
         // 用 .NET CreateDirectory 才能稳健处理任意(含方括号/Unicode)路径
-        const script =
-          `[System.IO.Directory]::CreateDirectory(${psQuote(outputDir)}) | Out-Null; ` +
-          `Copy-Item -LiteralPath ${psQuote(tmpParams)} -Destination ${psQuote(paramsPath)} -Force; ` +
-          `& ${psQuote(rscript)} ${psQuote(runnerR)} ${psQuote(paramsPath)}`;
+        const script = useWindowsAsciiStage
+          ? [
+              "$ErrorActionPreference = 'Stop'",
+              `[System.IO.Directory]::CreateDirectory(${psQuote(outputDir)}) | Out-Null`,
+              `[System.IO.Directory]::CreateDirectory(${psQuote(joinPath(outputDir, "prepared"))}) | Out-Null`,
+              `[System.IO.Directory]::CreateDirectory(${psQuote(stageBase)}) | Out-Null`,
+              "$exitCode = 1",
+              "try {",
+              `Copy-Item -LiteralPath ${psQuote(outputDir)} -Destination ${psQuote(stageBase)} -Recurse -Force`,
+              `[System.IO.Directory]::CreateDirectory(${psQuote(stageOutputDir)}) | Out-Null`,
+              `Copy-Item -LiteralPath ${psQuote(tmpTargetParams)} -Destination ${psQuote(paramsPath)} -Force`,
+              `& ${psQuote(rscript)} ${psQuote(runnerR)} ${psQuote(tmpRunnerParams)}`,
+              "$exitCode = $LASTEXITCODE",
+              "if ($exitCode -eq 0) {",
+              `Get-ChildItem -LiteralPath ${psQuote(stageOutputDir)} -Force | Copy-Item -Destination ${psQuote(outputDir)} -Recurse -Force`,
+              `Copy-Item -LiteralPath ${psQuote(tmpTargetParams)} -Destination ${psQuote(paramsPath)} -Force`,
+              "}",
+              "} finally {",
+              `Remove-Item -LiteralPath ${psQuote(stageBase)} -Recurse -Force -ErrorAction SilentlyContinue`,
+              "}",
+              "exit $exitCode",
+            ].join("\n")
+          :
+              `[System.IO.Directory]::CreateDirectory(${psQuote(outputDir)}) | Out-Null; ` +
+              `[System.IO.Directory]::CreateDirectory(${psQuote(joinPath(outputDir, "prepared"))}) | Out-Null; ` +
+              `Copy-Item -LiteralPath ${psQuote(tmpRunnerParams)} -Destination ${psQuote(paramsPath)} -Force; ` +
+              `& ${psQuote(rscript)} ${psQuote(runnerR)} ${psQuote(tmpRunnerParams)}`;
         command = ShellCommand.create("powershell", [
           "-NoProfile",
           "-ExecutionPolicy",
@@ -392,8 +449,9 @@ export async function runR(
       } else {
         const script =
           `mkdir -p ${shQuote(outputDir)} && ` +
-          `cp ${shQuote(tmpParams)} ${shQuote(paramsPath)} && ` +
-          `exec ${shQuote(rscript)} ${shQuote(runnerR)} ${shQuote(paramsPath)}`;
+          `mkdir -p ${shQuote(joinPath(outputDir, "prepared"))} && ` +
+          `cp ${shQuote(tmpRunnerParams)} ${shQuote(paramsPath)} && ` +
+          `exec ${shQuote(rscript)} ${shQuote(runnerR)} ${shQuote(tmpRunnerParams)}`;
         command = ShellCommand.create("bash", ["-c", script]);
       }
 

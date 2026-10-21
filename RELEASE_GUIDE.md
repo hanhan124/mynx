@@ -1,6 +1,6 @@
 # Mynx 发版指南
 
-适用于 Windows 安装器和 macOS Apple Silicon 安装包。当前版本：**2.3.6**。
+适用于 Windows 安装器和 macOS Apple Silicon 安装包。当前版本：**2.3.8**。
 
 ## 1. GitHub 上传边界
 
@@ -86,14 +86,14 @@ npm run resources:check
 ### 3.1 更新版本和日志
 
 ```bash
-npm version 2.3.6 --no-git-tag-version
+npm version 2.3.8 --no-git-tag-version
 node scripts/sync-version.cjs
 ```
 
 在 `CHANGELOG.md` 顶部添加：
 
 ```markdown
-## [2.3.6] - YYYY-MM-DD
+## [2.3.8] - YYYY-MM-DD
 
 ### 新增 / 优化 / 修复
 - ...
@@ -132,28 +132,28 @@ git diff --cached --name-only
 
 ```bash
 git add -A
-git commit -m "release: v2.3.6"
-git tag -a v2.3.6 -m "release: v2.3.6"
+git commit -m "release: v2.3.8"
+git tag -a v2.3.8 -m "release: v2.3.8"
 git push origin main --follow-tags
 ```
 
 也可以使用脚本完成版本提交和推送：
 
 ```bash
-npm run release -- 2.3.6
+npm run release -- 2.3.8
 ```
 
-该脚本会提交当前工作区、更新版本、创建 `v2.3.6` 标签并推送，请确认工作区内容后再运行。
+该脚本会提交当前工作区、更新版本、创建 `v2.3.8` 标签并推送，请确认工作区内容后再运行。
 
 ## 4. GitHub Actions 构建结果
 
-推送 `v2.3.6` 后，`.github/workflows/release.yml` 会执行：
+推送 `v2.3.8` 后，`.github/workflows/release.yml` 会执行：
 
 1. 校验 tag、主应用、安装器及全部锁文件的版本一致性，并检查 R 运行时资源。
 2. 在 Windows 与 macOS 上运行前端数据契约和 Rust 测试。
 3. Windows 构建主程序和自建安装器，并生成签名。
 4. macOS 14 构建 Apple Silicon `.dmg`、`.app.tar.gz` 和签名。
-5. 从 `CHANGELOG.md` 提取 `2.3.6` 更新摘要，并生成 `latest.json` 和 GitHub Release。
+5. 从 `CHANGELOG.md` 提取 `2.3.8` 更新摘要，并生成 `latest.json` 和 GitHub Release。
 
 Release 页面至少应有：
 
@@ -207,8 +207,8 @@ Tauri updater 的私钥签名与 Apple Developer ID 签名不同，不能替代�
 4. 重新创建并推送同名 tag。
 
 ```bash
-git tag -d v2.3.6
-git push origin :refs/tags/v2.3.6
-git tag -a v2.3.6 -m "release: v2.3.6"
+git tag -d v2.3.8
+git push origin :refs/tags/v2.3.8
+git tag -a v2.3.8 -m "release: v2.3.8"
 git push origin main --follow-tags
 ```

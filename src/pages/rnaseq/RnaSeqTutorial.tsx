@@ -519,28 +519,27 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
             <p className="tutorial__subtitle-inline">输出目录内容</p>
             <ul>
               <li>
-                <code>RNAseq_Analysis_Results.xlsx</code> — 总表:Normalized_Matrix /
+                <code>DEG/RNAseq_Analysis_Results.xlsx</code> — 总表:Normalized_Matrix /
                 Candidate_Genes / 每比较 All 与 DEGs / Analysis_Meta(参数记录)
               </li>
               <li>
-                <code>&lt;Comp&gt;_DEGs.csv</code> — 每个比较的差异基因列表
+                <code>DEG/&lt;Comp&gt;_DEGs.csv</code> — 每个比较的差异基因列表
               </li>
               <li>
-                <code>plots/</code> — 全部图表(PNG 300dpi / SVG / PDF 可选)
+                <code>figures/</code> — 全部图表(PNG 300dpi / SVG / PDF 可选)
               </li>
               <li>
-                <code>Analysis_Report.md</code> — 自动生成的方法学描述(可直接用于论文
-                Methods)
+                <code>run_report.txt</code> — 自动生成的运行与方法学报告
               </li>
               <li>
-                <code>sample_correlation.*</code> / <code>sample_distance.*</code> —
+                <code>figures/sample_correlation.*</code> / <code>figures/sample_distance.*</code> —
                 样本相关性与距离 QC 热图
               </li>
               <li>
-                <code>session_info.txt</code> — R 与全部已加载 R 包的版本信息
+                <code>prepared/session_info.txt</code> — R 与全部已加载 R 包的版本信息
               </li>
               <li>
-                <code>params.json</code> — 本次全部参数(可用于复现/还原配置)
+                <code>analysis_parameters.txt</code> / <code>prepared/params.json</code> — 本次全部参数
               </li>
             </ul>
           </section>
@@ -831,27 +830,27 @@ function EnglishRnaSeqTutorial({ onClose }: { onClose: () => void }) {
             <h2 className="tutorial__h2">📦 Outputs</h2>
             <ul>
               <li>
-                <code>RNAseq_Analysis_Results.xlsx</code> — normalized matrix, candidate
+                <code>DEG/RNAseq_Analysis_Results.xlsx</code> — normalized matrix, candidate
                 genes, and per-comparison results
               </li>
               <li>
-                <code>&lt;Comparison&gt;_DEGs.csv</code> — differential-gene tables
+                <code>DEG/&lt;Comparison&gt;_DEGs.csv</code> — differential-gene tables
               </li>
               <li>
-                <code>plots/</code> — exported PNG, SVG, and/or PDF figures
+                <code>figures/</code> — exported PNG, SVG, and/or PDF figures
               </li>
               <li>
-                <code>Analysis_Report.md</code> — generated methods summary
+                <code>run_report.txt</code> — generated run and methods summary
               </li>
               <li>
-                <code>Analysis_Metadata.csv</code> — thresholds, normalization, model, and
+                <code>prepared/Analysis_Metadata.csv</code> — thresholds, normalization, model, and
                 filtering record
               </li>
               <li>
-                <code>session_info.txt</code> — exact R and loaded-package versions
+                <code>prepared/session_info.txt</code> — exact R and loaded-package versions
               </li>
               <li>
-                <code>params.json</code> — reproducible run settings
+                <code>analysis_parameters.txt</code> / <code>prepared/params.json</code> — reproducible settings
               </li>
             </ul>
           </section>

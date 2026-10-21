@@ -17,6 +17,28 @@ import { defaultOutputBase } from "./runner.ts";
 import type { Config, PlotFileContent, PlotFileItem, RunItem } from "./types.ts";
 
 export const EXCEL_NAME = "RNAseq_Analysis_Results.xlsx";
+const EXCEL_LOCATIONS = [["DEG", EXCEL_NAME], [EXCEL_NAME]] as const;
+const FIGURE_DIR_NAMES = ["figures", "plots"] as const;
+
+/** 新版输出遵循 RNAseq_workflow.R：结果在 DEG/；保留平铺式旧目录的读取兼容。 */
+async function findExcelFile(runDir: string): Promise<string | null> {
+  for (const parts of EXCEL_LOCATIONS) {
+    const file = joinPath(runDir, ...parts);
+    const st = await statAny(file);
+    if (st && !st.isDir) return file;
+  }
+  return null;
+}
+
+/** figures/ 是脚本标准名；plots/ 仅用于读取旧版本结果。 */
+async function findFigureDir(runDir: string): Promise<string | null> {
+  for (const name of FIGURE_DIR_NAMES) {
+    const dir = joinPath(runDir, name);
+    const st = await statAny(dir);
+    if (st?.isDir) return dir;
+  }
+  return null;
+}
 
 async function listSubDirs(base: string): Promise<string[]> {
   try {
@@ -34,11 +56,11 @@ async function scanRuns(base: string): Promise<RunItem[]> {
   for (const name of names) {
     try {
       const d = joinPath(base, name);
-      const excelStat = await statAny(joinPath(d, EXCEL_NAME));
+      const excelFile = await findExcelFile(d);
       let nPlots: number;
       try {
-        const plots = await readDirAny(joinPath(d, "plots"));
-        nPlots = plots.length;
+        const figuresDir = await findFigureDir(d);
+        nPlots = figuresDir ? (await readDirAny(figuresDir)).length : 0;
       } catch {
         nPlots = 0;
       }
@@ -46,7 +68,7 @@ async function scanRuns(base: string): Promise<RunItem[]> {
       items.push({
         name,
         base_dir: base,
-        has_excel: !!excelStat,
+        has_excel: !!excelFile,
         n_plots: nPlots,
         mtime: dirStat ? fmtDateTime(dirStat.mtimeMs) : "",
       });
@@ -97,22 +119,24 @@ export async function validateAnalysisDir(path: string): Promise<ValidatedDir> {
   const st = await statAny(p);
   if (!st || !st.isDir) return { found: false, error: `目录不存在: ${p}` };
 
-  if (await statAny(joinPath(p, EXCEL_NAME))) {
+  const directExcel = await findExcelFile(p);
+  if (directExcel) {
     return {
       found: true,
       run_name: pathBase(p),
       output_dir: parentOf(p),
-      excel_file: joinPath(p, EXCEL_NAME),
+      excel_file: directExcel,
     };
   }
   for (const name of (await listSubDirs(p)).sort().reverse()) {
     const d = joinPath(p, name);
-    if (await statAny(joinPath(d, EXCEL_NAME))) {
+    const excelFile = await findExcelFile(d);
+    if (excelFile) {
       return {
         found: true,
         run_name: name,
         output_dir: p,
-        excel_file: joinPath(d, EXCEL_NAME),
+        excel_file: excelFile,
       };
     }
   }
@@ -133,7 +157,7 @@ export async function hasAnalysisResult(
 ): Promise<{ found: boolean; run_name?: string; output_dir?: string }> {
   const scanDir = async (base: string) => {
     for (const name of (await listSubDirs(base)).sort().reverse()) {
-      if (await statAny(joinPath(joinPath(base, name), EXCEL_NAME))) {
+      if (await findExcelFile(joinPath(base, name))) {
         return { name, base };
       }
     }
@@ -145,7 +169,7 @@ export async function hasAnalysisResult(
     const rn = config.run_name?.trim() ?? "";
     if (rn && rn !== "auto") {
       const d = joinPath(ob, rn);
-      if (await statAny(joinPath(d, EXCEL_NAME))) {
+      if (await findExcelFile(d)) {
         return { found: true, run_name: rn, output_dir: ob };
       }
     }
@@ -186,21 +210,27 @@ export async function loadAnalysisResult(
     has_params: false,
   };
   if (loadParams) {
-    try {
-      const text = await readTextAny(joinPath(runPath, "params.json"));
-      const cfg = JSON.parse(text) as Record<string, unknown>;
-      // 强制对齐本次结果目录,避免 params 里旧 output_dir 覆盖
-      cfg.output_dir = outDir;
-      cfg.run_name = runName;
-      result.params = cfg;
-      result.has_params = true;
-    } catch {
-      /* params 缺失或损坏不阻塞 */
+    for (const paramsFile of [
+      joinPath(runPath, "prepared", "params.json"),
+      joinPath(runPath, "params.json"),
+    ]) {
+      try {
+        const text = await readTextAny(paramsFile);
+        const cfg = JSON.parse(text) as Record<string, unknown>;
+        // 强制对齐本次结果目录,避免 params 里旧 output_dir 覆盖
+        cfg.output_dir = outDir;
+        cfg.run_name = runName;
+        result.params = cfg;
+        result.has_params = true;
+        break;
+      } catch {
+        /* 尝试下一种目录布局 */
+      }
     }
   }
   try {
-    const plots = await readDirAny(joinPath(runPath, "plots"));
-    result.n_plots = plots.length;
+    const figuresDir = await findFigureDir(runPath);
+    result.n_plots = figuresDir ? (await readDirAny(figuresDir)).length : 0;
   } catch {
     result.n_plots = 0;
   }
@@ -213,7 +243,8 @@ export async function plotFiles(
   runName: string,
 ): Promise<{ files: PlotFileItem[]; dir: string }> {
   const base = outputDir || (await defaultOutputBase());
-  const dir = joinPath(joinPath(base, runName), "plots");
+  const runDir = joinPath(base, runName);
+  const dir = (await findFigureDir(runDir)) ?? joinPath(runDir, "figures");
   const files: PlotFileItem[] = [];
   try {
     const entries = await readDirAny(dir);

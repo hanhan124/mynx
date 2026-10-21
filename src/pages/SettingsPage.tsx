@@ -42,7 +42,7 @@ export default function SettingsPage() {
   const openWebsite = async () => {
     if (!isTauri) return;
     const { open } = await import("@tauri-apps/plugin-shell");
-    await open("https://www.fanguanghan.homes");
+    await open("https://fanguanghan.dpdns.org/");
   };
 
   const settingsSections = [

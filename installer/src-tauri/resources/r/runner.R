@@ -8,7 +8,7 @@
 #   多重复(每组 ≥2 个样本)  → 标准 DESeq2
 #
 # 作图代码严格对齐 old/ 目录原脚本格式,仅把硬编码参数改为从 JSON 读取。
-# 输出:<output_dir>/<run_name>/plots/*.svg (+可选 pdf) + RNAseq_Analysis_Results.xlsx
+# 输出:<output_dir>/<run_name>/{DEG,figures,prepared} + 可复现性文件
 # =============================================================================
 
 # ─── 0. 读配置 ──────────────────────────────────────────────────────────────
@@ -26,7 +26,13 @@ source(file.path(script_dir, "modules", "io.R"), local = TRUE)
 # %||% 运算符(避免依赖 rlang):NULL 时取后备值
 `%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
 
-cfg <- fromJSON(params_file, simplifyVector = TRUE)
+# jsonlite::fromJSON 对含中文字符的 Windows 文件路径有时会把路径本身误作
+# JSON 文本解析。先显式读取 UTF-8 文件内容，避免单图导出在 params.json
+# 位于 E:\文件\… 等路径时尚未进入 PCA/热图步骤就退出。
+cfg <- fromJSON(
+  paste(readLines(params_file, warn = FALSE, encoding = "UTF-8"), collapse = "\n"),
+  simplifyVector = TRUE
+)
 
 # 便捷别名(沿用旧脚本变量名,便于对照)
 data_file      <- cfg$data_file
@@ -34,8 +40,14 @@ output_base    <- cfg$output_dir
 run_name       <- if (is.null(cfg$run_name) || cfg$run_name == "auto" || cfg$run_name == "")
                     format(Sys.time(), "RNA_seq_%Y%m%d_%H%M%S") else cfg$run_name
 output_dir     <- file.path(output_base, run_name)
-plots_dir      <- file.path(output_dir, "plots")
-excel_file     <- file.path(output_dir, "RNAseq_Analysis_Results.xlsx")
+# 与 RNAseq_workflow.R 的归档格式一致：结果、图和预处理产物分目录保存，
+# 根目录仅保留参数、prepared_data.rds 与运行报告，便于论文项目归档。
+deg_dir        <- file.path(output_dir, "DEG")
+figures_dir    <- file.path(output_dir, "figures")
+prepared_dir   <- file.path(output_dir, "prepared")
+plots_dir      <- figures_dir
+excel_file     <- file.path(deg_dir, "RNAseq_Analysis_Results.xlsx")
+legacy_excel_file <- file.path(output_dir, "RNAseq_Analysis_Results.xlsx")
 
 group_info     <- as.list(cfg$groups)                # list(组名 = c(样本...))
 group_display  <- cfg$group_display
@@ -50,9 +62,39 @@ if (is.null(comparison_raw) || length(comparison_raw) == 0) {
 } else {
   comparisons <- lapply(comparison_raw, as.character)
 }
-marker_genes   <- as.character(cfg$marker_genes)
-gene_clusters  <- as.list(cfg$gene_clusters)
-excluded_genes <- as.character(cfg$excluded_genes)
+# 基因名清洗:历史配置/手工编辑可能把值写成 '"RPE65"' 这种带引号的字面量
+# （旧版 params.json 中实际出现过），导致 tolower('"rpe65"') 永远匹配不到
+# 矩阵里的 rpe65，表现为「标记基因一个都没命中」。这里统一去掉包裹的引号
+# 及首尾空白，避免下游所有匹配点各写一遍。
+norm_gene_names <- function(x) {
+  v <- as.character(x %||% character(0))
+  if (length(v) == 0L) return(character(0))
+  v <- trimws(v)
+  # 剥离成对的单/双引号（'"MITF"'、"MITF"、'MITF' 都要还原成 MITF）
+  v <- gsub("^[\"']+|[\"']+$", "", v)
+  v <- trimws(v)
+  v[nzchar(v)]
+}
+
+marker_genes   <- norm_gene_names(cfg$marker_genes)
+gene_clusters  <- lapply(as.list(cfg$gene_clusters), norm_gene_names)
+excluded_genes <- norm_gene_names(cfg$excluded_genes)
+
+# 基因名匹配统一走大小写不敏感（与参考 2.heatmap.R 的 tolower() 一致）。
+# 直接写 `x %in% rownames(mat)` 会漏掉 "Rpe65"/"mitf" 这类大小写写法。
+# 返回在 `universe` 中实际命中的元素（保留 universe 的原始大小写），已去重。
+# 注意：必须用 match() 的下标去取 universe；用逻辑掩码索引会因长度循环
+# 而返回整个 universe（曾导致热图意外收进全部基因）。
+match_genes_ci <- function(genes, universe) {
+  genes <- as.character(genes)
+  if (length(genes) == 0L || length(universe) == 0L) return(character(0))
+  idx <- match(tolower(genes), tolower(universe))
+  unique(universe[idx[!is.na(idx)]])
+}
+# 返回 logical 向量，长度与 `genes` 一致，标记每个输入是否命中。
+genes_in_ci <- function(genes, universe) {
+  !is.na(match(tolower(as.character(genes)), tolower(universe)))
+}
 
 p              <- cfg$params
 bcv            <- as.numeric(p$bcv)
@@ -96,7 +138,8 @@ if (preview_mode) {
   message(sprintf("[runner] 快速预览模式 ON (png @ %d dpi)", preview_dpi))
 }
 plot_dpi <- if (preview_mode) preview_dpi else 300L
-deg_cache_rds  <- file.path(output_dir, "deg_cache.rds")
+deg_cache_rds  <- file.path(output_dir, "prepared_data.rds")
+legacy_deg_cache_rds <- file.path(output_dir, "deg_cache.rds")
 
 # 统一 sheet 名(与旧脚本契约一致)
 sheet_normalized <- "Normalized_Matrix"
@@ -109,7 +152,13 @@ sample_to_group <- unlist(lapply(names(group_info), function(g)
 
 # ─── 创建目录 ───────────────────────────────────────────────────────────────
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(plots_dir,  recursive = TRUE, showWarnings = FALSE)
+dir.create(deg_dir,    recursive = TRUE, showWarnings = FALSE)
+dir.create(figures_dir,recursive = TRUE, showWarnings = FALSE)
+dir.create(prepared_dir, recursive = TRUE, showWarnings = FALSE)
+tryCatch({
+  # 与参考脚本一致，将本次完整配置以可读、可复用的 R list 写在根目录。
+  dput(cfg, file = file.path(output_dir, "analysis_parameters.txt"), control = "all")
+}, error = function(e) message("[WARN] 写 analysis_parameters.txt 失败: ", conditionMessage(e)))
 
 # ─── 依赖包:按步骤懒加载(单图重绘时跳过 edgeR/DESeq2/ComplexHeatmap 等重包)──
 ensure_pkgs <- function(pkgs) {
@@ -127,8 +176,18 @@ ensure_pkgs <- function(pkgs) {
 
 need_deg_step  <- "deg" %in% steps
 need_heatmap   <- any(c("heatmap", "select_heatmap") %in% steps)
+need_vst        <- any(c("heatmap", "select_heatmap", "pca", "mds") %in% steps)
 need_venn      <- "venn" %in% steps
 need_qc        <- "qc" %in% steps
+# 兼容旧版平铺式结果目录：仅在“读取已有结果、未重跑 DEG”时回退旧文件。
+if (!need_deg_step && !file.exists(deg_cache_rds) && file.exists(legacy_deg_cache_rds)) {
+  deg_cache_rds <- legacy_deg_cache_rds
+  message("[runner] 兼容读取旧缓存: deg_cache.rds")
+}
+if (!need_deg_step && !file.exists(excel_file) && file.exists(legacy_excel_file)) {
+  excel_file <- legacy_excel_file
+  message("[runner] 兼容读取旧结果表: RNAseq_Analysis_Results.xlsx")
+}
 # Excel 仅:跑 DEG 写表,或无 RDS 时回退读表
 need_xlsx      <- need_deg_step || !file.exists(deg_cache_rds)
 
@@ -150,16 +209,93 @@ if (need_deg_step) {
     message("[runner] 加载 ComplexHeatmap...")
     ensure_pkgs(c("ComplexHeatmap", "circlize"))
   }
-  # 选定基因热图在缓存路径下按所选样本重算 log2CPM,依赖 edgeR(DGEList/cpm);
-  # DEG 走 DESeq2 时 edgeR 不会随 DEG 步骤加载,单图重绘必须显式加载,否则
-  # "could not find function DGEList" 退出码 1
-  if ("select_heatmap" %in% steps) {
-    message("[runner] 加载 edgeR(选定基因热图重算 log2CPM)...")
-    ensure_pkgs("edgeR")
+  # 参考脚本的热图/PCA 统一使用 DESeq2 VST(blind=TRUE)，即使只重绘旧缓存
+  # 也必须加载 DESeq2 并从原始 counts 重算，不能继续沿用旧版 edgeR log2-CPM。
+  if (need_vst) {
+    message("[runner] 加载 DESeq2(VST blind=TRUE,用于热图/PCA)...")
+    ensure_pkgs("DESeq2")
   }
   if (need_venn) ensure_pkgs("ggvenn")
   # 单独导出样本 QC 时仍需 pheatmap 生成相关性与距离热图。
   if (need_qc) ensure_pkgs("pheatmap")
+}
+
+# ─── 参考脚本 VST 合同 ─────────────────────────────────────────────────────
+# 1.DEG.R 的可视化矩阵逻辑与差异检验逻辑分开：原始 counts 去空基因名、
+# distinct(.keep_all=TRUE) 保留首行、总和 counts >= 10，然后 vst(blind=TRUE)。
+# 这套矩阵用于热图/PCA；DE 检验仍使用下方经过统一预过滤的 countData_sub。
+reference_count_matrix <- function(count_raw, sample_names) {
+  gene_col <- if ("gene_name" %in% colnames(count_raw)) "gene_name"
+              else if ("gene_id" %in% colnames(count_raw)) "gene_id"
+              else colnames(count_raw)[1]
+  keep_gene <- !is.na(count_raw[[gene_col]]) & trimws(as.character(count_raw[[gene_col]])) != ""
+  raw <- count_raw[keep_gene, , drop = FALSE]
+  raw <- raw[!duplicated(raw[[gene_col]]), , drop = FALSE]
+  gene_names <- as.character(raw[[gene_col]])
+  raw[[gene_col]] <- NULL
+  present <- sample_names[sample_names %in% colnames(raw)]
+  if (length(present) < 2L)
+    stop("参考 VST 至少需要 2 个可用样本；请检查分组与 counts 列名。", call. = FALSE)
+  numeric_cols <- vapply(raw, function(x) {
+    vals <- suppressWarnings(as.numeric(x))
+    all(!is.na(vals) & is.finite(vals))
+  }, logical(1))
+  numeric_cols <- numeric_cols & colnames(raw) %in% present
+  if (!any(numeric_cols))
+    stop("原始 counts 中没有可用于参考 VST 的数值样本列。", call. = FALSE)
+  present <- present[present %in% colnames(raw)[numeric_cols]]
+  if (length(present) < 2L)
+    stop("参考 VST 至少需要 2 个数值样本。", call. = FALSE)
+  mat <- as.matrix(raw[, present, drop = FALSE])
+  storage.mode(mat) <- "numeric"
+  if (anyNA(mat) || any(!is.finite(mat)) || any(mat < 0))
+    stop("参考 VST 的原始 counts 含有非数值、缺失值或负数。", call. = FALSE)
+  mat <- round(mat)
+  # gene_names 与 raw 行一一对应；显式赋值避免 read.csv 行名干扰。
+  rownames(mat) <- gene_names
+  mat <- mat[, present, drop = FALSE]
+  mat <- mat[rowSums(mat) >= 10, , drop = FALSE]
+  if (nrow(mat) < 2L)
+    stop("参考 VST 总和 counts >= 10 后基因少于 2 个。", call. = FALSE)
+  mat
+}
+
+reference_vst <- function(count_mat, condition_labels) {
+  if (ncol(count_mat) != length(condition_labels))
+    stop("参考 VST 的样本列与分组标签数量不一致。", call. = FALSE)
+  condition <- factor(as.character(condition_labels), levels = unique(as.character(condition_labels)))
+  col_data <- data.frame(row.names = colnames(count_mat), condition = condition)
+  dds_vst <- DESeq2::DESeqDataSetFromMatrix(countData = count_mat,
+                                             colData = col_data,
+                                             design = ~ condition)
+  vsd <- tryCatch(
+    DESeq2::vst(dds_vst, blind = TRUE),
+    error = function(e) {
+      message("[WARN] 参考 VST 默认子采样失败(", conditionMessage(e),
+              ")，使用全部基因重试")
+      DESeq2::vst(dds_vst, blind = TRUE, nsub = nrow(dds_vst))
+    }
+  )
+  SummarizedExperiment::assay(vsd)
+}
+
+reference_vst_from_config <- function() {
+  raw <- read.csv(data_file, check.names = FALSE, stringsAsFactors = FALSE)
+  requested <- unlist(group_info[selected_groups], use.names = FALSE)
+  mat <- reference_count_matrix(raw, requested)
+  actual <- unlist(lapply(selected_groups, function(g) {
+    ss <- group_info[[g]]
+    rep(g, sum(ss %in% colnames(mat)))
+  }), use.names = FALSE)
+  actual <- actual[match(colnames(mat), requested)]
+  if (anyNA(actual)) {
+    # requested 本身保持组内顺序，正常情况下不会进入；这里提供稳定回退。
+    actual <- unlist(lapply(selected_groups, function(g) {
+      ss <- intersect(group_info[[g]], colnames(mat))
+      rep(g, length(ss))
+    }), use.names = FALSE)
+  }
+  list(mat = reference_vst(mat, actual), sample_names = colnames(mat))
 }
 
 # ─── 工具:智能尺寸(默认对齐 old/ 固定尺寸,极端维度时按数据扩展)─────────────
@@ -167,8 +303,10 @@ if (need_deg_step) {
 # old/ 基准:火山 6×5 / 热图 5×7 / 选定基因热图 7×2 / PCA 6×4 / Venn 5×5 / MA 6×5
 auto_size <- function(plot_type, n_genes = 0, n_samples = 0, n_comparisons = 0, n_clusters = 0, n_sets = 0) {
   switch(plot_type,
-    # old/2: Heatmap 5×7;基因极多时加高(上限 25in)
-    "heatmap" = list(w = max(5, n_samples * 0.8), h = max(7, min(n_genes * 0.04, 25))),
+    # 参考 2.heatmap.R: pdf(width=8, height=12);基因极多时继续加高(上限 25in)。
+    # 画布宽度直接决定左侧 anno_mark 标记基因标签的可用空间，7.5in 会把
+    # 长基因名挤掉，因此与参考脚本统一为 8in。
+    "heatmap" = list(w = max(8, n_samples * 0.8), h = max(12, min(n_genes * 0.04, 25))),
     # old/4: 选定基因热图基准 4.5×5(竖版);基因/样本多时放大
     "select_heatmap" = list(w = max(4.5, n_samples * 0.3 + 3), h = max(5, n_genes * 0.16 + 1.8)),
     # 参考发表预设：PCA / MDS 均为 7×6 in
@@ -577,6 +715,8 @@ run_deg <- function() {
             effective_filter_min_samples, "（最小组重复数 = ", min_group_n, "）")
   }
   forced_genes <- unique(c(marker_genes, unlist(gene_clusters, use.names = FALSE)))
+  # 大小写不敏感地映射到行名，避免 "Rpe65" 写法在低表达过滤阶段被直接丢弃。
+  forced_genes <- c(match_genes_ci(forced_genes, rownames(countData_sub)), forced_genes)
   prefilter_keep <- rowSums(countData_sub >= filter_min_count) >= effective_filter_min_samples |
     rownames(countData_sub) %in% forced_genes
   countData_sub <- countData_sub[prefilter_keep, , drop = FALSE]
@@ -610,6 +750,32 @@ run_deg <- function() {
     condition = factor(safe_levels[actual_groups],
                        levels = as.character(safe_levels[selected_groups]))
   )
+  # 与 RNAseq_workflow.R 对齐：保存本次真正进入分析的计数矩阵与样本归属，
+  # 让 prepared/ 可独立审计，而不必从结果表反推输入。
+  tryCatch({
+    write.csv(countData_sub, file.path(prepared_dir, "counts_filtered.csv"), quote = FALSE)
+    prepared_meta <- data.frame(
+      Sample = selected_samples,
+      Group = actual_groups,
+      stringsAsFactors = FALSE
+    )
+    write.csv(prepared_meta, file.path(prepared_dir, "metadata_selected.csv"), row.names = FALSE)
+    writeLines(c(
+      paste0("Filtered genes: ", nrow(countData_sub)),
+      paste0("Selected samples: ", length(selected_samples)),
+      paste0("Filter: >=", filter_min_count, " counts in >=", effective_filter_min_samples, " sample(s)")
+    ), file.path(prepared_dir, "preparation_log.txt"))
+  }, error = function(e) message("[WARN] 写 prepared 文件失败: ", conditionMessage(e)))
+
+  # 按参考 1.DEG.R 同一套输入与参数生成可视化矩阵。注意这里故意使用
+  # count_raw（distinct 保留首行、总和 counts >= 10），而不是为了 DE 检验
+  # 经过统一预过滤/重复求和的 countData_sub。
+  reference_vst_mat <- reference_vst(
+    reference_count_matrix(count_raw, selected_samples),
+    actual_groups
+  )
+  message("参考 VST(blind=TRUE) 矩阵:", nrow(reference_vst_mat), " 基因 x ",
+          ncol(reference_vst_mat), " 样本")
 
   # 批次作为可选协变量；要求所有纳入样本均有且仅有一个批次归属。
   has_batch <- length(batch_info) > 0L
@@ -747,16 +913,9 @@ run_deg <- function() {
             design = if (has_batch) ~ batch + condition else ~ condition)
     if (filter_rowsum > 0) dds <- dds[rowSums(counts(dds)) >= filter_rowsum, ]
     dds <- DESeq(dds, quiet = TRUE)
-    # VST 归一化:vst 需足够基因数(nsub 默认 1000);基因少时回退到标准 VST(无子采样)
-    n_genes <- nrow(dds)
-    vsd <- tryCatch(
-      vst(dds, blind = FALSE),
-      error = function(e) {
-        message("  vst 失败(", conditionMessage(e), "),回退 nsub=", min(n_genes, 1000))
-        vst(dds, blind = FALSE, nsub = min(n_genes, 1000))
-      }
-    )
-    norm_mat <- assay(vsd)
+    # 热图/PCA 的矩阵已经按参考脚本在 DESeq2 分支外统一计算；这里保留
+    # DESeq2 模型只负责 Wald 检验，避免 blind=FALSE 造成图形随 DE 设计改变。
+    norm_mat <- reference_vst_mat
 
     results_list <- list()
     for (i in comp_indexes) {
@@ -809,9 +968,9 @@ run_deg <- function() {
   deseq2_env <- if (use_deseq2) run_deseq2(regular_comp_idx) else NULL
   result_envs <- Filter(Negate(is.null), list(edge_single_env, edger_qlf_env, deseq2_env))
   results_list <- unlist(lapply(result_envs, `[[`, "results_list"), recursive = FALSE)
-  # DESeq2 VST remains the preferred visualization transform whenever it was
-  # fitted; single-replicate-only runs retain edgeR TMM log2-CPM.
-  norm_mat <- if (!is.null(deseq2_env)) deseq2_env$norm_mat else result_envs[[1]]$norm_mat
+  # 无论差异检验走 DESeq2 还是单重复 edgeR，热图/PCA 均使用参考脚本
+  # 的 DESeq2 VST(blind=TRUE)；edgeR/DESeq2 仅决定差异检验结果。
+  norm_mat <- reference_vst_mat
   mode_flag <- if (length(result_envs) == 1) result_envs[[1]]$mode_flag else "mixed_by_comparison"
   is_single <- use_edgeR_single
   is_treat <- FALSE
@@ -839,8 +998,8 @@ run_deg <- function() {
     sig <- results_list[[nm]] %>% filter(regulation %in% c("up", "down"))
     addWorksheet(wb, paste0(safe, "_DEGs"))
     writeData(wb, paste0(safe, "_DEGs"), sig)
-    write.csv(results_list[[nm]], file.path(output_dir, paste0(safe, "_All.csv")), row.names = FALSE)
-    write.csv(sig,            file.path(output_dir, paste0(safe, "_DEGs.csv")), row.names = FALSE)
+    write.csv(results_list[[nm]], file.path(deg_dir, paste0(safe, "_All.csv")), row.names = FALSE)
+    write.csv(sig,            file.path(deg_dir, paste0(safe, "_DEGs.csv")), row.names = FALSE)
   }
 
   # 输入文件校验和(精确复现用;MD5 来自 base R tools 包)
@@ -894,7 +1053,7 @@ run_deg <- function() {
               if (has_batch) nlevels(colData$batch) else 0L,
               length(selected_groups), ncol(countData_sub),
               length(comparisons),
-              if (!is.null(deseq2_env)) "VST (blind=FALSE)" else "log2-CPM (TMM, prior.count=2)",
+              "VST (blind=TRUE; reference script)",
               is_single, input_md5, as.character(Sys.Date()))
   )
   addWorksheet(wb, sheet_meta)
@@ -917,8 +1076,8 @@ run_deg <- function() {
     ),
     stringsAsFactors = FALSE
   )
-  write.csv(qc_df, file.path(output_dir, "QC_Summary.csv"), row.names = FALSE)
-  write.csv(meta_df, file.path(output_dir, "Analysis_Metadata.csv"), row.names = FALSE)
+  write.csv(qc_df, file.path(prepared_dir, "QC_Summary.csv"), row.names = FALSE)
+  write.csv(meta_df, file.path(prepared_dir, "Analysis_Metadata.csv"), row.names = FALSE)
   message("[OK] QC_Summary.csv 与 Analysis_Metadata.csv 已写出")
 
   # 二进制缓存:单图重绘时跳过 openxlsx 读表,显著加速二次出图
@@ -933,6 +1092,7 @@ run_deg <- function() {
       is_single = is_single,
       is_treat = is_treat,
       use_edgeR = use_edgeR,
+      norm_transform = "VST_blind_TRUE",
       deg_params = list(
         fdr_th = fdr_th, log2fc_th = log2fc_th, basemean_th = basemean_th,
         engine = engine, groups = selected_groups,
@@ -950,7 +1110,7 @@ run_deg <- function() {
 
   # 单重复警告文件
   if (is_single) {
-    notice <- file.path(output_dir, "SINGLE_REPLICATE_NOTICE.txt")
+    notice <- file.path(deg_dir, "SINGLE_REPLICATE_NOTICE.txt")
     writeLines(c(
       "==================================================================",
       "NOTICE: SINGLE-REPLICATE ANALYSIS (edgeR, fixed BCV)",
@@ -977,7 +1137,7 @@ run_deg <- function() {
 
   # ─── 7. 可重复性:sessionInfo + Markdown 分析报告(期刊要求报告软件版本)──
   tryCatch({
-    writeLines(capture.output(sessionInfo()), file.path(output_dir, "session_info.txt"))
+    writeLines(capture.output(sessionInfo()), file.path(prepared_dir, "session_info.txt"))
     message("[OK] 软件版本已写出:session_info.txt")
   }, error = function(e) message("[WARN] 写 session_info.txt 失败:", conditionMessage(e)))
 
@@ -1017,6 +1177,7 @@ run_deg <- function() {
       ". A negative-binomial generalized linear model was fitted with the design `",
       if (has_batch) "~ batch + condition" else "~ condition",
       "` and per-group contrasts were tested (", engine_desc, "). ",
+      "For visualization, the raw-count matrix was independently filtered at total counts >= 10 and transformed with DESeq2 variance-stabilizing transformation (VST; blind=TRUE), matching the reference heatmap script. ",
       if (use_edgeR_single) paste0("Because at least one group had a single replicate, dispersion was fixed at BCV = ", bcv, ". ") else "",
       "P-values were adjusted for multiple testing with the Benjamini-Hochberg procedure; ",
       "genes with adjusted P < ", fdr_th, ", |log2 Fold Change| > ", log2fc_th,
@@ -1051,11 +1212,11 @@ run_deg <- function() {
       deg_rows,
       "",
       "## Output files",
-      "- `RNAseq_Analysis_Results.xlsx` (normalized matrix, candidate genes, per-comparison results, metadata)",
-      "- `<Comparison>_All.csv` / `<Comparison>_DEGs.csv` per comparison",
-      "- `sample_correlation.csv` (sample correlation QC matrix)",
-      "- `session_info.txt` (R and package versions, for the Methods section)",
-      "- `plots/` (all figures)",
+      "- `DEG/RNAseq_Analysis_Results.xlsx` (normalized matrix, candidate genes, per-comparison results, metadata)",
+      "- `DEG/<Comparison>_All.csv` / `DEG/<Comparison>_DEGs.csv` per comparison",
+      "- `figures/` (all figures and figure-level data tables)",
+      "- `prepared/` (QC metadata, session information and reusable configuration JSON)",
+      "- `prepared_data.rds` (reusable analysis cache)",
       "",
       "",
       "## Methods (auto-generated, for manuscript)",
@@ -1064,14 +1225,15 @@ run_deg <- function() {
       "",
       "See `session_info.txt` for exact software versions to report in the Methods section."
     )
-    writeLines(unlist(report), file.path(output_dir, "Analysis_Report.md"))
-    message("[OK] 分析报告已写出:Analysis_Report.md")
-  }, error = function(e) message("[WARN] 写 Analysis_Report.md 失败:", conditionMessage(e)))
+    writeLines(unlist(report), file.path(output_dir, "run_report.txt"))
+    message("[OK] 运行报告已写出:run_report.txt")
+  }, error = function(e) message("[WARN] 写 run_report.txt 失败:", conditionMessage(e)))
 
   # 返回给后续步骤用
   list(norm_mat = norm_mat, results_list = results_list,
        mode_flag = mode_flag, is_single = is_single, is_treat = is_treat,
        use_edgeR = use_edgeR, cand_df = cand_df,
+       norm_transform = "VST_blind_TRUE",
        deg_params = list(
          fdr_th = fdr_th, log2fc_th = log2fc_th, basemean_th = basemean_th,
          engine = engine, groups = selected_groups,
@@ -1104,7 +1266,19 @@ run_heatmap_pca_venn <- function(deg_env) {
   # 整体热图:可选择使用所有基因(不过滤)或仅候选基因
   # 若无候选基因(如单重复无显著 DEG),自动回退到全基因模式
   use_all <- isTRUE(hopt$use_all_genes)
-  if (!use_all && length(deg_genes) == 0) {
+  # 是否把「标记基因」一并纳入热图行集(即使它们未通过 DEG 筛选)。
+  # 参考脚本只画 DEG 交点，导致 TJP1/SIX6/KLOTHO/CLIC2 等基因静默消失。
+  # 这里提供一个自由开关:开启后标记基因与基因簇基因强制保留在热图行集中。
+  include_markers <- isTRUE(hopt$include_markers)
+  forced_rows <- character(0)
+  if (include_markers) {
+    forced_rows <- unique(c(
+      match_genes_ci(marker_genes, rownames(norm_full)),
+      match_genes_ci(unlist(gene_clusters, use.names = FALSE), rownames(norm_full))
+    ))
+    forced_rows <- setdiff(forced_rows, excluded_genes)
+  }
+  if (!use_all && length(deg_genes) == 0 && length(forced_rows) == 0) {
     message("[WARN] 无候选基因,自动回退到全基因模式(排除 excluded_genes)")
     use_all <- TRUE
   }
@@ -1112,22 +1286,44 @@ run_heatmap_pca_venn <- function(deg_env) {
     hm_data <- as.matrix(norm_full[setdiff(rownames(norm_full), excluded_genes), hm_selected_samples, drop = FALSE])
     message("使用所有基因(不过滤):", nrow(hm_data), " 基因 x ", ncol(hm_data), " 样本")
   } else {
-    hm_data <- as.matrix(norm_full[rownames(norm_full) %in% deg_genes, hm_selected_samples, drop = FALSE])
+    keep_genes <- unique(c(deg_genes, forced_rows))
+    hm_data <- as.matrix(norm_full[rownames(norm_full) %in% keep_genes, hm_selected_samples, drop = FALSE])
     message("候选基因:", length(deg_genes), " | 热图矩阵:", nrow(hm_data), " 基因 x ", ncol(hm_data), " 样本")
+    if (length(forced_rows) > 0)
+      message("其中额外保留标记/功能簇基因 ", length(forced_rows), " 个(不要求在 DEG 中)")
   }
-  # 发表热图不应因过多行而失去可读性。与参考流程一致，候选 DEG 超过
-  # 2,000 个时按各比较最小 FDR（再按效应量）保留最有信息量的基因。
+  # 发表热图不应因过多行而失去可读性。这个上限必须同时作用于候选基因和
+  # “所有基因”模式：后者若直接把数万个基因压进有限高度的 PNG，每个像素
+  # 会混合多行，造成不真实的平滑色带。候选 DEG 按统计证据筛选；全基因
+  # 模式则按跨所选样本的表达方差筛选，保留最有区分度的行。
   hm_max_genes <- suppressWarnings(as.integer(hopt$max_genes %||% 2000))
-  if (!use_all && !is.na(hm_max_genes) && hm_max_genes > 0 && nrow(hm_data) > hm_max_genes &&
-      all(c("GeneSymbol", "padj", "log2FoldChange") %in% colnames(cand_df))) {
-    ranked_genes <- cand_df %>%
-      filter(GeneSymbol %in% rownames(hm_data)) %>%
-      group_by(GeneSymbol) %>%
-      summarise(min_padj = min(padj, na.rm = TRUE), max_lfc = max(abs(log2FoldChange), na.rm = TRUE), .groups = "drop") %>%
-      arrange(min_padj, desc(max_lfc)) %>%
-      slice_head(n = hm_max_genes) %>% pull(GeneSymbol)
-    hm_data <- hm_data[intersect(ranked_genes, rownames(hm_data)), , drop = FALSE]
-    message("候选 DEG 超过 ", hm_max_genes, " 个，按最小 FDR 保留 ", nrow(hm_data), " 个基因用于总体热图")
+  if (!is.na(hm_max_genes) && hm_max_genes > 0 && nrow(hm_data) > hm_max_genes) {
+    if (!use_all && all(c("GeneSymbol", "padj", "log2FoldChange") %in% colnames(cand_df))) {
+      ranked_genes <- cand_df %>%
+        filter(GeneSymbol %in% rownames(hm_data)) %>%
+        group_by(GeneSymbol) %>%
+        summarise(min_padj = min(padj, na.rm = TRUE), max_lfc = max(abs(log2FoldChange), na.rm = TRUE), .groups = "drop") %>%
+        arrange(min_padj, desc(max_lfc)) %>%
+        slice_head(n = hm_max_genes) %>% pull(GeneSymbol)
+      hm_data <- hm_data[intersect(ranked_genes, rownames(hm_data)), , drop = FALSE]
+      message("候选 DEG 超过 ", hm_max_genes, " 个，按最小 FDR 保留 ", nrow(hm_data), " 个基因用于总体热图")
+    } else {
+      row_variance <- apply(hm_data, 1, var, na.rm = TRUE)
+      row_variance[!is.finite(row_variance)] <- -Inf
+      ranked_genes <- rownames(hm_data)[order(row_variance, decreasing = TRUE, na.last = TRUE)]
+      hm_data <- hm_data[head(ranked_genes, hm_max_genes), , drop = FALSE]
+      message("所有基因模式超过 ", hm_max_genes, " 个，按所选样本的表达方差保留 ",
+              nrow(hm_data), " 个基因用于总体热图（避免像素压缩造成平滑色带）")
+    }
+  }
+
+  # 与参考 2.heatmap.R 一致：Z-score / 距离计算前剔除零方差基因，
+  # 而不是将 NaN 静默替换为 0；后者会人为增加中性色行并改变聚类距离。
+  hm_row_sd <- apply(hm_data, 1, sd, na.rm = TRUE)
+  hm_keep <- is.finite(hm_row_sd) & hm_row_sd > 1e-8
+  if (any(!hm_keep)) {
+    message("剔除 ", sum(!hm_keep), " 个跨所选样本零方差基因（与参考热图一致）")
+    hm_data <- hm_data[hm_keep, , drop = FALSE]
   }
 
   # hm_data 仅在以下步骤需要:heatmap / venn(by sample)
@@ -1158,20 +1354,50 @@ run_heatmap_pca_venn <- function(deg_env) {
   }
   k_clust <- suppressWarnings(as.integer(hopt$k_clusters %||% 3))
   if (is.na(k_clust) || k_clust < 1L) k_clust <- 1L
-  k_clust <- min(k_clust, nrow(hm_data))
-  scaled <- t(scale(t(hm_data)))
-  # 全基因模式常含跨样本方差为 0 的基因；这些行的 Z-score 为 NaN，
-  # 聚类前按 0 处理，避免 hclust 失败并在图中以中性色显示。
-  scaled[!is.finite(scaled)] <- 0
-  # 距离矩阵为 O(n^2)，因此层次聚类有明确的可执行上限。但不自动改用
-  # 其他方法：用户须在界面中明确选择 K-means 或不聚类，保证方法可复现。
+  # 距离矩阵为 O(n^2)，因此层次聚类有明确的可执行上限。算法本身绝不自动替换
+  # （用户须在界面中明确选择 K-means 或不聚类，保证方法可复现）；但当行数超限
+  # 而用户没有设置 max_genes 时，按跨样本表达方差自动截断行数——这只是在
+  # 已选定的行集内做确定性抽样，不改变聚类方法，也不会破坏可复现性。
+  # 注意:必须在 scaled 之前截断,否则 scaled 行数会与 hm_data 不一致。
   cluster_limit <- 5000L
   cluster_method_label <- "不聚类（保留行排序）"
+  if (identical(row_cluster_method, "hierarchical") &&
+      nrow(hm_data) > cluster_limit &&
+      (!is.finite(hm_max_genes) || hm_max_genes <= 0 || hm_max_genes > cluster_limit)) {
+    message("[WARN] 待聚类基因数 ", nrow(hm_data), " 超过层次聚类安全上限 ", cluster_limit,
+            "，且未设置有效『最多基因数』；按跨样本表达方差自动截断到 ", cluster_limit, " 行。",
+            "如需保留全部行，请在『行聚类方法』中选择 K-means 分簇或『不聚类』。")
+    row_variance <- apply(hm_data, 1, var, na.rm = TRUE)
+    row_variance[!is.finite(row_variance)] <- -Inf
+    ranked_genes <- rownames(hm_data)[order(row_variance, decreasing = TRUE, na.last = TRUE)]
+    # 标记基因与功能簇基因必须优先保留:它们正是本图的解读重点,方差排序
+    # 不能把它们挤出去(否则左侧 anno_mark 一个标签都画不出来)。
+    must_keep <- unique(c(
+      match_genes_ci(marker_genes, rownames(hm_data)),
+      match_genes_ci(unlist(gene_clusters, use.names = FALSE), rownames(hm_data))
+    ))
+    if (length(must_keep) > cluster_limit)
+      must_keep <- must_keep[seq_len(cluster_limit)]
+    kept_genes <- unique(c(must_keep, ranked_genes))
+    kept_genes <- kept_genes[seq_len(min(cluster_limit, length(kept_genes)))]
+    dropped <- setdiff(must_keep, kept_genes)
+    if (length(must_keep) > 0)
+      message("[INFO] 已优先保留标记/功能簇基因 ", length(must_keep) - length(dropped),
+              " 个于热图行集内")
+    if (length(dropped) > 0)
+      message("[WARN] 仍有 ", length(dropped), " 个标记基因因排名靠后被截断: ",
+              paste(head(dropped, 12), collapse = ", "))
+    hm_data <- hm_data[kept_genes, , drop = FALSE]
+  }
   if (identical(row_cluster_method, "hierarchical") && nrow(hm_data) > cluster_limit) {
     stop("当前整体热图有 ", nrow(hm_data), " 个基因，层次聚类需计算完整距离矩阵，",
          "已超过科学计算安全上限 ", cluster_limit, "。请在『行聚类方法』中明确选择『K-means 分簇』",
          "或『不聚类』；系统不会自动替换算法。", call. = FALSE)
   }
+  k_clust <- min(k_clust, nrow(hm_data))
+  scaled <- t(scale(t(hm_data)))
+  # 理论上零方差行已在上方剔除；保留该保护仅处理个别数值异常。
+  scaled[!is.finite(scaled)] <- 0
   if (identical(row_cluster_method, "hierarchical") && nrow(hm_data) >= 2L) {
     hc <- hclust(dist(scaled, method = "euclidean"), method = "ward.D2")
     order_genes <- rownames(hm_data)[hc$order]
@@ -1189,7 +1415,14 @@ run_heatmap_pca_venn <- function(deg_env) {
       set.seed(20260911L)
       km <- kmeans(scaled, centers = k_effective, nstart = 10L, iter.max = 100L)
       base_cl <- km$cluster
-      order_genes <- rownames(hm_data)[order(base_cl, -scaled[, 1], na.last = TRUE)]
+      # K-means 只负责把相似表达谱分到同一簇；簇内再按完整表达谱做层次排序。
+      # 不能按首列排序，否则首列会被人为排成连续的颜色梯度，而其他列不会。
+      order_genes <- unlist(lapply(sort(unique(base_cl)), function(cluster_id) {
+        genes <- rownames(hm_data)[base_cl == cluster_id]
+        if (length(genes) < 2L) return(genes)
+        genes[hclust(dist(scaled[genes, , drop = FALSE], method = "euclidean"),
+                     method = "ward.D2")$order]
+      }), use.names = FALSE)
       cluster_method_label <- paste0("K-means（行 Z-score；k=", k_effective,
                                      "；seed=20260911；nstart=10）")
       message("使用 ", cluster_method_label)
@@ -1225,7 +1458,14 @@ run_heatmap_pca_venn <- function(deg_env) {
       stringsAsFactors = FALSE)
   }
   rownames(cl_df) = cl_df$GeneSymbol
-  row_order_mode <- hopt$row_order %||% "cluster_first_column_desc"
+  # 参考 2.heatmap.R：保留 Ward.D2 聚类树的叶节点顺序。
+  # 首列重排只能由用户显式选择，绝不能作为默认，否则会制造平滑梯度。
+  row_order_mode <- hopt$row_order %||% "cluster"
+  # 旧版“簇优先·首列高到低”会改变簇的树顺序；统一迁移为参考脚本的树顺序。
+  if (identical(row_order_mode, "cluster_first_column_desc")) {
+    message("[INFO] 已将旧版首列优先排序迁移为 Ward.D2 聚类树顺序")
+    row_order_mode <- "cluster"
+  }
   if (identical(row_cluster_method, "none") && !row_order_mode %in% c("input", "first_column_desc", "first_column_asc"))
     row_order_mode <- "input"
   final_order <- order_genes
@@ -1233,22 +1473,6 @@ run_heatmap_pca_venn <- function(deg_env) {
     final_order <- rownames(hm_data)[order(scaled[, 1], decreasing = TRUE, na.last = TRUE)]
   } else if (identical(row_order_mode, "first_column_asc")) {
     final_order <- rownames(hm_data)[order(scaled[, 1], decreasing = FALSE, na.last = TRUE)]
-  } else if (!identical(row_cluster_method, "none") && identical(row_order_mode, "cluster_first_column_desc")) {
-    cluster_by_gene <- as.character(cl_df[order_genes, "Original_Cluster"])
-    cluster_levels <- unique(cluster_by_gene)
-    # 簇优先；簇内按热图实际显示的首列 Z-score 从高到低，避免簇内第一行
-    # 又出现蓝色。簇的先后也按首列均值从高到低排列。
-    cluster_score <- vapply(cluster_levels, function(cl) {
-      mean(scaled[order_genes[cluster_by_gene == cl], 1], na.rm = TRUE)
-    }, numeric(1))
-    cluster_levels <- cluster_levels[order(cluster_score, decreasing = TRUE, na.last = TRUE)]
-    # ComplexHeatmap 会按 row_split 因子的 levels 排列分块；同步 levels，
-    # 否则即使 final_order 正确，绘图时仍可能把原 Cluster_1 放在最上面。
-    cl_df$Original_Cluster <- factor(as.character(cl_df$Original_Cluster), levels = cluster_levels)
-    final_order <- unlist(lapply(cluster_levels, function(cl) {
-      genes <- order_genes[cluster_by_gene == cl]
-      genes[order(scaled[genes, 1], decreasing = TRUE, na.last = TRUE)]
-    }), use.names = FALSE)
   }
   cluster_mode <- "auto"  # auto / cluster_aware / pure_manual
 
@@ -1258,8 +1482,8 @@ run_heatmap_pca_venn <- function(deg_env) {
   #   gene_order_manual.csv :纯手动(列 GeneSymbol),完全自定义顺序
   # 注意:本脚本每次运行也会写出 gene_cluster_order.csv(自动结果);
   #       回读仅在文件存在且含基因时生效,用户编辑后下次运行即按用户顺序。
-  manual_cluster_file <- file.path(output_dir, "gene_cluster_order_user.csv")
-  manual_pure_file    <- file.path(output_dir, "gene_order_manual.csv")
+  manual_cluster_file <- file.path(figures_dir, "gene_cluster_order_user.csv")
+  manual_pure_file    <- file.path(figures_dir, "gene_order_manual.csv")
   if (file.exists(manual_pure_file)) {
     m <- read.csv(manual_pure_file, stringsAsFactors = FALSE, check.names = FALSE)
     gcol <- if ("GeneSymbol" %in% colnames(m)) "GeneSymbol" else 1
@@ -1300,7 +1524,7 @@ run_heatmap_pca_venn <- function(deg_env) {
                           Original_Cluster = as.character(cl_df$Original_Cluster),
                           Clustering_Method = cluster_method_label,
                           stringsAsFactors = FALSE)
-  write.csv(export_df, file.path(output_dir, "gene_cluster_order.csv"), row.names = FALSE)
+  write.csv(export_df, file.path(figures_dir, "gene_cluster_order.csv"), row.names = FALSE)
 
   hm_data <- hm_data[final_order, , drop = FALSE]
 
@@ -1316,8 +1540,8 @@ run_heatmap_pca_venn <- function(deg_env) {
     col_names_rot <- as.numeric(hopt$column_names_rot %||% 0)
     show_row_names <- isTRUE(hopt$show_row_names %||% FALSE)
     row_names_size <- as.numeric(hopt$row_names_size %||% 6)
-    col_names_size <- as.numeric(hopt$column_names_size %||% 9)
-    marker_label_size <- as.numeric(hopt$marker_label_size %||% 6)
+    col_names_size <- as.numeric(hopt$column_names_size %||% 16)
+    marker_label_size <- as.numeric(hopt$marker_label_size %||% 12)
     hm_legend_title_size <- as.numeric(hopt$legend_title_size %||% 10)
     hm_legend_text_size <- as.numeric(hopt$legend_text_size %||% 9)
 
@@ -1356,29 +1580,49 @@ run_heatmap_pca_venn <- function(deg_env) {
                                 simple_anno_size = unit(2,"mm"),
                                 show_legend = show_hm_legend)
     # Cluster 注释只用于显式选择的聚类方法；不聚类时不生成虚假的簇色条或图例。
-    show_cl_ann <- !identical(row_cluster_method, "none") && isTRUE(hopt$show_cluster_annotation %||% TRUE)
+    show_cl_ann <- !identical(row_cluster_method, "none") &&
+      isTRUE(hopt$show_cluster_annotation %||% TRUE) &&
+      length(unique(cl_df$Original_Cluster)) > 1L
     show_cl_legend <- show_cl_ann && isTRUE(hopt$show_cluster_legend %||% FALSE)
     ha_row <- NULL
     if (show_cl_ann) {
-      cluster_pal <- hopt$cluster_palette %||% "Catppuccin Mocha"
+      cluster_pal <- hopt$cluster_palette %||% "default_igv"
       ann_row <- data.frame(Cluster = cl_df$Original_Cluster, row.names = rownames(hm_data_h))
       ucl <- levels(cl_df$Original_Cluster)
-      ccols <- setNames(get_heat_palette(cluster_pal, length(ucl)), ucl)
+      ccols <- setNames(get_palette(cluster_pal, length(ucl)), ucl)
       ha_row <- rowAnnotation(Cluster = ann_row$Cluster, col = list(Cluster = ccols),
                               annotation_name_side = "top",
                               annotation_name_gp = gpar(fontsize = 0, fontfamily = font_family),
-                              simple_anno_size = unit(2,"mm"),
+                              simple_anno_size = unit(3,"mm"),
+                              width = unit(0, "mm"),
                               show_legend = show_cl_legend)
     }
     ha_mark <- NULL
     if (show_mark) {
-      valid <- marker_genes[marker_genes %in% rownames(mat)]
-      if (length(valid) > 0)
-        ha_mark <- rowAnnotation(mark = anno_mark(at = match(valid, rownames(mat)), labels = valid,
+      # 与参考 2.heatmap.R 一致：大小写不敏感匹配。
+      # anno_mark 的 at= 是行下标，必须落在与 row_split 相同的行序上。
+      hit_idx <- which(genes_in_ci(marker_genes, rownames(mat)))
+      if (length(hit_idx) > 0) {
+        at_idx <- match(tolower(marker_genes[hit_idx]), tolower(rownames(mat)))
+        at_idx <- at_idx[!duplicated(at_idx)]
+        # anno_mark 要求 at 严格单调递增，否则标签会错位。
+        at_idx <- sort(at_idx)
+        lbl <- rownames(mat)[at_idx]
+        ha_mark <- rowAnnotation(mark = anno_mark(at = at_idx, labels = lbl,
                                  which = "row", side = "left",
                                  labels_gp = gpar(fontsize = marker_label_size, fontface = "bold.italic", fontfamily = font_family),
-                                 link_gp = gpar(col = "#333", lwd = 1),
-                                 padding = unit(4, "mm"), extend = unit(10, "mm")))
+                                 link_gp = gpar(col = "#1f77b4", lwd = 1.3),
+                                 padding = unit(4, "mm"), extend = unit(12, "mm")))
+        message("标记基因:", length(lbl), "/", length(marker_genes), " 个已标注")
+      } else {
+        message("[WARN] 标记基因在热图矩阵中一个都没有命中: ",
+                paste(head(marker_genes, 12), collapse = ", "))
+      }
+      missing_markers <- marker_genes[!genes_in_ci(marker_genes, rownames(mat))]
+      if (length(missing_markers) > 0) {
+        message("[INFO] 未参与本图的标记基因(", length(missing_markers), "): ",
+                paste(missing_markers, collapse = ", "))
+      }
     }
     ht <- Heatmap(mat, name = "Z-score", col = col_fun,
                   heatmap_legend_param = if (show_hm_legend) list(title = "Z-score", at = z_at,
@@ -1437,6 +1681,16 @@ run_heatmap_pca_venn <- function(deg_env) {
       pca_data <- pca_data[keep_genes, , drop = FALSE]
       message("PCA 使用方差最高的 ", nrow(pca_data), " 个基因")
     }
+    # 与 2.heatmap.R 一致：PCA 前剔除在当前所选样本中零方差的基因。
+    # 否则当“逐基因 Z 标准化”开启时，prcomp(scale.=TRUE) 会因常数列报错。
+    pca_sd <- apply(pca_data, 1, sd, na.rm = TRUE)
+    pca_keep <- is.finite(pca_sd) & pca_sd > 1e-8
+    if (any(!pca_keep)) {
+      message("PCA 剔除 ", sum(!pca_keep), " 个跨所选样本零方差基因")
+      pca_data <- pca_data[pca_keep, , drop = FALSE]
+    }
+    if (nrow(pca_data) < 2L)
+      stop("PCA 剔除零方差基因后少于 2 个有效基因，无法计算。请调整所选样本或重新运行 DEG 分析。", call. = FALSE)
     do_label_repel <- isTRUE(o$label_repel)
     label_text <- o$label_text %||% "group"
 
@@ -1568,7 +1822,7 @@ run_heatmap_pca_venn <- function(deg_env) {
                                         legend_text_size = mo$legend_text_size %||% 14)))
       mds_sz <- get_size("mds", mo, n_samples = ncol(mds_data))
       save_ggplot(mds_plot, "mds", width = mds_sz$w, height = mds_sz$h)
-      write.csv(mds_df, file.path(output_dir, "MDS_coordinates.csv"), row.names = FALSE)
+      write.csv(mds_df, file.path(figures_dir, "MDS_coordinates.csv"), row.names = FALSE)
       message("[OK] MDS 已生成")
     }
   }
@@ -1660,14 +1914,14 @@ run_select_heatmap <- function(deg_env) {
   if (length(sel_samples) < 1)
     stop("选定基因热图没有同时存在于 VST 与 counts 的样本列。", call. = FALSE)
 
-  valid_clusters <- lapply(gene_clusters, function(g)
-    intersect(g, intersect(rownames(norm_full), rownames(countData_numeric))))
+  shared_universe <- intersect(rownames(norm_full), rownames(countData_numeric))
+  valid_clusters <- lapply(gene_clusters, function(g) match_genes_ci(g, shared_universe))
   valid_clusters <- valid_clusters[sapply(valid_clusters, length) > 0]
   gene_order <- unlist(valid_clusters)
   if (length(gene_order) == 0) { message("[WARN] 没有有效基因,跳过选定基因热图"); return(invisible(NULL)) }
 
   all_marker <- unlist(gene_clusters)
-  missing <- setdiff(all_marker, intersect(rownames(norm_full), rownames(countData_numeric)))
+  missing <- all_marker[!genes_in_ci(all_marker, shared_universe)]
   if (length(missing) > 0) message("[WARN] 缺失基因:", paste(missing, collapse=", "))
   message("有效基因:", length(gene_order), " | 功能类别:", length(valid_clusters))
 
@@ -1862,10 +2116,11 @@ run_volcano <- function(deg_env) {
           TRUE ~ "NS"
         ),
         # 标注策略:top_n(显著 top-N,old/) / marker(标记基因) / both(并集) / none
+        is_marker = genes_in_ci(GeneSymbol, marker_genes),
         is_labeled = case_when(
           label_strategy == "none" ~ FALSE,
-          label_strategy == "marker" ~ GeneSymbol %in% marker_genes,
-          label_strategy == "both" ~ (significance != "NS" & rank(-logP) <= vtop) | (GeneSymbol %in% marker_genes),
+          label_strategy == "marker" ~ is_marker,
+          label_strategy == "both" ~ (significance != "NS" & rank(-logP) <= vtop) | is_marker,
           TRUE ~ significance != "NS" & rank(-logP) <= vtop  # top_n(默认)
         ),
         # 上下调分别控制是否标注
@@ -2128,7 +2383,7 @@ run_extra_plots <- function(deg_env) {
     genes_to_plot <- o$genes
     if (is.null(genes_to_plot) || length(genes_to_plot) == 0)
       genes_to_plot <- marker_genes
-    genes_to_plot <- intersect(genes_to_plot, rownames(norm_mat))
+    genes_to_plot <- match_genes_ci(genes_to_plot, rownames(norm_mat))
     if (length(genes_to_plot) == 0) {
       message("[WARN] 无有效基因,跳过小提琴图")
     } else {
@@ -2282,7 +2537,7 @@ run_qc_plots <- function(deg_env) {
                        legend_title_size = 16, legend_text_size = 14, show_grid = TRUE))
     if (isTRUE(qo$show_detected_genes %||% TRUE))
       qc_saved <- isTRUE(save_ggplot(p_detected, "QC_detected_genes", width = qc_width, height = qc_height, required = FALSE)) || qc_saved
-    write.csv(lib, file.path(output_dir, "QC_library_size.csv"), row.names = FALSE)
+    write.csv(lib, file.path(figures_dir, "QC_library_size.csv"), row.names = FALSE)
   }
 
   long_expr <- stack(as.data.frame(norm_mat))
@@ -2342,7 +2597,7 @@ run_qc_plots <- function(deg_env) {
       cor_df <- as.data.frame(cor_mat, check.names = FALSE)
       cor_df$Sample <- rownames(cor_df)
       write.csv(cor_df[, c("Sample", setdiff(colnames(cor_df), "Sample"))],
-                file.path(output_dir, "sample_correlation.csv"), row.names = FALSE)
+                file.path(figures_dir, "sample_correlation.csv"), row.names = FALSE)
       # 组内生物学重复低相关提示仅针对同组样本，跨组低相关属正常现象。
       warned <- 0L
       for (pr in combn(colnames(cor_mat), 2, simplify = FALSE)) {
@@ -2442,7 +2697,8 @@ load_deg_from_excel <- function() {
   }
   cand_df <- if (sheet_candidates %in% sheets) read.xlsx(excel_file, sheet = sheet_candidates) else data.frame()
   list(norm_mat = as.matrix(norm_full), results_list = results_list,
-       cand_df = cand_df, mode_flag = "from_excel", is_single = NA)
+       cand_df = cand_df, mode_flag = "from_excel", is_single = NA,
+       norm_transform = "legacy")
 }
 
 load_deg_from_rds <- function() {
@@ -2462,6 +2718,7 @@ load_deg_from_rds <- function() {
     is_single = obj$is_single %||% NA,
     is_treat = obj$is_treat %||% NA,
     use_edgeR = obj$use_edgeR %||% NA,
+    norm_transform = obj$norm_transform %||% "legacy",
     deg_params = obj$deg_params
   )
 }
@@ -2502,6 +2759,33 @@ refresh_deg_cache <- function(deg_env) {
   deg_env
 }
 
+# 旧缓存/旧 Excel 可能把 edgeR log2-CPM 或 blind=FALSE 矩阵写成“归一化矩阵”。
+# 只要本次包含热图/PCA，就按参考 1.DEG.R 从原始 counts 重算 VST(blind=TRUE)，
+# 以保证重新导出不会因缓存版本不同而产生另一套颜色。
+refresh_reference_vst <- function(deg_env) {
+  requested <- unlist(group_info[selected_groups], use.names = FALSE)
+  norm_samples <- colnames(deg_env$norm_mat %||% matrix(numeric(0), nrow = 0, ncol = 0))
+  sample_match <- length(requested) > 0L && all(requested %in% norm_samples)
+  if (!need_vst || (identical(deg_env$norm_transform, "VST_blind_TRUE") && sample_match))
+    return(deg_env)
+  if (!file.exists(data_file)) {
+    message("[WARN] 无法重算参考 VST：原始 counts 文件不存在，沿用旧缓存矩阵。")
+    return(deg_env)
+  }
+  message("[INFO] 旧缓存不是参考 VST，按 1.DEG.R 重算 VST(blind=TRUE)...")
+  vst_result <- tryCatch(reference_vst_from_config(), error = function(e) {
+    message("[WARN] 参考 VST 重算失败，沿用旧缓存矩阵：", conditionMessage(e))
+    NULL
+  })
+  if (!is.null(vst_result)) {
+    deg_env$norm_mat <- vst_result$mat
+    deg_env$norm_transform <- "VST_blind_TRUE"
+    message("[OK] 参考 VST 已替换缓存矩阵:", nrow(deg_env$norm_mat), " 基因 x ",
+            ncol(deg_env$norm_mat), " 样本")
+  }
+  deg_env
+}
+
 deg_env <- NULL
 if ("deg" %in% steps) {
   deg_env <- run_deg()
@@ -2515,10 +2799,12 @@ if ("deg" %in% steps) {
     }
   )
   deg_env <- refresh_deg_cache(deg_env)
+  deg_env <- refresh_reference_vst(deg_env)
   } else {
     # 兼容旧 run:仅有 Excel 时读表,刷新后顺手写 RDS 供下次加速
     deg_env <- load_deg_from_excel()
     deg_env <- refresh_deg_cache(deg_env)
+    deg_env <- refresh_reference_vst(deg_env)
     tryCatch({
       saveRDS(list(
         norm_mat = deg_env$norm_mat,
@@ -2528,6 +2814,7 @@ if ("deg" %in% steps) {
         is_single = deg_env$is_single,
         is_treat = deg_env$is_treat %||% NA,
         use_edgeR = deg_env$use_edgeR,
+        norm_transform = deg_env$norm_transform %||% "legacy",
         deg_params = list(
           fdr_th = fdr_th, log2fc_th = log2fc_th, basemean_th = basemean_th,
           engine = engine, groups = selected_groups,
@@ -2556,5 +2843,5 @@ if (!is.null(deg_env)) {
 message("\n============================================================")
 message("[DONE] 全流程完成!输出目录:", normalizePath(output_dir))
 message("   Excel :", normalizePath(excel_file))
-message("   Plots :", normalizePath(plots_dir))
+message("   Figures :", normalizePath(figures_dir))
 message("============================================================")

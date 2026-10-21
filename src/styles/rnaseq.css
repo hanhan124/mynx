@@ -2467,9 +2467,12 @@
   height: 100%;
 }
 
+/* 缩略图同样要保留宽高比,否则竖长的热图会被 34px 方框压成一条线。 */
 .rx-thumb-svg svg {
-  width: 100%;
-  height: 100%;
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  margin: auto;
 }
 
 /* ========= 工作面板 ========= */
@@ -2531,6 +2534,42 @@
   justify-content: flex-end;
 }
 
+/* 导出完成后始终显示图片实际保存位置，避免用户只看到 run 根目录。 */
+.rx-export-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 7px 16px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--green) 7%, var(--bg-card));
+  border-bottom: 0.5px solid var(--separator);
+  font-size: 12px;
+}
+
+.rx-export-location > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.rx-export-location code {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rx-export-location .btn {
+  flex-shrink: 0;
+}
+
 /* 预览区 */
 .rx-work-preview {
   position: relative;
@@ -2555,6 +2594,11 @@
   object-fit: contain;
 }
 
+/* 热图缩小时不进行双线性插值；否则相邻基因行会被混色为平滑渐变。 */
+.rx-work-preview.heatmap-preview img {
+  image-rendering: pixelated;
+}
+
 .rx-preview-svg {
   display: block;
   width: 100%;
@@ -2562,9 +2606,14 @@
   padding: 12px;
 }
 
+/* 必须保留图形自身宽高比:热图是 8×12in 的竖长图,若强行 width/height
+   100% 拉伸,内容会被压成一条几乎看不见的窄带。SVG 带 viewBox,native
+   width/height 已被移除 → 用 max-height 限制、宽度按比例自适应。 */
 .rx-preview-svg svg {
-  width: 100%;
-  height: 100%;
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  margin: auto;
 }
 
 .rx-preview-empty {

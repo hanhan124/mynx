@@ -13,8 +13,16 @@ import React, {
 } from "react";
 import { showToast } from "@/components/Toast";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { defaultConfig, defaultPlotOptions, deepMerge } from "@/lib/rnaseq/defaults";
+import {
+  cleanGeneClusters,
+  cleanGeneList,
+  DEFAULT_MARKER_GENES,
+  defaultConfig,
+  defaultPlotOptions,
+  deepMerge,
+} from "@/lib/rnaseq/defaults";
 import { importCounts as importCountsApi } from "@/lib/rnaseq/matrix";
+import { joinPath } from "@/lib/rnaseq/io";
 import {
   checkRscript,
   resetRDependencyCache,
@@ -148,6 +156,12 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
       if (!Array.isArray(merged.plot_formats) || merged.plot_formats.length === 0) {
         merged.plot_formats = ["png"];
       }
+      // 历史 params.json 可能把基因名写成带引号的 '"RPE65"',会让匹配全部失效,
+      // 这里统一清洗,保证 UI 显示与下游匹配都用干净的基因名。
+      merged.marker_genes = cleanGeneList(merged.marker_genes);
+      merged.excluded_genes = cleanGeneList(merged.excluded_genes);
+      merged.gene_clusters = cleanGeneClusters(merged.gene_clusters);
+      if (merged.marker_genes.length === 0) merged.marker_genes = [...DEFAULT_MARKER_GENES];
       return merged;
     });
   }, []);
@@ -353,6 +367,10 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
   const [plotOutputDir, setPlotOutputDir] = useState<string | null>(null);
   const plotHandleRef = useRef<RunHandle | null>(null);
 
+  // 已加载的结果目录(单图导出/预览据此确定输出位置,须先于 runSinglePlot 声明)
+  const [analysisDir, setAnalysisDir] = useState("");
+  const [usingManualDir, setUsingManualDir] = useState(false);
+
   const pushPlotLog = useCallback((plotType: string, level: string, msg: string) => {
     setPlotLogs((prev) => {
       const next = [...prev, { ts: Date.now(), level, msg, plotType }];
@@ -372,19 +390,56 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
       cfg.steps = [plotType];
       if (preview) {
         cfg.preview_mode = true;
-        cfg.preview_dpi = 120;
+        // 整体热图常有数千行。120 dpi 会把多行压进同一像素，浏览器缩放后
+        // 看起来像不真实的平滑色带；热图预览使用发表级分辨率以保留行结构。
+        cfg.preview_dpi = plotType === "heatmap" ? 300 : 120;
         cfg.plot_formats = ["png"];
       } else {
         cfg.preview_mode = false;
       }
-      // 单图导出依赖已有 DEG 缓存:run_name 未显式指定时自动复用最近含 Excel 的 run
-      if (!cfg.run_name || cfg.run_name === "auto") {
-        const r = await hasAnalysisResultApi(cfg);
-        if (r.found) {
-          if (r.run_name) cfg.run_name = r.run_name;
-          if (r.output_dir) cfg.output_dir = r.output_dir;
+      // 单图导出/预览必须落在「当前已加载的结果目录」里,否则图会写到别处、
+      // 画廊查不到。按优先级解析出唯一的 run 目录:
+      //   1) 用户已加载/手动选择的结果目录(analysisDir) —— 最权威
+      //   2) 配置里已明确的 run_name + output_dir
+      //   3) 兜底扫描最近含 Excel 的 run
+      // 三者都拿不到就不再往下走:runR 会在 run_name 为空时自建时间戳目录,
+      // 那样图会被写到一个画廊看不见的新目录里。
+      let resolvedRun = "";
+      let resolvedBase = "";
+
+      if (analysisDir.trim()) {
+        const located = await loadAnalysisResult(analysisDir.trim(), false);
+        if (located.found && located.run_name && located.output_dir) {
+          resolvedRun = located.run_name;
+          resolvedBase = located.output_dir;
         }
       }
+      if (!resolvedRun && cfg.run_name && cfg.run_name !== "auto" && cfg.output_dir) {
+        const probe = await loadAnalysisResult(
+          joinPath(cfg.output_dir, cfg.run_name),
+          false,
+        );
+        if (probe.found && probe.run_name && probe.output_dir) {
+          resolvedRun = probe.run_name;
+          resolvedBase = probe.output_dir;
+        }
+      }
+      if (!resolvedRun) {
+        const r = await hasAnalysisResultApi(cfg);
+        if (r.found && r.run_name && r.output_dir) {
+          resolvedRun = r.run_name;
+          resolvedBase = r.output_dir;
+        }
+      }
+      if (!resolvedRun || !resolvedBase) {
+        const msg =
+          "未检测到可用的差异分析结果目录，无法绘图。请先在「分析」页运行完整流程，或在上方选择结果文件夹。";
+        pushPlotLog(plotType, "error", `[失败] ${msg}`);
+        setPlotStatus("failed");
+        return null;
+      }
+      cfg.run_name = resolvedRun;
+      cfg.output_dir = resolvedBase;
       setPlotStatus("running");
       setCurrentPlot(plotType);
       pushPlotLog(plotType, "info", `──── 开始导出 ${plotType} ────`);
@@ -420,7 +475,7 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
     },
-    [pushPlotLog],
+    [pushPlotLog, analysisDir],
   );
 
   const cancelPlot = useCallback(async () => {
@@ -443,8 +498,6 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     dirMsgRef.current = dirMsg;
   }, [dirMsg]);
-  const [analysisDir, setAnalysisDir] = useState("");
-  const [usingManualDir, setUsingManualDir] = useState(false);
   const [dirChecking, setDirChecking] = useState(false);
   const [mergeParamsOnLoad, setMergeParamsOnLoad] = useState(true);
 

@@ -44,6 +44,7 @@ docs/
 
 # Workbuddy (local AI agent context)
 .workbuddy/
+.workbuddy-ai/
 
 # Claude (local AI agent context)
 .claude/
