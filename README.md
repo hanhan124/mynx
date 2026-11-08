@@ -5,71 +5,47 @@
 [![macOS](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-000000.svg)](#系统要求)
 [![Tauri 2](https://img.shields.io/badge/Tauri-2.x-FFC131.svg)](https://tauri.app/)
 
-Mynx 是一款科研数据处理桌面工具，提供 qPCR 数据分析、RNA-seq 差异分析和图片转 PNG（批量转换 / 压缩 / 水印）功能，支持 Windows 与 macOS Apple Silicon。
+Mynx 是一款本地运行的科研数据处理桌面工具,包含 qPCR 分析、RNA-seq 差异分析、科研绘图与图片转 PNG 四个模块,支持 Windows 与 macOS Apple Silicon。所有计算与绘图均在本机完成,数据不经过任何在线服务。
 
 ## 功能
 
 ### qPCR 分析
 
-- 导入 `.xlsx` / `.xls` 文件并选择工作表
-- 自动识别 `Target` / `Gene`、`Sample` / `Group` 和 `Cq` / `Ct` 列
-- 将原始表格整理为 `Transformed Data`，并保留基因、分组和重复信息
-- 缺失 Ct 使用同一“样本 + 基因”的有效重复均值补齐；全部缺失时使用 50，并在表格中标记
-- 提供“相对内参”和“相对对照（ΔΔCt）”两种计算方法
-- 按基因生成明细表和 `Summary_All_Genes` 汇总表，结果写回原 Excel 工作簿
-- 可生成 `Summary_Best_Replicates`（择优重复）或 `Summary_Outlier_Removed`（按 SD 阈值剔除离群值）作为 QC 参考
-
-qPCR 绘图工作区读取计算结果 Excel，支持柱状图和表达量热图。柱状图可显示误差棒、重复点和显著性标注，支持 Welch t-test、Wilcoxon、ANOVA + Tukey、Kruskal-Wallis 及多种比较方式；图表可导出为 PNG、SVG 或 PDF，也支持批量处理子文件夹。
-
-### 科研绘图
-
-- 从 CSV、TSV、TXT 或 Excel 导入数据，也可直接载入示例数据
-- 提供基础比较、趋势关系、分布、组成、矩阵与层级、空间与网络等图表模板
-- 包含柱状图、折线图、散点图、箱线图、热图、相关性矩阵、树状图、网络图、地图、韦恩图、火山图、MA 图、PCA 图、富集分析图、GSEA 曲线和生存曲线等
-- 设置字段映射、主题、字体、图例、配色、尺寸和 DPI；提供 Nature 等论文版式预设
-- 支持 PNG、TIFF、SVG、PDF 和 EPS 输出
-- 保存、导入和导出参数模板；结果目录同时保存可复现的 JSON 参数清单
-- 可导出包含图表和模板说明的结果包，并在 SVG 结果上复制源码
-
-科研绘图使用 R 生成图表，运行时会检查环境，并可按当前模板准备所需依赖。
+- 导入 `.xlsx` / `.xls`,自动识别 Target/Gene、Sample/Group 与 Ct/Cq 列
+- 缺失 Ct 按同组有效重复均值补齐,并标记无法补齐的值
+- 支持"相对内参"与"相对对照(ΔΔCt)"两种计算方法,结果写回原工作簿
+- 汇总表支持择优重复与按 SD 剔除离群值两种 QC 模式
+- 绘图工作区读取计算结果,支持带误差棒、重复点与显著性标注的柱状图(Welch t / Wilcoxon / ANOVA+Tukey / Kruskal-Wallis)及表达量热图,导出 PNG / SVG / PDF,支持批量处理子文件夹
 
 ### RNA-seq 分析
 
-- 支持 CSV、TSV、TXT 和 Excel（`.xlsx`）输入
-- 提供标准 Counts、featureCounts 和 HTSeq 三种导入预设，自动处理注释列、统计行和重复基因名
-- 导入后显示样本数、基因数、非零基因数和分页数据预览，并检查低计数样本
-- 可手动分组，也可按样本名前缀自动分组；支持生成两两比较和自定义比较
-- 分析引擎支持 DESeq2 Wald、edgeR QL F-test，以及按比较自动选择的模式
-- 设置低表达过滤、最小原始计数、`log2FC` 和 FDR 阈值
-- 输出差异分析 Excel 结果、运行日志和分析元数据
-- 支持保存/加载分析配置、加载已有结果目录、取消运行和查看历史运行记录
+- 分析引擎 `rnaseq_engine.R` 与实验室参考脚本逐行一致:每个比较仅用两组样本单独建模;两组各 ≥2 重复走 DESeq2(Wald)或 edgeR QL F 检验,任一组单重复自动走 edgeR exactTest + 固定 BCV(人 0.4 / 同基因型 0.1 / 技术重复 0.01)
+- 低表达过滤默认 `filterByExpr`(可切换 min_count / none);重复基因名支持 sum / max_mean / make_unique 三种合并策略;计数取整支持 round / floor / ceiling
+- 界面为三步向导:数据导入(样本显示名)→ 分组与差异分析 → 图形输出;实验分组支持拖拽
+- 图形输出:整体热图(标记基因连线 + 聚类色块)、样本相关性热图、选定基因热图(基因簇分块)、PCA、火山图;样式参数(色板、Z-score 范围、聚类方法、期刊毫米尺寸等)可配置,默认值即参考脚本默认配置
+- 输出目录:`DE/`(差异表与汇总)、`heatmap/`(热图与矩阵)、`plots/`(PCA 与火山图)、`data/`(清洗后计数与样本表)、`logs/`、`prepared/params.json`(完整可复现参数)
+- 依赖本机 R 与 DESeq2 / edgeR / ComplexHeatmap 等包;必须使用原始整数 Counts,不能用 TPM / FPKM;单重复比较的 P 值仅用于探索性排序
 
-绘图与导出工作区提供 16 类结果图：样本 QC、PCA、MDS、整体热图、选定基因热图、火山图、Venn 图、MA 图、箱线图、DEG 柱状图、Top 基因图、样本聚类树、GO/KEGG 富集条形图、GSEA 点图、小提琴图和密度图。支持单图预览、批量导出、结果画廊，以及 PDF、SVG 和 PNG 格式。
+### 科研绘图
 
-RNA-seq 功能依赖本机安装的 R 和相关 R 包。DESeq2/edgeR 需要原始或 estimated counts，不能直接使用 TPM、FPKM 或 log 转换矩阵。含单重复组的比较仅适合作为候选线索，正式结论应使用足够的生物学重复进行验证。
+- 57 种图表模板:柱状图、折线图、散点图、箱线图、热图、相关性矩阵、树状图、网络图、地图、韦恩图、火山图、MA 图、PCA 图、富集分析图、GSEA 曲线、生存曲线等
+- 从 CSV / TSV / TXT / Excel 导入数据,或载入示例数据
+- 字段映射、主题、字体、图例、配色、尺寸与 DPI 可配置;内置 Nature 等期刊版式预设
+- 由本地 R(ggplot2)渲染,导出 PNG / TIFF / SVG / PDF / EPS
+- 参数可保存、导入、导出(JSON);结果目录同时保留可复现的参数清单
 
 ### 图片转 PNG
 
-- 支持 PNG / JPG / TIFF / WebP / BMP / GIF / ICO / TGA / PNM / QOI / DDS / SVG 等常见格式批量转换为 PNG
-- 文件、文件夹（递归）与拖放三种添加方式，带缩略图文件列表
-- **无损优化**：像素不变，oxipng 分档压缩（快速 / 均衡 / 极致）
-- **有损压缩**：量化为 256 / 128 / 64 / 32 色索引色 PNG，可开抖动
-- 多页 TIFF 逐页导出；动图取首帧；SVG 按矢量高清栅格化；自动识别 EXIF 方向
-- **水印**：文字水印（默认文件名、字体、字号、粗体、白/黑、不透明度、九宫格位置或平铺、半透明底色）与图片水印（logo、缩放、不透明度、位置）
-- 输出位置三选一：源目录时间戳子文件夹（默认）/ 与原图同目录 / 自定义目录；重名自动加后缀，原图永不覆盖
-- 实时进度、随时取消、逐文件结果表与总体节省体积统计
-- 转换全部在本地完成，由开源库驱动（image-rs、oxipng、resvg、color_quant、kamadak-exif、imageproc），无需安装 ImageMagick 等外部程序
+- PNG / JPG / TIFF / WebP / BMP / GIF / ICO / TGA / PNM / QOI / DDS / SVG 批量转 PNG
+- 无损优化(oxipng 分档)与有损压缩(量化为 256 / 128 / 64 / 32 色索引色,可开抖动)
+- 多页 TIFF 逐页导出;动图取首帧;SVG 按矢量高清栅格化;自动识别 EXIF 方向
+- 文字水印(字体、字号、位置、平铺、半透明底色)与图片水印(logo、缩放、不透明度)
+- 输出到源目录时间戳子文件夹 / 原图同目录 / 自定义目录;重名自动加后缀,不覆盖原文件
+- 由 image-rs、oxipng、resvg 等开源库驱动,无需安装外部程序;不支持 HEIC 输入
 
-已知限制：不支持 HEIC 输入。
+### 通用
 
-### 通用功能
-
-- Windows 和 macOS Apple Silicon 桌面版本
-- 中英文界面
-- 浅色、深色和跟随系统主题
-- 窗口置顶、帮助、官网和关于页面
-- 拖放导入文件或文件夹
-- 工具搜索和应用内更新提示
+- 中英文界面,浅色 / 深色 / 跟随系统主题,窗口置顶,拖放导入,应用内更新提示
 
 ## 安装
 
@@ -78,20 +54,11 @@ RNA-seq 功能依赖本机安装的 R 和相关 R 包。DESeq2/edgeR 需要原�
 | 平台                 | 文件                 | 安装方式                       |
 | -------------------- | -------------------- | ------------------------------ |
 | Windows 10/11 64-bit | `mynx-installer.exe` | 运行安装器                     |
-| macOS Apple Silicon  | `Mynx_*.dmg`         | 打开 DMG，将应用拖到“应用程序” |
+| macOS Apple Silicon  | `Mynx_*.dmg`         | 打开 DMG,将应用拖到"应用程序" |
 
-当前 macOS 发布包面向 Apple Silicon（M1/M2/M3/M4），暂不提供 Intel 或 Universal 版本。
+当前 macOS 发布包面向 Apple Silicon(M1–M4),不提供 Intel 或 Universal 版本。
 
-### macOS 首次打开
-
-当前 DMG 未使用 Apple Developer ID 签名和公证。首次打开时，macOS 可能提示应用“已损坏，无法打开”。
-
-1. 打开 DMG，将 `Mynx.app` 拖到“应用程序”。
-2. 在 DMG 中找到 `修复损坏.command`，右键选择“打开”。
-3. 在安全提示中选择“打开”，等待脚本完成处理。
-4. 关闭终端窗口，再从“应用程序”启动 Mynx。
-
-如果脚本无法打开，可在终端执行：
+DMG 未做 Apple Developer ID 公证,首次打开若提示"已损坏":在 DMG 中右键 `修复损坏.command` 选择"打开",按提示完成后再启动应用;或手动执行:
 
 ```bash
 sudo xattr -cr /Applications/Mynx.app
@@ -102,57 +69,29 @@ sudo codesign --force --deep --sign - /Applications/Mynx.app
 
 | 项目     | Windows                                | macOS                            |
 | -------- | -------------------------------------- | -------------------------------- |
-| 操作系统 | Windows 10 1803+ / Windows 11（64 位） | macOS 11+                        |
+| 操作系统 | Windows 10 1803+ / Windows 11(64 位) | macOS 11+                        |
 | 架构     | x86_64                                 | Apple Silicon / arm64            |
 | 运行时   | Microsoft Edge WebView2 Runtime        | 系统 WebKit                      |
 | 权限     | 安装到 Program Files 时需要管理员权限  | 首次打开可能需要在系统设置中允许 |
 
 ## 开发
 
-### 环境
-
-- Node.js >= 22
-- Rust >= 1.77（stable）
-- Windows 构建安装器：Windows 10/11 和 Visual Studio Build Tools（C++ 工作负载）
-- macOS 构建 DMG：Apple Silicon Mac 和 Xcode Command Line Tools
-
-### 安装依赖
+环境:Node.js ≥ 22,Rust ≥ 1.77(stable);Windows 构建需 Visual Studio Build Tools(C++ 工作负载),macOS 构建需 Xcode Command Line Tools。
 
 ```bash
-npm install
-cd installer && npm install && cd ..
-```
+npm install && cd installer && npm install && cd ..
 
-### 开发模式
+npm run tauri dev          # 主应用开发模式
+npm run installer:dev      # 安装器开发模式
 
-```bash
-npm run tauri dev          # 主应用
-npm run installer:dev      # 安装器界面
-```
+npm run installer:build    # Windows:主应用 + 自建安装器(产物 release-installer/)
+npm run mac:build          # macOS Apple Silicon:.app / .dmg / updater tarball
 
-### 构建
-
-```bash
-# Windows：主应用和自建安装器
-npm run installer:build
-# 产物：release-installer/mynx-installer.exe
-
-# macOS Apple Silicon：.app、.dmg 和 updater tarball
-npm run mac:build
-# 产物：src-tauri/target/aarch64-apple-darwin/release/bundle/
-
-# Intel Mac：开发环境兼容性构建，不作为正式发布产物
-npm run mac:build:intel
-```
-
-### 检查
-
-```bash
-npm run version:check
-npm run resources:check
-npm run build
-npm run lint
-npm run check:release
+npm run build              # 前端类型检查与构建
+npm run lint               # ESLint
+npm run check:release      # 测试套件 + cargo test + 安装器 payload 同步
+npm run test:r:engine      # RNA-seq 引擎契约冒烟测试(需本机 R)
+npm run version:check && npm run resources:check
 ```
 
 ## 项目结构
@@ -160,20 +99,17 @@ npm run check:release
 ```text
 mynx/
 ├── src/                # React 主应用
-├── src-tauri/          # Rust 后端和 Tauri 配置
+├── src-tauri/          # Rust 后端、Tauri 配置与 R 引擎(r/)
 ├── installer/          # Windows 安装器
-│   ├── src/            # 安装器 React 界面
-│   └── src-tauri/      # 安装器 Rust 逻辑
-├── scripts/            # 版本同步和构建脚本
+├── scripts/            # 版本同步、资源校验与冒烟测试脚本
+├── tests/r/            # R 引擎数值回归基准
 └── .github/workflows/  # GitHub Actions
 ```
 
 ## 许可证
 
-Mynx 使用 [Apache License 2.0](./LICENSE) 许可证。
+本项目以 [Apache License 2.0](./LICENSE) 发布,第三方组件声明见 [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md)。RNA-seq / qPCR / 科研绘图依赖运行时安装的 R 及其扩展包(DESeq2、edgeR、ComplexHeatmap 等),这些包不随本软件分发,各自遵循其原始许可证。
 
 Copyright © 2024-2026 Han
 
-第三方组件的许可声明见 [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md)。RNA-seq / qPCR / 科研绘图功能依赖运行时安装的 R 及其扩展包（DESeq2、edgeR、ComplexHeatmap 等），这些包不随本软件分发，各自遵循其原始许可证。
-
-本项目由 https://www.relixapi.top/ 支持并提供优质 token。
+作者主页:<https://fanguanghan.dpdns.org/>
