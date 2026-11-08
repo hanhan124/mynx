@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window. Permissions are scoped to the minimum set the app actually uses: reading/writing user-selected files (xlsx) and writing/cleaning up temp conversion scripts.",
+  "description": "Capability for the main window. Permissions are scoped to the minimum set the app actually uses: reading/writing user-selected files (xlsx) and cleaning up R-run temp files.",
   "windows": ["main"],
   "permissions": [
     "core:default",
@@ -105,7 +105,7 @@
       ]
     },
     {
-      "comment": "remove: only needed to clean up temp conversion scripts in $TEMP.",
+      "comment": "remove: clean up R-run temp files in $TEMP (qPCR plot runner).",
       "identifier": "fs:allow-remove",
       "allow": [
         { "path": "$TEMP/**" }

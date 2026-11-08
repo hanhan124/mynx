@@ -1,12 +1,12 @@
 /**
  * RNA-seq 差异分析流水线 — 主页面。
  *
- * 三步向导:数据导入 → 差异分析 → 绘图导出。
- * 进入本页时窗口最大化(保留任务栏的标准最大化,非全屏),离开时恢复进入前状态;
- * 设计体系完全沿用 mynx(Tahoe 令牌 / surface 渐变 / tabler 图标 / spring 动效)。
+ * 三步向导:数据导入 → 分组与分析 → 图形输出。
+ * 分析引擎为 r/rnaseq_engine.R(参考脚本 rnaseq_DE_heatmap.R 的原样移植),
+ * 本页只负责配置收集、运行调度与结果展示。
  */
-import { useMemo, useState } from "react";
-import { ask, open } from "@tauri-apps/plugin-dialog";
+import { useState } from "react";
+import { ask } from "@tauri-apps/plugin-dialog";
 import {
   IconMicroscope,
   IconFileImport,
@@ -17,9 +17,9 @@ import {
 } from "@tabler/icons-react";
 import { showToast } from "@/components/Toast";
 import HelpButton from "@/components/HelpButton";
-import { RnaSeqProvider, useRnaSeq, validComparisonsOf } from "./store";
+import { RnaSeqProvider, useRnaSeq } from "./store";
 import ImportStep from "./ImportStep";
-import AnalysisStep from "./AnalysisStep";
+import DesignStep from "./DesignStep";
 import PlotsStep from "./PlotsStep";
 import { RnaSeqTutorial } from "./RnaSeqTutorial";
 import { useLanguage } from "@/lib/i18n";
@@ -29,23 +29,8 @@ type StepId = "import" | "analysis" | "plots";
 
 function StepContent({ step, goStep }: { step: StepId; goStep: (s: StepId) => void }) {
   if (step === "import") return <ImportStep />;
-  if (step === "analysis") return <AnalysisStep goPlots={() => goStep("plots")} />;
+  if (step === "analysis") return <DesignStep goPlots={() => goStep("plots")} />;
   return <PlotsStep goAnalysis={() => goStep("analysis")} />;
-}
-
-/** 步骤就绪状态。步骤只在其前提完成后开放，避免用户跳到没有可执行操作的页面。 */
-function useStepReadiness() {
-  const st = useRnaSeq();
-  return useMemo(() => {
-    const importReady =
-      !!st.importData && st.config.data_file === st.successfulImportPath;
-    const analysisReady =
-      st.hasResult ||
-      (st.config.selected_groups.length >= 2 &&
-        validComparisonsOf(st.config).length >= 1);
-    const plotsReady = st.hasResult;
-    return { importReady, analysisReady, plotsReady };
-  }, [st.importData, st.config, st.hasResult, st.successfulImportPath]);
 }
 
 function RnaSeqInner() {
@@ -57,49 +42,17 @@ function RnaSeqInner() {
   ];
   const [step, setStep] = useState<StepId>("import");
   const st = useRnaSeq();
-  const readiness = useStepReadiness();
-  const stepIndex = steps.findIndex((s) => s.id === step);
 
   const goStep = (s: StepId) => {
-    if (s === "analysis" && !readiness.importReady && !st.hasResult) {
+    if (s !== "import" && !st.config.data_file) {
       showToast("请先完成 Counts 数据导入", "info");
       return;
     }
     if (s === "plots" && !st.hasResult) {
-      showToast("绘图需要差异分析结果:先运行 DEG,或在结果来源处选择历史目录", "info");
+      showToast("绘图需要差异分析结果:先运行 DE,或在「图形输出」加载结果目录", "info");
       return;
     }
     setStep(s);
-  };
-
-  // ── 配置存取:保存/加载配置 + 加载结果(对齐 publication_pipeline_wails) ──
-  const onSaveConfig = async () => {
-    const r = await st.saveConfig();
-    if (r.saved) showToast(`配置已保存:${r.path}`, "success");
-    else if (r.error) showToast(r.error, "error");
-  };
-  const onLoadConfig = async () => {
-    const picked = await open({
-      multiple: false,
-      filters: [{ name: "JSON 配置", extensions: ["json"] }],
-    });
-    if (!picked) return;
-    const p = Array.isArray(picked) ? picked[0] : picked;
-    const res = await st.loadConfig(p);
-    if (res.ok) showToast("配置已加载,请核对分组与比较设置", "success");
-    else if (res.error) showToast(res.error, "error");
-  };
-  const onLoadResult = async () => {
-    const picked = await open({
-      directory: true,
-      multiple: false,
-      title: "选择差异分析结果目录(含 RNAseq_Analysis_Results.xlsx)",
-    });
-    if (!picked) return;
-    const p = Array.isArray(picked) ? picked[0] : picked;
-    const ok = await st.loadFromPath(p, { mergeParams: true });
-    if (ok) goStep("plots");
-    else showToast("该目录未找到差异分析结果(RNAseq_Analysis_Results.xlsx)", "info");
   };
 
   const rscriptTag = () => {
@@ -128,12 +81,12 @@ function RnaSeqInner() {
         role="button"
         title="点击重新检测(安装 R 后无需重启)"
         onClick={async () => {
-          const consent = await ask("未检测到 R。是否现在通过系统包管理器安装？", {
+          const consent = await ask("未检测到 R。是否现在通过系统包管理器安装?", {
             title: "安装 R",
             kind: "info",
           });
           if (!consent) return;
-          showToast("正在安装 R，完成后会自动重新检测…", "info");
+          showToast("正在安装 R,完成后会自动重新检测…", "info");
           const installed = await installRRuntime();
           if (!installed.ok) {
             showToast(installed.error || "R 安装未完成", "error");
@@ -141,7 +94,7 @@ function RnaSeqInner() {
           }
           const ok = await st.recheckRscript();
           showToast(
-            ok ? "已检测到 Rscript" : "R 已安装但尚未被检测到，请重新打开软件后再试",
+            ok ? "已检测到 Rscript" : "R 已安装但尚未被检测到,请重新打开软件后再试",
             ok ? "success" : "info",
           );
         }}
@@ -154,7 +107,7 @@ function RnaSeqInner() {
   return (
     <div className="page-shell page-shell--wide unified-page unified-page--rnaseq">
       <div className="panel-header">
-        <div className="panel-icon" style={{ background: "#af52de" }}>
+        <div className="panel-icon panel-icon--purple">
           <IconMicroscope size={18} color="white" stroke={1.75} />
         </div>
         <div className="panel-title">
@@ -167,20 +120,14 @@ function RnaSeqInner() {
         </div>
       </div>
 
-      {/* 三步工作流:只开放已满足前置条件的下一步，避免进入空页面。 */}
+      {/* 三步工作流 */}
       <div className="rx-steps" role="tablist">
         <span
           className="rx-steps-indicator"
-          style={{ transform: `translateX(${stepIndex * 100}%)` }}
+          style={{ transform: `translateX(${steps.findIndex((s) => s.id === step) * 100}%)` }}
         />
         {steps.map((s, i) => {
           const Icon = s.icon;
-          const ready =
-            s.id === "import"
-              ? readiness.importReady
-              : s.id === "analysis"
-                ? readiness.analysisReady
-                : readiness.plotsReady;
           return (
             <button
               key={s.id}
@@ -195,8 +142,13 @@ function RnaSeqInner() {
                 {i + 1}. {s.label}
               </span>
               <span
-                className={`rx-steps-dot${ready ? " ready" : ""}`}
-                title={ready ? "已完成" : i > stepIndex ? "完成上一步后开放" : "待完成"}
+                className={`rx-steps-dot${
+                  (s.id === "import" && !!st.config.data_file) ||
+                  (s.id === "analysis" && st.hasResult) ||
+                  (s.id === "plots" && st.resultImages.length > 0)
+                    ? " ready"
+                    : ""
+                }`}
               />
             </button>
           );
@@ -205,16 +157,31 @@ function RnaSeqInner() {
 
       <details className="rx-project-menu">
         <summary>
-          {t("rnaseq.loadConfig")} / {t("rnaseq.loadResult")}
+          {t("rnaseq.loadConfig")} / {t("rnaseq.loadResult")} / {t("rnaseq.saveConfig")}
         </summary>
         <div className="rx-project-menu-actions">
-          <button type="button" className="btn" onClick={() => void onLoadConfig()}>
+          <button type="button" className="btn" onClick={() => void st.loadConfig()}>
             <IconFileImport size={13} stroke={1.75} /> {t("rnaseq.loadConfig")}
           </button>
-          <button type="button" className="btn" onClick={() => void onLoadResult()}>
+          <button
+            type="button"
+            className="btn"
+            onClick={async () => {
+              const { open } = await import("@tauri-apps/plugin-dialog");
+              const picked = await open({
+                directory: true,
+                multiple: false,
+                title: "选择引擎运行结果目录(含 DE/heatmap/plots)",
+              });
+              if (!picked) return;
+              const p = Array.isArray(picked) ? picked[0] : picked;
+              const ok = await st.loadResultDir(p);
+              if (ok) setStep("plots");
+            }}
+          >
             <IconFolderOpen size={13} stroke={1.75} /> {t("rnaseq.loadResult")}
           </button>
-          <button type="button" className="btn" onClick={() => void onSaveConfig()}>
+          <button type="button" className="btn" onClick={() => void st.saveConfig()}>
             <IconDeviceFloppy size={13} stroke={1.75} /> {t("rnaseq.saveConfig")}
           </button>
         </div>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import HelpButton, { ChartStudioTutorial } from "@/components/HelpButton";
 import {
   IconChartAreaLine,
   IconChartBar,
@@ -12,6 +13,7 @@ import {
   IconDeviceFloppy,
   IconDownload,
   IconExternalLink,
+  IconFileImport,
   IconFileSpreadsheet,
   IconFolder,
   IconLayoutGrid,
@@ -1661,8 +1663,8 @@ export default function ChartStudioPage() {
         cancelDisabled={cancelling}
       />
       <div className="panel-header">
-        <div className="panel-icon" style={{ background: "#ff9f0a" }}>
-          <IconChartDots3 size={18} color="white" />
+        <div className="panel-icon panel-icon--orange">
+          <IconChartDots3 size={18} color="white" stroke={1.75} />
         </div>
         <div className="panel-title">
           <h2>{l("科研绘图", "Scientific plotting")}</h2>
@@ -1677,25 +1679,25 @@ export default function ChartStudioPage() {
           {rscriptTag()}
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn"
             onClick={savePreset}
             disabled={running}
           >
-            <IconDeviceFloppy size={15} />
+            <IconDeviceFloppy size={14} stroke={1.75} />
             {l("保存参数", "Save preset")}
           </button>
           <button
             type="button"
-            className="btn btn-ghost"
+            className="btn"
             onClick={() => void importPresets()}
             disabled={running}
           >
-            <IconUpload size={14} />
+            <IconUpload size={14} stroke={1.75} />
             {l("导入参数", "Import presets")}
           </button>
           <button
             type="button"
-            className="btn btn-ghost"
+            className="btn"
             onClick={() => void importConfigSidecar()}
             disabled={running}
             title={l(
@@ -1703,18 +1705,19 @@ export default function ChartStudioPage() {
               "Load the JSON settings saved with a chart result",
             )}
           >
-            <IconUpload size={14} />
+            <IconFileImport size={14} stroke={1.75} />
             {l("加载出图参数", "Load chart settings")}
           </button>
           <button
             type="button"
-            className="btn btn-ghost"
+            className="btn"
             onClick={() => void exportPresets()}
             disabled={running}
           >
-            <IconDownload size={14} />
+            <IconDownload size={14} stroke={1.75} />
             {l("导出参数", "Export presets")}
           </button>
+          <HelpButton>{(close) => <ChartStudioTutorial onClose={close} />}</HelpButton>
         </div>
       </div>
       <div className="chart-studio__notice">
@@ -1832,7 +1835,7 @@ export default function ChartStudioPage() {
               <div className="chart-studio__data-actions btn-row">
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn"
                   onClick={pickData}
                   disabled={running}
                 >
@@ -1841,7 +1844,7 @@ export default function ChartStudioPage() {
                 </button>
                 <button
                   type="button"
-                  className="btn btn-ghost"
+                  className="btn"
                   onClick={useDemo}
                   disabled={running}
                 >
@@ -1850,7 +1853,7 @@ export default function ChartStudioPage() {
                 </button>
                 <button
                   type="button"
-                  className="btn btn-ghost"
+                  className="btn"
                   onClick={downloadSample}
                   disabled={running}
                 >
@@ -1860,7 +1863,7 @@ export default function ChartStudioPage() {
                 {cfg.filePath && (
                   <button
                     type="button"
-                    className="btn btn-ghost chart-studio__clear-data"
+                    className="btn chart-studio__clear-data"
                     onClick={clearData}
                     disabled={running}
                   >
@@ -1937,7 +1940,7 @@ export default function ChartStudioPage() {
                 </div>
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn"
                   onClick={pickFolder}
                   disabled={running}
                 >
@@ -2758,7 +2761,7 @@ export default function ChartStudioPage() {
           <div className="chart-studio__template-actions">
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn"
               onClick={downloadTemplate}
               disabled={running}
             >
@@ -2767,7 +2770,7 @@ export default function ChartStudioPage() {
             </button>
             <button
               type="button"
-              className="btn btn-ghost"
+              className="btn"
               onClick={() => void copyLog()}
             >
               <IconCopy size={13} />
@@ -2775,7 +2778,7 @@ export default function ChartStudioPage() {
             </button>
             <button
               type="button"
-              className="btn btn-ghost"
+              className="btn"
               onClick={() => void copySourceNote()}
             >
               <IconCopy size={13} />
@@ -2829,7 +2832,7 @@ export default function ChartStudioPage() {
                 </small>
                 <button
                   type="button"
-                  className="btn btn-secondary btn-full"
+                  className="btn btn-full"
                   onClick={() => void openResult()}
                 >
                   <IconFolder size={14} />
@@ -2837,7 +2840,7 @@ export default function ChartStudioPage() {
                 </button>
                 <button
                   type="button"
-                  className="btn btn-ghost btn-full"
+                  className="btn btn-full"
                   onClick={() => void exportResultPackage()}
                 >
                   <IconDownload size={14} />
@@ -2849,7 +2852,7 @@ export default function ChartStudioPage() {
                 {lastResult.format === "svg" && (
                   <button
                     type="button"
-                    className="btn btn-ghost btn-full"
+                    className="btn btn-full"
                     onClick={() => void copySvgSource()}
                   >
                     <IconCopy size={14} />

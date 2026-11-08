@@ -1,332 +1,217 @@
 /**
- * RNA-seq 流水线类型定义 — 与 r/runner.R 的 params.json 契约严格一致。
- * 迁移自 publication_pipeline_wails（frontend/src/types/config.ts）。
+ * RNA-seq 类型定义 — 与 r/rnaseq_engine.R 的 params.json 契约严格一致。
+ * 契约即参考脚本 rnaseq_DE_heatmap.R 的 CONFIG 结构,字段名一一对应。
  */
 
-// ── 分析参数 ──
-export interface AnalysisParams {
+// ── 输入计数文件(input)──
+export interface InputOptions {
+  count_file: string;
+  /** 基因名列序号(GUI 导入后固定为 1) */
+  gene_col: number;
+  drop_empty_gene: boolean;
+  /** 重名基因处理:sum(原始计数相加) | max_mean(留均值最大行) | make_unique(改名保留) */
+  duplicate_genes: "sum" | "max_mean" | "make_unique";
+  /** 计数取整: round(四舍五入) | floor | ceiling */
+  rounding: "round" | "floor" | "ceiling";
+}
+
+// ── 差异分析全局参数(de)──
+export interface DeFilter {
+  method: "filterByExpr" | "min_count" | "none";
+  min_count: number;
+  min_total_count: number;
+  min_samples: number;
+}
+
+export interface DeOptions {
+  /** 有重复路径的方法:deseq2 | edger */
+  method: "deseq2" | "edger";
+  /** 显著性阈值(校正后 P / FDR) */
+  padj: number;
+  /** Up/Down 判定的 |log2FC| 阈值 */
+  log2fc: number;
+  /** 无重复路径的生物学变异系数:人 0.4 | 同基因型 0.1 | 技术重复 0.01 */
   bcv: number;
-  log2fc_th: number;
-  fdr_th: number;
-  basemean_th: number;
-  top_n_label: number;
-  pvalue_cap: number;
-  /** 引擎:auto(单重复→edgeR 固定 BCV;多重复→DESeq2)/ deseq2 / edger_qlf */
-  engine?: "auto" | "deseq2" | "edger_qlf";
-  /** 低表达过滤阈值(edgeR filterByExpr min.count / DESeq2 rowSums 下限) */
-  filter_min_count?: number;
-  /** 至少达到 filter_min_count 的样本数；与附件流程的统一预过滤一致 */
-  filter_min_samples?: number;
-  filter_rowsum?: number;
-  /** 小数 Counts 默认拒绝；仅确认是计数器舍入误差时可明确选择 round。 */
-  count_rounding?: "stop" | "round";
-  /** 富集注释所用输入基因 ID 类型；auto 自动识别 Ensembl 基因 ID。 */
-  gene_id_type?: "auto" | "symbol" | "ensembl";
+  /** DESeq2 log2FC 收缩:none | apeglm | ashr */
+  shrink: "none" | "apeglm" | "ashr";
+  /** 有 batch 时是否放进设计矩阵 */
+  use_batch: boolean;
+  filter: DeFilter;
 }
 
-// ── 通用作图选项(所有 ggplot 图共享) ──
-export interface CommonPlotOptions {
-  show_legend?: boolean;
-  legend_position?: "right" | "left" | "top" | "bottom";
-  legend_direction?: "vertical" | "horizontal";
-  legend_title?: string;
-  legend_title_size?: number;
-  legend_text_size?: number;
-  show_title?: boolean;
+// ── 差异比较(case 相对 control)──
+export interface Comparison {
+  name: string;
+  case: string;
+  control: string;
+  mode?: "auto" | "replicate" | "noreplicate";
+}
+
+// ── 热图通用样式(heatmap;字段与参考脚本 heatmap list 一致)──
+export interface HeatmapStyle {
+  transform: "vst" | "logcpm";
+  scale: "row" | "none";
+  palette: string;
+  reverse_palette: boolean;
+  zlim: number;
+  group_palette: string;
+  gene_group_palette: string;
+  cluster_rows: boolean;
+  cluster_columns: boolean;
+  row_distance: string;
+  column_distance: string;
+  cluster_method: string;
+  column_names_rot: number;
+  column_names_side: "top" | "bottom";
+  group_bar_height: number;
+  cluster_bar_width: number;
+  cluster_bar_side: "left" | "right";
+  row_title_rot: number;
+  /** null = 自动(≤80 行显示基因名) */
+  show_row_names: boolean | null;
+  show_row_title: boolean;
+  row_names_italic: boolean;
+  show_column_names: boolean;
+  show_annotation_name: boolean;
+  /** "" = 图例只留色块与组名;null = ComplexHeatmap 默认「Group」 */
+  group_legend_title: string | null;
+  show_title: boolean;
+  show_batch: boolean;
+  font_size: number;
+  marker_font_size: number;
+  max_cluster_rows: number;
+  use_raster: boolean | null;
+  raster_quality: number;
+  formats: string[];
+  dpi: number;
+}
+
+// ── 整体热图(overall_heatmap)──
+export interface OverallHeatmap {
+  enabled: boolean;
+  name: string;
+  /** variable(按方差取基因) | deg(差异基因并集,需先跑 de) */
+  gene_source: "variable" | "deg";
+  /** 画多少个基因(按方差);字符串 "all" = 全部 */
+  top_n: number | "all";
+  expressed_only: boolean;
+  /** deg 模式:用哪些比较的结果,null = 全部 */
+  comparisons: string[] | null;
+  /** deg 模式:最多画多少基因(按 padj 排序截取) */
+  max_genes: number;
+  /** 整体热图左侧标记基因(整体基因列表,平铺) */
+  marker_genes: string[];
+  marker_add_missing: boolean;
+  /** 基因聚成几簇(色块 C1..Ck);null = 不分簇 */
+  n_clusters: number | null;
+  sample_correlation: boolean;
+  correlation_palette: string;
+  correlation_show_annotation_name: boolean;
+}
+
+// ── 选定基因热图(selected_heatmaps 的单个任务)──
+export interface SelectedHeatmapJob {
+  name: string;
+  title: string;
+  enabled?: boolean;
+  /** 组名或样本名,顺序即图中顺序;null = 全部 */
+  samples: string[] | null;
+  /** 基因簇:{簇名 = 基因数组};由全局 gene_clusters 填充 */
+  gene_groups: Record<string, string[]> | null;
+  n_clusters: number | null;
+  options: SelectedHeatmapOptions;
+}
+
+/** 选定基因热图 per-figure 覆盖项(merge 进全局 heatmap 样式) */
+export interface SelectedHeatmapOptions {
+  cluster_rows?: boolean;
+  cluster_columns?: boolean;
+  show_row_dend?: boolean;
+  show_column_dend?: boolean;
+  border?: boolean;
+  show_row_title?: boolean;
+  width?: number | null;
+}
+
+// ── PCA 任务 ──
+export interface PcaJob {
+  name: string;
   title?: string;
-  title_hjust?: number;
-  title_color?: string;
-  show_xlab?: boolean;
-  xlab?: string;
-  show_ylab?: boolean;
-  ylab?: string;
-  show_grid?: boolean;
-  panel_border?: "auto" | "none" | "solid" | "dashed";
-  panel_fill?: string;
-  plot_background?: string;
-  show_axis_ticks?: boolean;
-  plot_margin?: number[];
-  title_size?: number;
-  axis_text_size?: number;
-  axis_title_size?: number;
-  axis_text_color?: string;
-  axis_title_color?: string;
-  width?: number;
-  height?: number;
-  up_color?: string;
-  down_color?: string;
-  ns_color?: string;
-  color_palette?: string;
-  point_size?: number;
-  point_alpha?: number;
-  point_shape?: number;
-  bar_width?: number;
-  x_text_angle?: number;
-  show_subtitle?: boolean;
-  // ggplot 主题(runner.R build_theme)
-  gg_theme?: string;
-  base_size?: number;
-  show_threshold_line?: boolean;
-  /** per-plot 子集(空数组=使用全局 selected_groups / comparisons) */
-  groups?: string[];
-  comparisons?: [string, string][];
-  /** MA 图 LOESS 趋势线 */
-  show_loess?: boolean;
+  enabled?: boolean;
+  /** 组名或样本名;null = 全部 */
+  samples: string[] | null;
+  /** 取方差最大的前 ntop 个基因 */
+  ntop: number;
+  pcs: [number, number];
+  label_samples: boolean;
+  /** 组内 ≥4 样本时画 95% 置信椭圆 */
+  ellipse: boolean;
+  legend_pos: "right" | "bottom" | "top" | "none";
+  square_panel: boolean;
+  width_mm: number;
+  height_mm: number;
 }
 
-export interface PcaOptions extends CommonPlotOptions {
-  square?: boolean;
-  show_crosshair?: boolean;
-  label_repel?: boolean;
-  label_text?: "group" | "sample" | "none";
-  xlim?: number[];
-  ylim?: number[];
-  shape_by_group?: boolean;
-  show_n?: boolean;
-  scale_genes?: boolean;
-  /** 仅取方差最高的基因做 PCA；空值/0 表示使用全部变换后的基因 */
-  top_var_genes?: number;
+// ── 火山图(volcano)──
+export interface VolcanoOptions {
+  enabled: boolean;
+  /** 画哪些比较,null = 全部 */
+  comparisons: string[] | null;
+  /** 标注最显著的 N 个基因;0 = 不标 */
+  label_top: number;
+  label_genes: string[] | null;
+  point_size: number;
+  width_mm: number;
+  height_mm: number;
+  legend_pos: "right" | "top" | "bottom" | "none";
+  show_subtitle: boolean;
 }
 
-export interface QcOptions extends CommonPlotOptions {
-  qc_width?: number;
-  qc_height_min?: number;
-  qc_height_per_sample?: number;
-  correlation_width?: number;
-  correlation_height?: number;
-  distance_width?: number;
-  distance_height?: number;
-  show_library_size?: boolean;
-  show_detected_genes?: boolean;
-  show_expression_distribution?: boolean;
-  show_correlation?: boolean;
-  show_distance?: boolean;
+// ── ggplot 图全局(plots)──
+export interface PlotsConfig {
+  formats: string[];
+  dpi: number;
+  font_family: string;
+  base_size: number;
+  group_palette: string;
+  plot_pad_mm: number;
+  label_halo: boolean;
+  legend_gap_mm: number;
+  pca: PcaJob[];
+  volcano: VolcanoOptions;
 }
 
-export interface HeatmapOptions {
-  /** 行聚类算法；必须显式指定，避免因矩阵大小自动改变统计方法 */
-  row_clustering_method?: "hierarchical" | "kmeans" | "none";
-  k_clusters?: number;
-  show_marker_labels?: boolean;
-  /** 强制把标记基因/功能簇基因保留在热图行集内，即使它们未通过 DEG 筛选 */
-  include_markers?: boolean;
-  show_legend?: boolean;
-  legend_position?: string;
-  show_column_names?: boolean;
-  column_names_rot?: number;
-  show_row_names?: boolean;
-  /** 整体热图：基因行名、组列名、标记基因标注的字号(pt) */
-  row_names_size?: number;
-  column_names_size?: number;
-  marker_label_size?: number;
-  legend_title_size?: number;
-  legend_text_size?: number;
-  use_all_genes?: boolean;
-  width?: number;
-  height?: number;
-  groups?: string[];
-  heatmap_palette?: string;
-  zscore_min?: number;
-  zscore_max?: number;
-  /** 调色板中点（通常为白色）对应的 Z 值，必须位于上下限之间 */
-  zscore_center?: number;
-  cluster_palette?: string;
-  show_cluster_annotation?: boolean;
-  /** 是否显示整体热图的 Cluster 图例(与注释条独立控制) */
-  show_cluster_legend?: boolean;
-  column_group_order?: string[];
-  /** 发表热图保留的最多基因数；NULL/空值表示不封顶 */
-  max_genes?: number;
-  /** 大热图是否以栅格绘制；PDF 编辑需求时建议关闭 */
-  use_raster?: boolean;
-  /** 自动热图行排序策略 */
-  row_order?:
-    | "cluster"
-    | "first_column_desc"
-    | "first_column_asc"
-    | "input";
-}
-
-export interface SelectHeatmapOptions {
-  width?: number;
-  height?: number;
-  gene_label_rot?: number;
-  show_legend?: boolean;
-  legend_position?: string;
-  show_gene_names?: boolean;
-  show_group_names?: boolean;
-  /** 选定基因热图的文字字号(pt) */
-  gene_names_size?: number;
-  group_names_size?: number;
-  legend_title_size?: number;
-  legend_text_size?: number;
-  /** 在热图单元格中显示原始 counts */
-  show_cell_text?: boolean;
-  cell_text_size?: number;
-  /** 按附件参考使用栅格化绘制 */
-  use_raster?: boolean;
-  groups?: string[];
-  heatmap_palette?: string;
-  zscore_min?: number;
-  zscore_max?: number;
-  /** 调色板中点（通常为白色）对应的 Z 值，必须位于上下限之间 */
-  zscore_center?: number;
-  cluster_palette?: string;
-  show_cluster_annotation?: boolean;
-  /** 是否显示选定基因热图的 Cluster 图例(与注释条独立控制) */
-  show_cluster_legend?: boolean;
-  column_group_order?: string[];
-}
-
-export interface VolcanoOptions extends CommonPlotOptions {
-  square?: boolean;
-  top_n?: number;
-  label_size?: number;
-  show_threshold_lines?: boolean;
-  show_subtitle?: boolean;
-  ylim?: number[];
-  label_strategy?: "top_n" | "marker" | "both" | "none";
-  label_up_only?: boolean;
-  label_down_only?: boolean;
-}
-
-export interface VennOptions {
-  by?: "sample" | "comparison";
-  max_sets?: number;
-  show_title?: boolean;
-  title?: string;
-  show_stats?: boolean;
-  stroke_size?: number;
-  set_name_size?: number;
-  text_size?: number;
-  title_size?: number;
-  width?: number;
-  height?: number;
-  groups?: string[];
-  comparisons?: [string, string][];
-}
-
-export interface BoxplotOptions extends CommonPlotOptions {
-  outlier_size?: number;
-  box_line_width?: number;
-  box_alpha?: number;
-}
-
-export interface DegBarOptions extends CommonPlotOptions {
-  bar_position?: "stack" | "dodge";
-  show_values?: boolean;
-}
-
-export interface TopGenesOptions extends CommonPlotOptions {
-  n?: number;
-  gene_italic?: boolean;
-  show_threshold_line?: boolean;
-}
-
-export interface DendrogramOptions {
-  method?: string;
-  color_palette?: string;
-  label_cex?: number;
-  hang?: number;
-  cex_axis?: number;
-  cex_main?: number;
-  cex_lab?: number;
-  show_title?: boolean;
-  title?: string;
-  show_xlab?: boolean;
-  xlab?: string;
-  show_ylab?: boolean;
-  ylab?: string;
-  width?: number;
-  height?: number;
-  groups?: string[];
-}
-
-export interface EnrichOptions extends CommonPlotOptions {
-  organism?: string;
-  databases?: string[];
-  ontologies?: string[];
-  /** 分开检验上调/下调基因，避免方向相反的基因混合解释 */
-  split_direction?: boolean;
-  pvalue_cutoff?: number;
-  qvalue_cutoff?: number;
-  top_n?: number;
-  bar_color_by?: "database" | "ontology" | "neg_log10p";
-  bar_x?: "count" | "neg_log10p";
-}
-
-export interface GseaOptions extends CommonPlotOptions {
-  organism?: string;
-  databases?: string[];
-  pvalue_cutoff?: number;
-  top_n?: number;
-  point_size_min?: number;
-  point_size_max?: number;
-  color_by?: "direction" | "nes";
-  n_running_plots?: number;
-}
-
-export interface ViolinOptions extends CommonPlotOptions {
-  genes?: string[];
-  violin_alpha?: number;
-  ncol?: number;
-}
-
-export interface DensityOptions extends CommonPlotOptions {
-  by?: "sample" | "group";
-  alpha?: number;
-}
-
-export interface PlotOptions {
-  pca?: PcaOptions;
-  mds?: PcaOptions;
-  /** 样本文库、检测基因数、表达分布及样本间关系的一组质控图 */
-  qc?: QcOptions;
-  heatmap?: HeatmapOptions;
-  select_heatmap?: SelectHeatmapOptions;
-  volcano?: VolcanoOptions;
-  venn?: VennOptions;
-  ma?: CommonPlotOptions;
-  boxplot?: BoxplotOptions;
-  deg_bar?: DegBarOptions;
-  top_genes?: TopGenesOptions;
-  dendrogram?: DendrogramOptions;
-  enrich?: EnrichOptions;
-  gsea?: GseaOptions;
-  violin?: ViolinOptions;
-  density?: DensityOptions;
-}
-
-// ── 完整配置(params.json 契约) ──
-export interface Config {
+// ── 完整配置(params.json 契约)──
+export interface RnaSeqConfig {
+  /** 计数文件(导入规范化后的 csv 缓存) */
   data_file: string;
+  /** 输出根目录(运行目录 = output_dir/run_name) */
   output_dir: string;
   run_name: string;
-  groups: Record<string, string[]>;
-  group_display: Record<string, string>;
-  group_order: string[];
-  selected_groups: string[];
-  comparisons: [string, string][];
-  /** 批次分配:批次名 → 样本列表;非空时采用 ~ batch + condition 设计(默认 {}) */
-  batches: Record<string, string[]>;
-  params: AnalysisParams;
-  marker_genes: string[];
+  /** 样本显示名:原始列名 = 显示名 */
+  sample_labels: Record<string, string>;
+  /** 整体热图标记基因(平铺) */
+  overall_genes: string[];
+  /** 选定基因热图的基因簇:簇名 = 基因数组 */
   gene_clusters: Record<string, string[]>;
-  excluded_genes: string[];
-  steps: string[];
-  plot_formats: string[];
-  size_mode: "auto" | "manual";
-  plot_options: PlotOptions;
-  /** 发表字体(sans/Arial/Helvetica/Times) */
-  font_family: string;
-  /** 快速预览模式(低分辨率 PNG,R 端读取) */
-  preview_mode?: boolean;
-  preview_dpi?: number;
+  input: InputOptions;
+  groups: Record<string, string[]>;
+  de: DeOptions;
+  comparisons: Comparison[];
+  heatmap: HeatmapStyle;
+  overall_heatmap: OverallHeatmap;
+  selected_heatmaps: SelectedHeatmapJob[];
+  plots: PlotsConfig;
+  /** 运行步骤(运行时注入):de | heatmap | plots */
+  steps?: string[];
 }
 
-export type MatrixFormat = "counts_matrix" | "featurecounts" | "htseq";
+// ── 运行步骤 ──
+export type RunStep = "de" | "heatmap" | "plots";
 
 // ── 导入数据 ──
+export type MatrixFormat = "counts_matrix" | "featurecounts" | "htseq";
+
 export interface ImportData {
   gene_col: string;
   sample_cols: string[];
@@ -352,21 +237,8 @@ export interface PageData {
   total_pages: number;
 }
 
-// ── 绘图结果文件 ──
-export interface PlotFileItem {
-  name: string;
-  size: number;
-  mtime: string;
-}
-
-export interface PlotFileContent {
-  kind?: "svg" | "png" | "pdf";
-  content?: string;
-  data_base64?: string;
-  unsupported?: boolean;
-  name?: string;
-  error?: string;
-}
+// ── 运行状态 ──
+export type RunStatus = "idle" | "running" | "done" | "failed" | "cancelled";
 
 export interface LogEntry {
   ts: number;
@@ -374,18 +246,27 @@ export interface LogEntry {
   level: string;
 }
 
-export interface StepDef {
-  id: string;
+// ── 结果文件 ──
+export interface ResultFileItem {
   name: string;
+  /** 相对运行目录的子目录:"heatmap" | "plots" */
+  subdir: string;
+  size: number;
+  mtimeMs: number;
 }
 
-// ── 运行记录 ──
-export interface RunItem {
-  name: string;
-  base_dir: string;
-  has_excel: boolean;
-  n_plots: number;
-  mtime: string;
+/** DE_summary.csv 的行 */
+export interface DeSummaryRow {
+  comparison: string;
+  case: string;
+  control: string;
+  n_case: number;
+  n_control: number;
+  path: string;
+  method: string;
+  genes_tested: number;
+  padj_cutoff: number;
+  log2fc_cutoff: number;
+  Up: number;
+  Down: number;
 }
-
-export type RunStatus = "idle" | "running" | "done" | "failed" | "cancelled";

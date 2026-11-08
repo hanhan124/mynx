@@ -1,13 +1,13 @@
 /**
- * R 引擎运行器 — Go 端 runR/Cancel/CheckRscript 的 TS 移植。
+ * R 引擎运行器 — 通过 plugin-shell 启动 Rscript 执行 rnaseq_engine.R。
  *
- * 通过 plugin-shell 启动 Rscript(Windows 经 PowerShell 包装,可写任意输出目录;
- * macOS/Linux 经 bash -c exec 直接替换进程以便取消),stdout/stderr 逐行流式回调。
- * 参数经 params.json 传递,与 r/runner.R 契约一致。
+ * Windows 经 PowerShell 包装(可写任意输出目录;输出路径含中文时先在
+ * ASCII 临时目录运行,完成后复制回目标),macOS/Linux 经 bash -c exec。
+ * 参数经 params.json 传递,与引擎(参考脚本 rnaseq_DE_heatmap.R)契约一致。
  */
 import { Command as ShellCommand } from "@tauri-apps/plugin-shell";
 import { isWindows, joinPath, psQuote, shQuote } from "./io.ts";
-import type { Config } from "./types.ts";
+import type { RnaSeqConfig } from "./types.ts";
 
 export type LogLevel = "info" | "warning" | "error" | "success";
 
@@ -97,24 +97,20 @@ export function resetRscriptCache(): void {
   rscriptCache = null;
 }
 
-/** RNA-seq 核心流程所需依赖；高级单图仍由 R 端按需检查。 */
+/** rnaseq_engine.R(参考脚本)运行所需依赖;R 端 check_dependencies 亦按此清单校验。 */
 export const RNA_SEQ_REQUIRED_PACKAGES = [
   "jsonlite",
-  "dplyr",
-  "tibble",
-  "tidyr",
-  "ggplot2",
-  "ggrepel",
-  "paletteer",
-  "ggsci",
-  "svglite",
-  "edgeR",
   "DESeq2",
-  "openxlsx",
-  "pheatmap",
+  "edgeR",
+  "SummarizedExperiment",
+  "matrixStats",
   "ComplexHeatmap",
   "circlize",
-  "ggvenn",
+  "RColorBrewer",
+  "viridisLite",
+  "ggplot2",
+  "ggrepel",
+  "ragg",
 ] as const;
 
 export interface RDependencyStatus {
@@ -259,11 +255,11 @@ export async function installRDependencies(
   }
 }
 
-// ── runner.R 资源定位(开发与打包均为 resourceDir()/r/runner.R) ──
+// ── 引擎脚本资源定位(开发与打包均为 resourceDir()/r/rnaseq_engine.R) ──
 export async function resolveRunnerR(): Promise<string> {
   const { resourceDir } = await import("@tauri-apps/api/path");
   const dir = await resourceDir();
-  return joinPath(dir, "r", "runner.R");
+  return joinPath(dir, "r", "rnaseq_engine.R");
 }
 
 // ── 默认输出根目录 ──
@@ -302,7 +298,7 @@ let taskSeq = 0;
  * 返回句柄:promise 在进程结束后 resolve;cancel 终止进程树。
  */
 export async function runR(
-  config: Config,
+  config: RnaSeqConfig,
   callbacks: RunCallbacks = {},
 ): Promise<RunHandle> {
   const taskId = `t${Date.now()}_${++taskSeq}`;
@@ -311,8 +307,10 @@ export async function runR(
   const rscript = await findRscript();
   const runnerR = await resolveRunnerR();
 
-  // 解析输出目录与运行名,写回 config 副本(Go 端语义:确保 R 侧用同一个 run_name)
-  const cfg: Config = { ...config };
+  // 解析输出目录与运行名,写回 config 副本。
+  // 引擎(参考脚本)把全部结果直接写进 params 的 output_dir,因此 R 侧
+  // 拿到的是 <输出根目录>/<run_name> 本身,不再由 R 拼接 run_name。
+  const cfg: RnaSeqConfig = { ...config };
   let outputBase = cfg.output_dir?.trim() ?? "";
   if (!outputBase) outputBase = await defaultOutputBase();
   let runName = cfg.run_name?.trim() ?? "";
@@ -320,6 +318,10 @@ export async function runR(
   cfg.output_dir = outputBase;
   cfg.run_name = runName;
   const outputDir = joinPath(outputBase, runName);
+  // 批次功能已从 GUI 移除;旧保存的配置若带 batch 字段也不传给引擎
+  const { batch: _batch, ...core } = cfg as RnaSeqConfig & { batch?: unknown };
+  void _batch;
+  const engineParams: RnaSeqConfig = { ...core, output_dir: outputDir };
 
   // params.json 先写到临时目录(fs 插件可写),再由包装 shell 复制到目标
   // (目标目录可在任意磁盘,绕开 fs 作用域限制)。Rscript 始终读取临时文件。
@@ -334,9 +336,9 @@ export async function runR(
     ? joinPath(tmp, `mynx_rnaseq_stage_${taskId}`)
     : "";
   const stageOutputDir = useWindowsAsciiStage ? joinPath(stageBase, runName) : "";
-  const runnerCfg: Config = useWindowsAsciiStage
-    ? { ...cfg, output_dir: stageBase }
-    : cfg;
+  const runnerCfg: RnaSeqConfig = useWindowsAsciiStage
+    ? { ...engineParams, output_dir: stageOutputDir }
+    : engineParams;
   const tmpRunnerParams = joinPath(tmp, `mynx_rnaseq_runner_${taskId}.json`);
   const tmpTargetParams = useWindowsAsciiStage
     ? joinPath(tmp, `mynx_rnaseq_target_${taskId}.json`)
@@ -348,7 +350,7 @@ export async function runR(
   if (tmpTargetParams !== tmpRunnerParams) {
     await writeFile(
       tmpTargetParams,
-      new TextEncoder().encode(JSON.stringify(cfg, null, 2)),
+      new TextEncoder().encode(JSON.stringify(engineParams, null, 2)),
     );
   }
   // 脚本标准布局：可供 GUI 复用的 JSON 放在 prepared/，根目录保留
@@ -389,8 +391,7 @@ export async function runR(
 
     callbacks.onLog?.("info", `Rscript: ${rscript}`);
     callbacks.onLog?.("info", `输出目录: ${outputDir}`);
-    callbacks.onLog?.("info", `步骤: ${cfg.steps.join(", ")}`);
-    callbacks.onLog?.("info", `图格式: ${(cfg.plot_formats ?? []).join(", ") || "png"}`);
+    callbacks.onLog?.("info", `步骤: ${(cfg.steps ?? []).join(", ")}`);
     if (useWindowsAsciiStage) {
       callbacks.onLog?.(
         "info",

@@ -280,7 +280,7 @@ export default function UpdateNotification() {
             <div className="update-header">
               <div
                 className="update-icon-wrap"
-                style={{ background: "rgba(48,209,88,0.12)", color: "#30d158" }}
+                style={{ background: "rgba(var(--green-rgb), 0.12)", color: "var(--green)" }}
               >
                 <IconDownload size={16} stroke={1.75} />
               </div>
@@ -308,7 +308,7 @@ export default function UpdateNotification() {
             <div className="update-header">
               <div
                 className="update-icon-wrap"
-                style={{ background: "rgba(255,69,58,0.12)", color: "#ff453a" }}
+                style={{ background: "rgba(var(--red-rgb), 0.12)", color: "var(--red)" }}
               >
                 <IconAlertTriangleFilled size={16} stroke={1.75} />
               </div>

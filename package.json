@@ -1,7 +1,8 @@
 {
   "name": "mynx",
   "private": true,
-  "version": "2.3.8",
+  "version": "2.3.9",
+  "license": "Apache-2.0",
   "type": "module",
   "repository": "https://github.com/hanhan124/mynx",
   "scripts": {
@@ -38,7 +39,8 @@
     "charts:check": "npm run charts:schema && node scripts/check-charts.mjs",
     "charts:smoke": "Rscript scripts/chart-template-smoke.R",
     "charts:verify": "npm run charts:check && npm run charts:smoke && npm run charts:visual",
-    "release": "node scripts/release.cjs"
+    "release": "node scripts/release.cjs",
+    "test:r:engine": "node --experimental-strip-types scripts/rnaseq-engine-smoke.ts"
   },
   "dependencies": {
     "@tabler/icons-react": "^3.44.0",

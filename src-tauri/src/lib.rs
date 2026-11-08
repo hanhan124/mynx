@@ -24,12 +24,10 @@ pub fn run() {
             commands::app::app_exe_path,
             commands::app::is_portable,
             commands::app::cleanup_update_bak,
-            commands::search::open_search_window,
-            commands::search::search_new_tab,
-            commands::search::search_switch_tab,
-            commands::search::search_close_tab,
-            commands::search::navigate_search_window,
-            commands::search::search_content_action,
+            commands::image_convert::image_collect_files,
+            commands::image_convert::image_convert_start,
+            commands::image_convert::image_convert_cancel,
+            commands::image_convert::image_thumbnail,
             commands::weather::weather_by_ip
         ])
         .setup(|app| {

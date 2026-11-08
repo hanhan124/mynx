@@ -1,0 +1,20 @@
+{
+  "data_file": "D:/vibe_coding/mynx/tests/r/rnaseq-engine-test/gene.count_rep.csv",
+  "output_dir": "",
+  "run_name": "ui_test",
+  "sample_labels": { "CTL_1": "Control-1" },
+  "input": {
+    "count_file": "D:/vibe_coding/mynx/tests/r/rnaseq-engine-test/gene.count_rep.csv",
+    "gene_col": 1,
+    "drop_empty_gene": true,
+    "duplicate_genes": "sum",
+    "rounding": "round"
+  },
+  "groups": {
+    "Control": ["CTL_1", "CTL_2", "CTL_3"],
+    "Case": ["CASE_1", "CASE_2", "CASE_3"]
+  },
+  "comparisons": [
+    { "name": "Case_vs_Control", "case": "Case", "control": "Control" }
+  ]
+}

@@ -1,11 +1,11 @@
 # Mynx
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 [![Windows](https://img.shields.io/badge/platform-Windows-0078d4.svg)](#系统要求)
 [![macOS](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-000000.svg)](#系统要求)
 [![Tauri 2](https://img.shields.io/badge/Tauri-2.x-FFC131.svg)](https://tauri.app/)
 
-Mynx 是一款科研数据处理桌面工具，提供 qPCR 数据分析、RNA-seq 差异分析和 TIFF 图像转换功能，支持 Windows 与 macOS Apple Silicon。
+Mynx 是一款科研数据处理桌面工具，提供 qPCR 数据分析、RNA-seq 差异分析和图片转 PNG（批量转换 / 压缩 / 水印）功能，支持 Windows 与 macOS Apple Silicon。
 
 ## 功能
 
@@ -48,16 +48,19 @@ qPCR 绘图工作区读取计算结果 Excel，支持柱状图和表达量热图
 
 RNA-seq 功能依赖本机安装的 R 和相关 R 包。DESeq2/edgeR 需要原始或 estimated counts，不能直接使用 TPM、FPKM 或 log 转换矩阵。含单重复组的比较仅适合作为候选线索，正式结论应使用足够的生物学重复进行验证。
 
-### TIFF 转 JPG
+### 图片转 PNG
 
-- 批量转换文件夹中的 `.tif` / `.tiff` 文件
-- 支持单页和多页 TIFF
-- 设置 JPG 压缩质量
-- 可选添加文件名水印，设置字体、字号、粗体、斜体、边距、背景透明度和输出质量
-- 显示转换进度和失败数量
-- 输出到带时间戳的 `JPG_output_` 子目录，不修改原始 TIFF 文件
+- 支持 PNG / JPG / TIFF / WebP / BMP / GIF / ICO / TGA / PNM / QOI / DDS / SVG 等常见格式批量转换为 PNG
+- 文件、文件夹（递归）与拖放三种添加方式，带缩略图文件列表
+- **无损优化**：像素不变，oxipng 分档压缩（快速 / 均衡 / 极致）
+- **有损压缩**：量化为 256 / 128 / 64 / 32 色索引色 PNG，可开抖动
+- 多页 TIFF 逐页导出；动图取首帧；SVG 按矢量高清栅格化；自动识别 EXIF 方向
+- **水印**：文字水印（默认文件名、字体、字号、粗体、白/黑、不透明度、九宫格位置或平铺、半透明底色）与图片水印（logo、缩放、不透明度、位置）
+- 输出位置三选一：源目录时间戳子文件夹（默认）/ 与原图同目录 / 自定义目录；重名自动加后缀，原图永不覆盖
+- 实时进度、随时取消、逐文件结果表与总体节省体积统计
+- 转换全部在本地完成，由开源库驱动（image-rs、oxipng、resvg、color_quant、kamadak-exif、imageproc），无需安装 ImageMagick 等外部程序
 
-工具按当前选择的文件夹处理，不会递归扫描更深层子目录。Windows 不需要额外依赖；macOS 启用水印时需要安装 ImageMagick。
+已知限制：不支持 HEIC 输入。
 
 ### 通用功能
 
@@ -167,8 +170,10 @@ mynx/
 
 ## 许可证
 
-Mynx 使用 MIT 许可证，详见 [LICENSE](./LICENSE)。
+Mynx 使用 [Apache License 2.0](./LICENSE) 许可证。
 
 Copyright © 2024-2026 Han
+
+第三方组件的许可声明见 [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md)。RNA-seq / qPCR / 科研绘图功能依赖运行时安装的 R 及其扩展包（DESeq2、edgeR、ComplexHeatmap 等），这些包不随本软件分发，各自遵循其原始许可证。
 
 本项目由 https://www.relixapi.top/ 支持并提供优质 token。

@@ -1,0 +1,80 @@
+{
+  "output_dir": "D:/vibe_coding/mynx/tests/r/rnaseq-engine-test/results_rep",
+  "steps": ["de", "heatmap", "plots"],
+  "sample_labels": {
+    "CTL_1": "Control 1",
+    "CTL_2": "Control 2",
+    "CTL_3": "Control 3",
+    "CASE_1": "Case 1",
+    "CASE_2": "Case 2",
+    "CASE_3": "Case 3"
+  },
+  "overall_genes": [
+    "RPE65", "MITF", "BEST1", "NANOG",
+    "SOX2", "POU5F1", "PAX6", "PMEL", "RAX",
+    "TYR", "OTX2", "TYRP1", "MERTK",
+    "LHX2", "VSX2", "DCT", "RLBP1"
+  ],
+  "gene_clusters": {
+    "Transcription": ["MITF", "OTX2", "PAX6", "RAX"],
+    "Melanogenesis": ["TYR", "TYRP1", "PMEL", "MLANA"],
+    "Visual_Cycle": ["RPE65", "RDH5", "RLBP1"],
+    "Phagocytosis": ["MERTK", "ITGAV"],
+    "Ion_Transport": ["BEST1", "ATP1A1"],
+    "Tight_Junctions": ["TJP1", "AQP1"],
+    "Cytoskeleton": ["EZR"],
+    "Secreted": ["SERPINF1", "VEGFA"]
+  },
+  "input": {
+    "count_file": "D:/vibe_coding/mynx/tests/r/rnaseq-engine-test/gene.count_rep.csv",
+    "gene_col": 1,
+    "drop_empty_gene": true,
+    "duplicate_genes": "sum",
+    "rounding": "round"
+  },
+  "groups": {
+    "Control": ["CTL_1", "CTL_2", "CTL_3"],
+    "Case": ["CASE_1", "CASE_2", "CASE_3"]
+  },
+  "batch": null,
+  "de": {
+    "method": "deseq2",
+    "padj": 0.05,
+    "log2fc": 1,
+    "bcv": 0.4,
+    "shrink": "none",
+    "use_batch": true,
+    "filter": {
+      "method": "filterByExpr",
+      "min_count": 10,
+      "min_total_count": 15,
+      "min_samples": 2
+    }
+  },
+  "comparisons": [
+    { "name": "Case_vs_Control", "case": "Case", "control": "Control" }
+  ],
+  "overall_heatmap": {
+    "marker_genes": [
+      "RPE65", "MITF", "BEST1", "NANOG",
+      "SOX2", "POU5F1", "PAX6", "PMEL", "RAX",
+      "TYR", "OTX2", "TYRP1", "MERTK",
+      "LHX2", "VSX2", "DCT", "RLBP1"
+    ]
+  },
+  "selected_heatmaps": [
+    {
+      "name": "gene_clusters",
+      "title": "RPE gene clusters",
+      "options": {
+        "cluster_rows": false,
+        "cluster_columns": false,
+        "show_row_dend": true,
+        "show_column_dend": true,
+        "border": false,
+        "show_row_title": false,
+        "width": 4.5
+      }
+    }
+  ]
+}

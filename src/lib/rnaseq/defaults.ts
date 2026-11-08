@@ -1,10 +1,18 @@
 /**
- * RNA-seq 默认配置 — 与 Go 端 DefaultConfig() / R 契约一致。
- * 迁移自 publication_pipeline_wails app.go。
+ * RNA-seq 默认配置 — 与参考脚本 rnaseq_DE_heatmap.R 的 CONFIG 默认值一一对应。
+ * 字段名/默认值不得随意改动:R 端引擎按参考脚本原样消费这些值。
  */
-import type { Config, PlotOptions, StepDef } from "./types";
+import type {
+  Comparison,
+  HeatmapStyle,
+  OverallHeatmap,
+  PlotsConfig,
+  RnaSeqConfig,
+  SelectedHeatmapJob,
+} from "./types.ts";
 
-export const DEFAULT_MARKER_GENES = [
+/** 整体热图标记基因(参考脚本 overall_genes) */
+export const DEFAULT_MARKER_GENES: string[] = [
   "RPE65",
   "MITF",
   "BEST1",
@@ -18,16 +26,16 @@ export const DEFAULT_MARKER_GENES = [
   "OTX2",
   "TYRP1",
   "MERTK",
-  "TJP1",
   "LHX2",
   "VSX2",
   "DCT",
   "RLBP1",
 ];
 
+/** 选定基因热图的基因簇(参考脚本 gene_clusters) */
 export const DEFAULT_GENE_CLUSTERS: Record<string, string[]> = {
-  Transcription: ["MITF", "OTX2", "PAX6", "RAX", "LHX2"],
-  Melanogenesis: ["TYR", "TYRP1", "PMEL", "MLANA", "DCT"],
+  Transcription: ["MITF", "OTX2", "PAX6", "RAX"],
+  Melanogenesis: ["TYR", "TYRP1", "PMEL", "MLANA"],
   Visual_Cycle: ["RPE65", "RDH5", "RLBP1"],
   Phagocytosis: ["MERTK", "ITGAV"],
   Ion_Transport: ["BEST1", "ATP1A1"],
@@ -36,504 +44,219 @@ export const DEFAULT_GENE_CLUSTERS: Record<string, string[]> = {
   Secreted: ["SERPINF1", "VEGFA"],
 };
 
-export const ALL_STEPS: StepDef[] = [
-  { id: "deg", name: "DEG 差异分析" },
-  { id: "heatmap", name: "整体热图" },
-  { id: "pca", name: "PCA 图" },
-  { id: "mds", name: "MDS 图" },
-  { id: "qc", name: "样本 QC" },
-  { id: "venn", name: "Venn 图" },
-  { id: "select_heatmap", name: "选定基因功能簇热图" },
-  { id: "volcano", name: "火山图" },
-  { id: "ma", name: "MA 图" },
-  { id: "boxplot", name: "表达分布箱线图" },
-  { id: "deg_bar", name: "DEG 统计柱状图" },
-  { id: "top_genes", name: "Top 基因条形图" },
-  { id: "dendrogram", name: "样本聚类树状图" },
-  { id: "enrich", name: "GO/KEGG 富集条形图" },
-  { id: "gsea", name: "GSEA 富集点图" },
-  { id: "violin", name: "单基因表达小提琴图" },
-  { id: "density", name: "表达密度图" },
-];
-
-/** 每类图的默认绘图参数(键名/默认值与 runner.R 读取的字段一一对应,勿改) */
-export function defaultPlotOptions(): PlotOptions {
-  const subset = { groups: [] as string[], comparisons: [] as [string, string][] };
-  const commonLegend = {
-    show_legend: true,
-    legend_position: "right" as const,
-    legend_direction: "vertical" as const,
-  };
-  const commonGg = { gg_theme: "bw", base_size: 12 };
+/** 热图通用样式(参考脚本 CONFIG$heatmap) */
+export function defaultHeatmapStyle(): HeatmapStyle {
   return {
-    pca: {
-      ...commonLegend,
-      ...commonGg,
-      ...subset,
-      square: true,
-      point_size: 4,
-      point_alpha: 0.9,
-      point_shape: 19,
-      label_repel: true,
-      label_text: "group",
-      title: "PCA Plot",
-      show_title: true,
-      show_xlab: true,
-      show_ylab: true,
-      show_grid: true,
-      show_crosshair: true,
-      panel_border: "auto",
-      shape_by_group: false,
-      show_n: false,
-      // VST/log2-CPM 已稳定均值-方差关系；PCA 默认不再逐基因 Z 标准化。
-      scale_genes: false,
-      top_var_genes: 0,
-      legend_title: "Group",
-      color_palette: "reference",
-      title_size: 18,
-      axis_text_size: 16,
-      axis_title_size: 18,
-      legend_title_size: 16,
-      legend_text_size: 14,
-      width: 7,
-      height: 6,
+    transform: "vst",
+    scale: "row",
+    palette: "RdBu",
+    reverse_palette: true,
+    zlim: 2,
+    group_palette: "Set2",
+    gene_group_palette: "Dark2",
+    cluster_rows: true,
+    cluster_columns: false,
+    row_distance: "pearson",
+    column_distance: "euclidean",
+    cluster_method: "ward.D2",
+    column_names_rot: 0,
+    column_names_side: "top",
+    group_bar_height: 1,
+    cluster_bar_width: 5,
+    cluster_bar_side: "left",
+    row_title_rot: 0,
+    show_row_names: null,
+    show_row_title: true,
+    row_names_italic: true,
+    show_column_names: true,
+    show_annotation_name: false,
+    group_legend_title: "",
+    show_title: false,
+    show_batch: true,
+    font_size: 9,
+    marker_font_size: 8,
+    max_cluster_rows: 5000,
+    use_raster: null,
+    raster_quality: 1,
+    formats: ["png"],
+    dpi: 600,
+  };
+}
+
+/** 整体热图(参考脚本 CONFIG$overall_heatmap) */
+export function defaultOverallHeatmap(): OverallHeatmap {
+  return {
+    enabled: true,
+    name: "overall",
+    gene_source: "variable",
+    top_n: "all",
+    expressed_only: true,
+    comparisons: null,
+    max_genes: 2000,
+    marker_genes: [...DEFAULT_MARKER_GENES],
+    marker_add_missing: true,
+    n_clusters: 3,
+    sample_correlation: true,
+    correlation_palette: "YlOrRd",
+    correlation_show_annotation_name: false,
+  };
+}
+
+/** 选定基因热图(参考脚本 CONFIG$selected_heatmaps) */
+export function defaultSelectedHeatmaps(): SelectedHeatmapJob[] {
+  return [
+    {
+      name: "gene_clusters",
+      title: "RPE gene clusters",
+      gene_groups: null, // 运行时由全局 gene_clusters 填充
+      samples: null,
+      n_clusters: null,
+      options: {
+        cluster_rows: false,
+        cluster_columns: false,
+        show_row_dend: true,
+        show_column_dend: true,
+        border: false,
+        show_row_title: false,
+        width: 4.5,
+      },
     },
-    mds: {
-      ...commonLegend,
-      ...commonGg,
-      ...subset,
-      square: true,
-      point_size: 4,
-      point_alpha: 0.9,
-      point_shape: 19,
-      label_repel: true,
-      label_text: "group",
-      title: "MDS Plot",
-      show_title: true,
-      show_xlab: true,
-      show_ylab: true,
-      show_grid: true,
-      show_crosshair: true,
-      panel_border: "auto",
-      shape_by_group: false,
-      legend_title: "Group",
-      color_palette: "reference",
-      title_size: 18,
-      axis_text_size: 16,
-      axis_title_size: 18,
-      legend_title_size: 16,
-      legend_text_size: 14,
-      width: 7,
-      height: 6,
-    },
-    qc: {
-      ...commonLegend,
-      ...commonGg,
-      ...subset,
-      qc_width: 9,
-      qc_height_min: 5,
-      qc_height_per_sample: 0.25,
-      correlation_width: 8,
-      correlation_height: 6,
-      distance_width: 8,
-      distance_height: 6,
-      show_library_size: true,
-      show_detected_genes: true,
-      show_expression_distribution: true,
-      show_correlation: true,
-      show_distance: true,
-      color_palette: "reference",
-    },
-    heatmap: {
-      ...subset,
-      row_clustering_method: "hierarchical",
-      k_clusters: 3,
-      // 与 2.heatmap.R 一致：默认展示左侧关键基因标记。
-      show_marker_labels: true,
-      // 与 2.heatmap.R 一致：热图行集只取候选 DEG。开启后强制保留标记基因。
-      include_markers: false,
-      show_legend: true,
-      legend_position: "right",
-      show_column_names: true,
-      column_names_rot: 0,
-      show_row_names: false,
-      row_names_size: 6,
-      column_names_size: 16,
-      marker_label_size: 12,
-      legend_title_size: 10,
-      legend_text_size: 9,
-      use_all_genes: false,
-      // 与 2.heatmap.R 的 pdf(width=8, height=12) 一致。
-      width: 8,
-      height: 12,
-      heatmap_palette: "Blue-Red 2",
-      zscore_min: -2,
-      zscore_max: 2,
-      zscore_center: 0,
-      // 参考脚本使用 ggsci::default_igv 作为 Cluster 色带。
-      cluster_palette: "default_igv",
-      show_cluster_annotation: true,
-      show_cluster_legend: false,
-      column_group_order: [] as string[],
-      // 0 = 不限制。全基因模式下行数可达 1.8 万，超过 5000 行时层次聚类
-      // 会因 O(n²) 距离矩阵直接失败，因此默认给一个与聚类上限匹配的上限；
-      // 需要更高上限可手动调大，或把行聚类方法改为 K-means / 不聚类。
-      max_genes: 2000,
-      use_raster: false,
-      row_order: "cluster",
-    },
-    select_heatmap: {
-      ...subset,
-      width: 5,
-      height: 5,
-      gene_label_rot: 0,
-      show_legend: true,
-      legend_position: "right",
-      show_gene_names: true,
-      show_group_names: true,
-      gene_names_size: 6,
-      group_names_size: 8,
-      legend_title_size: 10,
-      legend_text_size: 9,
-      show_cell_text: false,
-      cell_text_size: 4.5,
-      use_raster: true,
-      heatmap_palette: "Blue-Red 2",
-      zscore_min: -2,
-      zscore_max: 2,
-      zscore_center: 0,
-      cluster_palette: "npg",
-      show_cluster_annotation: true,
-      show_cluster_legend: true,
-      column_group_order: [] as string[],
-    },
+  ];
+}
+
+/** PCA 与火山图(参考脚本 CONFIG$plots) */
+export function defaultPlots(): PlotsConfig {
+  return {
+    formats: ["png"],
+    dpi: 300,
+    font_family: "Arial",
+    base_size: 7,
+    group_palette: "npg",
+    plot_pad_mm: 2,
+    label_halo: true,
+    legend_gap_mm: 0.8,
+    pca: [
+      {
+        name: "PCA_selected",
+        samples: null,
+        ntop: 500,
+        pcs: [1, 2],
+        label_samples: true,
+        ellipse: false,
+        legend_pos: "right",
+        square_panel: true,
+        width_mm: 76,
+        height_mm: 62,
+      },
+    ],
     volcano: {
-      ...commonLegend,
-      ...commonGg,
-      ...subset,
-      square: true,
-      top_n: 20,
-      label_size: 4,
-      show_threshold_lines: true,
-      point_alpha: 0.4,
-      point_size: 1.2,
-      point_shape: 19,
-      up_color: "#d57a27",
-      down_color: "#0068aa",
-      ns_color: "grey80",
-      show_title: true,
-      show_subtitle: true,
-      title: "",
-      show_xlab: true,
-      show_ylab: true,
-      xlab: "log2(Fold Change)",
-      ylab: "-log10 (Adjusted P-value)",
-      show_grid: false,
-      title_size: 14,
-      axis_text_size: 10,
-      axis_title_size: 12,
-      width: 7,
-      height: 6,
-      label_strategy: "top_n",
-      label_up_only: true,
-      label_down_only: true,
-    },
-    venn: {
-      ...subset,
-      by: "comparison",
-      max_sets: 4,
-      show_title: true,
-      title: "",
-      show_stats: true,
-      stroke_size: 0.5,
-      set_name_size: 3,
-      text_size: 2.5,
-      title_size: 10,
-      width: 5,
-      height: 5,
-    },
-    ma: {
-      ...commonLegend,
-      ...commonGg,
-      ...subset,
-      point_size: 1.2,
-      point_alpha: 0.6,
-      point_shape: 19,
-      up_color: "#d57a27",
-      down_color: "#0068aa",
-      ns_color: "grey80",
-      show_title: true,
-      show_xlab: true,
-      show_ylab: true,
-      xlab: "log2(mean expression + 1)",
-      ylab: "log2 Fold Change",
-      show_threshold_line: true,
-      show_grid: false,
-      title_size: 13,
-      axis_text_size: 10,
-      axis_title_size: 11,
-      width: 8,
-      height: 6,
-      show_loess: false,
-    },
-    boxplot: {
-      ...commonLegend,
-      ...commonGg,
-      ...subset,
-      show_title: true,
-      title: "Expression Distribution",
-      show_xlab: true,
-      show_ylab: true,
-      xlab: "Sample",
-      ylab: "Expression (log2)",
-      x_text_angle: 45,
-      show_grid: false,
-      color_palette: "category10_d3",
-      outlier_size: 0.5,
-      box_line_width: 0.5,
-      box_alpha: 0.7,
-      title_size: 13,
-      axis_text_size: 7,
-      axis_title_size: 11,
-      width: 7,
-      height: 5,
-    },
-    deg_bar: {
-      ...commonLegend,
-      ...commonGg,
-      ...subset,
-      show_title: true,
-      title: "DEG Counts per Comparison",
-      show_xlab: false,
-      show_ylab: true,
-      xlab: "",
-      ylab: "Number of DEGs",
-      x_text_angle: 30,
-      bar_position: "stack",
-      bar_width: 0.7,
-      up_color: "#E41A1C",
-      down_color: "#377EB8",
-      show_values: false,
-      show_grid: false,
-      title_size: 13,
-      axis_text_size: 10,
-      axis_title_size: 11,
-      width: 7,
-      height: 5,
-    },
-    top_genes: {
-      ...commonLegend,
-      ...commonGg,
-      ...subset,
-      n: 20,
-      show_title: true,
-      show_xlab: true,
-      show_ylab: true,
-      xlab: "log2 Fold Change",
-      ylab: "",
-      gene_italic: true,
-      show_threshold_line: true,
-      bar_width: 0.7,
-      up_color: "#E41A1C",
-      down_color: "#377EB8",
-      title_size: 13,
-      axis_text_size: 9,
-      axis_title_size: 11,
-      width: 7,
-      height: 5,
-    },
-    dendrogram: {
-      ...subset,
-      method: "ward.D2",
-      color_palette: "category10_d3",
-      show_title: true,
-      title: "Sample Clustering Dendrogram",
-      show_xlab: false,
-      show_ylab: true,
-      xlab: "",
-      ylab: "Distance (1 - Pearson r)",
-      label_cex: 0.8,
-      hang: -1,
-      cex_axis: 0.7,
-      cex_main: 1,
-      cex_lab: 1,
-      width: 7,
-      height: 5,
-    },
-    enrich: {
-      ...commonLegend,
-      ...commonGg,
-      ...subset,
-      organism: "human",
-      databases: ["GO", "KEGG"],
-      ontologies: ["BP", "CC", "MF"],
-      split_direction: true,
-      pvalue_cutoff: 0.05,
-      qvalue_cutoff: 0.2,
-      top_n: 20,
-      bar_width: 0.7,
-      show_title: true,
-      title: "Enrichment Analysis (ORA)",
-      show_xlab: true,
-      show_ylab: true,
-      xlab: "Gene Count",
-      ylab: "",
-      show_grid: false,
-      panel_border: "none",
-      title_size: 13,
-      axis_text_size: 9,
-      axis_title_size: 11,
-      color_palette: "category10_d3",
-      legend_title: "Database",
-      width: 7,
-      height: 5,
-      bar_color_by: "database",
-      bar_x: "count",
-    },
-    gsea: {
-      ...commonLegend,
-      ...commonGg,
-      ...subset,
-      organism: "human",
-      databases: ["GO", "KEGG"],
-      pvalue_cutoff: 0.05,
-      top_n: 20,
-      up_color: "#E41A1C",
-      down_color: "#377EB8",
-      show_title: true,
-      show_xlab: true,
-      show_ylab: true,
-      xlab: "Normalized Enrichment Score (NES)",
-      ylab: "",
-      show_grid: false,
-      panel_border: "none",
-      title_size: 13,
-      axis_text_size: 9,
-      axis_title_size: 11,
-      legend_title: "Direction",
-      width: 7,
-      height: 5,
-      point_size_min: 2,
-      point_size_max: 6,
-      color_by: "direction",
-      n_running_plots: 3,
-    },
-    violin: {
-      ...commonLegend,
-      ...commonGg,
-      ...subset,
-      genes: [] as string[],
-      violin_alpha: 0.6,
-      ncol: 4,
-      show_title: true,
-      title: "Gene Expression (Violin)",
-      show_xlab: true,
-      show_ylab: true,
-      xlab: "Group",
-      ylab: "Expression (log2)",
-      show_grid: false,
-      panel_border: "none",
-      title_size: 13,
-      axis_text_size: 10,
-      axis_title_size: 11,
-      color_palette: "category10_d3",
-      legend_title: "Group",
-      width: 7,
-      height: 5,
-    },
-    density: {
-      ...commonLegend,
-      ...commonGg,
-      ...subset,
-      by: "group",
-      alpha: 0.4,
-      show_title: true,
-      title: "Expression Density",
-      show_xlab: true,
-      show_ylab: true,
-      xlab: "Expression (log2)",
-      ylab: "Density",
-      show_grid: false,
-      panel_border: "none",
-      title_size: 13,
-      axis_text_size: 10,
-      axis_title_size: 11,
-      color_palette: "category10_d3",
-      width: 7,
-      height: 5,
+      enabled: true,
+      comparisons: null,
+      label_top: 10,
+      label_genes: null,
+      point_size: 0.5,
+      width_mm: 78,
+      height_mm: 70,
+      legend_pos: "right",
+      show_subtitle: false,
     },
   };
 }
 
-export function defaultConfig(): Config {
+export function defaultComparisons(): Comparison[] {
+  return [];
+}
+
+export function defaultConfig(): RnaSeqConfig {
   return {
     data_file: "",
     output_dir: "",
-    run_name: "",
-    groups: {},
-    group_display: {},
-    group_order: [],
-    selected_groups: [],
-    comparisons: [],
-    batches: {},
-    params: {
-      bcv: 0.4,
-      log2fc_th: 1.5,
-      fdr_th: 0.05,
-      basemean_th: 0,
-      top_n_label: 20,
-      pvalue_cap: 1e-50,
-      engine: "auto",
-      filter_min_count: 10,
-      filter_min_samples: 2,
-      filter_rowsum: 0,
-      count_rounding: "stop",
-      gene_id_type: "auto",
+    run_name: "auto",
+    sample_labels: {},
+    overall_genes: [...DEFAULT_MARKER_GENES],
+    gene_clusters: Object.fromEntries(
+      Object.entries(DEFAULT_GENE_CLUSTERS).map(([k, v]) => [k, [...v]]),
+    ),
+    input: {
+      count_file: "",
+      gene_col: 1,
+      drop_empty_gene: true,
+      duplicate_genes: "sum",
+      rounding: "round",
     },
-    marker_genes: [...DEFAULT_MARKER_GENES],
-    gene_clusters: JSON.parse(JSON.stringify(DEFAULT_GENE_CLUSTERS)),
-    excluded_genes: [],
-    steps: ALL_STEPS.map((s) => s.id),
-    // 参考脚本默认导出 300 DPI PNG；PDF 仍可由用户在导出设置中主动选择。
-    plot_formats: ["png"],
-    size_mode: "auto",
-    plot_options: defaultPlotOptions(),
-    font_family: "sans",
+    groups: {},
+    de: {
+      method: "deseq2",
+      padj: 0.05,
+      log2fc: 1,
+      bcv: 0.4,
+      shrink: "none",
+      use_batch: true,
+      filter: {
+        method: "filterByExpr",
+        min_count: 10,
+        min_total_count: 15,
+        min_samples: 2,
+      },
+    },
+    comparisons: defaultComparisons(),
+    heatmap: defaultHeatmapStyle(),
+    overall_heatmap: defaultOverallHeatmap(),
+    selected_heatmaps: defaultSelectedHeatmaps(),
+    plots: defaultPlots(),
   };
 }
 
-/** 深合并外部配置到默认值之上(残缺/旧配置不崩溃) */
+// ── 深合并(加载历史配置时,防止旧/残缺 JSON 缺字段)──
 export function deepMerge<T>(base: T, patch: unknown): T {
-  if (patch === null || typeof patch !== "object" || Array.isArray(patch)) {
-    return (patch ?? base) as T;
+  if (Array.isArray(base)) {
+    return (Array.isArray(patch) ? patch : base) as T;
   }
-  const out: Record<string, unknown> = { ...(base as Record<string, unknown>) };
-  for (const k of Object.keys(patch as Record<string, unknown>)) {
-    out[k] = deepMerge(out[k], (patch as Record<string, unknown>)[k]);
+  if (base !== null && typeof base === "object") {
+    if (patch === null || typeof patch !== "object" || Array.isArray(patch)) {
+      return base;
+    }
+    const out: Record<string, unknown> = { ...(base as Record<string, unknown>) };
+    for (const [k, v] of Object.entries(patch as Record<string, unknown>)) {
+      if (v === undefined) continue;
+      out[k] = k in out ? deepMerge(out[k], v) : v;
+    }
+    return out as T;
   }
-  return out as T;
+  return (patch === undefined ? base : (patch as T)) ?? base;
 }
 
-/**
- * 清洗基因名列表:去掉首尾空白与包裹的引号。
- * 历史 params.json 里出现过 `"RPE65"`（含字面双引号）这类值,会让基因名
- * 匹配全部失效。与 R 端 norm_gene_names 保持一致。
- */
+// ── 基因名清洗:去引号/空白(历史配置可能出现 '"RPE65"' 字面量)──
 export function cleanGeneList(input: unknown): string[] {
   if (!Array.isArray(input)) return [];
-  return input
-    .map((v) => String(v ?? "").trim())
-    .map((v) => v.replace(/^["']+|["']+$/g, "").trim())
-    .filter(Boolean);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of input) {
+    if (typeof v !== "string") continue;
+    const g = v
+      .trim()
+      .replace(/^["']*/, "")
+      .replace(/["']*$/, "")
+      .trim();
+    if (!g || seen.has(g)) continue;
+    seen.add(g);
+    out.push(g);
+  }
+  return out;
 }
 
-/** 清洗 gene_clusters:每个簇的基因列表同样去引号 */
 export function cleanGeneClusters(input: unknown): Record<string, string[]> {
   if (!input || typeof input !== "object" || Array.isArray(input)) return {};
   const out: Record<string, string[]> = {};
-  for (const [k, v] of Object.entries(input as Record<string, unknown>)) {
-    const genes = cleanGeneList(v);
-    if (genes.length > 0) out[k] = genes;
+  for (const [name, genes] of Object.entries(input as Record<string, unknown>)) {
+    const key = name.trim();
+    const list = cleanGeneList(genes);
+    if (key && list.length) out[key] = list;
   }
   return out;
+}
+
+/** 比较名 -> 文件安全名(与参考脚本「name 用作输出文件名」的建议一致) */
+export function sanitizeComparisonName(name: string): string {
+  return name.trim().replace(/\s+/g, "_");
 }

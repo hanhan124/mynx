@@ -86,6 +86,7 @@
 }
 
 /* ========= 主题选择器 ========= */
+/* 3 个主题（跟随系统/深色/浅色）单行三列 */
 .theme-picker {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -387,6 +388,15 @@
   align-items: center;
   justify-content: center;
   color: white;
+}
+
+/* 语义色变体：跟随主题令牌（qPCR 绿 / RNA-seq 紫） */
+.file-icon--green {
+  background: var(--green);
+}
+
+.file-icon--purple {
+  background: var(--purple);
 }
 
 .file-info {

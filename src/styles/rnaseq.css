@@ -114,7 +114,7 @@
   align-items: center;
   padding: 12px 14px;
   margin-bottom: 14px;
-  background: linear-gradient(105deg, rgba(175, 82, 222, 0.09), var(--bg-card) 42%);
+  background: linear-gradient(105deg, rgba(var(--purple-rgb), 0.09), var(--bg-card) 42%);
   border: 1px solid var(--stroke);
   border-radius: var(--radius-lg, 12px);
   box-shadow: var(--shadow-sm);
@@ -309,7 +309,7 @@
 
 .rx-steps-btn.active svg {
   opacity: 1;
-  color: #af52de;
+  color: var(--purple);
 }
 
 .rx-steps-dot {
@@ -422,7 +422,7 @@
 }
 
 .rx-empty-hero svg {
-  color: #af52de;
+  color: var(--purple);
 }
 
 .rx-empty-hero strong {
@@ -2170,7 +2170,7 @@
 }
 
 .rx-preset-lead svg {
-  color: #af52de;
+  color: var(--purple);
 }
 
 .rx-preset-val {
@@ -2217,7 +2217,7 @@
 .rx-preset-card.active {
   border-color: var(--preset-accent, var(--accent));
   box-shadow: 0 0 0 1px var(--preset-accent, var(--accent)), var(--shadow-sm);
-  background: linear-gradient(180deg, rgba(175, 82, 222, 0.05), transparent), var(--bg-card);
+  background: linear-gradient(180deg, rgba(var(--purple-rgb), 0.05), transparent), var(--bg-card);
 }
 
 .rx-preset-card-top {
@@ -3097,7 +3097,7 @@
 .rx-fmt-points li svg {
   flex: 0 0 auto;
   transform: translateY(1px);
-  color: var(--green, #34c759);
+  color: var(--green);
 }
 @media (max-width: 920px) {
   .rx-fmt-cards {
@@ -3179,4 +3179,86 @@
 }
 .rx-flow-arrow {
   opacity: 0.65;
+}
+
+/* ========= 参考脚本版 UI 补充 ========= */
+/* 基因列表 textarea(整体热图标记基因) */
+.rx-genes-textarea {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--stroke-strong, var(--stroke));
+  border-radius: var(--radius-sm);
+  resize: vertical;
+  font-family: inherit;
+}
+.rx-genes-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* 基因簇基因 textarea:按内容自适应高度 */
+.rx-cluster-genes {
+  height: auto;
+  min-height: 28px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* 当前选中(接收样本)的分组卡片高亮 */
+.rx-group-card.selected {
+  outline: 2px solid var(--group-color, var(--accent));
+  outline-offset: -1px;
+}
+
+/* 批次编辑器:已归属该批次的样本芯片 */
+.rx-group-card--batch .rx-sample-chip--group.checked {
+  border-color: var(--group-color, var(--orange));
+  color: var(--group-color, var(--orange));
+}
+
+/* ========= 样本拖拽分配(PointerEvent 实现)========= */
+.rx-sample-chip {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.rx-sample-chip--pick {
+  cursor: grab;
+  touch-action: none;
+}
+.rx-sample-chip--pick:active {
+  cursor: grabbing;
+}
+.rx-sample-chip--group {
+  cursor: grab;
+  touch-action: none;
+}
+/* 拖拽悬停时的落点高亮 */
+.rx-group-card.drag-over {
+  outline: 2px dashed var(--group-color, var(--accent));
+  outline-offset: -1px;
+  background: var(--accent-soft, var(--bg-hover));
+}
+.rx-pool-box.drag-over {
+  outline: 2px dashed var(--orange);
+  outline-offset: -1px;
+}
+/* 跟随指针的样本幽灵标签(portal 到 body) */
+.rx-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  transform: translate(-50%, -140%);
+  padding: 4px 12px;
+  border-radius: var(--radius-circular);
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
 }

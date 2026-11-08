@@ -57,7 +57,7 @@ check('unknown preset falls back', unk.applied === 'counts_matrix');
 const cm = normalizeCountMatrix([['gene', 'S1'], ['__no_feature', '5'], ['g1', '3']], '');
 check('counts_matrix filters __ rows', cm.body.length === 1);
 
-// ── 重复基因名按原始计数求和合并(Go 测试断言值)──
+// ── 重复基因名保留原行(合并策略由 R 端引擎按 duplicate_genes 处理)──
 const dup = normalizeCountMatrix(
   [
     ['gene_id', 'G1', 'G2'],
@@ -67,8 +67,7 @@ const dup = normalizeCountMatrix(
   ],
   'counts_matrix',
 );
-check('dup merged by sum G1=15', dup.body.length === 2 && dup.body[0][1] === '15', dup.body);
-check('dup merged by sum G2=26', dup.body[0][2] === '26', dup.body);
+check('dup rows preserved', dup.body.length === 3 && dup.body[0][1] === '5' && dup.body[1][1] === '10', dup.body);
 check('dup warning', dup.warnings.some((w) => w.includes('重复基因名')), dup.warnings);
 
 // ── TPM 疑似检测 ──

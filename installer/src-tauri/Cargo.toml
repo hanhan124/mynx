@@ -1,7 +1,8 @@
 [package]
 name = "mynx-installer"
-version = "2.3.8"
+version = "2.3.9"
 description = "Mynx 安装向导(Tauri 自建安装器)"
+license = "Apache-2.0"
 authors = ["Han"]
 edition = "2021"
 rust-version = "1.77"

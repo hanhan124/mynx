@@ -16,3 +16,17 @@ export type SearchEngine = (typeof SEARCH_ENGINES)[number]["id"];
 export function isSearchEngine(value: string | null): value is SearchEngine {
   return SEARCH_ENGINES.some(({ id }) => id === value);
 }
+
+/** Web-search URL per engine; opened with the system default browser. */
+const SEARCH_QUERY_URLS: Record<SearchEngine, string> = {
+  google: "https://www.google.com/search?q=",
+  bing: "https://www.bing.com/search?q=",
+  baidu: "https://www.baidu.com/s?wd=",
+  brave: "https://search.brave.com/search?q=",
+  perplexity: "https://www.perplexity.ai/search/new?q=",
+  you: "https://you.com/search?q=",
+};
+
+export function searchUrl(engine: SearchEngine, query: string): string {
+  return SEARCH_QUERY_URLS[engine] + encodeURIComponent(query);
+}

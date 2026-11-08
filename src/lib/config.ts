@@ -78,3 +78,16 @@ export async function saveChartPresets(presets: ChartPreset[]): Promise<void> {
   await store.set("chartStudioPresets", presets);
   await store.save();
 }
+
+/** Image-converter tool options, persisted across sessions. */
+export async function loadConverterSettings(): Promise<Record<string, unknown> | null> {
+  const store = await getStore();
+  const value = await store.get<Record<string, unknown>>("imageConverterOptions");
+  return value && typeof value === "object" ? value : null;
+}
+
+export async function saveConverterSettings(settings: Record<string, unknown>): Promise<void> {
+  const store = await getStore();
+  await store.set("imageConverterOptions", settings);
+  await store.save();
+}

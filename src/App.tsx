@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState } from "react";
-import { HashRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { listen } from "@tauri-apps/api/event";
 import TitleBar from "@/components/TitleBar";
 import Modal from "@/components/Modal";
@@ -10,7 +10,6 @@ import SettingsPage from "@/pages/SettingsPage";
 import ToastContainer from "@/components/Toast";
 import UpdateNotification from "@/components/UpdateNotification";
 import { tools, getPageTitle } from "@/lib/tools";
-import SearchWindow from "@/pages/SearchWindow";
 import { LanguageProvider, getToolTranslationKey, useLanguage } from "@/lib/i18n";
 import { useAccessibilityPreferences } from "@/hooks/useAccessibilityPreferences";
 
@@ -66,7 +65,7 @@ function Layout() {
     return () => unlisten?.();
   }, []);
 
-  if (location.pathname === "/search-window") return <SearchWindow />;
+  if (location.pathname === "/search-window") return <Navigate to="/" replace />;
 
   return (
     <div className="app-layout">
@@ -78,7 +77,7 @@ function Layout() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/search-window" element={<SearchWindow />} />
+            <Route path="/tiff" element={<Navigate to="/image" replace />} />
             {tools.map((tool) => (
               <Route
                 key={tool.path}

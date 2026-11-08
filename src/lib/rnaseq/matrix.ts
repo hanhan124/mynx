@@ -1,9 +1,8 @@
 /**
- * Counts 矩阵导入/规范化 — Go 端 normalizeCountMatrix 的 TS 移植。
- * 行为对齐 normalize_matrix_test.go:
+ * Counts 矩阵导入/规范化。
  *  - featureCounts 预设丢弃注释列,保留 Geneid + 数值样本列
  *  - HTSeq 预设过滤 __no_feature 等特殊行
- *  - 重复基因名按原始计数求和合并
+ *  - 重复基因名/小数计数不做有损预处理,交给 R 端引擎按参考脚本处理
  */
 import { joinPath, pathBase, readBytesAny, readTextAny, statAny } from "./io.ts";
 import type { ImportData, MatrixFormat, PageData } from "./types.ts";
@@ -328,38 +327,16 @@ export function normalizeCountMatrix(
   }
   if (body.length === 0) throw new Error("没有有效的基因行");
 
-  // 重复基因名:按原始计数求和合并(DESeq2 vignette 推荐做法)
-  const seen = new Map<string, number>();
-  let dupRows = 0;
-  const merged: string[][] = [];
-  for (const row of body) {
-    const gene = row[0];
-    const j = seen.get(gene);
-    if (j !== undefined) {
-      const target = merged[j];
-      for (let c = 1; c < row.length; c++) {
-        const prev = target[c].trim();
-        const cur = row[c].trim();
-        if (prev === "") {
-          target[c] = cur; // 先前空缺用后到值补
-          continue;
-        }
-        if (cur === "") continue;
-        const fv = Number(prev);
-        const av = Number(cur);
-        if (!Number.isFinite(fv) || !Number.isFinite(av)) continue; // 非数值保留先出现的
-        const sum = fv + av;
-        target[c] =
-          Number.isInteger(sum) && Math.abs(sum) < 1e15 ? String(sum) : String(sum);
-      }
-      dupRows++;
-    } else {
-      seen.set(gene, merged.length);
-      merged.push(row);
-    }
+  // 重复基因名保留原样:合并策略(sum / max_mean / make_unique)由 R 端引擎
+  // 按参考脚本的 input$duplicate_genes 处理,前端不做有损预处理。
+  const finalBody = body;
+  const geneSet = new Set<string>();
+  for (const row of body) geneSet.add(row[0]);
+  if (geneSet.size < body.length) {
+    warnings.push(
+      `发现 ${body.length - geneSet.size} 行重复基因名;将按分析参数的重名基因处理策略合并`,
+    );
   }
-  const finalBody = dupRows > 0 ? merged : body;
-  if (dupRows > 0) warnings.push(`发现 ${dupRows} 行重复基因名,已按原始计数求和合并`);
 
   // 计数质量:抽样检查是否像原始整数 counts(而非 TPM/FPKM)
   let checked = 0;
@@ -388,7 +365,7 @@ export function normalizeCountMatrix(
     const intRatio = integerish / checked;
     if (fractional > 0) {
       warnings.push(
-        `抽样检测到 ${fractional} 个小数 Counts；分析时会四舍五入为整数，并在结果的 Analysis_Meta 中记录。请确认文件不是 TPM、FPKM 或 log 转换数据。`,
+        `抽样检测到 ${fractional} 个小数 Counts；分析时会按「计数取整」参数处理为整数。请确认文件不是 TPM、FPKM 或 log 转换数据。`,
       );
     }
     if (fracRatio > 0.35 && intRatio < 0.7) {

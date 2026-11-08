@@ -10,8 +10,8 @@ import {
 import AppMark from "@/components/AppMark";
 import WeatherWidget from "@/components/WeatherWidget";
 import { tools } from "@/lib/tools";
-import { invoke } from "@tauri-apps/api/core";
-import { isSearchEngine, SEARCH_ENGINES, type SearchEngine } from "@/lib/search-engines";
+import { open as openInBrowser } from "@tauri-apps/plugin-shell";
+import { searchUrl, isSearchEngine, SEARCH_ENGINES, type SearchEngine } from "@/lib/search-engines";
 import { getToolTranslationKey, useLanguage } from "@/lib/i18n";
 
 export default function Home() {
@@ -81,7 +81,9 @@ export default function Home() {
   function openSearch() {
     const q = query.trim();
     if (!q) return;
-    void invoke("open_search_window", { query: q, engine: searchEngine, tab: null });
+    // No in-app search window — hand the query straight to the system
+    // default browser.
+    void openInBrowser(searchUrl(searchEngine, q));
   }
 
   return (

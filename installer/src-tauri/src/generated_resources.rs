@@ -350,5 +350,6 @@ pub const R_RESOURCES: &[(&str, &[u8])] = &[
     ("r/modules/gsea.R", include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/resources/r/modules/gsea.R"))),
     ("r/modules/io.R", include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/resources/r/modules/io.R"))),
     ("r/qpcr_plot_runner.R", include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/resources/r/qpcr_plot_runner.R"))),
+    ("r/rnaseq_engine.R", include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/resources/r/rnaseq_engine.R"))),
     ("r/runner.R", include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/resources/r/runner.R"))),
 ];

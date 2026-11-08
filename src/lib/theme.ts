@@ -1,21 +1,12 @@
 export const THEMES = [
   {
     id: "system",
-    name: "跟随系统",
-    description: "跟随系统深浅色",
-    accent: "#8e8e93",
   },
   {
     id: "graphite",
-    name: "深色模式",
-    description: "暗色界面",
-    accent: "#0a84ff",
   },
   {
     id: "pearl",
-    name: "浅色模式",
-    description: "亮色界面",
-    accent: "#007aff",
   },
 ] as const;
 

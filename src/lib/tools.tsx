@@ -44,7 +44,7 @@ export interface Tool {
 }
 
 const QpcrPage = lazy(() => import("@/pages/qPCR/QpcrPage"));
-const TiffPage = lazy(() => import("@/pages/tiff/TiffPage"));
+const ImageConvertPage = lazy(() => import("@/pages/image/ImageConvertPage"));
 const RnaSeqPage = lazy(() => import("@/pages/rnaseq/RnaSeqPage"));
 const ChartStudioPage = lazy(() => import("@/pages/charts/ChartStudioPage"));
 
@@ -54,7 +54,7 @@ export const tools: Tool[] = [
     title: "科研绘图",
     description: "科研图表、统计标注与论文版式",
     path: "/charts",
-    accent: "#ff9f0a",
+    accent: "var(--orange)",
     icon: IconChartDots3,
     component: ChartStudioPage,
     navLabel: "科研绘图",
@@ -65,21 +65,21 @@ export const tools: Tool[] = [
     title: "qPCR 分析",
     description: "qPCR 数据处理与图表",
     path: "/qpcr",
-    accent: "#007aff",
+    accent: "var(--accent)",
     icon: IconDna,
     component: QpcrPage,
     navLabel: "qPCR",
     showInSidebar: true,
   },
   {
-    id: "tiff",
-    title: "TIFF 转 JPG",
-    description: "TIFF 批量转 JPG",
-    path: "/tiff",
-    accent: "#34c759",
+    id: "image",
+    title: "图片转 PNG",
+    description: "全格式转 PNG · 压缩 · 水印",
+    path: "/image",
+    accent: "var(--accent)",
     icon: IconPhotoFilled,
-    component: TiffPage,
-    navLabel: "TIFF",
+    component: ImageConvertPage,
+    navLabel: "PNG",
     showInSidebar: true,
   },
   {
@@ -87,7 +87,7 @@ export const tools: Tool[] = [
     title: "RNA-seq 分析",
     description: "差异分析与图表导出",
     path: "/rnaseq",
-    accent: "#af52de",
+    accent: "var(--purple)",
     icon: IconMicroscope,
     component: RnaSeqPage,
     navLabel: "RNA-seq",

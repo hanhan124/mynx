@@ -1,1356 +1,909 @@
 /**
- * 步骤 3:绘图与导出 — 主从双栏工作台(左图库/右预览+参数)、
- * 发表尺寸预设、批量导出、结果画廊与绘图日志。
+ * 步骤 3:图形输出 — 热图/样本相关性/选定基因热图/PCA/火山图。
+ * 参数结构与参考脚本 CONFIG$heatmap / overall_heatmap / selected_heatmaps / plots 一致;
+ * 生成逻辑完全由 R 引擎(rnaseq_engine.R)执行,本页只负责配置与展示。
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { open } from "@tauri-apps/plugin-dialog";
 import {
-  IconFolderOpen,
-  IconRefresh,
-  IconRuler,
-  IconDownload,
-  IconBolt,
-  IconRotate,
-  IconEye,
-  IconPhoto,
-  IconPhotoOff,
-  IconTrash,
+  IconPalette,
+  IconPlayerPlay,
   IconPlayerStop,
-  IconLoader2,
-  IconChevronDown,
+  IconFolderOpen,
+  IconPhoto,
+  IconFlame,
+  IconChartDots,
+  IconChartHistogram,
+  IconZoomIn,
+  IconX,
+  IconLayersIntersect,
 } from "@tabler/icons-react";
-import Modal from "@/components/Modal";
 import { showToast } from "@/components/Toast";
+import Modal from "@/components/Modal";
 import { useRnaSeq } from "./store";
-import { Collapse, CollapseToggle } from "./fields";
 import {
-  GgThemeSection,
-  LabelsSection,
-  ScopeSection,
-  SizeSection,
-  SpecificParams,
-  ThemeSection,
-} from "./PlotParams";
-import {
-  PLOT_FILE_PREFIX,
-  PLOT_GROUPS,
-  PUB_PRESETS,
-  filePlotId,
-  isGgplotPlot,
-  plotLabel,
-} from "./plotDefs";
-import { joinPath, openInShell } from "@/lib/rnaseq/io";
-import { plotFiles, readPlotFile } from "@/lib/rnaseq/runs";
-import type { PlotFileItem } from "@/lib/rnaseq/types";
+  NumField,
+  SelectField,
+  SwitchField,
+  TextField,
+  CheckChips,
+  Collapse,
+} from "./fields";
+import { openInShell } from "@/lib/rnaseq/io";
+import { readImageDataURL } from "@/lib/rnaseq/results";
+import { cleanGeneList } from "@/lib/rnaseq/defaults";
 import { useLanguage } from "@/lib/i18n";
 
-interface ThumbContent {
-  kind: "svg" | "png";
-  data: string;
-  name: string;
-  fp: string;
-}
-
-const RNA_PLOT_EN: Record<string, { label: string; desc: string }> = {
-  pca: { label: "PCA plot", desc: "Principal components · sample clustering" },
-  mds: { label: "MDS plot", desc: "Distance ordination · sample-structure check" },
-  qc: { label: "Sample QC", desc: "Library, expression and sample relationships" },
-  heatmap: { label: "Global heatmap", desc: "Candidate-gene expression heatmap" },
-  select_heatmap: {
-    label: "Selected-gene heatmap",
-    desc: "Functional-cluster gene heatmap",
-  },
-  volcano: { label: "Volcano plot", desc: "Per comparison · differential distribution" },
-  venn: { label: "Venn diagram", desc: "Sample/comparison intersections" },
-  ma: { label: "MA plot", desc: "Per comparison · expression vs FC" },
-  boxplot: { label: "Box plot", desc: "Expression distribution" },
-  deg_bar: { label: "DEG bar chart", desc: "Per comparison · up/down counts" },
-  top_genes: { label: "Top genes", desc: "Per comparison · significant-gene bars" },
-  dendrogram: { label: "Dendrogram", desc: "Sample clustering tree" },
-  enrich: { label: "Enrichment bar chart", desc: "GO/KEGG ORA" },
-  gsea: { label: "GSEA dot plot", desc: "Gene-set enrichment" },
-  violin: { label: "Violin plot", desc: "Single-gene expression distribution" },
-  density: { label: "Density plot", desc: "Expression density curve" },
-};
-
-/** 不需要额外研究假设即可用于常规 RNA-seq 结果呈现的核心图。 */
-const CORE_PLOT_IDS = ["qc", "pca", "heatmap", "volcano", "ma", "deg_bar"];
-
-/** 规范化 SVG:补 viewBox、去固定宽高,交给容器等比 contain */
-function normalizeSvg(svg: string): string {
-  let s = svg;
-  if (!/\sviewBox=/i.test(s)) {
-    const w = s.match(/\swidth="([\d.]+)/i);
-    const h = s.match(/\sheight="([\d.]+)/i);
-    if (w && h) s = s.replace(/<svg\b/i, `<svg viewBox="0 0 ${w[1]} ${h[1]}"`);
-  }
-  s = s.replace(/(<svg\b[^>]*?)\swidth="[^"]*"/i, "$1");
-  s = s.replace(/(<svg\b[^>]*?)\sheight="[^"]*"/i, "$1");
-  return s;
-}
-
-function fileFingerprint(f: PlotFileItem): string {
-  return `${f.name}|${f.size}|${f.mtime}`;
-}
-
-function fmtSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
-}
+/** 连续色板(热图 Z-score / 相关性) */
+const HEAT_PALETTES = [
+  "RdBu", "RdYlBu", "PiYG", "PRGn", "BrBG", "PuOr", "RdGy", "Spectral",
+  "viridis", "magma", "inferno", "plasma", "cividis", "rocket", "mako", "turbo",
+];
+/** 离散色板(分组 / 基因簇) */
+const DISCRETE_PALETTES = ["Set2", "Dark2", "Set1", "Set3", "Paired", "Pastel1", "npg"];
 
 export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
   const { language } = useLanguage();
   const l = (zh: string, en: string) => (language === "en" ? en : zh);
-  const plotCopy = (plot: { id: string; label: string; desc: string }) =>
-    language === "en" ? (RNA_PLOT_EN[plot.id] ?? plot) : plot;
   const st = useRnaSeq();
-  const {
-    config,
-    updateConfig,
-    resetPlotOption,
-    hasResult,
-    checkingResult,
-    dirStatus,
-    dirMsg,
-    analysisDir,
-    usingManualDir,
-    dirChecking,
-    checkResult,
-    browseAnalysisDir,
-    useAutoDetect,
-    plotStatus,
-    plotLogs,
-    runSinglePlot,
-    cancelPlot,
-    plotOutputDir,
-  } = st;
+  const cfg = st.config;
+  const running = st.runStatus === "running";
 
-  const [activeId, setActiveId] = useState("pca");
-  const [showAllPlotTypes, setShowAllPlotTypes] = useState(false);
-  const activePlot = PLOT_GROUPS.find((p) => p.id === activeId) ?? null;
-  const [exportingPlot, setExportingPlot] = useState<string | null>(null);
-  const [previewBusy, setPreviewBusy] = useState(false);
-  const lastPreviewSnap = useRef<Record<string, string>>({});
-
-  // ── 发表尺寸预设 ──
-  const [presetExpanded, setPresetExpanded] = useState(false);
-  const [pubPreset, setPubPreset] = useState<string>("nature_sc");
-  const [customOpen, setCustomOpen] = useState(false);
-  const [customW, setCustomW] = useState(7);
-  const [customH, setCustomH] = useState(5);
-  const activePreset = PUB_PRESETS.find((p) => p.id === pubPreset) ?? null;
-
-  const applyPreset = (p: { id: string; label: string; w: number; h: number }) => {
-    setPubPreset(p.id);
-    updateConfig((c) => {
-      const po = c.plot_options as Record<string, Record<string, number>>;
-      for (const id of Object.keys(po)) {
-        // 参考热图脚本固定为 8 × 12 in；期刊版式预设不应覆盖它。
-        if (id === "heatmap") {
-          po[id].width = 8;
-          po[id].height = 12;
-          continue;
-        }
-        po[id].width = p.w;
-        po[id].height = p.h;
-      }
+  const browseResult = async () => {
+    const picked = await open({
+      directory: true,
+      multiple: false,
+      title: l("选择引擎运行结果目录", "Select an engine run directory"),
     });
-    showToast(
-      `已应用「${p.label}」预设；整体热图保持参考脚本的 8 × 12 英寸`,
-      "success",
-    );
+    if (!picked) return;
+    const p = Array.isArray(picked) ? picked[0] : picked;
+    await st.loadResultDir(p);
   };
 
-  // ── 参数快照(预览去重) ──
-  const plotOptionSnapshot = useCallback(
-    (plotType: string): string => {
-      try {
-        return JSON.stringify({
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          o: (config.plot_options as any)?.[plotType] ?? {},
-          size_mode: config.size_mode,
-          font_family: config.font_family,
-          top_n_label: config.params?.top_n_label,
-          pvalue_cap: config.params?.pvalue_cap,
-          log2fc_th: config.params?.log2fc_th,
-          fdr_th: config.params?.fdr_th,
-          marker_genes: config.marker_genes,
-          gene_clusters: config.gene_clusters,
-          excluded_genes: config.excluded_genes,
-        });
-      } catch {
-        return String(Date.now());
-      }
-    },
-    [config],
-  );
-
-  // ── 单图导出/快速预览 ──
-  const exportSinglePlot = useCallback(
-    async (plotType: string, opts: { preview?: boolean; silent?: boolean } = {}) => {
-      const preview = !!opts.preview;
-      const silent = !!opts.silent;
-      if (!config.data_file) {
-        if (!silent)
-          showToast(
-            l("请先在「数据导入」中导入数据", "Import data in Data import first"),
-            "info",
-          );
-        return;
-      }
-      if (config.selected_groups.length < 2) {
-        if (!silent)
-          showToast(
-            l(
-              "至少需要 2 个选定的组(差异分析页)",
-              "Select at least two groups in Differential analysis",
-            ),
-            "info",
-          );
-        return;
-      }
-      if (config.comparisons.length === 0) {
-        if (!silent)
-          showToast(
-            l(
-              "至少需要 1 个比较(差异分析页)",
-              "Add at least one comparison in Differential analysis",
-            ),
-            "info",
-          );
-        return;
-      }
-      let has = hasResult;
-      if (!has) {
-        has = await checkResult();
-      }
-      if (!has) {
-        if (!silent) {
-          showToast(
-            "未检测到差异分析结果。请先运行 DEG,或在上方选择结果文件夹。",
-            "error",
-          );
-        }
-        return;
-      }
-      if (plotStatus === "running" || exportingPlot) {
-        if (!silent)
-          showToast(
-            l(
-              "当前有导出/预览任务在进行,请稍候",
-              "An export or preview is already running; please wait",
-            ),
-            "info",
-          );
-        return;
-      }
-      const snap = plotOptionSnapshot(plotType);
-      // 参数未变时不必重跑 R(每次预览要几秒),但必须给用户明确反馈——
-      // 静默 return 会让人以为「点了没反应」。已生成的图会保持在预览位。
-      if (preview && lastPreviewSnap.current[plotType] === snap) {
-        if (!silent)
-          showToast(
-            l(
-              "参数未变化,当前预览已是最新;调整参数后会重新生成",
-              "Parameters unchanged — the current preview is up to date. Adjust parameters to regenerate.",
-            ),
-            "info",
-          );
-        return;
-      }
-      setExportingPlot(plotType);
-      setPreviewBusy(preview);
-      try {
-        const result = await runSinglePlot(plotType, { preview, silent: true });
-        if (!result || result.status !== "done") {
-          // 失败的导出绝不能被记作“已预览”，否则后续点击会被同参数缓存拦截。
-          delete lastPreviewSnap.current[plotType];
-          if (!silent) {
-            showToast(
-              `${preview ? "快速预览" : "导出"} ${plotLabel(plotType)} 失败，请查看下方导出日志中的具体原因`,
-              "error",
-            );
-          }
-          return;
-        }
-        if (preview) lastPreviewSnap.current[plotType] = snap;
-        if (!silent) {
-          const imageDir = joinPath(result.outputDir, "figures");
-          showToast(
-            preview
-              ? `快速预览 ${plotLabel(plotType)}(低分辨率 PNG)`
-              : `已导出 ${plotLabel(plotType)}；图片在 ${imageDir}`,
-            "success",
-          );
-        }
-      } catch (e) {
-        if (!silent) showToast(e instanceof Error ? e.message : String(e), "error");
-      } finally {
-        setPreviewBusy(false);
-        setExportingPlot(null);
-      }
-    },
-    [
-      config,
-      hasResult,
-      checkResult,
-      plotStatus,
-      exportingPlot,
-      plotOptionSnapshot,
-      runSinglePlot,
-      st,
-    ],
-  );
-
-  // ── 批量导出 ──
-  const [batch, setBatch] = useState({ running: false, done: 0, total: 0, current: "" });
-  const batchAbort = useRef(false);
-
-  const exportPlotSet = async (ids: string[], setName: string) => {
-    if (!config.data_file) {
-      showToast(
-        l("请先在「数据导入」中导入数据", "Import data in Data import first"),
-        "info",
-      );
+  const runHeatmaps = async () => {
+    if (!st.hasResult && !cfg.data_file) {
+      goAnalysis();
       return;
     }
-    if (config.selected_groups.length < 2) {
-      showToast(
-        l(
-          "至少需要 2 个选定的组(差异分析页)",
-          "Select at least two groups in Differential analysis",
-        ),
-        "info",
-      );
+    await st.startRun(["heatmap"]);
+  };
+  const runPlots = async () => {
+    if (!st.hasResult) {
+      showToast(l("火山图/PCA 需要先完成差异分析(DE)", "Volcano/PCA require the DE step first"), "info");
       return;
     }
-    if (config.comparisons.length === 0) {
-      showToast(
-        l(
-          "至少需要 1 个比较(差异分析页)",
-          "Add at least one comparison in Differential analysis",
-        ),
-        "info",
-      );
+    await st.startRun(["plots"]);
+  };
+  const runAll = async () => {
+    if (!st.hasResult) {
+      showToast(l("图形需要差异分析结果:先运行 DE,或加载历史结果目录", "Run DE first, or load a result directory"), "info");
       return;
     }
-    let has = hasResult;
-    if (!has) {
-      has = await checkResult();
-    }
-    if (!has) {
-      showToast(
-        l(
-          "未检测到差异分析结果,请先运行 DEG 或选择结果文件夹。",
-          "No differential-analysis results found. Run DEG or select a results folder first.",
-        ),
-        "error",
-      );
-      return;
-    }
-    if (plotStatus === "running" || exportingPlot) {
-      showToast(
-        l("当前有导出任务在进行,请稍候", "An export is already running; please wait"),
-        "info",
-      );
-      return;
-    }
-    batchAbort.current = false;
-    setBatch({ running: true, done: 0, total: ids.length, current: "" });
-    setPlotLogOpen(true);
-    const failed: string[] = [];
-    for (const id of ids) {
-      if (batchAbort.current) break;
-      setBatch((b) => ({ ...b, current: id }));
-      setExportingPlot(id);
-      setPreviewBusy(false);
-      let ok: boolean;
-      try {
-        const r = await runSinglePlot(id, { silent: true });
-        ok = r?.status === "done";
-      } catch {
-        ok = false;
-      }
-      if (!ok) failed.push(plotLabel(id));
-      setBatch((b) => ({ ...b, done: b.done + 1 }));
-    }
-    setExportingPlot(null);
-    setPreviewBusy(false);
-    const aborted = batchAbort.current;
-    setBatch({ running: false, done: 0, total: 0, current: "" });
-    void loadGallery(true);
-    if (aborted)
-      showToast(
-        l(
-          "已停止批量导出;已完成的图保留在输出目录",
-          "Batch export stopped; completed plots remain in the output directory",
-        ),
-        "info",
-      );
-    else if (failed.length) {
-      showToast(
-        `批量导出完成:${ids.length - failed.length} 成功 / ${failed.length} 失败(${failed.join("、")}),详见绘图日志`,
-        "error",
-      );
-    } else
-      showToast(
-        l(
-          `已导出${setName}（${ids.length} 类图表）`,
-          `Exported ${setName} (${ids.length} chart types)`,
-        ),
-        "success",
-      );
+    await st.startRun(["heatmap", "plots"]);
   };
 
-  const exportCorePlots = () =>
-    void exportPlotSet(CORE_PLOT_IDS, l("论文核心图", "core publication plots"));
-
-  const exportAllPlots = () =>
-    void exportPlotSet(
-      PLOT_GROUPS.map((p) => p.id),
-      l("全部图表", "all chart types"),
-    );
-
-  const stopBatchExport = () => {
-    batchAbort.current = true;
-    void cancelPlot();
-  };
-
-  // ── 画廊 ──
-  const [gallery, setGallery] = useState<PlotFileItem[]>([]);
-  const [galleryDir, setGalleryDir] = useState("");
-  const [galleryLoading, setGalleryLoading] = useState(false);
-  // 画廊缩略图内容缓存:指纹(name|size|mtime) → 内容;重绘同名文件后指纹变,自动失效
-  const [contentCache, setContentCache] = useState<Map<string, ThumbContent>>(new Map());
-  const galleryReqSeq = useRef(0);
-  const [galleryVersion, setGalleryVersion] = useState(0); // 触发缩略图重渲染
-  const [galleryOpen, setGalleryOpen] = useState(false);
-
-  const loadGallery = useCallback(
-    async (force = false) => {
-      const runName = config.run_name;
-      if (!hasResult || !runName || runName === "auto") {
-        setGallery([]);
-        return;
-      }
-      const seq = ++galleryReqSeq.current;
-      setGalleryLoading(true);
-      try {
-        const r = await plotFiles(config.output_dir, runName);
-        if (seq !== galleryReqSeq.current) return;
-        setGalleryDir(r.dir);
-        const next = new Map(contentCache);
-        const liveFps = new Set(r.files.map(fileFingerprint));
-        for (const k of next.keys()) {
-          if (!liveFps.has(k)) next.delete(k);
-        }
-        await Promise.all(
-          r.files.map(async (f) => {
-            if (!/\.(svg|png)$/i.test(f.name)) return;
-            const fp = fileFingerprint(f);
-            if (!force && next.has(fp)) return;
-            try {
-              const c = await readPlotFile(r.dir, f.name);
-              if (seq !== galleryReqSeq.current) return;
-              if (c.kind === "svg" && c.content) {
-                next.set(fp, {
-                  kind: "svg",
-                  data: normalizeSvg(c.content),
-                  name: f.name,
-                  fp,
-                });
-              } else if (c.kind === "png" && c.data_base64) {
-                next.set(fp, {
-                  kind: "png",
-                  data: `data:image/png;base64,${c.data_base64}`,
-                  name: f.name,
-                  fp,
-                });
-              }
-            } catch {
-              /* 单文件失败不阻塞画廊 */
-            }
-          }),
-        );
-        if (seq !== galleryReqSeq.current) return;
-        // 等新文件内容读完后再替换文件清单，避免同名预览在“旧图 → 空白
-        // → 新图”之间出现一帧空白。加载期间保留旧图，并由忙碌遮罩提示状态。
-        setGallery(r.files);
-        setContentCache(next);
-        setGalleryVersion((v) => v + 1);
-      } finally {
-        if (seq === galleryReqSeq.current) setGalleryLoading(false);
-      }
-    },
-    [config.output_dir, config.run_name, hasResult, contentCache],
-  );
-
-  useEffect(() => {
-    void checkResult();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // 导出完成/失败 → 刷新画廊
-  const prevPlotStatus = useRef(plotStatus);
-  useEffect(() => {
-    if (prevPlotStatus.current === "running") {
-      if (
-        plotStatus === "done" ||
-        plotStatus === "failed" ||
-        plotStatus === "cancelled"
-      ) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setPreviewBusy(false);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setExportingPlot(null);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        void loadGallery(true);
-      }
-    }
-    prevPlotStatus.current = plotStatus;
-  }, [plotStatus, loadGallery]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (hasResult) void loadGallery();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    else setGallery([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasResult]);
-
-  const latestPlotFile = useCallback(
-    (plotId: string): PlotFileItem | null => {
-      const prefixes = PLOT_FILE_PREFIX[plotId] ?? [];
-      const files = gallery.filter((f) => prefixes.some((p) => f.name.startsWith(p)));
-      if (files.length === 0) return null;
-      return files.reduce(
-        (best, f) => {
-          if (!best) return f;
-          if ((f.mtime || "") > (best.mtime || "")) return f;
-          if (f.mtime === best.mtime && f.name > best.name) return f;
-          return best;
-        },
-        null as PlotFileItem | null,
-      );
-    },
-    [gallery],
-  );
-
-  const thumbOf = useCallback(
-    (f: PlotFileItem | null): ThumbContent | null => {
-      if (!f) return null;
-      return contentCache.get(fileFingerprint(f)) ?? null;
-    },
-    [contentCache],
-  );
-  const cardThumb = useCallback(
-    (plotId: string) => thumbOf(latestPlotFile(plotId)),
-    [thumbOf, latestPlotFile],
-  );
-
-  const activePreview = activeId ? cardThumb(activeId) : null;
-  const activePreviewFile = activeId ? latestPlotFile(activeId) : null;
-  const plotFilesDir = plotOutputDir ? joinPath(plotOutputDir, "figures") : null;
-  const previewRunning =
-    !!exportingPlot &&
-    exportingPlot === activeId &&
-    (previewBusy || plotStatus === "running");
-
-  // ── 大图查看 ──
-  const [viewerFile, setViewerFile] = useState<PlotFileItem | null>(null);
-  const viewerContent = viewerFile ? thumbOf(viewerFile) : null;
-
-  // ── 绘图日志 ──
-  const [plotLogOpen, setPlotLogOpen] = useState(false);
-  const plotLogRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (plotLogRef.current)
-      plotLogRef.current.scrollTop = plotLogRef.current.scrollHeight;
-  }, [plotLogs.length, plotLogOpen]);
-  useEffect(() => {
-    if (plotStatus === "failed" && !batch.running) {
-      setPlotLogOpen(true);
-      const errs = plotLogs.filter((l) => l.level === "error");
-      const last = errs[errs.length - 1];
-      showToast(last ? `导出失败:${last.msg}` : "导出失败,请查看绘图日志", "error");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plotStatus]);
-
-  const batchCurrentLabel = plotLabel(batch.current);
-  const visiblePlots = showAllPlotTypes
-    ? PLOT_GROUPS
-    : PLOT_GROUPS.filter((plot) => CORE_PLOT_IDS.includes(plot.id));
-
-  const toggleFormat = (fmt: string) =>
-    updateConfig((c) => {
-      const has2 = c.plot_formats.includes(fmt);
-      if (has2 && c.plot_formats.length === 1) return; // 至少保留一种格式
-      c.plot_formats = has2
-        ? c.plot_formats.filter((f) => f !== fmt)
-        : [...c.plot_formats, fmt];
-    });
+  const groupNames = Object.keys(cfg.groups);
 
   return (
     <div className="rx-step">
-      {/* 结果来源 */}
-      <div className="card">
+      {/* ── 结果来源 ── */}
+      <section className="card">
         <div className="card-title">
-          <IconFolderOpen size={14} stroke={1.75} />
-          <span>{l("分析结果来源", "Analysis result source")}</span>
-          <span
-            className={`rx-tag ${dirStatus === "ok" ? "rx-tag--ok" : dirStatus === "err" ? "rx-tag--err" : ""}`}
-          >
-            {dirStatus === "ok"
-              ? l("已就绪", "Ready")
-              : dirStatus === "err"
-                ? l("未找到", "Not found")
-                : l("检测中", "Checking")}
+          <IconFlame size={15} stroke={1.75} />
+          <span>{l("结果来源", "Result source")}</span>
+          <span className="rx-title-actions">
+            {st.hasResult ? (
+              <span className="rx-tag rx-tag--ok">{l("已就绪", "ready")}</span>
+            ) : (
+              <span className="rx-tag rx-tag--err">{l("无结果", "no result")}</span>
+            )}
           </span>
         </div>
         <div className="card-body">
           <p className="rx-source-desc">
-            {l("选择含", "Choose a directory containing ")}
-            <code>RNAseq_Analysis_Results.xlsx</code>
-            {l(" 的目录即可直接绘图;若有", " to plot directly. If ")}{" "}
-            <code>params.json</code>
             {l(
-              " 会自动还原分组与比较。",
-              " is present, groups and comparisons are restored automatically.",
+              "图形从运行结果目录读取(DE/、heatmap/、plots/)。可重新生成,或加载历史结果目录。",
+              "Figures are read from the run directory (DE/, heatmap/, plots/). Regenerate or load a previous run.",
             )}
           </p>
           <div className="rx-path-row">
-            <input
-              className="rx-path-input"
-              type="text"
-              readOnly
-              placeholder={l(
-                "尚未指定结果目录 — 点右侧选择,或先运行 DEG",
-                "No result directory selected — choose one or run DEG first",
-              )}
-              value={
-                usingManualDir
-                  ? analysisDir
-                  : config.output_dir && config.run_name
-                    ? joinPath(config.output_dir, config.run_name)
-                    : ""
-              }
-            />
-            <button
-              className="btn btn-primary"
-              disabled={dirChecking}
-              onClick={() => void browseAnalysisDir()}
-            >
-              <IconFolderOpen size={13} stroke={1.75} />{" "}
-              {l("选择结果文件夹", "Choose result folder")}
+            <input className="rx-path-input" value={st.resultDir} readOnly placeholder={l("尚未加载结果目录", "No result directory loaded")} />
+            <button type="button" className="btn" onClick={() => void browseResult()}>
+              {l("浏览", "Browse")}
             </button>
-            <button
-              className="btn"
-              disabled={dirChecking}
-              onClick={() => void checkResult()}
-            >
-              <IconRefresh size={12} stroke={1.75} /> {l("重新检测", "Check again")}
-            </button>
-            {usingManualDir && (
-              <button className="btn" onClick={useAutoDetect}>
-                {l("恢复自动检测", "Restore auto-detection")}
+            {st.hasResult && (
+              <button type="button" className="btn" onClick={() => void openInShell(st.resultDir)}>
+                <IconFolderOpen size={13} stroke={1.75} />
               </button>
             )}
           </div>
-          {dirStatus !== "none" && (
-            <div className={`rx-dir-msg ${dirStatus === "err" ? "err" : ""}`}>
-              {dirStatus === "err" && (
-                <button className="rx-link-btn" onClick={goAnalysis}>
-                  {l("去运行 DEG →", "Run DEG →")}
-                </button>
-              )}
-              {dirMsg}
-            </div>
+          {!st.hasResult && (
+            <button type="button" className="btn" onClick={goAnalysis}>
+              {l("前往差异分析", "Go to DE analysis")}
+            </button>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* 全局格式 + 批量导出 */}
-      <div className="card">
-        <div className="card-body rx-global-row">
-          <div className="rx-global-item">
-            <span className="rx-global-label">{l("格式", "Format")}</span>
-            <div className="rx-format-group">
-              {["pdf", "svg", "png"].map((fmt) => (
-                <button
-                  key={fmt}
-                  type="button"
-                  className={`rx-format-btn${config.plot_formats.includes(fmt) ? " on" : ""}`}
-                  onClick={() => toggleFormat(fmt)}
-                >
-                  {fmt.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="rx-global-item">
-            <span className="rx-global-label">{l("尺寸", "Size")}</span>
-            <select
-              className="rx-size-select"
-              value={config.size_mode}
-              onChange={(e) =>
-                updateConfig((c) => {
-                  c.size_mode = e.target.value as "auto" | "manual";
+      {/* ── 整体热图 ── */}
+      <Collapse
+        title={<><IconPhoto size={15} stroke={1.75} style={{ verticalAlign: -2 }} /> {l("整体热图", "Overall heatmap")}</>}
+        subtitle={l(
+          `基因来源:${cfg.overall_heatmap.gene_source === "variable" ? (cfg.overall_heatmap.top_n === "all" ? "全部表达基因(按方差排序)" : `方差前 ${cfg.overall_heatmap.top_n} 个`) : "差异基因并集"}`,
+          `Source: ${cfg.overall_heatmap.gene_source === "variable" ? (cfg.overall_heatmap.top_n === "all" ? "all expressed genes" : `top ${cfg.overall_heatmap.top_n} by variance`) : "DEG union"}`,
+        )}
+        defaultOpen
+      >
+        <div className="card-body rx-param-grid">
+          <SwitchField
+            label={l("启用整体热图", "Enabled")}
+            checked={cfg.overall_heatmap.enabled}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.overall_heatmap.enabled = v;
+              })
+            }
+          />
+          <SelectField
+            label={l("基因来源", "Gene source")}
+            value={cfg.overall_heatmap.gene_source}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.overall_heatmap.gene_source = v;
+              })
+            }
+            options={[
+              { value: "variable", label: l("高表达按方差", "variable") },
+              { value: "deg", label: l("差异基因并集(需先跑 DE)", "DEG union (needs DE)") },
+            ]}
+          />
+          {cfg.overall_heatmap.gene_source === "variable" && (
+            <>
+              <TextField
+                label={l("取前多少个基因(all = 全部)", "top N genes (\"all\" = everything)")}
+                value={String(cfg.overall_heatmap.top_n)}
+                onChange={(v) =>
+                  st.updateConfig((d) => {
+                    const s = v.trim();
+                    d.overall_heatmap.top_n = !s || s.toLowerCase() === "all" ? "all" : Math.max(1, Number(s) || 1);
+                  })
+                }
+                placeholder="all"
+              />
+              <SwitchField
+                label={l("先过滤低表达基因", "Filter low expression first")}
+                checked={cfg.overall_heatmap.expressed_only}
+                onChange={(v) =>
+                  st.updateConfig((d) => {
+                    d.overall_heatmap.expressed_only = v;
+                  })
+                }
+              />
+            </>
+          )}
+          {cfg.overall_heatmap.gene_source === "deg" && (
+            <NumField
+              label={l("最多画多少个基因", "max genes")}
+              value={cfg.overall_heatmap.max_genes}
+              step={100}
+              min={1}
+              onChange={(v) =>
+                st.updateConfig((d) => {
+                  if (v !== undefined) d.overall_heatmap.max_genes = v;
                 })
               }
-            >
-              <option value="auto">{l("自动(启发式)", "Auto (heuristic)")}</option>
-              <option value="manual">{l("手动", "Manual")}</option>
-            </select>
-          </div>
-          <div className="rx-global-item rx-global-item--batch">
-            <button
-              className="btn btn-primary"
-              disabled={
-                !hasResult ||
-                plotStatus === "running" ||
-                (!!exportingPlot && !batch.running)
-              }
-              title={
-                hasResult
-                  ? l(
-                      "按当前参数导出 QC、PCA、热图、火山图、MA 图和 DEG 柱状图",
-                      "Export QC, PCA, heatmap, volcano, MA and DEG bar charts with current settings",
-                    )
-                  : l("请先运行 DEG 或加载结果", "Run DEG or load results first")
-              }
-              onClick={exportCorePlots}
-            >
-              <IconDownload size={13} stroke={1.75} />
-              {batch.running
-                ? `${l("导出中", "Exporting")} ${batch.done}/${batch.total} · ${batchCurrentLabel}`
-                : l("导出论文核心图", "Export core plots")}
-            </button>
-            {batch.running && (
-              <button className="btn rx-cancel-btn" onClick={stopBatchExport}>
-                <IconPlayerStop size={12} stroke={1.75} /> {l("停止", "Stop")}
-              </button>
-            )}
-            {!batch.running && (
-              <details className="rx-export-more">
-                <summary>{l("更多图表", "More charts")}</summary>
-                <button
-                  type="button"
-                  className="btn"
-                  disabled={!hasResult || plotStatus === "running" || !!exportingPlot}
-                  title={l(
-                    "包含富集、Venn、指定基因等需按研究问题判断的图",
-                    "Includes enrichment, Venn and selected-gene charts that require research-specific choices",
-                  )}
-                  onClick={exportAllPlots}
-                >
-                  <IconDownload size={12} stroke={1.75} />{" "}
-                  {l("仍要导出全部 16 类图", "Export all 16 chart types")}
-                </button>
-              </details>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* 发表尺寸 */}
-      <div className="card">
-        <CollapseToggle onClick={() => setPresetExpanded(!presetExpanded)}>
-          <span className="rx-preset-lead">
-            <IconRuler size={14} stroke={1.75} />
-            <strong>{l("期刊尺寸", "Journal size")}</strong>
-            {activePreset ? (
-              <span className="rx-preset-val">
-                {activePreset.label} · {activePreset.w}" × {activePreset.h}"
-              </span>
-            ) : (
-              <span className="rx-preset-val muted">{l("未选择", "Not selected")}</span>
-            )}
-          </span>
-          <span className="rx-collapse-right">
-            <button
-              className="btn"
-              disabled={!activePreset}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (activePreset) applyPreset(activePreset);
-              }}
-            >
-              {l("应用到全部图", "Apply to all charts")}
-            </button>
-            <button
-              className="btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                setCustomOpen(true);
-              }}
-            >
-              {l("自定义", "Custom")}
-            </button>
-            <span className={`rx-collapse-arrow${presetExpanded ? " open" : ""}`}>
-              <IconChevronDown size={15} stroke={2} />
-            </span>
-          </span>
-        </CollapseToggle>
-        {presetExpanded && (
-          <div className="card-body rx-preset-showcase">
-            {PUB_PRESETS.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                className={`rx-preset-card${pubPreset === p.id ? " active" : ""}`}
-                style={{ "--preset-accent": p.accent } as React.CSSProperties}
-                onClick={() => setPubPreset(p.id)}
-                onDoubleClick={() => applyPreset(p)}
-              >
-                <div className="rx-preset-card-top">
-                  <span className="rx-preset-journal">{p.journal}</span>
-                  <span className="rx-preset-span">{p.span}</span>
-                </div>
-                <div className="rx-preset-visual">
-                  <span
-                    className="rx-preset-frame"
-                    style={{ aspectRatio: `${p.w} / ${p.h}` }}
-                  />
-                </div>
-                <div className="rx-preset-card-body">
-                  <strong>{p.label}</strong>
-                  <span className="rx-preset-dims">
-                    {p.w}" × {p.h}"
-                  </span>
-                  <small>{p.desc}</small>
-                </div>
-                {pubPreset === p.id && <span className="rx-preset-check">✓</span>}
-              </button>
-            ))}
-            <p className="rx-preset-hint">
-              {l(
-                "单击选中 · 双击立即应用 · 或点「应用到全部图」",
-                "Click to select · double-click to apply · or use Apply to all charts",
-              )}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {!checkingResult && !hasResult && (
-        <div className="rx-alert rx-alert--warn">
-          {l(
-            "未检测到差异分析结果:请先在「差异分析」页运行 DEG,或在上方选择结果文件夹。",
-            "No differential-analysis result found. Run DEG in Differential analysis or choose a result folder above.",
+            />
           )}
-        </div>
-      )}
-
-      {/* 主从工作台 */}
-      <div className="rx-workbench">
-        <aside className="rx-rail" aria-label={l("图表类型", "Chart types")}>
-          <div className="rx-rail-head">
-            <span>{l("图表类型", "Chart types")}</span>
-            <span className="rx-rail-count">{visiblePlots.length}</span>
-          </div>
-          <div className="rx-rail-list">
-            {visiblePlots.map((g) => {
-              const thumb = cardThumb(g.id);
-              const custom =
-                ((
-                  config.plot_options as Record<
-                    string,
-                    { groups?: string[]; comparisons?: unknown[] }
-                  >
-                )[g.id]?.groups?.length ?? 0) > 0 ||
-                ((config.plot_options as Record<string, { comparisons?: unknown[] }>)[
-                  g.id
-                ]?.comparisons?.length ?? 0) > 0;
-              const Icon = g.icon;
-              return (
-                <button
-                  key={g.id}
-                  type="button"
-                  className={`rx-rail-item${activeId === g.id ? " active" : ""}`}
-                  style={{ "--plot-color": g.color } as React.CSSProperties}
-                  onClick={() => setActiveId(g.id)}
-                >
-                  <span
-                    className="rx-rail-icon"
-                    style={{ background: `${g.color}22`, color: g.color }}
-                  >
-                    {thumb ? (
-                      thumb.kind === "svg" ? (
-                        <span
-                          key={galleryVersion}
-                          className="rx-thumb-svg"
-                          dangerouslySetInnerHTML={{ __html: thumb.data }}
-                        />
-                      ) : (
-                        <img
-                          key={galleryVersion}
-                          src={thumb.data}
-                          alt={plotCopy(g).label}
-                        />
-                      )
-                    ) : (
-                      <Icon size={16} stroke={1.75} />
-                    )}
-                  </span>
-                  <span className="rx-rail-meta">
-                    <strong>{plotCopy(g).label}</strong>
-                    <small>{plotCopy(g).desc}</small>
-                  </span>
-                  {custom && (
-                    <span
-                      className="rx-rail-dot"
-                      title={l("已自定义范围", "Custom scope")}
-                    />
-                  )}
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              className="rx-rail-more"
-              onClick={() => {
-                const next = !showAllPlotTypes;
-                if (!next && !CORE_PLOT_IDS.includes(activeId)) setActiveId("pca");
-                setShowAllPlotTypes(next);
-              }}
-            >
-              {showAllPlotTypes
-                ? l("只看核心图", "Core plots only")
-                : l(
-                    `显示其余 ${PLOT_GROUPS.length - CORE_PLOT_IDS.length} 类图`,
-                    `Show ${PLOT_GROUPS.length - CORE_PLOT_IDS.length} more charts`,
-                  )}
-            </button>
-          </div>
-        </aside>
-
-        {activePlot && (
-          <section className="rx-work-panel">
-            <header className="rx-work-head">
-              <div className="rx-work-head-left">
-                <span
-                  className="rx-work-head-icon"
-                  style={{ background: `${activePlot.color}22`, color: activePlot.color }}
-                >
-                  {(() => {
-                    const Icon = activePlot.icon;
-                    return <Icon size={20} stroke={1.75} />;
-                  })()}
-                </span>
-                <div>
-                  <strong>{plotCopy(activePlot).label}</strong>
-                  <small>{plotCopy(activePlot).desc}</small>
-                </div>
-              </div>
-              <div className="rx-work-head-actions">
-                <button
-                  className="btn"
-                  disabled={!!exportingPlot}
-                  onClick={() => resetPlotOption(activePlot.id)}
-                >
-                  <IconRotate size={12} stroke={1.75} /> {l("恢复默认", "Reset")}
-                </button>
-                <button
-                  className="btn"
-                  disabled={!!exportingPlot || !hasResult || plotStatus === "running"}
-                  title={
-                    hasResult
-                      ? l(
-                          "立即低分辨率预览(参数未变会跳过)",
-                          "Generate a low-resolution preview now (skips unchanged settings)",
-                        )
-                      : l("请先运行 DEG 或加载结果", "Run DEG or load results first")
-                  }
-                  onClick={() => void exportSinglePlot(activePlot.id, { preview: true })}
-                >
-                  <IconBolt size={13} stroke={1.75} /> {l("快速预览", "Quick preview")}
-                </button>
-                <button
-                  className="btn btn-primary"
-                  disabled={!!exportingPlot || !hasResult || plotStatus === "running"}
-                  title={
-                    hasResult
-                      ? `${l("按当前格式导出", "Export ")} ${plotCopy(activePlot).label} ${l("按当前格式", "with current formats")}`
-                      : l("请先运行 DEG 或加载结果", "Run DEG or load results first")
-                  }
-                  onClick={() => void exportSinglePlot(activePlot.id)}
-                >
-                  <IconDownload size={13} stroke={1.75} />{" "}
-                  {l("导出此图", "Export this chart")}
-                </button>
-              </div>
-            </header>
-
-            {plotFilesDir && (
-              <div className="rx-export-location">
-                <span>
-                  <IconFolderOpen size={13} stroke={1.75} />
-                  {l("导出图片文件夹", "Exported images folder")}
-                </span>
-                <code title={plotFilesDir}>{plotFilesDir}</code>
-                <button className="btn" onClick={() => void openInShell(plotFilesDir)}>
-                  <IconFolderOpen size={12} stroke={1.75} /> {l("打开", "Open")}
-                </button>
-              </div>
-            )}
-
-            {/* 预览 */}
-            <div
-              className={`rx-work-preview${activePreview ? "" : " empty"}${previewRunning ? " running" : ""}${activePlot?.id === "heatmap" ? " heatmap-preview" : ""}`}
-              onClick={() => {
-                if (activePreview && !previewRunning && activePreviewFile)
-                  setViewerFile(activePreviewFile);
-              }}
-            >
-              {activePreview ? (
-                <>
-                  {activePreview.kind === "svg" ? (
-                    <span
-                      key={`svg-${activePreview.fp}-${galleryVersion}`}
-                      className="rx-preview-svg"
-                      dangerouslySetInnerHTML={{ __html: activePreview.data }}
-                    />
-                  ) : (
-                    <img
-                      key={`png-${activePreview.fp}-${galleryVersion}`}
-                      src={activePreview.data}
-                      alt={plotCopy(activePlot).label}
-                    />
-                  )}
-                  <span className="rx-preview-zoom">
-                    <IconEye size={13} stroke={1.75} />{" "}
-                    {l("点击放大", "Click to enlarge")}
-                  </span>
-                  {activePreviewFile && (
-                    <span className="rx-preview-name">
-                      {activePreviewFile.name} · {activePreviewFile.mtime}
-                    </span>
-                  )}
-                </>
-              ) : (
-                <div className="rx-preview-empty">
-                  <IconPhotoOff size={26} stroke={1.5} />
-                  <strong>{l("尚无预览", "No preview yet")}</strong>
-                  <span>
-                    {l(
-                      "调好参数后点「快速预览」查看效果;满意后再「导出此图」定稿",
-                      "Adjust settings, use Quick preview, then Export this chart when ready.",
-                    )}
-                  </span>
-                </div>
-              )}
-              {previewRunning && (
-                <div className="rx-preview-busy">
-                  <IconLoader2 size={17} stroke={2} className="rx-spin" />
-                  <span>
-                    {previewBusy
-                      ? l("快速预览中…", "Creating preview…")
-                      : l("导出中…", "Exporting…")}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* 参数 */}
-            <div className="rx-work-params">
-              <Collapse title={l("使用范围", "Scope")}>
-                <ScopeSection plotId={activePlot.id} dim={activePlot.dim} />
-              </Collapse>
-              <Collapse title={l("本图专属", "Chart-specific")} defaultOpen>
-                <SpecificParams plotId={activePlot.id} />
-              </Collapse>
-              {isGgplotPlot(activePlot.id) && (
-                <Collapse title={l("ggplot 主题", "ggplot theme")}>
-                  <GgThemeSection plotId={activePlot.id} />
-                </Collapse>
-              )}
-              <Collapse title={l("尺寸", "Size")}>
-                <SizeSection plotId={activePlot.id} />
-              </Collapse>
-              <Collapse title={l("图例 · 标题 · 坐标轴", "Legend · title · axes")}>
-                <LabelsSection plotId={activePlot.id} />
-              </Collapse>
-              <Collapse title={l("theme() 调节", "theme() tuning")}>
-                <ThemeSection plotId={activePlot.id} />
-              </Collapse>
-            </div>
-          </section>
-        )}
-      </div>
-
-      {/* 结果画廊 */}
-      <div className="card">
-        <CollapseToggle onClick={() => setGalleryOpen(!galleryOpen)}>
-          <span className="rx-preset-lead">
-            <IconPhoto size={14} stroke={1.75} />
-            <strong>{l("结果画廊", "Results gallery")}</strong>
-            <small>
-              {gallery.length
-                ? `${gallery.length} ${l("个文件", "files")}`
-                : l("当前 run 已生成的图", "Charts from the current run")}
-            </small>
-          </span>
-          <span className="rx-collapse-right">
-            <button
-              className="btn"
-              disabled={!hasResult || galleryLoading}
-              onClick={(e) => {
-                e.stopPropagation();
-                void loadGallery(true);
-              }}
-            >
-              <IconRefresh size={12} stroke={1.75} /> {l("刷新", "Refresh")}
-            </button>
-            <button
-              className="btn"
-              disabled={!galleryDir}
-              onClick={(e) => {
-                e.stopPropagation();
-                void openInShell(galleryDir);
-              }}
-            >
-              <IconFolderOpen size={12} stroke={1.75} /> {l("打开目录", "Open folder")}
-            </button>
-          </span>
-        </CollapseToggle>
-        {galleryOpen && (
-          <div className="card-body">
-            {!hasResult ? (
-              <div className="rx-empty-hero rx-empty-hero--slim">
-                <IconPhoto size={22} stroke={1.5} />
-                <strong>{l("暂无结果", "No results")}</strong>
-                <span>
-                  {l(
-                    "先在「差异分析」页运行 DEG,再在工作台导出图表。",
-                    "Run DEG in Differential analysis, then export charts here.",
-                  )}
-                </span>
-              </div>
-            ) : gallery.length === 0 && !galleryLoading ? (
-              <div className="rx-empty-hero rx-empty-hero--slim">
-                <IconPhotoOff size={22} stroke={1.5} />
-                <strong>{l("还没有生成任何图", "No charts generated yet")}</strong>
-                <span>
-                  {l(
-                    "在右侧工作台点「导出此图」,生成后会出现在这里与预览区。",
-                    "Use Export this chart in the workbench; generated charts appear here and in the preview.",
-                  )}
-                </span>
-              </div>
-            ) : (
-              <div className={`rx-gallery-grid${galleryLoading ? " rx-loading" : ""}`}>
-                {gallery.map((f) => {
-                  const thumb = thumbOf(f);
-                  const pid = filePlotId(f.name);
-                  return (
-                    <div
-                      key={fileFingerprint(f)}
-                      className="rx-gallery-item"
-                      onClick={() => thumb && setViewerFile(f)}
-                    >
-                      <div className="rx-gallery-thumb">
-                        {thumb?.kind === "svg" ? (
-                          <span
-                            className="rx-thumb-svg"
-                            dangerouslySetInnerHTML={{ __html: thumb.data }}
-                          />
-                        ) : thumb?.kind === "png" ? (
-                          <img src={thumb.data} alt={f.name} />
-                        ) : (
-                          <div className="rx-thumb-pdf">
-                            <IconPhoto size={24} stroke={1.5} />
-                            <span>
-                              {l(
-                                "PDF 请打开目录查看",
-                                "Open the output directory to view PDF",
-                              )}
-                            </span>
-                          </div>
-                        )}
-                        {thumb && (
-                          <span className="rx-thumb-zoom">
-                            <IconEye size={13} stroke={1.75} />
-                          </span>
-                        )}
-                      </div>
-                      <div className="rx-gallery-meta">
-                        <strong title={f.name}>{f.name}</strong>
-                        <small>
-                          {pid && <span className="rx-tag">{plotLabel(pid)}</span>}
-                          {fmtSize(f.size)} · {f.mtime}
-                        </small>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* 绘图日志 */}
-      <div className="card">
-        <CollapseToggle onClick={() => setPlotLogOpen(!plotLogOpen)}>
-          <strong>{l("绘图日志", "Plot log")}</strong>
-          <small>
-            {plotLogs.length > 0
-              ? `${l("最近导出:", "Last export: ")}${plotLogs[plotLogs.length - 1].plotType}`
-              : l("单图导出的实时日志", "Live log for single-plot exports")}
-          </small>
-          <span
-            className={`rx-tag ${plotStatus === "running" ? "rx-tag--run" : plotStatus === "done" ? "rx-tag--ok" : plotStatus === "failed" ? "rx-tag--err" : plotStatus === "cancelled" ? "rx-tag--warn" : ""}`}
-          >
-            {
-              {
-                idle: l("空闲", "Idle"),
-                running: l("导出中", "Exporting"),
-                done: l("完成", "Done"),
-                failed: l("失败", "Failed"),
-                cancelled: l("已取消", "Cancelled"),
-              }[plotStatus]
+          <NumField
+            label={l("基因聚成几簇(0 = 不分簇)", "n_clusters (0 = none)")}
+            value={cfg.overall_heatmap.n_clusters ?? 0}
+            step={1}
+            min={0}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.overall_heatmap.n_clusters = !v || v < 2 ? null : Math.round(v);
+              })
             }
-          </span>
-        </CollapseToggle>
-        {plotLogOpen && (
-          <div className="card-body">
-            <div className="rx-title-actions" style={{ marginBottom: 8 }}>
-              <button
-                className="btn"
-                disabled={!plotFilesDir}
-                onClick={() => plotFilesDir && void openInShell(plotFilesDir)}
-              >
-                <IconFolderOpen size={12} stroke={1.75} />{" "}
-                {l("打开图片文件夹", "Open images folder")}
-              </button>
-              <button
-                className="btn"
-                disabled={plotStatus === "running"}
-                onClick={st.clearPlotLogs}
-              >
-                <IconTrash size={12} stroke={1.75} /> {l("清空日志", "Clear log")}
-              </button>
-            </div>
-            <div ref={plotLogRef} className="rx-log-area">
-              {plotLogs.map((entry, i) => (
-                <div key={i} className={`rx-log-line ${entry.level}`}>
-                  <span className="rx-log-tag">[{entry.plotType}]</span>
-                  {entry.msg}
-                </div>
-              ))}
-              {plotLogs.length === 0 && (
-                <div className="rx-empty-tip">
-                  {l(
-                    "暂无日志。在右侧工作台点「导出此图」后,实时日志显示在此处。",
-                    "No logs yet. Click Export this plot in the workspace to see the live log here.",
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 大图查看弹窗 */}
-      <Modal open={!!viewerFile} onClose={() => setViewerFile(null)} wide>
-        {viewerFile && (
-          <div className="rx-viewer">
-            <div className="modal-header">
-              <h3>{viewerFile.name}</h3>
-            </div>
-            <div className="rx-viewer-body">
-              {viewerContent?.kind === "svg" ? (
-                <span
-                  className="rx-thumb-svg rx-viewer-svg"
-                  dangerouslySetInnerHTML={{ __html: viewerContent.data }}
-                />
-              ) : viewerContent?.kind === "png" ? (
-                <img src={viewerContent.data} alt={viewerFile.name} />
-              ) : (
-                <div className="rx-preview-empty">
-                  <IconPhotoOff size={26} stroke={1.5} />
-                  <span>
-                    {l(
-                      "该格式不支持内嵌预览,请打开输出目录查看",
-                      "This format cannot be previewed here. Open the output directory to view it.",
-                    )}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="rx-viewer-footer">
-              <button
-                className="btn"
-                onClick={() => galleryDir && void openInShell(galleryDir)}
-              >
-                <IconFolderOpen size={13} stroke={1.75} />{" "}
-                {l("打开所在目录", "Open containing directory")}
-              </button>
-              <button className="btn btn-primary" onClick={() => setViewerFile(null)}>
-                {l("关闭", "Close")}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* 自定义尺寸弹窗 */}
-      <Modal open={customOpen} onClose={() => setCustomOpen(false)}>
-        <div className="rx-custom-preset">
-          <div className="modal-header">
-            <h3>{l("自定义尺寸", "Custom size")}</h3>
-          </div>
-          <div className="modal-body">
-            <div className="form-group">
-              <label>
-                {l(
-                  "宽度(inches,单栏 3.5 / 双栏 7 / 全幅 ~9)",
-                  "Width (inches; single column 3.5 / double column 7 / full width ~9)",
-                )}
-              </label>
-              <input
-                type="number"
-                min={2}
-                max={12}
-                step={0.5}
-                value={customW}
-                onChange={(e) => setCustomW(Number(e.target.value))}
-              />
-            </div>
-            <div className="form-group">
-              <label>{l("高度(inches,通常 4–6)", "Height (inches; usually 4–6)")}</label>
-              <input
-                type="number"
-                min={2}
-                max={12}
-                step={0.5}
-                value={customH}
-                onChange={(e) => setCustomH(Number(e.target.value))}
-              />
-            </div>
-          </div>
-          <div className="rx-viewer-footer">
-            <button className="btn" onClick={() => setCustomOpen(false)}>
-              取消
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                applyPreset({
-                  id: "custom",
-                  label: `自定义 ${customW}×${customH}`,
-                  w: customW,
-                  h: customH,
-                });
-                setCustomOpen(false);
-              }}
-            >
-              应用到全部图
-            </button>
+          />
+          <SwitchField
+            label={l("同时输出样本相关性热图", "Sample correlation heatmap")}
+            checked={cfg.overall_heatmap.sample_correlation}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.overall_heatmap.sample_correlation = v;
+              })
+            }
+          />
+          <div className="rx-field rx-field--wide">
+            <span className="rx-field-label">
+              {l("标记基因(整体热图左侧标出;每行一个)", "Marker genes (labelled on the left; one per line)")}
+            </span>
+            <textarea
+              className="rx-genes-textarea"
+              rows={5}
+              value={cfg.overall_heatmap.marker_genes.join("\n")}
+              onChange={(e) =>
+                st.updateConfig((d) => {
+                  d.overall_heatmap.marker_genes = cleanGeneList(e.target.value.split(/[\n,]/));
+                })
+              }
+            />
+            <span className="rx-field-hint">
+              {l("不在所选基因里的标记基因会自动加入热图", "Missing markers are added to the plotted set automatically")}
+            </span>
           </div>
         </div>
-      </Modal>
+      </Collapse>
+
+      {/* ── 选定基因热图 ── */}
+      <Collapse
+        title={<><IconLayersIntersect size={15} stroke={1.75} style={{ verticalAlign: -2 }} /> {l("选定基因热图(基因簇)", "Selected-gene heatmap (clusters)")}</>}
+        subtitle={l(
+          `${Object.keys(cfg.gene_clusters).length} 个簇 / ${Object.values(cfg.gene_clusters).flat().length} 个基因`,
+          `${Object.keys(cfg.gene_clusters).length} clusters / ${Object.values(cfg.gene_clusters).flat().length} genes`,
+        )}
+        defaultOpen
+      >
+        <div className="card-body">
+          <GeneClustersEditor />
+          {cfg.selected_heatmaps.map((job, ji) => (
+            <div key={ji} className="rx-param-grid" style={{ marginTop: 10 }}>
+              <TextField
+                label={l("图标题", "Title")}
+                value={job.title}
+                onChange={(v) =>
+                  st.updateConfig((d) => {
+                    d.selected_heatmaps[ji].title = v;
+                  })
+                }
+              />
+              <NumField
+                label={l("画布宽度(英寸)", "Width (in)")}
+                value={job.options.width ?? undefined}
+                step={0.5}
+                min={2}
+                onChange={(v) =>
+                  st.updateConfig((d) => {
+                    d.selected_heatmaps[ji].options.width = v ?? null;
+                  })
+                }
+              />
+              <SwitchField
+                label={l("簇内基因聚类", "Cluster rows within clusters")}
+                checked={job.options.cluster_rows ?? false}
+                onChange={(v) =>
+                  st.updateConfig((d) => {
+                    d.selected_heatmaps[ji].options.cluster_rows = v;
+                  })
+                }
+              />
+              <SwitchField
+                label={l("样本列聚类", "Cluster columns")}
+                checked={job.options.cluster_columns ?? false}
+                onChange={(v) =>
+                  st.updateConfig((d) => {
+                    d.selected_heatmaps[ji].options.cluster_columns = v;
+                  })
+                }
+              />
+              <SwitchField
+                label={l("显示聚类树线条", "Show dendrograms")}
+                checked={job.options.show_row_dend ?? true}
+                onChange={(v) =>
+                  st.updateConfig((d) => {
+                    d.selected_heatmaps[ji].options.show_row_dend = v;
+                    d.selected_heatmaps[ji].options.show_column_dend = v;
+                  })
+                }
+              />
+              <SwitchField
+                label={l("显示左侧簇名", "Show cluster names")}
+                checked={job.options.show_row_title ?? true}
+                onChange={(v) =>
+                  st.updateConfig((d) => {
+                    d.selected_heatmaps[ji].options.show_row_title = v;
+                  })
+                }
+              />
+              <div className="rx-field rx-field--wide">
+                <span className="rx-field-label">{l("画哪些组/样本(空 = 全部)", "Groups/samples to plot (empty = all)")}</span>
+                <CheckChips
+                  options={[...groupNames]}
+                  selected={job.samples ?? []}
+                  onToggle={(g) =>
+                    st.updateConfig((d) => {
+                      const cur = d.selected_heatmaps[ji].samples ?? [];
+                      const next = cur.includes(g) ? cur.filter((x) => x !== g) : [...cur, g];
+                      d.selected_heatmaps[ji].samples = next.length ? next : null;
+                    })
+                  }
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </Collapse>
+
+      {/* ── 热图样式 ── */}
+      <Collapse
+        title={<><IconPalette size={15} stroke={1.75} style={{ verticalAlign: -2 }} /> {l("热图样式", "Heatmap style")}</>}
+        subtitle={l(
+          `${cfg.heatmap.transform.toUpperCase()} · ${cfg.heatmap.scale === "row" ? "行 Z-score" : "原始值"} · ${cfg.heatmap.palette}`,
+          `${cfg.heatmap.transform.toUpperCase()} · ${cfg.heatmap.scale === "row" ? "row Z-score" : "raw"} · ${cfg.heatmap.palette}`,
+        )}
+      >
+        <div className="card-body rx-param-grid">
+          <SelectField
+            label={l("表达量变换", "Transform")}
+            value={cfg.heatmap.transform}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.heatmap.transform = v;
+              })
+            }
+            options={[
+              { value: "vst", label: "VST (DESeq2)" },
+              { value: "logcpm", label: "log-CPM (edgeR)" },
+            ]}
+          />
+          <SelectField
+            label={l("数据缩放", "Scale")}
+            value={cfg.heatmap.scale}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.heatmap.scale = v;
+              })
+            }
+            options={[
+              { value: "row", label: l("按行 Z-score", "row Z-score") },
+              { value: "none", label: l("不缩放", "none") },
+            ]}
+          />
+          <SelectField
+            label={l("连续色板", "Palette")}
+            value={cfg.heatmap.palette}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.heatmap.palette = v;
+              })
+            }
+            options={HEAT_PALETTES.map((p) => ({ value: p, label: p }))}
+          />
+          <SwitchField
+            label={l("翻转色板(红=高表达)", "Reverse palette (red = high)")}
+            checked={cfg.heatmap.reverse_palette}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.heatmap.reverse_palette = v;
+              })
+            }
+          />
+          <NumField
+            label={l("Z-score 色阶范围 ±", "Z-score limits ±")}
+            value={cfg.heatmap.zlim}
+            step={0.5}
+            min={0.5}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined) d.heatmap.zlim = v;
+              })
+            }
+          />
+          <SelectField
+            label={l("分组色板", "Group palette")}
+            value={cfg.heatmap.group_palette}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.heatmap.group_palette = v;
+              })
+            }
+            options={DISCRETE_PALETTES.map((p) => ({ value: p, label: p }))}
+          />
+          <SelectField
+            label={l("基因簇色板", "Cluster palette")}
+            value={cfg.heatmap.gene_group_palette}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.heatmap.gene_group_palette = v;
+              })
+            }
+            options={DISCRETE_PALETTES.map((p) => ({ value: p, label: p }))}
+          />
+          <SelectField
+            label={l("聚类方法", "Clustering method")}
+            value={cfg.heatmap.cluster_method}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.heatmap.cluster_method = v;
+              })
+            }
+            options={["ward.D2", "ward.D", "complete", "average", "single"].map((m) => ({ value: m, label: m }))}
+          />
+          <SelectField
+            label={l("行距离", "Row distance")}
+            value={cfg.heatmap.row_distance}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.heatmap.row_distance = v;
+              })
+            }
+            options={["pearson", "spearman", "euclidean", "maximum", "manhattan"].map((m) => ({ value: m, label: m }))}
+          />
+          <NumField
+            label={l("样本名旋转角度", "Column names rotation")}
+            value={cfg.heatmap.column_names_rot}
+            step={45}
+            min={0}
+            max={90}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined) d.heatmap.column_names_rot = v;
+              })
+            }
+          />
+          <SelectField
+            label={l("样本名位置", "Column names side")}
+            value={cfg.heatmap.column_names_side}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.heatmap.column_names_side = v;
+              })
+            }
+            options={[
+              { value: "top", label: l("顶部", "top") },
+              { value: "bottom", label: l("底部", "bottom") },
+            ]}
+          />
+          <NumField
+            label={l("字号 (pt)", "Font size (pt)")}
+            value={cfg.heatmap.font_size}
+            step={1}
+            min={4}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined) d.heatmap.font_size = v;
+              })
+            }
+          />
+          <SwitchField
+            label={l("基因名斜体", "Italic gene names")}
+            checked={cfg.heatmap.row_names_italic}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.heatmap.row_names_italic = v;
+              })
+            }
+          />
+          <NumField
+            label={l("热图 DPI", "Heatmap DPI")}
+            value={cfg.heatmap.dpi}
+            step={50}
+            min={72}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined) d.heatmap.dpi = v;
+              })
+            }
+          />
+        </div>
+      </Collapse>
+
+      {/* ── PCA ── */}
+      <Collapse
+        title={<><IconChartDots size={15} stroke={1.75} style={{ verticalAlign: -2 }} /> {l("PCA", "PCA")}</>}
+        subtitle={l(
+          `ntop=${cfg.plots.pca[0]?.ntop ?? 500} · PC${cfg.plots.pca[0]?.pcs?.[0] ?? 1}/PC${cfg.plots.pca[0]?.pcs?.[1] ?? 2}`,
+          `ntop=${cfg.plots.pca[0]?.ntop ?? 500} · PC${cfg.plots.pca[0]?.pcs?.[0] ?? 1}/PC${cfg.plots.pca[0]?.pcs?.[1] ?? 2}`,
+        )}
+      >
+        <div className="card-body rx-param-grid">
+          <NumField
+            label={l("方差最大的前 N 个基因", "Top N variable genes")}
+            value={cfg.plots.pca[0]?.ntop ?? 500}
+            step={50}
+            min={10}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined && d.plots.pca[0]) d.plots.pca[0].ntop = Math.round(v);
+              })
+            }
+          />
+          <NumField
+            label={l("PC x 轴", "PC x-axis")}
+            value={cfg.plots.pca[0]?.pcs?.[0] ?? 1}
+            step={1}
+            min={1}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined && d.plots.pca[0]) d.plots.pca[0].pcs = [Math.round(v), d.plots.pca[0].pcs[1]];
+              })
+            }
+          />
+          <NumField
+            label={l("PC y 轴", "PC y-axis")}
+            value={cfg.plots.pca[0]?.pcs?.[1] ?? 2}
+            step={1}
+            min={1}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined && d.plots.pca[0]) d.plots.pca[0].pcs = [d.plots.pca[0].pcs[0], Math.round(v)];
+              })
+            }
+          />
+          <SwitchField
+            label={l("样本名标签", "Label samples")}
+            checked={cfg.plots.pca[0]?.label_samples ?? true}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (d.plots.pca[0]) d.plots.pca[0].label_samples = v;
+              })
+            }
+          />
+          <SwitchField
+            label={l("95% 置信椭圆(组内 ≥4 样本)", "95% ellipses (groups with ≥4 samples)")}
+            checked={cfg.plots.pca[0]?.ellipse ?? false}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (d.plots.pca[0]) d.plots.pca[0].ellipse = v;
+              })
+            }
+          />
+          <SelectField
+            label={l("图例位置", "Legend position")}
+            value={cfg.plots.pca[0]?.legend_pos ?? "right"}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (d.plots.pca[0]) d.plots.pca[0].legend_pos = v;
+              })
+            }
+            options={[
+              { value: "right", label: l("右侧", "right") },
+              { value: "bottom", label: l("底部", "bottom") },
+              { value: "top", label: l("顶部", "top") },
+              { value: "none", label: l("隐藏", "none") },
+            ]}
+          />
+          <NumField
+            label={l("宽 (mm)", "Width (mm)")}
+            value={cfg.plots.pca[0]?.width_mm ?? 76}
+            step={5}
+            min={40}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined && d.plots.pca[0]) d.plots.pca[0].width_mm = v;
+              })
+            }
+          />
+          <NumField
+            label={l("高 (mm)", "Height (mm)")}
+            value={cfg.plots.pca[0]?.height_mm ?? 62}
+            step={5}
+            min={40}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined && d.plots.pca[0]) d.plots.pca[0].height_mm = v;
+              })
+            }
+          />
+        </div>
+      </Collapse>
+
+      {/* ── 火山图 ── */}
+      <Collapse
+        title={<><IconChartHistogram size={15} stroke={1.75} style={{ verticalAlign: -2 }} /> {l("火山图", "Volcano")}</>}
+        subtitle={l(
+          `标注最显著 ${cfg.plots.volcano.label_top} 个基因 · 阈值 padj<${cfg.de.padj}, |log2FC|≥${cfg.de.log2fc}`,
+          `label top ${cfg.plots.volcano.label_top} genes · padj<${cfg.de.padj}, |log2FC|≥${cfg.de.log2fc}`,
+        )}
+      >
+        <div className="card-body rx-param-grid">
+          <SwitchField
+            label={l("启用火山图", "Enabled")}
+            checked={cfg.plots.volcano.enabled}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.plots.volcano.enabled = v;
+              })
+            }
+          />
+          <NumField
+            label={l("标注最显著的 N 个基因(0 = 不标)", "Label top N genes (0 = none)")}
+            value={cfg.plots.volcano.label_top}
+            step={1}
+            min={0}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined) d.plots.volcano.label_top = Math.round(v);
+              })
+            }
+          />
+          <NumField
+            label={l("点大小", "Point size")}
+            value={cfg.plots.volcano.point_size}
+            step={0.1}
+            min={0.1}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined) d.plots.volcano.point_size = v;
+              })
+            }
+          />
+          <NumField
+            label={l("宽 (mm)", "Width (mm)")}
+            value={cfg.plots.volcano.width_mm}
+            step={5}
+            min={40}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined) d.plots.volcano.width_mm = v;
+              })
+            }
+          />
+          <NumField
+            label={l("高 (mm)", "Height (mm)")}
+            value={cfg.plots.volcano.height_mm}
+            step={5}
+            min={40}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                if (v !== undefined) d.plots.volcano.height_mm = v;
+              })
+            }
+          />
+          <SelectField
+            label={l("图例位置", "Legend position")}
+            value={cfg.plots.volcano.legend_pos}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.plots.volcano.legend_pos = v;
+              })
+            }
+            options={[
+              { value: "right", label: l("右侧", "right") },
+              { value: "top", label: l("顶部", "top") },
+              { value: "bottom", label: l("底部", "bottom") },
+              { value: "none", label: l("隐藏", "none") },
+            ]}
+          />
+          <SwitchField
+            label={l("显示副标题(方法与阈值)", "Show subtitle (method & thresholds)")}
+            checked={cfg.plots.volcano.show_subtitle}
+            onChange={(v) =>
+              st.updateConfig((d) => {
+                d.plots.volcano.show_subtitle = v;
+              })
+            }
+          />
+          <span className="rx-field-hint" style={{ alignSelf: "end" }}>
+            {l(
+              "Up/Down/NS 颜色使用 NPG 配色(红/蓝/灰),与参考脚本一致",
+              "Up/Down/NS use NPG colors (red/blue/grey), matching the reference script",
+            )}
+          </span>
+        </div>
+      </Collapse>
+
+      {/* ── 运行 ── */}
+      <section className="card">
+        <div className="card-body">
+          <div className="rx-run-bar">
+            <div className="rx-run-left">
+              <button type="button" className="btn btn-primary rx-run-btn" disabled={running} onClick={() => void runAll()}>
+                <IconPlayerPlay size={14} stroke={1.75} />
+                {l("生成全部图形", "Generate all figures")}
+              </button>
+              <button type="button" className="btn rx-run-btn" disabled={running} onClick={() => void runHeatmaps()}>
+                {l("仅热图", "Heatmaps only")}
+              </button>
+              <button type="button" className="btn rx-run-btn" disabled={running} onClick={() => void runPlots()}>
+                {l("仅 PCA + 火山图", "PCA + volcano only")}
+              </button>
+              {running && (
+                <button type="button" className="btn rx-cancel-btn" onClick={() => void st.cancelRun()}>
+                  <IconPlayerStop size={14} stroke={1.75} /> {l("取消", "Cancel")}
+                </button>
+              )}
+              <span className={`rx-tag${running ? " rx-tag--run" : st.runStatus === "done" ? " rx-tag--ok" : st.runStatus === "failed" ? " rx-tag--err" : ""}`}>
+                {running ? l("生成中", "Running") : st.runStatus === "done" ? l("完成", "Done") : st.runStatus === "failed" ? l("失败", "Failed") : l("待生成", "Idle")}
+              </span>
+              {running && <span className="rx-elapsed">{st.elapsedSec}s</span>}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 结果画廊 ── */}
+      {st.resultImages.length > 0 && (
+        <section className="card">
+          <div className="card-title">
+            <IconPhoto size={15} stroke={1.75} />
+            <span>{l("输出图形", "Output figures")}</span>
+            <span className="rx-title-actions">
+              <span className="rx-tag">{st.resultImages.length} {l("个文件", "files")}</span>
+            </span>
+          </div>
+          <div className="card-body">
+            <Gallery />
+          </div>
+        </section>
+      )}
     </div>
   );
+}
+
+/** 基因簇编辑器:簇名 = 基因列表 */
+function GeneClustersEditor() {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => (language === "en" ? en : zh);
+  const st = useRnaSeq();
+  const clusters = st.config.gene_clusters;
+  const entries = Object.entries(clusters);
+
+  const setClusters = (next: Record<string, string[]>) => {
+    st.updateConfig((d) => {
+      d.gene_clusters = next;
+    });
+  };
+
+  return (
+    <div className="rx-gene-clusters">
+      {entries.map(([name, genes], i) => (
+        <div key={name} className="rx-cluster-row">
+          <input
+            className="rx-cluster-name"
+            value={name}
+            onChange={(e) => {
+              const nextName = e.target.value.trim();
+              if (!nextName || entries.some(([k]) => k === nextName)) return;
+              const next: Record<string, string[]> = {};
+              for (const [k, v] of entries) next[k === name ? nextName : k] = v;
+              setClusters(next);
+            }}
+          />
+          <textarea
+            className="rx-cluster-genes"
+            rows={Math.min(4, Math.max(1, Math.ceil(genes.length / 6)))}
+            value={genes.join(", ")}
+            placeholder="RPE65, MITF, …"
+            onChange={(e) => {
+              const list = cleanGeneList(e.target.value.split(/[\n,]/));
+              setClusters({ ...clusters, [name]: list });
+            }}
+          />
+          <span className="rx-tag">{genes.length}</span>
+          <button
+            type="button"
+            className="rx-icon-btn rx-icon-btn--danger"
+            onClick={() => {
+              const next = { ...clusters };
+              delete next[name];
+              setClusters(next);
+            }}
+          >
+            <IconX size={12} stroke={2} />
+          </button>
+          {i === entries.length - 1 && null}
+        </div>
+      ))}
+      <div>
+        <button
+          type="button"
+          className="btn"
+          onClick={() => {
+            let i = entries.length + 1;
+            while (clusters[`Cluster${i}`]) i++;
+            setClusters({ ...clusters, [`Cluster${i}`]: [] });
+          }}
+        >
+          + {l("添加基因簇", "Add cluster")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** 图画廊:缩略图 + 点击放大 */
+function Gallery() {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => (language === "en" ? en : zh);
+  const st = useRnaSeq();
+  const [zoom, setZoom] = useState<{ subdir: string; name: string } | null>(null);
+
+  return (
+    <>
+      <div className="rx-gallery-grid">
+        {st.resultImages.map((f) => (
+          <GalleryItem
+            key={`${f.subdir}/${f.name}`}
+            runDir={st.resultDir}
+            subdir={f.subdir}
+            name={f.name}
+            onZoom={() => setZoom({ subdir: f.subdir, name: f.name })}
+          />
+        ))}
+      </div>
+      {zoom && (
+        <Modal open onClose={() => setZoom(null)} wide title={zoom.name}>
+          <div style={{ textAlign: "center" }}>
+            <ZoomImage runDir={st.resultDir} subdir={zoom.subdir} name={zoom.name} />
+          </div>
+        </Modal>
+      )}
+      {st.resultDir && (
+        <div className="btn-row" style={{ marginTop: 10 }}>
+          <button type="button" className="btn" onClick={() => void openInShell(st.resultDir)}>
+            <IconFolderOpen size={13} stroke={1.75} /> {l("打开输出目录", "Open output folder")}
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+function GalleryItem({
+  runDir,
+  subdir,
+  name,
+  onZoom,
+}: {
+  runDir: string;
+  subdir: string;
+  name: string;
+  onZoom: () => void;
+}) {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    let alive = true;
+    if (!runDir) return;
+    readImageDataURL(runDir, subdir, name)
+      .then((u) => {
+        if (alive) setUrl(u);
+      })
+      .catch(() => {
+        if (alive) setUrl("");
+      });
+    return () => {
+      alive = false;
+    };
+  }, [runDir, subdir, name]);
+  const isPng = name.toLowerCase().endsWith(".png");
+  const isSvg = name.toLowerCase().endsWith(".svg");
+  return (
+    <figure className="rx-gallery-item">
+      <div className="rx-gallery-thumb" role="button" onClick={onZoom} title={name}>
+        {url && (isPng || isSvg) ? (
+          <img src={url} alt={name} loading="lazy" />
+        ) : (
+          <span className="rx-thumb-pdf">{name.split(".").pop()?.toUpperCase()}</span>
+        )}
+        <span className="rx-thumb-zoom">
+          <IconZoomIn size={16} stroke={1.75} />
+        </span>
+      </div>
+      <figcaption className="rx-gallery-meta">
+        <strong>{name}</strong>
+        <small>{subdir}</small>
+      </figcaption>
+    </figure>
+  );
+}
+
+function ZoomImage({ runDir, subdir, name }: { runDir: string; subdir: string; name: string }) {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    let alive = true;
+    if (!runDir) return;
+    readImageDataURL(runDir, subdir, name)
+      .then((u) => {
+        if (alive) setUrl(u);
+      })
+      .catch(() => {
+        if (alive) setUrl("");
+      });
+    return () => {
+      alive = false;
+    };
+  }, [runDir, subdir, name]);
+  if (!url) return <div className="rx-loading">…</div>;
+  return <img src={url} alt={name} style={{ maxWidth: "100%", height: "auto" }} />;
 }

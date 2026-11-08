@@ -1,9 +1,9 @@
 //! Typed task lifecycle primitives shared by future command adapters.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct TaskId(pub u64);
 

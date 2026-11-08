@@ -10,8 +10,8 @@ pub enum CommandError {
     Builder(String),
     #[error("Network request failed: {0}")]
     Network(String),
-    #[error("Search response could not be parsed: {0}")]
-    Search(String),
+    #[error("Image error: {0}")]
+    Image(String),
 }
 
 impl serde::Serialize for CommandError {

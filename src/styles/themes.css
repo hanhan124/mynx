@@ -71,6 +71,8 @@
   --orange-rgb: 255, 159, 10;
   --warning: #ff9f0a;
   --warning-rgb: 255, 159, 10;
+  --purple: #bf5af2;
+  --purple-rgb: 191, 90, 242;
   --severe: #ff453a;
   /* 兼容旧引用 */
   --fill-control: rgba(255, 255, 255, 0.08);
@@ -133,6 +135,8 @@
   --orange-rgb: 255, 149, 0;
   --warning: #ff9500;
   --warning-rgb: 255, 149, 0;
+  --purple: #af52de;
+  --purple-rgb: 175, 82, 222;
   --severe: #ff3b30;
   --fill-control: rgba(0, 0, 0, 0.06);
   --fill-control-hover: rgba(0, 0, 0, 0.035);
@@ -148,7 +152,7 @@
   --shadow-accent: 0 4px 14px rgba(0, 122, 255, 0.24);
   --accent-gradient: linear-gradient(135deg, #007aff 0%, #005ed4 100%);
   --focus-ring: 0 0 0 3px rgba(0, 122, 255, 0.28);
-  --home-hero-start: rgb(244, 244, 246);
-  --home-hero-mid: rgba(244, 244, 246, 0.62);
+  --home-hero-start: rgba(0, 122, 255, 0.10);
+  --home-hero-mid: rgba(52, 199, 89, 0.05);
   --home-hero-end: transparent;
 }

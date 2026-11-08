@@ -84,22 +84,44 @@ function Faq({ q, children }: { q: string; children: React.ReactNode }) {
   );
 }
 
-function EnglishToolTutorial({ type, onClose }: { type: "qpcr" | "tiff"; onClose: () => void }) {
+function EnglishToolTutorial({
+  type,
+  onClose,
+}: {
+  type: "qpcr" | "image" | "chart";
+  onClose: () => void;
+}) {
   const qpcr = type === "qpcr";
-  const title = qpcr ? "qPCR analysis guide" : "TIFF to JPG guide";
-  const subtitle = qpcr ? "From Ct values to charts in four steps" : "Batch conversion with optional filename watermarks";
-  const sections = qpcr
+  const chart = type === "chart";
+  const title = qpcr
+    ? "qPCR analysis guide"
+    : chart
+      ? "Scientific plotting guide"
+      : "Image to PNG guide";
+  const subtitle = qpcr
+    ? "From Ct values to charts in four steps"
+    : chart
+      ? "Journal-ready figures from your data, powered by a local R engine"
+      : "Batch conversion, compression and watermarks";
+  const sections = chart
     ? [
-        ["Prepare", "Use an Excel workbook containing Target/Gene, Sample/Group, and Ct columns."],
-        ["Transform", "Open the workbook, choose the worksheet, then transform data into the analysis layout."],
-        ["Calculate", "Choose a calculation method, reference gene, replicate count, and optional control group."],
-        ["Export", "Run calculation to save the workbook and create charts for each target gene."],
+        ["Pick a chart", "Choose a template from the left catalog; each covers one figure style (bar, box, volcano, PCA, …)."],
+        ["Import data", "Paste, type or upload your data, then map columns to axes, groups and errors."],
+        ["Style & layout", "Set palette, fonts, axis titles, legend and journal size presets (89/120/183 mm)."],
+        ["Generate", "Render with the local R engine and export PNG/SVG/PDF at publication quality."],
       ]
-    : [
-        ["Choose a folder", "Select or drop a folder that contains .tif or .tiff files."],
-        ["Set options", "Choose whether to add a filename watermark, then set font, margins, background opacity, and JPG quality."],
-        ["Convert", "Start conversion. Output is written to a timestamped JPG_output folder inside the selected source folder."],
-      ];
+    : qpcr
+      ? [
+          ["Prepare", "Use an Excel workbook containing Target/Gene, Sample/Group, and Ct columns."],
+          ["Transform", "Open the workbook, choose the worksheet, then transform data into the analysis layout."],
+          ["Calculate", "Choose a calculation method, reference gene, replicate count, and optional control group."],
+          ["Export", "Run calculation to save the workbook and create charts for each target gene."],
+        ]
+      : [
+          ["Add files", "Add image files or folders with the buttons, or drop them onto the files card."],
+          ["Set options", "Pick lossless optimization or lossy (indexed color) compression, an optional text or image watermark, and where outputs go."],
+          ["Convert", "Start conversion. Progress streams live and can be cancelled; a per-file result table follows."],
+        ];
   return (
     <div className="tutorial">
       <div className="tutorial__header">
@@ -108,7 +130,7 @@ function EnglishToolTutorial({ type, onClose }: { type: "qpcr" | "tiff"; onClose
       </div>
       <div className="tutorial__body"><div className="tutorial__content" style={{ width: "100%" }}>
         <section className="tutorial__section"><h2 className="tutorial__h2">Quick start</h2><p className="tutorial__subtitle-inline">Follow the workflow below</p><ol>{sections.map(([heading, text]) => <li key={heading}><strong>{heading}:</strong> {text}</li>)}</ol></section>
-        <section className="tutorial__section"><h2 className="tutorial__h2">Notes</h2><div className="tutorial__callout tutorial__callout--info">{qpcr ? "qPCR uses spreadsheet data locally. Keep a copy of your original workbook before processing." : "TIFF conversion runs locally. Watermarks require ImageMagick when that feature is enabled."}</div></section>
+        <section className="tutorial__section"><h2 className="tutorial__h2">Notes</h2><div className="tutorial__callout tutorial__callout--info">{qpcr ? "qPCR uses spreadsheet data locally. Keep a copy of your original workbook before processing." : chart ? "Charts are rendered by a local R engine (ggplot2/ComplexHeatmap). Install R when prompted; presets can be saved, imported and exported as JSON." : "Conversion runs fully locally via open-source engines (image-rs, oxipng, resvg). Sources are never overwritten; output files are always new PNGs."}</div></section>
         <div className="tutorial__footer"><button type="button" className="btn btn-primary tutorial__done" onClick={onClose}>Start using Mynx</button></div>
       </div></div>
     </div>
@@ -458,29 +480,30 @@ B02   SYBR   TNF      Sample_B     24.87`}</pre>
 }
 
 /* ================================================================
- * TIFF 转 JPG 使用教程
+ * 图片转 PNG 使用教程
  * ================================================================ */
 
-export function TiffTutorial({ onClose }: { onClose: () => void }) {
+export function ImageConvertTutorial({ onClose }: { onClose: () => void }) {
   const { language } = useLanguage();
   const sections = [
     { id: "intro", title: "📖 简介" },
-    { id: "source", title: "① 选文件夹" },
-    { id: "options", title: "② 转换选项" },
-    { id: "convert", title: "③ 开始转换" },
-    { id: "result", title: "④ 输出结果" },
+    { id: "files", title: "① 添加文件" },
+    { id: "compress", title: "② 压缩设置" },
+    { id: "watermark", title: "③ 水印设置" },
+    { id: "output", title: "④ 输出位置" },
+    { id: "result", title: "⑤ 转换结果" },
     { id: "faq", title: "❓ 常见问题" },
   ];
 
   const { activeId, scrollRef, scrollTo } = useTutorialScroll(sections);
-  if (language === "en") return <EnglishToolTutorial type="tiff" onClose={onClose} />;
+  if (language === "en") return <EnglishToolTutorial type="image" onClose={onClose} />;
 
   return (
     <div className="tutorial">
       <div className="tutorial__header">
         <div>
-          <div className="tutorial__title">TIFF 转 JPG 使用教程</div>
-          <div className="tutorial__subtitle">批量转换 + 文件名水印 · 3 步走完</div>
+          <div className="tutorial__title">图片转 PNG 使用教程</div>
+          <div className="tutorial__subtitle">批量转换 · 无损/有损压缩 · 水印</div>
         </div>
         <button className="tutorial__close" onClick={onClose} aria-label="关闭教程">
           <IconX size={16} stroke={1.75} />
@@ -510,132 +533,256 @@ export function TiffTutorial({ onClose }: { onClose: () => void }) {
           {/* ── 简介 ── */}
           <Section id="intro" title="📖 简介" subtitle="这工具能干什么">
             <p>
-              Mynx TIFF 转 JPG 模块可以<strong>批量</strong>把一个文件夹里所有 <code>.tif</code> / <code>.tiff</code>
-              图片转换为 <code>.jpg</code> 格式，并可选在图片左上角添加<strong>文件名水印</strong>。
+              Mynx 图片转 PNG 模块可以<strong>批量</strong>把常见图片格式转换为 PNG：
+              PNG / JPG / TIFF / WebP / BMP / GIF / ICO / TGA / PNM / QOI / DDS / SVG 等，
+              并支持<strong>无损优化</strong>、<strong>有损压缩</strong>和<strong>水印</strong>。
             </p>
-            <p>典型流程（几秒到几十秒，取决于文件数量）：</p>
+            <p>典型流程：</p>
             <ol>
-              <li><strong>选文件夹</strong> — 含 TIFF 文件的目录</li>
-              <li><strong>设选项</strong> — 水印文字样式、输出质量</li>
-              <li><strong>开始转换</strong> — 实时进度，自动输出到子文件夹</li>
+              <li><strong>添加文件</strong> — 文件、文件夹或直接拖入</li>
+              <li><strong>压缩设置</strong> — 无损优化 / 有损索引色</li>
+              <li><strong>水印</strong> — 文字或图片 logo，可平铺</li>
+              <li><strong>开始转换</strong> — 实时进度，可随时取消</li>
             </ol>
             <Callout type="info">
-              转换在本地完成，不依赖任何在线服务。Windows 使用 PowerShell + .NET System.Drawing，
-              macOS / Linux 使用 sips / ImageMagick。
+              转换全部在本地完成，由成熟开源引擎驱动（image-rs 解码、oxipng 无损优化、
+              resvg 渲染 SVG），无需安装 ImageMagick 等外部程序。
             </Callout>
           </Section>
 
-          {/* ── ① 选文件夹 ── */}
-          <Section id="source" title="① 选文件夹" subtitle="选含 TIFF 文件的目录">
-            <p>两种方式：</p>
+          {/* ── ① 添加文件 ── */}
+          <Section id="files" title="① 添加文件" subtitle="文件 / 文件夹 / 拖放">
+            <p>三种方式：</p>
             <ul>
-              <li>点 <code>选择文件夹</code> 按钮，弹出目录选择框</li>
-              <li>把文件夹直接拖到卡片虚线框里</li>
+              <li><code>添加文件</code> — 多选文件</li>
+              <li><code>添加文件夹</code> — 递归扫描子文件夹里的图片</li>
+              <li>把文件或文件夹<strong>直接拖到</strong>左侧卡片里</li>
             </ul>
-            <p>
-              选好后卡片会显示 <strong>文件夹名 + 完整路径</strong>。
-              支持的输入格式：<code>.tif</code> 和 <code>.tiff</code>（不区分大小写）。
-            </p>
+            <p>列表会显示缩略图、尺寸和大小，可单独移除或一键清空。</p>
             <Callout type="tip">
-              只扫描所选文件夹的<strong>第一层</strong>，不会递归子文件夹。
-              如果 TIFF 文件分散在子目录，请逐个文件夹转换。
+              多页 TIFF 会<strong>每一页单独导出</strong>为 <code>名字_p1.png</code>、
+              <code>名字_p2.png</code>…；动图（GIF / 动图 WebP）取第一帧。
             </Callout>
           </Section>
 
-          {/* ── ② 转换选项 ── */}
-          <Section id="options" title="② 转换选项" subtitle="配置水印和输出质量">
-            <p>首先选择是否<strong>添加文件名水印</strong>：</p>
-            <ul>
-              <li><strong>是</strong> — 在每张 JPG 左上角添加原 TIFF 文件名（不含扩展名）</li>
-              <li><strong>否</strong> — 纯转换，不加水印</li>
-            </ul>
-
-            <p>选「是」后可以配置水印样式：</p>
+          {/* ── ② 压缩设置 ── */}
+          <Section id="compress" title="② 压缩设置" subtitle="无损 or 有损">
             <div className="tutorial__table-wrap">
               <table className="tutorial__table">
                 <thead>
-                  <tr><th>选项</th><th>说明</th></tr>
+                  <tr><th>模式</th><th>原理</th><th>适合</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td><strong>字体</strong></td><td>Arial / Calibri / Times New Roman / 微软雅黑 / 黑体 / 宋体</td></tr>
-                  <tr><td><strong>字号</strong></td><td>36–120 px，默认 72</td></tr>
-                  <tr><td><strong>粗体 / 斜体</strong></td><td>文字样式开关</td></tr>
-                  <tr><td><strong>左边距 / 上边距</strong></td><td>水印距图片左上角的位置，0–200 px</td></tr>
-                  <tr><td><strong>内边距 X / Y</strong></td><td>文字背景框的留白，0–50 px</td></tr>
-                  <tr><td><strong>背景透明度</strong></td><td>水印背景色（深灰）的不透明度：不透明 / 半透明 / 较透明 / 全透明</td></tr>
+                  <tr>
+                    <td><strong>无损优化</strong>（默认）</td>
+                    <td>像素完全不变，用 oxipng 重新组织压缩流；优化强度越高压得越小、耗时越长</td>
+                    <td>截图、图表、需要保真的一切</td>
+                  </tr>
+                  <tr>
+                    <td><strong>有损压缩（索引色）</strong></td>
+                    <td>把颜色量化到 256 / 128 / 64 / 32 色调色板，可加抖动；体积通常降到原来的 20%–50%</td>
+                    <td>照片分享、表情包、体积敏感场景</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
-
-            <p>无论是否加水印，都可以设置 <strong>JPG 质量</strong>（80 / 85 / 90 / 95 / 98），默认 95。</p>
             <Callout type="warn">
-              ⚠️ macOS / Linux 上水印功能需要 ImageMagick（<code>magick</code> 或 <code>convert</code> 命令）。
-              如果系统未安装，转换仍会完成，但<strong>水印会被跳过</strong>，转换后会提示。
-              安装方式：<code>brew install imagemagick</code>。
+              ⚠️ 有损模式会改变像素颜色（最多只剩所选颜色数），输出<strong>不可逆</strong>。
+              需要保真请用无损。
             </Callout>
           </Section>
 
-          {/* ── ③ 开始转换 ── */}
-          <Section id="convert" title="③ 开始转换" subtitle="点「开始转换」">
-            <p>
-              点 <code>开始转换</code> 后，界面会显示遮罩 + 进度条，实时显示
-              <code>正在转换 (当前/总数)</code>。
-            </p>
-            <p>转换过程：</p>
-            <ol>
-              <li>在所选文件夹下创建子目录 <code>JPG_output_年月日_时分秒</code></li>
-              <li>逐个读取 TIFF → 转为 JPG → 写入子目录</li>
-              <li>如有水印，在每个 JPG 上绘制文件名文字 + 半透明背景框</li>
-              <li>完成后弹出 Toast 提示成功 / 失败数量</li>
-            </ol>
+          {/* ── ③ 水印设置 ── */}
+          <Section id="watermark" title="③ 水印设置" subtitle="文字或图片 logo">
+            <p>开关打开后可选两种水印：</p>
+            <ul>
+              <li>
+                <strong>文字水印</strong> — 内容默认使用文件名（留空即可），也可自定义；
+                支持字体（微软雅黑 / 黑体 / 宋体 / Arial 等）、字号、粗体、白/黑颜色、
+                不透明度、九宫格位置或<strong>平铺</strong>，以及半透明文字底色
+              </li>
+              <li>
+                <strong>图片水印</strong> — 选一张 PNG logo，
+                控制相对大小（10%–60%）、不透明度和位置
+              </li>
+            </ul>
             <Callout type="info">
-              文件名与原 TIFF 相同，仅扩展名改为 <code>.jpg</code>。
-              例如 <code>sample.tif</code> → <code>sample.jpg</code>。
+              水印在转换前叠加，原图永不修改。字体使用系统自带字体；
+              若系统找不到可用字体（极少数精简系统），转换仍会完成，仅跳过水印并提示。
             </Callout>
           </Section>
 
-          {/* ── ④ 输出结果 ── */}
-          <Section id="result" title="④ 输出结果" subtitle="JPG 在子文件夹里">
+          {/* ── ④ 输出位置 ── */}
+          <Section id="output" title="④ 输出位置" subtitle="三种落盘方式">
+            <ul>
+              <li>
+                <strong>源目录子文件夹</strong>（默认）— 在每个源文件所在目录创建
+                <code>PNG_output_年月日_时分秒</code>，多次转换互不覆盖
+              </li>
+              <li><strong>与原图同目录</strong> — 直接生成在原文件旁边</li>
+              <li><strong>自定义目录</strong> — 所有输出集中到一个文件夹</li>
+            </ul>
+            <Callout type="warn">
+              ⚠️ 重压缩 PNG 时输出永远写入<strong>新文件</strong>（重名自动加
+              <code>-min</code> / <code>-1</code> 后缀），原图不会被覆盖或删除。
+            </Callout>
+          </Section>
+
+          {/* ── ⑤ 转换结果 ── */}
+          <Section id="result" title="⑤ 转换结果" subtitle="逐文件对比">
             <p>
-              所有 JPG 文件输出到源文件夹下的 <code>JPG_output_</code> 子目录中，
-              目录名带时间戳，方便多次转换不覆盖。
+              转换完成后会生成结果表：每个文件的<strong>原始大小 → 转换后大小</strong>、
+              压缩率、成功 / 失败状态，底部汇总总体节省的体积百分比。
             </p>
+            <p>转换中可随时点「取消」，已完成的文件保留。</p>
             <Callout type="tip">
-              转换完成后可以直接打开 <code>JPG_output_</code> 文件夹查看结果。
-              原始 TIFF 文件不会被修改或删除。
+              点「打开输出文件夹」直达结果目录。个别文件失败不影响其余文件，
+              失败原因悬停在状态上可查看。
             </Callout>
           </Section>
 
           {/* ── FAQ ── */}
           <Section id="faq" title="❓ 常见问题" subtitle="对号入座，看怎么办">
-            <Faq q="转换提示「未找到 TIFF 文件」？">
-              检查所选文件夹的第一层目录里有没有 <code>.tif</code> 或 <code>.tiff</code> 文件。
-              工具不扫描子文件夹，如果文件在子目录里，请直接选那个子目录。
+            <Faq q="为什么转换后 PNG 反而变大了？">
+              无损优化对<strong>已经高度压缩</strong>的 PNG 提升有限，个别文件可能略增
+              （oxipng 保证不破坏像素）。照片类内容建议改用<strong>有损索引色</strong>模式。
             </Faq>
-            <Faq q="水印没加上？">
-              Windows 上不需要额外依赖。macOS / Linux 上需要 ImageMagick。
-              如果没装，转换会正常完成但跳过水印，结束后会有提示。
-              安装：<code>brew install imagemagick</code>（macOS）或
-              <code>sudo apt install imagemagick</code>（Linux）。
+            <Faq q="HEIC / iPhone 照片支持吗？">
+              暂不支持 HEIC（需要系统级解码器）。可先在系统相册导出为 JPG 再转换。
             </Faq>
-            <Faq q="部分文件转换失败？">
-              可能是 TIFF 文件损坏或格式特殊（如多页 TIFF）。
-              查看 Toast 提示的「N 个失败」数量，失败的文件不会生成 JPG。
-              可以尝试用其他工具单独打开该 TIFF 确认是否正常。
+            <Faq q="水印字体没生效？">
+              水印使用系统字体：Windows 用微软雅黑 / 黑体 / 宋体等，macOS 自动映射到苹方 /
+              宋体-简。精简系统可能缺字体，此时转换正常完成但水印被跳过。
             </Faq>
-            <Faq q="JPG 质量怎么选？">
-              <strong>95</strong>（默认）适合大多数场景，文件体积小且画质好。
-              需要更高画质选 98；需要更小体积选 85 或 80。
+            <Faq q="有损压缩选多少色合适？">
+              256 色几乎看不出差别；截图 / 图表 128 色也很安全；照片 64 或 32 色
+              体积最小，可开「抖动」减少色带。
             </Faq>
-            <Faq q="边距 / 内边距填了无效值？">
-              边距范围 0–200，内边距范围 0–50。如果手动输入超出范围的值或留空，
-              会自动截断到合法范围或回退到默认值，不会导致转换失败。
+            <Faq q="SVG 转出来的 PNG 分辨率是多少？">
+              SVG 是矢量格式，Mynx 会自动渲染到最长边 ≥1024px（上限 8192），
+              保证导出后清晰可用。
             </Faq>
           </Section>
 
           <div className="tutorial__footer">
             <button className="btn btn-primary tutorial__done" onClick={onClose}>
               我看完了，开始使用 →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+ * 科研绘图教程(与 qPCR / 图片转 PNG 教程同一套结构与样式)
+ * ================================================================ */
+
+export function ChartStudioTutorial({ onClose }: { onClose: () => void }) {
+  const { language } = useLanguage();
+  const sections = [
+    { id: "intro", title: "📖 简介" },
+    { id: "flow", title: "🧭 出图流程" },
+    { id: "preset", title: "💾 参数管理" },
+    { id: "faq", title: "❓ 常见问题" },
+  ];
+
+  const { activeId, scrollRef, scrollTo } = useTutorialScroll(sections);
+  if (language === "en") return <EnglishToolTutorial type="chart" onClose={onClose} />;
+
+  return (
+    <div className="tutorial">
+      <div className="tutorial__header">
+        <div>
+          <div className="tutorial__title">科研绘图使用教程</div>
+          <div className="tutorial__subtitle">选模板 → 导数据 → 调版式 → 生成导出</div>
+        </div>
+        <button className="tutorial__close" onClick={onClose} aria-label="关闭教程">
+          <IconX size={16} stroke={1.75} />
+        </button>
+      </div>
+
+      <div className="tutorial__body">
+        <aside className="tutorial__nav">
+          <div className="tutorial__nav-title">目录</div>
+          <ul>
+            {sections.map((s) => (
+              <li key={s.id}>
+                <button
+                  className={`tutorial__nav-item ${activeId === s.id ? "active" : ""}`}
+                  onClick={() => scrollTo(s.id)}
+                >
+                  <IconChevronRight size={12} stroke={1.75} />
+                  <span>{s.title}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="tutorial__nav-tip">💡 点目录可快速跳转</div>
+        </aside>
+
+        <div className="tutorial__content" ref={scrollRef}>
+          {/* ── 简介 ── */}
+          <Section id="intro" title="📖 简介" subtitle="这工具能干什么">
+            <p>
+              科研绘图模块用内置的 <strong>R 引擎</strong>(ggplot2 / ComplexHeatmap)在本地把数据
+              渲染成<strong>发表级图表</strong>:柱状图、箱线图、火山图、PCA、热图等几十种模板,
+              输出直接对齐期刊栏宽(单栏 89 mm / 1.5 栏 120 mm / 双栏 183 mm)。
+            </p>
+            <Callout type="info">
+              首次出图会要求安装 R 与相关包,按提示确认即可;之后所有绘制都在本机完成,
+              数据不出本机。
+            </Callout>
+          </Section>
+
+          {/* ── 出图流程 ── */}
+          <Section id="flow" title="🧭 出图流程" subtitle="四步一张图">
+            <ol>
+              <li><strong>选模板</strong> — 左侧图库按类型挑选图表模板</li>
+              <li><strong>导数据</strong> — 粘贴 / 上传数据,把列映射到坐标轴、分组与误差棒</li>
+              <li><strong>调版式</strong> — 配色、字体、坐标轴标题、图例与期刊尺寸预设</li>
+              <li><strong>生成</strong> — 本地 R 渲染,导出 PNG / SVG / PDF</li>
+            </ol>
+            <Callout type="tip">
+              生成过程中可随时「取消」;界面实时显示渲染进度与日志。
+            </Callout>
+          </Section>
+
+          {/* ── 参数管理 ── */}
+          <Section id="preset" title="💾 参数管理" subtitle="一次调好,反复套用">
+            <p>
+              页面右上角四个按钮管理当前图表的全部参数:
+            </p>
+            <ul>
+              <li><strong>保存参数</strong> — 当前模板 + 数据映射 + 版式存为 JSON 预设</li>
+              <li><strong>导入参数</strong> — 从 JSON 预设文件恢复</li>
+              <li><strong>加载出图参数</strong> — 读取某次出图自动保存的同名参数清单</li>
+              <li><strong>导出参数</strong> — 把预设分享给同事或另一台电脑</li>
+            </ul>
+            <Callout type="tip">
+              「已保存的参数」卡片里可一键套用历史预设,微调后再次保存为新版本。
+            </Callout>
+          </Section>
+
+          {/* ── FAQ ── */}
+          <Section id="faq" title="❓ 常见问题" subtitle="对号入座,看怎么办">
+            <Faq q="提示未找到 Rscript 怎么办?">
+              点击页面右上角的「Rscript 未找到」标签,按提示通过 winget / Homebrew 安装 R;
+              安装完成无需重启,再点一次标签即可检测到。
+            </Faq>
+            <Faq q="生成的图能到多大分辨率?">
+              PNG 按 300 dpi 输出,SVG / PDF 为矢量格式,可无限放大;期刊投稿优先选
+              PDF 或 SVG。
+            </Faq>
+            <Faq q="图表数据和我的原始数据会被上传吗?">
+              不会。渲染由本机 R 完成,数据与图片全程不出本机。
+            </Faq>
+          </Section>
+
+          <div className="tutorial__footer">
+            <button className="btn btn-primary tutorial__done" onClick={onClose}>
+              我看完了,开始使用 →
             </button>
           </div>
         </div>

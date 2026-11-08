@@ -5,32 +5,24 @@
   --gg-glass-light: rgba(255, 255, 255, .72);
   --gg-glass-dark: rgba(44, 44, 48, .72);
   --gg-control-height: 34px;
-  --gg-radius-control: 9px;
+  --gg-radius-control: var(--radius-md);
   --gg-radius-surface: 14px;
   --gg-focus: 0 0 0 3px rgba(var(--accent-rgb), .24), inset 0 1px rgba(255, 255, 255, .10);
   --gg-hairline: color-mix(in srgb, var(--text-primary) 12%, transparent);
-}
-
-/* Do not select .sidebar here: it is intentionally the one retained region. */
+}/* Do not select .sidebar here: it is intentionally the one retained region. */
 .app-main,
-.title-bar,
-.modal-overlay,
-.search-window-shell {
+  .title-bar,
+  .modal-overlay{
   --gg-glass: var(--gg-glass-light);
-}
-
-[data-theme="graphite"] .app-main,
-[data-theme="graphite"] .title-bar,
-[data-theme="graphite"] .modal-overlay,
-[data-theme="graphite"] .search-window-shell {
+}[data-theme="graphite"] .app-main,
+  [data-theme="graphite"] .title-bar,
+  [data-theme="graphite"] .modal-overlay{
   --gg-glass: var(--gg-glass-dark);
-}
-
-/* A quieter, denser type scale and deliberate Liquid Glass depth. */
+}/* A quieter,
+  denser type scale and deliberate Liquid Glass depth. */
 .app-main,
-.title-bar,
-.modal-overlay,
-.search-window-shell {
+  .title-bar,
+  .modal-overlay{
   font-family: var(--font);
   letter-spacing: -.012em;
 }
@@ -60,12 +52,12 @@
 [data-theme="graphite"] .app-main .file-display,
 [data-theme="graphite"] .app-main .qpcr-setting-section {
   box-shadow: var(--shadow-card);
-}
-
-/* Universal parameter controls, including TIFF, qPCR, RNA-seq and chart tools. */
+}/* Universal parameter controls,
+  including TIFF,
+  qPCR,
+  RNA-seq and chart tools. */
 .app-main :is(select, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]), textarea),
-.modal-box :is(select, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]), textarea),
-.search-window-shell :is(select, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"])) {
+  .modal-box :is(select, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]), textarea){
   min-height: var(--gg-control-height);
   color: var(--text-primary);
   border: 1px solid color-mix(in srgb, var(--text-primary) 14%, transparent);
@@ -73,30 +65,18 @@
   background-color: color-mix(in srgb, var(--bg-card) 82%, transparent);
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, .025), 0 1px rgba(255, 255, 255, .16);
   transition: border-color 180ms var(--ease-smooth), box-shadow 180ms var(--ease-smooth), background-color 180ms var(--ease-smooth), transform 180ms var(--ease-smooth);
-}
-
-.app-main select,
-.modal-box select,
-.search-window-shell select {
+}.app-main select,
+  .modal-box select{
   appearance: none;
   padding-right: 30px !important;
   cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m2 2 4 4 4-4' fill='none' stroke='%237c7f87' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
   background-position: right 10px center !important;
-}
-
-.app-main option,
-.modal-box option,
-.search-window-shell option { color: var(--text-primary); background: var(--bg-elevated); }
-
-.app-main :is(select, input, textarea):hover,
-.modal-box :is(select, input, textarea):hover,
-.search-window-shell :is(select, input):hover { border-color: color-mix(in srgb, var(--accent) 48%, var(--gg-hairline)); }
-
-.app-main :is(select, input, textarea):focus,
-.modal-box :is(select, input, textarea):focus,
-.search-window-shell :is(select, input):focus {
+}.app-main option,
+  .modal-box option{ color: var(--text-primary); background: var(--bg-elevated); }.app-main :is(select, input, textarea):hover,
+  .modal-box :is(select, input, textarea):hover{ border-color: color-mix(in srgb, var(--accent) 48%, var(--gg-hairline)); }.app-main :is(select, input, textarea):focus,
+  .modal-box :is(select, input, textarea):focus{
   outline: none;
   border-color: var(--accent);
   box-shadow: var(--gg-focus);
@@ -209,12 +189,9 @@
   border-color: transparent;
   background: var(--accent);
   box-shadow: 0 3px 10px rgba(var(--accent-rgb), .25), inset 0 1px rgba(255, 255, 255, .30);
-}
-
-.app-main .btn,
-.modal-box .btn,
-.search-window-shell button {
-  border-radius: 10px;
+}.app-main .btn,
+  .modal-box .btn{
+  border-radius: var(--radius-md);
 }
 
 .app-main .btn-primary,
@@ -230,13 +207,11 @@
 /* Search keeps its selected-engine affordance in the menu, not behind the magnifier. */
 .app-main .home-search-engine-trigger,
 .app-main .home-search-engine-trigger:hover,
-.app-main .home-search-engine-trigger[aria-expanded="true"] { background: transparent; }
-
-/* Consistent refined symbol treatment for every function icon, excluding charts. */
+.app-main .home-search-engine-trigger[aria-expanded="true"] { background: transparent; }/* Consistent refined symbol treatment for every function icon,
+  excluding charts. */
 .app-main :is(button, label, .panel-icon, .card-title, .qpcr-section-icon, .rx-work-head-icon, .tool-card-icon) > svg,
-.title-bar :is(button, .title-bar-left) > svg,
-.modal-box :is(button, label) > svg,
-.search-window-shell button > svg {
+  .title-bar :is(button, .title-bar-left) > svg,
+  .modal-box :is(button, label) > svg{
   stroke-width: 1.65;
   vector-effect: non-scaling-stroke;
 }
@@ -252,7 +227,7 @@
 .app-main .home-search-box {
   min-height: 44px;
   border-color: var(--gg-hairline);
-  border-radius: 15px;
+  border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--gg-glass) 88%, var(--bg-card));
   box-shadow: 0 1px rgba(255, 255, 255, .24) inset, 0 8px 24px rgba(0, 0, 0, .05);
   backdrop-filter: blur(26px) saturate(150%);
@@ -280,7 +255,7 @@
 
 .app-main .home-search-engine-menu {
   border-color: var(--gg-hairline);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--gg-glass) 94%, var(--bg-elevated));
   box-shadow: 0 14px 34px rgba(0, 0, 0, .14), 0 1px rgba(255, 255, 255, .24) inset;
   backdrop-filter: blur(28px) saturate(160%);
@@ -360,38 +335,7 @@
   border-color: var(--gg-hairline);
   backdrop-filter: blur(36px) saturate(160%);
   -webkit-backdrop-filter: blur(36px) saturate(160%);
-}
-
-/* The utility search window is a separate route, so it receives its own glass chrome. */
-.search-window-shell { background: var(--bg-primary); border-color: var(--gg-hairline); }
-.search-window-toolbar {
-  background: color-mix(in srgb, var(--gg-glass) 84%, var(--bg-primary));
-  border-color: var(--gg-hairline);
-  box-shadow: 0 1px rgba(255, 255, 255, .18) inset;
-  backdrop-filter: blur(30px) saturate(155%);
-  -webkit-backdrop-filter: blur(30px) saturate(155%);
-}
-.search-window-nav { border-color: var(--gg-hairline); background: color-mix(in srgb, var(--bg-card) 56%, transparent); }
-.search-window-address { background: color-mix(in srgb, var(--bg-card) 72%, transparent); border-color: var(--gg-hairline); }
-.search-window-address:focus-within { border-color: var(--accent); box-shadow: var(--gg-focus); }
-.search-window-engine-picker:hover,
-.search-window-nav button:hover,
-.search-window-address button:hover,
-.search-window-window-controls button:hover { background: color-mix(in srgb, var(--text-primary) 7%, transparent); }
-
-.search-window-brand,
-.search-window-nav button,
-.search-window-window-controls button,
-.search-window-tab { color: var(--text-secondary); }
-.search-window-tab:hover { color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 6%, transparent); }
-.search-window-tab.is-active { color: var(--accent); background: color-mix(in srgb, var(--bg-card) 90%, transparent); border-color: var(--gg-hairline); }
-.search-window-address input {
-  min-height: 0;
-  color: var(--text-primary);
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
+}/* The utility search window is a separate route{ background: var(--bg-primary); border-color: var(--gg-hairline); }
 
 .modal-overlay {
   background:
@@ -417,7 +361,7 @@
     linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, 0) 48%),
     rgba(255, 255, 255, .68);
   border-color: rgba(255, 255, 255, .72);
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   box-shadow: 0 24px 70px rgba(0, 0, 0, .22), 0 1px rgba(255, 255, 255, .30) inset;
   backdrop-filter: blur(30px) saturate(150%);
   -webkit-backdrop-filter: blur(30px) saturate(150%);
@@ -438,7 +382,7 @@
 
 /* macOS 27 elevates glass while retaining contrast: respect reduced motion. */
 @media (prefers-reduced-motion: reduce) {
-  .app-main *, .modal-box *, .search-window-shell * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  .app-main *, .modal-box * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
 
 /* Accessibility preferences take precedence over decorative material. The
@@ -446,7 +390,6 @@
    corresponding media query. */
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
   .title-bar,
-  .search-window-toolbar,
   .modal-box,
   .modal-overlay,
   .app-main .home-search-box,
@@ -457,13 +400,11 @@
 }
 
 :root[data-reduced-transparency] .title-bar,
-:root[data-reduced-transparency] .search-window-toolbar,
-:root[data-reduced-transparency] .modal-box,
-:root[data-reduced-transparency] .modal-overlay,
-:root[data-high-contrast] .title-bar,
-:root[data-high-contrast] .search-window-toolbar,
-:root[data-high-contrast] .modal-box,
-:root[data-high-contrast] .modal-overlay {
+  :root[data-reduced-transparency] .modal-box,
+  :root[data-reduced-transparency] .modal-overlay,
+  :root[data-high-contrast] .title-bar,
+  :root[data-high-contrast] .modal-box,
+  :root[data-high-contrast] .modal-overlay {
   background: var(--bg-elevated);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;

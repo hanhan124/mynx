@@ -100,7 +100,7 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
         )}
       </button>
 
-      <div className="about-copyright">© 2026 Han · MIT License</div>
+      <div className="about-copyright">© 2024-2026 Han · Apache License 2.0</div>
     </Modal>
   );
 }

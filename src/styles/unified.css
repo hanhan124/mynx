@@ -29,6 +29,21 @@
   box-shadow: var(--shadow-accent);
 }
 
+/* 页头图标语义变体：颜色跟随主题令牌，避免内联 hex 在不同主题下偏色 */
+.unified-page .panel-icon--accent {
+  background: var(--accent);
+}
+
+.unified-page .panel-icon--orange {
+  background: var(--orange);
+  box-shadow: 0 7px 16px rgba(var(--orange-rgb), .24);
+}
+
+.unified-page .panel-icon--purple {
+  background: var(--purple);
+  box-shadow: 0 7px 16px rgba(var(--purple-rgb), .26);
+}
+
 .unified-page .panel-title h2 {
   font-size: 20px;
   font-weight: 750;
@@ -54,7 +69,7 @@
   gap: 12px;
 }
 
-.unified-page--tiff .card,
+.unified-page--image .card,
 .unified-page--chart .card {
   overflow: hidden;
   border-radius: var(--radius-lg);
@@ -157,13 +172,214 @@
   margin-top: 16px;
 }
 
-/* TIFF：沿用工作台的绿色语义色，但保持公共卡片/控件节奏。 */
-.unified-page--tiff .panel-icon {
-  box-shadow: 0 7px 16px rgba(var(--green-rgb), 0.22);
+/* 图片转 PNG：蓝色语义色，沿用公共卡片/控件节奏。 */
+.unified-page--image .panel-icon {
+  box-shadow: 0 7px 16px rgba(var(--accent-rgb), 0.25);
 }
 
-.unified-page--tiff .file-display {
-  margin-bottom: 12px;
+/* ── 文件列表 ── */
+.imgconv-count {
+  margin-left: 6px;
+  padding: 1px 8px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.imgconv-dropzone {
+  min-height: 200px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 8px;
+  margin-bottom: 10px;
+  background: var(--bg-hover);
+  border: 1.5px dashed var(--stroke-strong);
+  border-radius: var(--radius-md);
+  transition: border-color 180ms var(--ease-smooth), background 180ms var(--ease-smooth);
+}
+
+.imgconv-dropzone.is-drag {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.imgconv-empty {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  text-align: center;
+}
+
+.imgconv-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.imgconv-file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-sm);
+}
+
+.imgconv-thumb {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+}
+
+.imgconv-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imgconv-file-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.imgconv-file-name {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.imgconv-file-sub {
+  margin-top: 2px;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.imgconv-file-remove {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.imgconv-file-remove:hover {
+  color: var(--text-primary);
+  background: rgba(128, 128, 128, 0.14);
+}
+
+.imgconv-total {
+  margin-top: 8px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.imgconv-hint {
+  margin: 2px 0 10px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+/* ── 结果表 ── */
+.imgconv-result {
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.imgconv-result-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.imgconv-table-wrap {
+  overflow-x: auto;
+}
+
+.imgconv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.imgconv-table th {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--separator);
+  color: var(--text-tertiary);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.imgconv-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--separator);
+  white-space: nowrap;
+}
+
+.imgconv-col-file {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.imgconv-pages {
+  color: var(--text-tertiary);
+  font-size: 10px;
+}
+
+.imgconv-status-ok {
+  color: var(--green);
+  font-weight: 650;
+}
+
+.imgconv-status-failed {
+  color: var(--red);
+  font-weight: 650;
+  cursor: help;
+}
+
+.imgconv-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.imgconv-summary strong {
+  color: var(--accent);
 }
 
 /* qPCR / RNA-seq 已有更完整的专属布局，仅补齐页标识与响应式安全边界。 */

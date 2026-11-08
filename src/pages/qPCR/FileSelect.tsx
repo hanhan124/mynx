@@ -60,14 +60,14 @@ export default function FileSelect({ file, sheetName, onFileChange, onSheetChang
         ref={dropRef}
         className={`file-display qpcr-file-input${isDragOver ? ' file-display--drag qpcr-file-input--drag' : ''}${file ? ' qpcr-file-input--loaded' : ''}`}
       >
-        <div className="file-icon" style={{ background: '#34c759' }}>
+        <div className="file-icon file-icon--green">
           <IconFileSpreadsheet size={20} color="white" stroke={1.75} />
         </div>
         <div className="file-info">
           <div className="file-name">{file ? file.name : t('qpcr.noFileSelected')}</div>
           <div className="file-path">{file ? file.path : 'xlsx / xls'}</div>
         </div>
-        {isDragOver && <span className="drop-hint">{t('tiff.drop')}</span>}
+        {isDragOver && <span className="drop-hint">{t('qpcr.drop')}</span>}
       </div>
 
       <div className="btn-row">

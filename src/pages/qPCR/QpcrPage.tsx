@@ -1,7 +1,5 @@
 import { useState, useCallback } from "react";
 import {
-  IconArrowRight,
-  IconChartBar,
   IconDna,
   IconFileSpreadsheet,
   IconFlask,
@@ -131,63 +129,24 @@ export default function QpcrPage() {
     <div className="page-shell page-shell--wide qpcr-page unified-page unified-page--qpcr">
       <LoadingOverlay visible={loading} text={loadingText} progress={progress} />
 
-      <header className="qpcr-page-hero">
-        <div className="qpcr-hero-copy">
-          <div className="qpcr-hero-title-row">
-            <div className="panel-icon" style={{ background: "#0a84ff" }}>
-              <IconDna size={19} color="white" stroke={1.75} />
-            </div>
-            <div className="panel-title">
-              <h2>{t("qpcr.title")}</h2>
-              <p>{t("qpcr.subtitle")}</p>
-            </div>
-          </div>
+      <div className="panel-header">
+        <div className="panel-icon panel-icon--accent">
+          <IconDna size={18} color="white" stroke={1.75} />
         </div>
-        <div className="qpcr-hero-side">
+        <div className="panel-title">
+          <h2>{t("qpcr.title")}</h2>
+          <p>{t("qpcr.subtitle")}</p>
+        </div>
+        <div className="panel-actions">
           <HelpButton>{(close) => <QpcrTutorial onClose={close} />}</HelpButton>
-        </div>
-      </header>
-
-      <div className="qpcr-workflow-overview" aria-label="qPCR workflow">
-        <div className="qpcr-overview-step is-current">
-          <span className="qpcr-overview-index">01</span>
-          <span>
-            <strong>{t("qpcr.transform")}</strong>
-          </span>
-        </div>
-        <span className="qpcr-overview-connector">
-          <IconArrowRight size={14} />
-        </span>
-        <div className="qpcr-overview-step">
-          <span className="qpcr-overview-index">02</span>
-          <span>
-            <strong>{t("qpcr.calculate")}</strong>
-          </span>
-        </div>
-        <span className="qpcr-overview-connector">
-          <IconArrowRight size={14} />
-        </span>
-        <div className="qpcr-overview-step">
-          <span className="qpcr-overview-index">
-            <IconChartBar size={13} />
-          </span>
-          <span>
-            <strong>绘图与导出</strong>
-          </span>
         </div>
       </div>
 
       {/* 步骤 0: 文件 */}
       <section className="card qpcr-source-card">
-        <div className="qpcr-section-head">
-          <div className="qpcr-section-title">
-            <span className="qpcr-section-icon qpcr-section-icon--green">
-              <IconFileSpreadsheet size={15} stroke={1.75} />
-            </span>
-            <span>
-              <strong>{t("qpcr.dataFile")}</strong>
-            </span>
-          </div>
+        <div className="card-title">
+          <IconFileSpreadsheet size={15} stroke={1.75} />
+          <span>{t("qpcr.dataFile")}</span>
         </div>
         <div className="qpcr-source-layout">
           <div className="qpcr-source-main">
