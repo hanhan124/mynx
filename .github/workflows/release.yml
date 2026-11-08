@@ -100,14 +100,17 @@ jobs:
     needs: prepare-tag
     strategy:
       fail-fast: true
-      matrix:
-        include:
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            label: windows
-          - os: macos-14
-            target: aarch64-apple-darwin
-            label: macos
+    matrix:
+      include:
+        - os: windows-latest
+          target: x86_64-pc-windows-msvc
+          label: windows
+        # macos-14 镜像已于 2026-11-02 从 GitHub Actions 退役
+        # (actions/runner-images#15226),改用 macos-15;
+        # MACOSX_DEPLOYMENT_TARGET 保持产物对 macOS 11+ 的兼容承诺
+        - os: macos-15
+          target: aarch64-apple-darwin
+          label: macos
 
     runs-on: ${{ matrix.os }}
 
@@ -241,6 +244,7 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          MACOSX_DEPLOYMENT_TARGET: '11.0'
         run: |
           set -euo pipefail
           npx tauri build --target aarch64-apple-darwin --bundles app,dmg

@@ -176,8 +176,10 @@ Actions 页面：
 
 - `prepare-tag`
 - `build (windows-latest, x86_64-pc-windows-msvc)`
-- `build (macos-14, aarch64-apple-darwin)`
+- `build (macos-15, aarch64-apple-darwin)`
 - `release`
+
+> macOS runner 说明:`macos-14` 镜像已于 2026-11-02 从 GitHub Actions 退役,现使用 `macos-15`(arm64);构建步骤设置 `MACOSX_DEPLOYMENT_TARGET=11.0` 以维持对 macOS 11+ 的兼容。
 
 下载检查：
 
