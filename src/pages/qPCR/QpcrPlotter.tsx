@@ -30,6 +30,7 @@ import { joinPath, openInShell, readDirAny } from "@/shared/platform/files";
 import { showToast } from "@/components/Toast";
 import { useDropZone } from "@/hooks/useDropZone";
 import { useLanguage } from "@/lib/i18n";
+import { Button, Select } from "@mantine/core";
 
 type PlotKind = "bar" | "heatmap";
 type PlotFormat = "png" | "svg" | "pdf";
@@ -1029,7 +1030,9 @@ export default function QpcrPlotter() {
                 {file ? l("已载入", "Loaded") : l("待选择", "Waiting")}
               </span>
             </div>
-            <button
+            <Button
+              variant="light"
+              size="sm"
               type="button"
               className={`qpcr-file-chip qpcr-file-input${isDragOver ? " drag qpcr-file-input--drag" : ""}${file ? " loaded qpcr-file-input--loaded" : ""}`}
               onClick={() => void chooseFile()}
@@ -1047,7 +1050,7 @@ export default function QpcrPlotter() {
                 </small>
               </span>
               <IconChevronRight size={14} />
-            </button>
+            </Button>
           </div>
           <div className="qpcr-io-meta-group">
             <div className="qpcr-io-label">
@@ -1059,18 +1062,19 @@ export default function QpcrPlotter() {
             </div>
             <div className="qpcr-io-select">
               <label>{l("工作表", "Sheet")}</label>
-              <select
+              <Select
+                size="sm"
+                data={sheets}
+                label={l("工作表", "Sheet")}
                 aria-label={l("工作表", "Sheet")}
                 value={sheetName}
-                onChange={(e) => setSheetName(e.target.value)}
+                onChange={(value) => setSheetName(value ?? "")}
                 disabled={!file}
-              >
-                {sheets.map((name) => (
-                  <option key={name}>{name}</option>
-                ))}
-              </select>
+              />
             </div>
-            <button
+            <Button
+              variant="default"
+              size="sm"
               type="button"
               className="btn qpcr-io-folder"
               onClick={() => void chooseOutput()}
@@ -1079,7 +1083,7 @@ export default function QpcrPlotter() {
               {outputDir
                 ? l("更换输出目录", "Change output")
                 : l("选择输出目录", "Output folder")}
-            </button>
+            </Button>
             <div className="qpcr-io-output" title={outputDir}>
               {outputDir || l("未设置输出目录", "No output folder")}
             </div>
@@ -1093,16 +1097,17 @@ export default function QpcrPlotter() {
               </span>
             </div>
             <div className="qpcr-io-settings-actions">
-              <button type="button" className="btn" onClick={() => void importSettings()}>
+              <Button type="button" variant="default" size="xs" onClick={() => void importSettings()}>
                 <IconUpload size={13} />
                 {l("导入设置", "Import")}
-              </button>
-              <button type="button" className="btn" onClick={() => void exportSettings()}>
+              </Button>
+              <Button type="button" variant="default" size="xs" onClick={() => void exportSettings()}>
                 <IconDownload size={13} />
                 {l("导出设置", "Export")}
-              </button>
+              </Button>
             </div>
-            <button
+            <Button
+              size="sm"
               type="button"
               className="btn btn-primary qpcr-run-btn"
               onClick={() => void handleRun()}
@@ -1112,7 +1117,7 @@ export default function QpcrPlotter() {
             >
               <IconPlayerPlayFilled size={12} />
               {running ? l("运行中…", "Running…") : l("运行", "Run")}
-            </button>
+            </Button>
           </div>
         </div>
         <div className="qpcr-plot-layout">
