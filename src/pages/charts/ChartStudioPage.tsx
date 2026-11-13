@@ -1811,15 +1811,6 @@ export default function ChartStudioPage() {
             <div className="card-title">
               <IconFileSpreadsheet size={15} />
               {l("数据与输出", "Data & output")}
-              <button
-                type="button"
-                className="btn chart-studio__data-template-action"
-                onClick={downloadTemplate}
-                disabled={running}
-              >
-                <IconDownload size={13} />
-                {l("下载模板", "Download template")}
-              </button>
             </div>
             <div className="card-body">
               <div
@@ -1950,6 +1941,16 @@ export default function ChartStudioPage() {
                   <strong>{l("输出文件夹", "Output folder")}</strong>
                   <small>{cfg.outputDir}</small>
                 </div>
+                <button
+                  type="button"
+                  className="btn chart-studio__data-template-action"
+                  onClick={downloadTemplate}
+                  disabled={running}
+                  title={l("下载模板（CSV + R）", "Download template (CSV + R)")}
+                >
+                  <IconDownload size={14} />
+                  {l("模板", "Template")}
+                </button>
                 <button
                   type="button"
                   className="btn"
@@ -2616,7 +2617,18 @@ export default function ChartStudioPage() {
                   </p>
                 </div>
               </div>
-              <span className="chart-studio__run-badge">{runStatusLabel}</span>
+              <div className="chart-studio__run-heading-actions">
+                <span className="chart-studio__run-badge">{runStatusLabel}</span>
+                <button
+                  type="button"
+                  className="chart-studio__run-copy"
+                  onClick={() => void copyLog()}
+                  aria-label={l("复制诊断信息", "Copy diagnostics")}
+                  title={l("复制诊断信息", "Copy diagnostics")}
+                >
+                  <IconCopy size={14} />
+                </button>
+              </div>
             </div>
             {showRunDetail ? (
               <>
@@ -2707,16 +2719,6 @@ export default function ChartStudioPage() {
                 </span>
               </div>
             )}
-            <div className="chart-studio__run-actions">
-              <button
-                type="button"
-                className="btn chart-studio__run-action"
-                onClick={() => void copyLog()}
-              >
-                <IconCopy size={13} />
-                {l("复制诊断信息", "Copy diagnostics")}
-              </button>
-            </div>
           </section>
           {presets.length > 0 && (
             <div className="card chart-studio__presets-panel">
@@ -2871,20 +2873,19 @@ export default function ChartStudioPage() {
               <IconExternalLink size={13} />
               {l("浏览全部示例", "Browse all examples")}
             </a>
+            <span className="chart-studio__credit-separator"> · </span>
+            <button
+              type="button"
+              className="chart-studio__source-action"
+              onClick={() => void copySourceNote()}
+            >
+              <IconCopy size={12} />
+              {l("复制来源说明", "Copy source note")}
+            </button>
             {l(
               "。官方示例代码与数据版权按原项目许可执行。",
               ". Example code and data remain subject to their original licenses.",
             )}
-            <span className="chart-studio__credit-action-row">
-              <button
-                type="button"
-                className="btn chart-studio__source-action"
-                onClick={() => void copySourceNote()}
-              >
-                <IconCopy size={13} />
-                {l("复制来源说明", "Copy source note")}
-              </button>
-            </span>
           </footer>
         </section>
       </div>
