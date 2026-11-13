@@ -1616,14 +1616,16 @@ function BarSettingsPanel({
         </div>
         <div className="qpcr-setting-grid qpcr-setting-grid--two">
           <Field label={l("标注样式", "Label style")}>
-            <select
+            <Select
+              size="sm"
+              data={[
+                { value: "p.signif", label: "星号 / ns" },
+                { value: "p", label: "具体 P 值" },
+                { value: "both", label: "星号 + P 值" },
+              ]}
               value={bar.labelStyle}
-              onChange={(e) => update("labelStyle", e.target.value)}
-            >
-              <option value="p.signif">星号 / ns</option>
-              <option value="p">具体 P 值</option>
-              <option value="both">星号 + P 值</option>
-            </select>
+              onChange={(value) => update("labelStyle", value ?? "p.signif")}
+            />
           </Field>
           <div className="qpcr-custom-pairs">
             <div className="qpcr-pair-head">
