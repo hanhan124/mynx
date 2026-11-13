@@ -30,7 +30,7 @@ import { joinPath, openInShell, readDirAny } from "@/shared/platform/files";
 import { showToast } from "@/components/Toast";
 import { useDropZone } from "@/hooks/useDropZone";
 import { useLanguage } from "@/lib/i18n";
-import { Button, ColorInput, Select, Switch } from "@mantine/core";
+import { Button, ColorInput, NumberInput, Select, Switch, TextInput } from "@mantine/core";
 
 type PlotKind = "bar" | "heatmap";
 type PlotFormat = "png" | "svg" | "pdf";
@@ -1306,61 +1306,51 @@ function BarSettingsPanel({
       <SettingSection title={l("文件与版式", "File & layout")}>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("输出前缀", "Output prefix")}>
-            <input
+            <TextInput
+              size="sm"
               value={bar.outputPrefix}
-              onChange={(e) => update("outputPrefix", e.target.value)}
+              onChange={(event) => update("outputPrefix", event.currentTarget.value)}
             />
           </Field>
           <Field label={l("选择基因", "Gene")}>
-            <select value={bar.gene} onChange={(e) => update("gene", e.target.value)}>
-              <option value="ALL">
-                {l("全部基因（逐图）", "All genes (one plot each)")}
-              </option>
-              {genes.map((gene) => (
-                <option key={gene}>{gene}</option>
-              ))}
-            </select>
+            <Select
+              size="sm"
+              value={bar.gene}
+              onChange={(value) => update("gene", value ?? "ALL")}
+              data={[{ value: "ALL", label: l("全部基因（逐图）", "All genes (one plot each)") }, ...genes]}
+            />
           </Field>
           <Field label={l("格式", "Format")}>
-            <select
+            <Select
+              size="sm"
+              data={["png", "svg", "pdf"]}
               value={bar.format}
-              onChange={(e) => update("format", e.target.value as PlotFormat)}
-            >
-              <option value="png">PNG</option>
-              <option value="svg">SVG</option>
-              <option value="pdf">PDF</option>
-            </select>
+              onChange={(value) => update("format", (value ?? "png") as PlotFormat)}
+            />
           </Field>
           <Field label="DPI">
-            <select
-              value={bar.dpi}
-              onChange={(e) => update("dpi", Number(e.target.value))}
-            >
-              <option value="300">300 · 通用</option>
-              <option value="600">600 · 投稿</option>
-              <option value="150">150 · 预览</option>
-            </select>
+            <Select size="sm" data={["300", "600", "150"]} value={String(bar.dpi)} onChange={(value) => update("dpi", Number(value ?? 300))} />
           </Field>
         </div>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("宽度（英寸）", "Width (in)")}>
-            <input
-              type="number"
-              min="2"
-              max="12"
-              step="0.5"
+            <NumberInput
+              size="sm"
+              min={2}
+              max={12}
+              step={0.5}
               value={bar.width}
-              onChange={(e) => update("width", safeNumber(e.target.value, bar.width))}
+              onChange={(value) => update("width", safeNumber(String(value), bar.width))}
             />
           </Field>
           <Field label={l("高度（英寸）", "Height (in)")}>
-            <input
-              type="number"
-              min="2"
-              max="12"
-              step="0.5"
+            <NumberInput
+              size="sm"
+              min={2}
+              max={12}
+              step={0.5}
               value={bar.height}
-              onChange={(e) => update("height", safeNumber(e.target.value, bar.height))}
+              onChange={(value) => update("height", safeNumber(String(value), bar.height))}
             />
           </Field>
           <Field label={l("柱体颜色", "Bar fill")}>

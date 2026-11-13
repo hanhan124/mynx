@@ -237,6 +237,7 @@
 - qPCR 绘图工作区的数据文件、工作表、输出目录、设置导入导出和运行按钮已切换到 Mantine `Button`、`Select`，保留 `runQpcrPlot`、取消和 Rscript 检测边界。
 - 图表类型切换、预览重置、打开结果目录和取消运行已切换到 Mantine `Button`，保留柱状图/热图状态和运行反馈。
 - 图表参数面板的开关和颜色字段已切换到 Mantine `Switch`、`ColorInput`，保留统计、聚类、配色和导出参数。
+- 柱状图文件与版式参数的输出前缀、基因、格式、DPI、宽高已切换到 Mantine `TextInput`、`Select`、`NumberInput`，保留原有 `BarSettings` 更新逻辑。
 - `npx tsc --noEmit` 已通过；运行态、Excel 文件选择和工作表切换仍需在 Tauri 窗口中人工检查。
 
 ### 页面切分
