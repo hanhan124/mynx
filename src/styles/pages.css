@@ -945,3 +945,13 @@
 @media (max-width: 760px) { .chart-studio__appearance-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 620px) { .chart-studio__text-fields, .chart-studio__visual-options { grid-template-columns: 1fr; } .chart-studio__publication-row { grid-template-columns: 1fr; } }
 @media (max-width: 460px) { .chart-studio .panel-actions .btn { flex: 1 1 auto; } }
+.chart-studio__page-header { margin-bottom: 16px; }
+.chart-studio__page-header .panel-title h2 { margin: 0; }
+.chart-studio__page-header .panel-title p { margin: 0; }
+.chart-studio__catalog-title { min-height: 42px; padding: 10px 14px; }
+.chart-studio__families .mantine-NavLink-root { min-height: 30px; padding: 5px 9px; border-radius: var(--radius-sm); font-size: 11px; }
+.chart-studio__families .mantine-NavLink-label { font-weight: 550; }
+.chart-studio__families .mantine-NavLink-root[data-active] { color: var(--accent); background: var(--accent-soft); }
+.chart-studio__templates-scroll { flex: 1; min-height: 0; }
+.chart-studio__templates-scroll .mantine-ScrollArea-viewport { max-height: calc(100vh - 330px); }
+.chart-studio__search .mantine-TextInput-root { flex: 1; min-width: 0; }

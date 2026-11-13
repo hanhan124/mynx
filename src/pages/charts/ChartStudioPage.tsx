@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { Badge, Group, NavLink, ScrollArea, Stack, Text, TextInput } from "@mantine/core";
 import HelpButton, { ChartStudioTutorial } from "@/components/HelpButton";
 import {
   IconChartAreaLine,
@@ -1662,20 +1663,22 @@ export default function ChartStudioPage() {
         }
         cancelDisabled={cancelling}
       />
-      <div className="panel-header">
+      <Group className="panel-header chart-studio__page-header" align="flex-start" justify="space-between" wrap="wrap" gap="md">
+        <Group gap="sm" wrap="nowrap" align="center">
         <div className="panel-icon panel-icon--orange">
           <IconChartDots3 size={18} color="white" stroke={1.75} />
         </div>
-        <div className="panel-title">
-          <h2>{l("科研绘图", "Scientific plotting")}</h2>
-          <p>
+        <Stack className="panel-title" gap={2}>
+          <Text component="h2" size="lg" fw={700}>{l("科研绘图", "Scientific plotting")}</Text>
+          <Text component="p" size="sm" c="dimmed">
             {l(
               "导入数据，按设定版式完成图形与导出",
               "Import data and export formatted figures",
             )}
-          </p>
-        </div>
-        <div className="panel-actions">
+          </Text>
+        </Stack>
+        </Group>
+        <Group className="panel-actions" gap="xs" wrap="wrap">
           {rscriptTag()}
           <button
             type="button"
@@ -1718,8 +1721,8 @@ export default function ChartStudioPage() {
             {l("导出参数", "Export presets")}
           </button>
           <HelpButton>{(close) => <ChartStudioTutorial onClose={close} />}</HelpButton>
-        </div>
-      </div>
+        </Group>
+      </Group>
       <div className="chart-studio__notice">
         <IconSparkles size={16} />
         <span>
@@ -1733,12 +1736,13 @@ export default function ChartStudioPage() {
         <aside className="card chart-studio__catalog">
           <div className="card-title">
             {l("图表模板", "Chart templates")}{" "}
-            <small className="chart-studio__result-count">
+            <Badge size="sm" variant="light" color="scientificOrange">
               {visible.length}/{verifiedChartTemplates.length}
-            </small>
+            </Badge>
           </div>
           <div className="chart-studio__search">
-            <input
+            <TextInput
+              size="sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={l("搜索图表名称或用途", "Search chart names or uses")}
@@ -1757,20 +1761,18 @@ export default function ChartStudioPage() {
               </button>
             )}
           </div>
-          <div className="chart-studio__families">
+          <Stack className="chart-studio__families" gap={2}>
             {families.map((name) => (
-              <button
-                type="button"
+              <NavLink
                 key={name}
+                label={localizedFamily(name, language)}
+                active={family === name}
                 onClick={() => setFamily(name)}
-                className={family === name ? "active" : ""}
-                aria-pressed={family === name}
                 disabled={running}
-              >
-                {localizedFamily(name, language)}
-              </button>
+              />
             ))}
-          </div>
+          </Stack>
+          <ScrollArea className="chart-studio__templates-scroll" type="auto" offsetScrollbars>
           <div className="chart-studio__templates">
             {visible.length ? (
               visible.map((item) => (
@@ -1802,6 +1804,7 @@ export default function ChartStudioPage() {
               </div>
             )}
           </div>
+          </ScrollArea>
         </aside>
         <section className="chart-studio__work">
           <div className="card">
