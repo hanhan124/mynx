@@ -233,6 +233,7 @@
 - 文件打开、清除和工作表选择已切换到 Mantine `Button`、`Group` 和 `Select`，继续复用原有 Excel 读取、拖放、工作表状态和错误提示逻辑。
 - 转换和计算的主操作已切换到 Mantine `Button`，保留原有禁用、进度和错误状态。
 - 计算方法、对照组、重复次数和参考基因已切换到 Mantine `Select`，保留原有字段值、自动识别和运行中禁用逻辑。
+- 重复处理策略和图表颜色已切换到 Mantine `Select`、`ColorInput`，保留择优重复、离群值阈值和配置持久化行为。
 - `npx tsc --noEmit` 已通过；运行态、Excel 文件选择和工作表切换仍需在 Tauri 窗口中人工检查。
 
 ### 页面切分

@@ -6,7 +6,7 @@ import { detectTransformedGenes, detectTransformedGroups } from '@/lib/qpcr-tran
 import { loadChartColor, saveChartColor } from '@/lib/config';
 import { DEFAULT_CHART_COLOR } from '@/lib/chart-gen';
 import { localizeErrorMessage, useLanguage } from '@/lib/i18n';
-import { Button, Select } from '@mantine/core';
+import { Button, ColorInput, Select } from '@mantine/core';
 
 interface CalculateProps {
   workbook: ExcelJS.Workbook | null;
@@ -210,12 +210,11 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
         <div className="form-group">
           <label>{t('qpcr.chartColor')}</label>
           <div className="color-picker-row">
-            <input
-              type="color"
+            <ColorInput
+              size="sm"
               value={chartColor}
               disabled={status === 'processing'}
-              onChange={(e) => {
-                const next = e.target.value;
+              onChange={(next) => {
                 setChartColor(next);
                 // Persist on every change so the user's choice survives reloads
                 saveChartColor(next).catch(() => undefined);
@@ -238,23 +237,22 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
               <IconInfoCircle size={14} stroke={1.75} style={{ color: 'var(--text-tertiary)' }} />
             </span>
           </label>
-          <select
+          <Select
+            size="sm"
+            data={[
+              { group: t('qpcr.bestReplicates'), items: Array.from({ length: Math.max(0, repeatCount - 1) }, (_, i) => ({ value: `best:${i + 2}`, label: `${i + 2} ${t('qpcr.replicatesUnit')}` })) },
+              { group: t('qpcr.outlierRemoval'), items: [
+                { value: 'outlier:1.5', label: '±1.5 SD' },
+                { value: 'outlier:2', label: '±2 SD' },
+                { value: 'outlier:3', label: '±3 SD' },
+              ] },
+              { value: '0', label: `0 — ${t('qpcr.disabled')}` },
+            ]}
+            label={t('qpcr.replicateHandling')}
             value={replicateOption}
-            onChange={(e) => setReplicateOption(e.target.value)}
+            onChange={(value) => setReplicateOption(value ?? '0')}
             disabled={status === 'processing'}
-          >
-            <option value="0">0 — {t('qpcr.disabled')}</option>
-            <optgroup label={t('qpcr.bestReplicates')}>
-              {Array.from({ length: Math.max(0, repeatCount - 1) }, (_, i) => i + 2).map((n) => (
-                <option key={`best:${n}`} value={`best:${n}`}>{n} {t('qpcr.replicatesUnit')}</option>
-              ))}
-            </optgroup>
-            <optgroup label={t('qpcr.outlierRemoval')}>
-              <option value="outlier:1.5">±1.5 SD</option>
-              <option value="outlier:2">±2 SD</option>
-              <option value="outlier:3">±3 SD</option>
-            </optgroup>
-          </select>
+          />
         </div>
       </div>
 
