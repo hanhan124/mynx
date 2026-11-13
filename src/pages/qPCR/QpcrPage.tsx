@@ -16,6 +16,7 @@ import { generateChartsFromFile } from "@/lib/chart-gen";
 import { detectTransformedGenes } from "@/lib/qpcr-transform";
 import { showToast } from "@/components/Toast";
 import { useLanguage } from "@/lib/i18n";
+import { Group, Stack, Text, ThemeIcon } from "@mantine/core";
 
 export default function QpcrPage() {
   const { t, language } = useLanguage();
@@ -129,18 +130,20 @@ export default function QpcrPage() {
     <div className="page-shell page-shell--wide qpcr-page unified-page unified-page--qpcr">
       <LoadingOverlay visible={loading} text={loadingText} progress={progress} />
 
-      <div className="panel-header">
-        <div className="panel-icon panel-icon--accent">
-          <IconDna size={18} color="white" stroke={1.75} />
-        </div>
-        <div className="panel-title">
-          <h2>{t("qpcr.title")}</h2>
-          <p>{t("qpcr.subtitle")}</p>
-        </div>
-        <div className="panel-actions">
+      <Group className="panel-header qpcr-page-header" justify="space-between" wrap="nowrap" gap="sm">
+        <Group gap="sm" wrap="nowrap" miw={0}>
+          <ThemeIcon size={36} radius="md" color="blue" variant="filled">
+            <IconDna size={18} stroke={1.75} />
+          </ThemeIcon>
+          <Stack gap={2} miw={0}>
+            <Text fw={700} size="lg" truncate>{t("qpcr.title")}</Text>
+            <Text size="sm" c="dimmed" truncate>{t("qpcr.subtitle")}</Text>
+          </Stack>
+        </Group>
+        <Group className="panel-actions" gap="xs" wrap="nowrap">
           <HelpButton>{(close) => <QpcrTutorial onClose={close} />}</HelpButton>
-        </div>
-      </div>
+        </Group>
+      </Group>
 
       {/* 步骤 0: 文件 */}
       <section className="card qpcr-source-card">

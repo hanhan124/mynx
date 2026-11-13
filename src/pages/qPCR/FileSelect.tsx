@@ -4,6 +4,7 @@ import { readExcelFile, getSheetNames, type ExcelFile } from '@/lib/excel-io';
 import { showToast } from '@/components/Toast';
 import { useDropZone } from '@/hooks/useDropZone';
 import { useLanguage } from '@/lib/i18n';
+import { Button, Group, Select } from '@mantine/core';
 
 interface FileSelectProps {
   file: ExcelFile | null;
@@ -70,27 +71,28 @@ export default function FileSelect({ file, sheetName, onFileChange, onSheetChang
         {isDragOver && <span className="drop-hint">{t('qpcr.drop')}</span>}
       </div>
 
-      <div className="btn-row">
-        <button className="btn btn-primary" onClick={handleOpen}>{t('qpcr.open')}</button>
+      <Group className="btn-row" gap="xs" wrap="wrap">
+        <Button size="sm" onClick={handleOpen}>{t('qpcr.open')}</Button>
         {file && (
-          <button className="btn" style={{ marginLeft: 'auto', color: 'var(--red)' }} onClick={() => {
+          <Button size="sm" variant="subtle" color="red" ml="auto" onClick={() => {
             onSheetChange('');
             onFileChange(null);
           }}>
             {t('qpcr.clear')}
-          </button>
+          </Button>
         )}
-      </div>
+      </Group>
 
       {file && sheets.length > 0 && (
-        <div className="form-group">
-          <label>{t('qpcr.sheet')}</label>
-          <select value={sheetName} onChange={(e) => onSheetChange(e.target.value)}>
-            {sheets.map((name) => (
-              <option key={name} value={name}>{name}</option>
-            ))}
-          </select>
-        </div>
+        <Select
+          className="form-group"
+          label={t('qpcr.sheet')}
+          value={sheetName}
+          onChange={(value) => onSheetChange(value ?? '')}
+          data={sheets}
+          size="sm"
+          allowDeselect={false}
+        />
       )}
     </>
   );

@@ -227,6 +227,12 @@
 
 ## 阶段 6  qPCR 工作台
 
+### 6.0 页面头部与数据源控件（进行中）
+
+- 页面头部已使用 Mantine `Group`、`Stack`、`Text` 和 `ThemeIcon` 统一标题、说明和帮助入口的对齐方式。
+- 文件打开、清除和工作表选择已切换到 Mantine `Button`、`Group` 和 `Select`，继续复用原有 Excel 读取、拖放、工作表状态和错误提示逻辑。
+- `npx tsc --noEmit` 已通过；运行态、Excel 文件选择和工作表切换仍需在 Tauri 窗口中人工检查。
+
 ### 页面切分
 
 1. `QpcrPageHeader`
