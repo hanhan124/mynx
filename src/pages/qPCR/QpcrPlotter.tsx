@@ -2049,32 +2049,31 @@ function HeatmapSettingsPanel({
       <SettingSection title={l("颜色与图例", "Colors & legend")}>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("图标题", "Plot title")}>
-            <input
+            <TextInput
+              size="sm"
               value={settings.heatmapTitle}
               placeholder={l("留空则不显示", "Leave blank to hide")}
-              onChange={(e) => update("heatmapTitle", e.target.value)}
+              onChange={(event) => update("heatmapTitle", event.currentTarget.value)}
             />
           </Field>
           <Field label={l("图例标题", "Legend title")}>
-            <input
+            <TextInput
+              size="sm"
               value={settings.legendTitle}
-              onChange={(e) => update("legendTitle", e.target.value)}
+              onChange={(event) => update("legendTitle", event.currentTarget.value)}
             />
           </Field>
           <Field label={l("图例位置", "Legend position")}>
-            <select
+            <Select
+              size="sm"
+              data={[
+                { value: "right", label: "右侧 / Right" },
+                { value: "bottom", label: "底部 / Bottom" },
+                { value: "none", label: "隐藏 / Hidden" },
+              ]}
               value={settings.legendPosition}
-              onChange={(e) =>
-                update(
-                  "legendPosition",
-                  e.target.value as HeatmapSettings["legendPosition"],
-                )
-              }
-            >
-              <option value="right">右侧 / Right</option>
-              <option value="bottom">底部 / Bottom</option>
-              <option value="none">隐藏 / Hidden</option>
-            </select>
+              onChange={(value) => update("legendPosition", (value ?? "right") as HeatmapSettings["legendPosition"])}
+            />
           </Field>
           <Field label={l("配色方案", "Color palette")}>
             <Select
