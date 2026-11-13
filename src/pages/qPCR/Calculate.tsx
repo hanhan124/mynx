@@ -6,7 +6,7 @@ import { detectTransformedGenes, detectTransformedGroups } from '@/lib/qpcr-tran
 import { loadChartColor, saveChartColor } from '@/lib/config';
 import { DEFAULT_CHART_COLOR } from '@/lib/chart-gen';
 import { localizeErrorMessage, useLanguage } from '@/lib/i18n';
-import { Button } from '@mantine/core';
+import { Button, Select } from '@mantine/core';
 
 interface CalculateProps {
   workbook: ExcelJS.Workbook | null;
@@ -149,31 +149,29 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
       <div className="form-row">
         <div className="form-group">
           <label>{t('qpcr.method')}</label>
-          <select
+          <Select
+            size="sm"
+            data={[
+              { value: 'ref-normalized', label: `${CALC_METHOD_LABELS['ref-normalized']}（${t('qpcr.default')}）` },
+              { value: 'control-relative', label: `${CALC_METHOD_LABELS['control-relative']}（ΔΔCt）` },
+            ]}
+            label={t('qpcr.method')}
             value={method}
-            onChange={(e) => setMethod(e.target.value as CalcMethod)}
+            onChange={(value) => setMethod((value ?? 'ref-normalized') as CalcMethod)}
             disabled={status === 'processing'}
-          >
-            <option value="ref-normalized">{CALC_METHOD_LABELS['ref-normalized']}（{t('qpcr.default')}）</option>
-            <option value="control-relative">{CALC_METHOD_LABELS['control-relative']}（ΔΔCt）</option>
-          </select>
+          />
         </div>
         {needsControl && (
           <div className="form-group">
             <label>{t('qpcr.controlGroup')}</label>
-            <select
+            <Select
+              size="sm"
+              data={groupNames.length > 0 ? groupNames : [{ value: '', label: t('qpcr.transformFirst') }]}
+              label={t('qpcr.controlGroup')}
               value={selectedControlGroup}
-              onChange={(e) => setControlGroup(e.target.value)}
+              onChange={(value) => setControlGroup(value ?? '')}
               disabled={status === 'processing' || groupNames.length === 0}
-            >
-              {groupNames.length > 0 ? (
-                groupNames.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))
-              ) : (
-                <option value="">{t('qpcr.transformFirst')}</option>
-              )}
-            </select>
+            />
           </div>
         )}
       </div>
@@ -181,10 +179,13 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
       <div className="form-row form-row--three">
         <div className="form-group">
           <label>{t('qpcr.repeats')}</label>
-          <select
-            value={repeatCount}
-            onChange={(e) => {
-              const next = Number(e.target.value);
+          <Select
+            size="sm"
+            data={Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }))}
+            label={t('qpcr.repeats')}
+            value={String(repeatCount)}
+            onChange={(value) => {
+              const next = Number(value ?? 2);
               setRepeatCount(next);
               // 重复次数调小后，择优重复数可能越界，顺带收敛到新的上限。
               if (replicateOption.startsWith('best:')) {
@@ -193,27 +194,18 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
               }
             }}
             disabled={status === 'processing'}
-          >
-            {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
+          />
         </div>
         <div className="form-group">
           <label>{t('qpcr.referenceGene')}</label>
-          <select
+          <Select
+            size="sm"
+            data={hasGenes ? effectiveGeneNames : [{ value: '', label: t('qpcr.transformFirst') }]}
+            label={t('qpcr.referenceGene')}
             value={selectedRefGene}
-            onChange={(e) => setRefGene(e.target.value)}
+            onChange={(value) => setRefGene(value ?? '')}
             disabled={status === 'processing' || !hasGenes}
-          >
-            {hasGenes ? (
-              effectiveGeneNames.map((g) => (
-                <option key={g} value={g}>{g}</option>
-              ))
-            ) : (
-              <option value="">{t('qpcr.transformFirst')}</option>
-            )}
-          </select>
+          />
         </div>
         <div className="form-group">
           <label>{t('qpcr.chartColor')}</label>
