@@ -71,7 +71,10 @@
 }
 
 .mynx-app-navbar {
-  height: 100%;
+  height: calc(
+    100dvh - var(--app-shell-header-offset, 0rem) - var(--app-shell-footer-offset, 0rem)
+  );
+  min-height: 0;
 }
 
 /* ========= 标题栏 — macOS 风格 ========= */
