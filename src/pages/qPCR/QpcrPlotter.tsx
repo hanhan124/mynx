@@ -1915,63 +1915,48 @@ function HeatmapSettingsPanel({
         </div>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("PNG DPI", "PNG DPI")}>
-            <select
-              value={settings.pngDpi}
-              onChange={(e) => update("pngDpi", Number(e.target.value))}
-            >
-              <option value="300">300</option>
-              <option value="600">600</option>
-              <option value="150">150</option>
-            </select>
+            <Select size="sm" data={["300", "600", "150"]} value={String(settings.pngDpi)} onChange={(value) => update("pngDpi", Number(value ?? 300))} />
           </Field>
           <Field label={l("PNG 宽度（英寸）", "PNG width (in)")}>
-            <input
-              type="number"
-              min="2"
-              max="14"
-              step="0.5"
+            <NumberInput
+              size="sm"
+              min={2}
+              max={14}
+              step={0.5}
               value={settings.pngWidth}
-              onChange={(e) =>
-                update("pngWidth", safeNumber(e.target.value, settings.pngWidth))
-              }
+              onChange={(value) => update("pngWidth", safeNumber(String(value), settings.pngWidth))}
             />
           </Field>
           <Field label={l("PNG 高度（英寸）", "PNG height (in)")}>
-            <input
-              type="number"
-              min="1"
-              max="14"
-              step="0.5"
+            <NumberInput
+              size="sm"
+              min={1}
+              max={14}
+              step={0.5}
               value={settings.pngHeight}
-              onChange={(e) =>
-                update("pngHeight", safeNumber(e.target.value, settings.pngHeight))
-              }
+              onChange={(value) => update("pngHeight", safeNumber(String(value), settings.pngHeight))}
             />
           </Field>
         </div>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("PDF 宽度（英寸）", "PDF width (in)")}>
-            <input
-              type="number"
-              min="2"
-              max="14"
-              step="0.5"
+            <NumberInput
+              size="sm"
+              min={2}
+              max={14}
+              step={0.5}
               value={settings.pdfWidth}
-              onChange={(e) =>
-                update("pdfWidth", safeNumber(e.target.value, settings.pdfWidth))
-              }
+              onChange={(value) => update("pdfWidth", safeNumber(String(value), settings.pdfWidth))}
             />
           </Field>
           <Field label={l("PDF 高度（英寸）", "PDF height (in)")}>
-            <input
-              type="number"
-              min="1"
-              max="14"
-              step="0.5"
+            <NumberInput
+              size="sm"
+              min={1}
+              max={14}
+              step={0.5}
               value={settings.pdfHeight}
-              onChange={(e) =>
-                update("pdfHeight", safeNumber(e.target.value, settings.pdfHeight))
-              }
+              onChange={(value) => update("pdfHeight", safeNumber(String(value), settings.pdfHeight))}
             />
           </Field>
           <div />

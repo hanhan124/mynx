@@ -239,6 +239,7 @@
 - 图表参数面板的开关和颜色字段已切换到 Mantine `Switch`、`ColorInput`，保留统计、聚类、配色和导出参数。
 - 柱状图文件与版式参数的输出前缀、基因、格式、DPI、宽高已切换到 Mantine `TextInput`、`Select`、`NumberInput`，保留原有 `BarSettings` 更新逻辑。
 - 柱状图坐标轴标题以及热图输出前缀、格式、颜色范围和基础字号已切换到 Mantine 表单控件，保留原有预览和导出参数。
+- 热图 PNG/PDF 的 DPI、宽高参数已切换到 Mantine `Select`、`NumberInput`，保留输出格式和尺寸契约。
 - `npx tsc --noEmit` 已通过；运行态、Excel 文件选择和工作表切换仍需在 Tauri 窗口中人工检查。
 
 ### 页面切分
