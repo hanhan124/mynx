@@ -6,6 +6,7 @@ import { detectTransformedGenes, detectTransformedGroups } from '@/lib/qpcr-tran
 import { loadChartColor, saveChartColor } from '@/lib/config';
 import { DEFAULT_CHART_COLOR } from '@/lib/chart-gen';
 import { localizeErrorMessage, useLanguage } from '@/lib/i18n';
+import { Button } from '@mantine/core';
 
 interface CalculateProps {
   workbook: ExcelJS.Workbook | null;
@@ -265,13 +266,14 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
         </div>
       </div>
 
-      <button
-        className="btn btn-primary btn-full"
+      <Button
+        fullWidth
+        size="sm"
         onClick={handleExecute}
         disabled={!canExecute}
       >
         {status === 'processing' ? t('qpcr.calculating') : t('qpcr.calculateAction')}
-      </button>
+      </Button>
 
       {status === 'success' && resultMsg && (
         <div className="result-success">

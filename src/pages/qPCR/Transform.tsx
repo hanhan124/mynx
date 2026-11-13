@@ -3,6 +3,7 @@ import { IconInfoCircleFilled, IconCircleCheckFilled, IconCircleXFilled } from '
 import type ExcelJS from 'exceljs';
 import { transformQpcrData, detectTransformedGenes } from '@/lib/qpcr-transform';
 import { localizeErrorMessage, useLanguage } from '@/lib/i18n';
+import { Button } from '@mantine/core';
 
 interface TransformProps {
   workbook: ExcelJS.Workbook | null;
@@ -83,13 +84,14 @@ export default function Transform({ workbook, sheetName, onComplete, onProgress,
         </div>
       )}
 
-      <button
-        className="btn btn-primary btn-full"
+      <Button
+        fullWidth
+        size="sm"
         onClick={handleExecute}
         disabled={!canExecute}
       >
         {status === 'processing' ? t('qpcr.executing') : alreadyTransformed ? t('qpcr.retransform') : t('qpcr.execute')}
-      </button>
+      </Button>
 
       {status === 'success' && resultMsg && (
         <div className="result-success">
