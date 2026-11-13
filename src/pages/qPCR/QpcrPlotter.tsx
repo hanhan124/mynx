@@ -1984,66 +1984,41 @@ function HeatmapSettingsPanel({
         </div>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("X 标签角度", "X label angle")}>
-            <select
-              value={settings.xAngle}
-              onChange={(e) => update("xAngle", Number(e.target.value))}
-            >
-              <option value="0">0°</option>
-              <option value="30">30°</option>
-              <option value="45">45°</option>
-              <option value="60">60°</option>
-              <option value="90">90°</option>
-            </select>
+            <Select size="sm" data={["0", "30", "45", "60", "90"]} value={String(settings.xAngle)} onChange={(value) => update("xAngle", Number(value ?? 0))} />
           </Field>
           <Field label={l("X 标签对齐", "X label align")}>
-            <select
-              value={settings.xHjust}
-              onChange={(e) => update("xHjust", Number(e.target.value))}
-            >
-              <option value="0">左</option>
-              <option value="0.5">中</option>
-              <option value="1">右</option>
-            </select>
+            <Select size="sm" data={[{ value: "0", label: "左" }, { value: "0.5", label: "中" }, { value: "1", label: "右" }]} value={String(settings.xHjust)} onChange={(value) => update("xHjust", Number(value ?? 0.5))} />
           </Field>
           <Field label={l("X 刻度字号", "X tick size")}>
-            <input
-              type="number"
-              min="6"
-              max="24"
-              step="1"
+            <NumberInput
+              size="sm"
+              min={6}
+              max={24}
+              step={1}
               value={settings.xTickSize}
-              onChange={(e) =>
-                update("xTickSize", safeNumber(e.target.value, settings.xTickSize))
-              }
+              onChange={(value) => update("xTickSize", safeNumber(String(value), settings.xTickSize))}
             />
           </Field>
           <Field label={l("Y 刻度字号", "Y tick size")}>
-            <input
-              type="number"
-              min="6"
-              max="24"
-              step="1"
+            <NumberInput
+              size="sm"
+              min={6}
+              max={24}
+              step={1}
               value={settings.yTickSize}
-              onChange={(e) =>
-                update("yTickSize", safeNumber(e.target.value, settings.yTickSize))
-              }
+              onChange={(value) => update("yTickSize", safeNumber(String(value), settings.yTickSize))}
             />
           </Field>
         </div>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("轴标题字号", "Axis title size")}>
-            <input
-              type="number"
-              min="6"
-              max="24"
-              step="1"
+            <NumberInput
+              size="sm"
+              min={6}
+              max={24}
+              step={1}
               value={settings.axisTitleSize}
-              onChange={(e) =>
-                update(
-                  "axisTitleSize",
-                  safeNumber(e.target.value, settings.axisTitleSize),
-                )
-              }
+              onChange={(value) => update("axisTitleSize", safeNumber(String(value), settings.axisTitleSize))}
             />
           </Field>
           <div className="qpcr-setting-span-two">
