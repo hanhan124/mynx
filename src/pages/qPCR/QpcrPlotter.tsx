@@ -30,7 +30,7 @@ import { joinPath, openInShell, readDirAny } from "@/shared/platform/files";
 import { showToast } from "@/components/Toast";
 import { useDropZone } from "@/hooks/useDropZone";
 import { useLanguage } from "@/lib/i18n";
-import { Button, Select } from "@mantine/core";
+import { Button, ColorInput, Select, Switch } from "@mantine/core";
 
 type PlotKind = "bar" | "heatmap";
 type PlotFormat = "png" | "svg" | "pdf";
@@ -590,18 +590,7 @@ function Toggle({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <button
-      type="button"
-      className={`qpcr-toggle${checked ? " on" : ""}`}
-      aria-pressed={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-    >
-      <span className="qpcr-toggle-label">{label}</span>
-      <span className="qpcr-toggle-track" aria-hidden="true">
-        <span className="qpcr-toggle-knob" />
-      </span>
-    </button>
+    <Switch checked={checked} onChange={(event) => onChange(event.currentTarget.checked)} label={label} size="sm" />
   );
 }
 
@@ -2285,9 +2274,6 @@ function ColorField({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="qpcr-color-field">
-      <input type="color" value={value} onChange={(e) => onChange(e.target.value)} />
-      <span>{value.toUpperCase()}</span>
-    </div>
+    <ColorInput size="sm" value={value} onChange={onChange} aria-label={value.toUpperCase()} />
   );
 }
