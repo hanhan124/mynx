@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { AppShell, Button, Group, Stack, Text } from "@mantine/core";
 import { listen } from "@tauri-apps/api/event";
 import TitleBar from "@/components/TitleBar";
 import Modal from "@/components/Modal";
@@ -9,6 +10,7 @@ import Home from "@/pages/Home";
 import SettingsPage from "@/pages/SettingsPage";
 import ToastContainer from "@/components/Toast";
 import UpdateNotification from "@/components/UpdateNotification";
+import UiShowcasePage from "@/pages/UiShowcasePage";
 import { tools, getPageTitle } from "@/lib/tools";
 import { LanguageProvider, getToolTranslationKey, useLanguage } from "@/lib/i18n";
 import { useAccessibilityPreferences } from "@/hooks/useAccessibilityPreferences";
@@ -24,6 +26,8 @@ function Layout() {
       ? "Mynx"
       : location.pathname === "/settings"
         ? t("settings.title")
+      : location.pathname === "/ui-showcase"
+        ? t("uiShowcase.title")
       : t(getToolTranslationKey(location.pathname, "title")) ||
         getPageTitle(location.pathname);
 
@@ -70,13 +74,37 @@ function Layout() {
   return (
     <div className="app-layout">
       <TitleBar title={title} />
-      <div className="app-body">
-        <Sidebar />
-        <main className="app-main">
+      <AppShell
+        className="mynx-app-shell"
+        header={{ height: 38 }}
+        navbar={{ width: 56, breakpoint: "0px" }}
+        padding={0}
+        withBorder={false}
+      >
+        <AppShell.Header className="mynx-app-header">
+          <Group h="100%" justify="space-between" px="md" gap="sm">
+            <Group gap="xs" wrap="nowrap">
+              <Text size="sm" fw={650} c="var(--text-primary)" truncate>
+                {title}
+              </Text>
+              <Text className="mynx-app-header-context" size="xs" c="dimmed">
+                {t("app.workbench")}
+              </Text>
+            </Group>
+            <Text size="xs" c="dimmed" className="mynx-app-header-status">
+              {t("app.ready")}
+            </Text>
+          </Group>
+        </AppShell.Header>
+        <AppShell.Navbar className="mynx-app-navbar">
+          <Sidebar />
+        </AppShell.Navbar>
+        <AppShell.Main className="app-main">
           <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{title}</div>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/ui-showcase" element={<UiShowcasePage />} />
             <Route path="/tiff" element={<Navigate to="/image" replace />} />
             {tools.map((tool) => (
               <Route
@@ -90,28 +118,32 @@ function Layout() {
               />
             ))}
           </Routes>
-        </main>
-      </div>
+        </AppShell.Main>
+      </AppShell>
       <ToastContainer />
       <UpdateNotification />
       <AboutModal open={showAbout} onClose={() => setShowAbout(false)} />
       <Modal open={showHelp} onClose={() => setShowHelp(false)} title={t("help.center.title")}>
-        <p className="help-center-intro">{t("help.center.intro")}</p>
-        <div className="help-center-actions">
+        <Stack gap="md">
+          <Text c="dimmed" size="sm">{t("help.center.intro")}</Text>
+          <Group className="help-center-actions" gap="sm">
           {tools.map((tool) => (
-            <button
+            <Button
               key={tool.path}
-              className="btn"
+              variant="light"
+              justify="flex-start"
+              fullWidth
               onClick={() => {
                 setShowHelp(false);
                 navigate(tool.path);
               }}
             >
               {t(getToolTranslationKey(tool.path, "title"))}
-            </button>
+            </Button>
           ))}
-        </div>
-        <p className="help-center-note">{t("help.center.note")}</p>
+          </Group>
+          <Text c="dimmed" size="xs">{t("help.center.note")}</Text>
+        </Stack>
       </Modal>
     </div>
   );

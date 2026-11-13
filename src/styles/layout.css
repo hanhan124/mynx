@@ -21,6 +21,53 @@
   overflow-x: hidden;
 }
 
+/* Mantine AppShell is the application frame. The custom title bar remains
+   outside it so Tauri drag regions never overlap the content viewport. */
+.mynx-app-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--bg-primary);
+}
+
+.mynx-app-shell .mantine-AppShell-navbar {
+  width: 56px;
+  min-width: 56px;
+  border-inline-end: 1px solid var(--separator);
+  background: var(--bg-sidebar);
+}
+
+.mynx-app-shell .mantine-AppShell-main {
+  min-width: 0;
+  min-height: 0;
+  padding-block: 0;
+  padding-block-start: var(--app-shell-header-offset, 38px);
+  padding-inline-end: 0;
+  padding-inline-start: var(--app-shell-navbar-offset, 56px);
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.mynx-app-header {
+  z-index: 10;
+  border-bottom: 1px solid var(--separator);
+  background: var(--bg-primary);
+}
+
+.mynx-app-header-context {
+  letter-spacing: 0.01em;
+}
+
+.mynx-app-header-status {
+  padding: 3px 8px;
+  border: 1px solid var(--separator);
+  border-radius: 999px;
+  background: var(--fill-control);
+}
+
+.mynx-app-navbar {
+  height: 100%;
+}
+
 /* ========= 标题栏 — macOS 风格 ========= */
 .title-bar {
   display: flex;
@@ -123,14 +170,16 @@
   flex-direction: column;
   align-items: center;
   width: 48px;
-  min-width: 48px;
+  min-width: 56px;
+  width: 56px;
+  height: 100%;
   padding: 4px 0 8px;
   gap: 2px;
   /* Mica 材质：更重模糊 + 饱和度提升 */
   background: var(--bg-sidebar);
   backdrop-filter: blur(60px) saturate(160%);
   -webkit-backdrop-filter: blur(60px) saturate(160%);
-  border-right: 0.5px solid var(--separator);
+  border-right: 0;
 }
 
 .sidebar-nav {

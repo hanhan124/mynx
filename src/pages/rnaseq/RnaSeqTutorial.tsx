@@ -60,7 +60,10 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
             ))}
           </ul>
           <div className="tutorial__nav-tip">
-            {l("引擎与输出布局完全由参考脚本决定", "The engine and output layout follow the reference script exactly")}
+            {l(
+              "引擎与输出布局完全由参考脚本决定",
+              "The engine and output layout follow the reference script exactly",
+            )}
           </div>
         </nav>
 
@@ -68,7 +71,10 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
           <section id="rtut-flow" className="tutorial__section">
             <h2 className="tutorial__h2">{l("流程概览", "Workflow")}</h2>
             <p className="tutorial__subtitle-inline">
-              {l("三步完成,每步的参数即参考脚本的配置项", "Three steps; every parameter maps to the reference script's config")}
+              {l(
+                "三步完成,每步的参数即参考脚本的配置项",
+                "Three steps; every parameter maps to the reference script's config",
+              )}
             </p>
             <div className="tutorial__callout tutorial__callout--info">
               <strong>1. {l("数据导入", "Import")}</strong>
@@ -85,6 +91,13 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
                   "Assign samples to groups → configure comparisons (case vs control) → run. Singleton groups trigger the no-replicate path (edgeR exactTest with fixed BCV); otherwise DESeq2 or edgeR QL is used.",
                 )}
               </p>
+              <strong>{l("可选：批次校正", "Optional: batch adjustment")}</strong>
+              <p>
+                {l(
+                  "在批次协变量面板中按测序批次/文库批次分配样本。批次只作为技术协变量，且只有设计矩阵满秩时才进入模型。",
+                  "Assign samples to sequencing or library batches. Batch is a technical covariate and is included only when the design matrix is full rank.",
+                )}
+              </p>
               <strong>3. {l("图形输出", "Plots")}</strong>
               <p>
                 {l(
@@ -98,7 +111,10 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
           <section id="rtut-methods" className="tutorial__section">
             <h2 className="tutorial__h2">{l("统计方法", "Statistical methods")}</h2>
             <p className="tutorial__subtitle-inline">
-              {l("与参考脚本 rnaseq_DE_heatmap.R 完全一致", "Identical to the reference script rnaseq_DE_heatmap.R")}
+              {l(
+                "与参考脚本 rnaseq_DE_heatmap.R 完全一致",
+                "Identical to the reference script rnaseq_DE_heatmap.R",
+              )}
             </p>
             <div className="tutorial__table-wrap">
               <table className="tutorial__table">
@@ -146,6 +162,15 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
                     </td>
                   </tr>
                   <tr>
+                    <td>{l("批次协变量", "Batch covariate")}</td>
+                    <td>
+                      {l(
+                        "仅在批次与分组不完全混杂、且启用批次校正时使用 ~ batch + group；混杂时自动跳过并写入日志",
+                        "Uses ~ batch + group only when estimable and enabled; a confounded term is skipped and recorded in the log",
+                      )}
+                    </td>
+                  </tr>
+                  <tr>
                     <td>{l("数据清洗", "Count cleaning")}</td>
                     <td>
                       {l(
@@ -171,7 +196,10 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
               </li>
               <li>
                 <strong>sample_correlation_overall.png</strong> —{" "}
-                {l("样本间 Pearson 相关性热图", "between-sample Pearson correlation heatmap")}
+                {l(
+                  "样本间 Pearson 相关性热图",
+                  "between-sample Pearson correlation heatmap",
+                )}
               </li>
               <li>
                 <strong>heatmap_gene_clusters.png</strong> —{" "}
@@ -194,6 +222,13 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
                   "volcano: log2FC vs −log10(padj), NPG colors, top genes labelled",
                 )}
               </li>
+              <li>
+                <strong>QC / DEG figures</strong> —{" "}
+                {l(
+                  "可选输出文库大小、表达分布、样本距离、MDS、MA、DEG 汇总、目标基因表达和 UpSet 图，用于分析质量检查与结果概览。",
+                  "Optional library-size, expression, sample-distance, MDS, MA, DEG summary, target-gene and UpSet figures for QC and result review.",
+                )}
+              </li>
             </ul>
           </section>
 
@@ -203,6 +238,7 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
 ├─ DE/      DE_<比较>.csv · DE_summary.csv
 ├─ heatmap/ heatmap_*.png · *_matrix.csv
 ├─ plots/   PCA_selected.png · volcano_*.png (+ 坐标/方差 csv)
+├─ QC/ PCA/ MA/ DEG/ expression/ overlap/   可选 QC 与 DEG 汇总图
 ├─ data/    counts_clean_integer.csv · sample_table.csv
 ├─ logs/    run.log · sessionInfo.txt · config_used.txt
 └─ prepared/ params.json(可复现的完整参数)`}</pre>
@@ -217,7 +253,12 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
           <section id="rtut-faq" className="tutorial__section">
             <h2 className="tutorial__h2">{l("常见问题", "FAQ")}</h2>
             <details className="tutorial__faq" open>
-              <summary>{l("为什么单样本组的 P 值“不可信”?", "Why are P values for singleton groups unreliable?")}</summary>
+              <summary>
+                {l(
+                  "为什么单样本组的 P 值“不可信”?",
+                  "Why are P values for singleton groups unreliable?",
+                )}
+              </summary>
               <div className="tutorial__faq-body">
                 {l(
                   "没有重复就无法从数据估计生物学变异。无重复路径按 edgeR 用户指南 §2.10 固定 BCV,得到的 P 值只能用于探索性排序;正式结论需要生物学重复或 qPCR 验证。",
@@ -235,7 +276,9 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
               </div>
             </details>
             <details className="tutorial__faq">
-              <summary>{l("重复基因名会怎么处理?", "How are duplicate gene names handled?")}</summary>
+              <summary>
+                {l("重复基因名会怎么处理?", "How are duplicate gene names handled?")}
+              </summary>
               <div className="tutorial__faq-body">
                 {l(
                   "默认 sum:同名行原始计数相加(在取整之前)。也可在导入参数中选 max_mean(保留均值最大行)或 make_unique(改名保留)。",
@@ -246,7 +289,11 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
           </section>
 
           <div className="tutorial__footer">
-            <button type="button" className="btn btn-primary tutorial__done" onClick={onClose}>
+            <button
+              type="button"
+              className="btn btn-primary tutorial__done"
+              onClick={onClose}
+            >
               {l("开始使用", "Get started")}
             </button>
           </div>

@@ -1,0 +1,11 @@
+.page {
+  min-height: 100%;
+  padding: 28px 32px 48px;
+  background: var(--mantine-color-body);
+}
+
+@media (max-width: 48em) {
+  .page {
+    padding: 20px 16px 32px;
+  }
+}

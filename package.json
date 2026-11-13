@@ -43,6 +43,8 @@
     "test:r:engine": "node --experimental-strip-types scripts/rnaseq-engine-smoke.ts"
   },
   "dependencies": {
+    "@mantine/core": "8.3.18",
+    "@mantine/hooks": "8.3.18",
     "@tabler/icons-react": "^3.44.0",
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-dialog": "^2.0.0",

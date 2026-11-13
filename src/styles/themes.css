@@ -1,5 +1,23 @@
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  /* Light first-paint fallback. ThemeProvider replaces these values after
+     loading the persisted preference. */
+  --bg-primary: #f6f8fb;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover: rgba(15, 23, 42, 0.045);
+  --bg-sidebar: #eef2f7;
+  --bg-titlebar: #eef2f7;
+  --text-primary: #1c2733;
+  --text-secondary: #5c6b7a;
+  --text-tertiary: #8290a0;
+  --separator: rgba(15, 23, 42, 0.09);
+  --stroke: rgba(15, 23, 42, 0.08);
+  --stroke-strong: rgba(15, 23, 42, 0.14);
+  --accent: #2169d3;
+  --accent-rgb: 33, 105, 211;
+  --focus-ring: 0 0 0 3px rgba(33, 105, 211, 0.24);
   --font: "Segoe UI Variable", "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);

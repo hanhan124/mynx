@@ -179,6 +179,33 @@ export interface PlotsConfig {
   legend_gap_mm: number;
   pca: PcaJob[];
   volcano: VolcanoOptions;
+  /** Optional descriptive/QC plots implemented by rnaseq_engine.R. */
+  additional: AdditionalPlotsOptions;
+}
+
+/**
+ * Optional figures from the reference workflow.  These are descriptive
+ * diagnostics and are deliberately kept separate from inferential DE output.
+ */
+export interface AdditionalPlotsOptions {
+  enabled: boolean;
+  ma: boolean;
+  sample_distance: boolean;
+  mds: boolean;
+  library_size: boolean;
+  expression_distribution: boolean;
+  deg_summary: boolean;
+  deg_dotplot: boolean;
+  gene_expression: boolean;
+  upset: boolean;
+  deg_matrix: boolean;
+  /** Reserved for future annotation layers; defaults to false for no-replicate runs. */
+  inferential_annotations: boolean;
+  top_n: number;
+  label_top: number;
+  genes: string[];
+  width_mm: number;
+  height_mm: number;
 }
 
 // ── 完整配置(params.json 契约)──
@@ -190,6 +217,8 @@ export interface RnaSeqConfig {
   run_name: string;
   /** 样本显示名:原始列名 = 显示名 */
   sample_labels: Record<string, string>;
+  /** Optional batch assignment: batch name -> sample names. */
+  batch: Record<string, string[]>;
   /** 整体热图标记基因(平铺) */
   overall_genes: string[];
   /** 选定基因热图的基因簇:簇名 = 基因数组 */
@@ -249,7 +278,7 @@ export interface LogEntry {
 // ── 结果文件 ──
 export interface ResultFileItem {
   name: string;
-  /** 相对运行目录的子目录:"heatmap" | "plots" */
+  /** 相对运行目录的图片分类子目录(heatmap/plots/QC/DEG 等) */
   subdir: string;
   size: number;
   mtimeMs: number;

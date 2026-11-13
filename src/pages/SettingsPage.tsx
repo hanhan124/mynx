@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { IconChevronRight } from "@tabler/icons-react";
 import AboutModal from "@/components/AboutModal";
 import ThemePicker from "@/components/ThemePicker";
@@ -11,6 +12,7 @@ const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
 type SettingsSectionId = "appearance" | "language" | "window" | "support";
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const [alwaysOnTop, setAlwaysOnTop] = useState(false);
@@ -43,6 +45,10 @@ export default function SettingsPage() {
     if (!isTauri) return;
     const { open } = await import("@tauri-apps/plugin-shell");
     await open("https://fanguanghan.dpdns.org/");
+  };
+
+  const openShowcase = () => {
+    navigate("/ui-showcase");
   };
 
   const settingsSections = [
@@ -159,6 +165,10 @@ export default function SettingsPage() {
                 </button>
                 <button type="button" className="settings-link-row" onClick={() => setShowAbout(true)}>
                   <span className="settings-row-copy"><strong>{t("settings.about")}</strong></span>
+                  <IconChevronRight size={16} stroke={1.75} />
+                </button>
+                <button type="button" className="settings-link-row" onClick={openShowcase}>
+                  <span className="settings-row-copy"><strong>{t("settings.showcase")}</strong></span>
                   <IconChevronRight size={16} stroke={1.75} />
                 </button>
               </div>

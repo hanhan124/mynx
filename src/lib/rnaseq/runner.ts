@@ -318,10 +318,9 @@ export async function runR(
   cfg.output_dir = outputBase;
   cfg.run_name = runName;
   const outputDir = joinPath(outputBase, runName);
-  // 批次功能已从 GUI 移除;旧保存的配置若带 batch 字段也不传给引擎
-  const { batch: _batch, ...core } = cfg as RnaSeqConfig & { batch?: unknown };
-  void _batch;
-  const engineParams: RnaSeqConfig = { ...core, output_dir: outputDir };
+  // Batch is part of the reference CONFIG contract and must reach the R
+  // engine so it can be used as a covariate when the design is estimable.
+  const engineParams: RnaSeqConfig = { ...cfg, output_dir: outputDir };
 
   // params.json 先写到临时目录(fs 插件可写),再由包装 shell 复制到目标
   // (目标目录可在任意磁盘,绕开 fs 作用域限制)。Rscript 始终读取临时文件。
@@ -435,11 +434,10 @@ export async function runR(
               "}",
               "exit $exitCode",
             ].join("\n")
-          :
-              `[System.IO.Directory]::CreateDirectory(${psQuote(outputDir)}) | Out-Null; ` +
-              `[System.IO.Directory]::CreateDirectory(${psQuote(joinPath(outputDir, "prepared"))}) | Out-Null; ` +
-              `Copy-Item -LiteralPath ${psQuote(tmpRunnerParams)} -Destination ${psQuote(paramsPath)} -Force; ` +
-              `& ${psQuote(rscript)} ${psQuote(runnerR)} ${psQuote(tmpRunnerParams)}`;
+          : `[System.IO.Directory]::CreateDirectory(${psQuote(outputDir)}) | Out-Null; ` +
+            `[System.IO.Directory]::CreateDirectory(${psQuote(joinPath(outputDir, "prepared"))}) | Out-Null; ` +
+            `Copy-Item -LiteralPath ${psQuote(tmpRunnerParams)} -Destination ${psQuote(paramsPath)} -Force; ` +
+            `& ${psQuote(rscript)} ${psQuote(runnerR)} ${psQuote(tmpRunnerParams)}`;
         command = ShellCommand.create("powershell", [
           "-NoProfile",
           "-ExecutionPolicy",

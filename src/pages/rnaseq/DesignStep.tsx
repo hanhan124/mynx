@@ -23,11 +23,7 @@ import {
 } from "@tabler/icons-react";
 import { showToast } from "@/components/Toast";
 import { useRnaSeq } from "./store";
-import {
-  NumField,
-  SelectField,
-  Collapse,
-} from "./fields";
+import { NumField, SelectField, SwitchField, Collapse } from "./fields";
 import { checkRDependencies, installRDependencies } from "@/lib/rnaseq/runner";
 import { openInShell } from "@/lib/rnaseq/io";
 import { sanitizeComparisonName } from "@/lib/rnaseq/defaults";
@@ -70,15 +66,14 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
     return Object.values(cfg.groups).flat();
   }, [st.importData, cfg.groups]);
 
-  const assigned = useMemo(
-    () => new Set(Object.values(cfg.groups).flat()),
-    [cfg.groups],
-  );
+  const assigned = useMemo(() => new Set(Object.values(cfg.groups).flat()), [cfg.groups]);
   const pool = allSamples.filter((s) => !assigned.has(s));
 
   const validComps = validComparisonsOf(cfg);
   const minGroupN = Math.min(
-    ...Object.values(cfg.groups).filter((g) => g.length > 0).map((g) => g.length),
+    ...Object.values(cfg.groups)
+      .filter((g) => g.length > 0)
+      .map((g) => g.length),
   );
   const hasSingleton = Number.isFinite(minGroupN) && minGroupN < 2;
 
@@ -88,7 +83,9 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
   // ── 分组编辑 ──
   const [pickedGroup, setPickedGroup] = useState("");
   // 显式选择的组不存在(被删除/改名)时回落到第一个组
-  const selectedGroup = cfg.groups[pickedGroup] ? pickedGroup : (Object.keys(cfg.groups)[0] ?? "");
+  const selectedGroup = cfg.groups[pickedGroup]
+    ? pickedGroup
+    : (Object.keys(cfg.groups)[0] ?? "");
   const setSelectedGroup = setPickedGroup;
 
   const addGroup = () => {
@@ -124,7 +121,9 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
 
   const removeGroup = async (name: string) => {
     if (justDragged(lastDragEndRef)) return; // 拖拽落点误压删除键
-    const related = cfg.comparisons.filter((c) => c.case === name || c.control === name).length;
+    const related = cfg.comparisons.filter(
+      (c) => c.case === name || c.control === name,
+    ).length;
     const msg = related
       ? l(
           `删除分组「${name}」将同时移除 ${related} 个相关比较,确定?`,
@@ -135,9 +134,7 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
     if (!ok) return;
     updateConfig((d) => {
       delete d.groups[name];
-      d.comparisons = d.comparisons.filter(
-        (c) => c.case !== name && c.control !== name,
-      );
+      d.comparisons = d.comparisons.filter((c) => c.case !== name && c.control !== name);
     });
   };
 
@@ -168,12 +165,26 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
   } | null>(null);
   // 拖拽结束后的一小段时间窗内忽略破坏性按钮的 click(见 justDragged)
   const lastDragEndRef = useRef(0);
-  const [dragGhost, setDragGhost] = useState<{ sample: string; x: number; y: number } | null>(null);
+  const [dragGhost, setDragGhost] = useState<{
+    sample: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const [dropTarget, setDropTarget] = useState<string | "pool" | null>(null);
 
-  const onChipPointerDown = (e: React.PointerEvent, sample: string, from: string | null) => {
+  const onChipPointerDown = (
+    e: React.PointerEvent,
+    sample: string,
+    from: string | null,
+  ) => {
     if (e.button !== 0) return;
-    dragRef.current = { sample, from, startX: e.clientX, startY: e.clientY, active: false };
+    dragRef.current = {
+      sample,
+      from,
+      startX: e.clientX,
+      startY: e.clientY,
+      active: false,
+    };
   };
 
   useEffect(() => {
@@ -203,14 +214,16 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
         if (target === "pool") {
           if (d.from)
             updateConfig((draft) => {
-              draft.groups[d.from as string] = (draft.groups[d.from as string] ?? []).filter(
-                (s) => s !== d.sample,
-              );
+              draft.groups[d.from as string] = (
+                draft.groups[d.from as string] ?? []
+              ).filter((s) => s !== d.sample);
             });
         } else if (target && target !== d.from) {
           updateConfig((draft) => {
             if (d.from)
-              draft.groups[d.from] = (draft.groups[d.from] ?? []).filter((s) => s !== d.sample);
+              draft.groups[d.from] = (draft.groups[d.from] ?? []).filter(
+                (s) => s !== d.sample,
+              );
             draft.groups[target] = [...(draft.groups[target] ?? []), d.sample];
           });
         }
@@ -229,7 +242,7 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
   // ── 比较编辑 ──
   const addComparison = () => {
     updateConfig((d) => {
-      d.comparisons.push({ name: "", case: "", control: "" });
+      d.comparisons.push({ name: "", case: "", control: "", mode: "auto" });
     });
   };
 
@@ -324,8 +337,11 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
           <IconLayersIntersect size={15} stroke={1.75} />
           <span>{l("实验分组", "Groups")}</span>
           <span className="rx-title-actions">
-            <span style={{ fontSize: 12, color: "var(--text-3, #888)" }}>
-              {l("拖拽样本到分组,或点击样本加入所选分组", "Drag samples into a group, or click to add to the selected group")}
+            <span className="rx-card-help">
+              {l(
+                "拖拽样本到分组,或点击样本加入所选分组",
+                "Drag samples into a group, or click to add to the selected group",
+              )}
             </span>
             <button type="button" className="btn" onClick={addGroup}>
               <IconPlus size={13} stroke={1.75} /> {l("添加分组", "Add group")}
@@ -387,7 +403,12 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                 <div className="rx-empty-hero rx-empty-hero--slim">
                   <IconLayersIntersect size={20} stroke={1.5} />
                   <strong>{l("还没有分组", "No groups yet")}</strong>
-                  <span>{l("添加分组后,拖拽或点击左侧样本完成分配", "Add groups, then drag or click samples on the left")}</span>
+                  <span>
+                    {l(
+                      "添加分组后,拖拽或点击左侧样本完成分配",
+                      "Add groups, then drag or click samples on the left",
+                    )}
+                  </span>
                 </div>
               )}
               {Object.entries(cfg.groups).map(([name, samples], i) => (
@@ -397,7 +418,9 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                   className={`rx-group-card${selectedGroup === name ? " selected" : ""}${
                     dragGhost && dropTarget === name ? " drag-over" : ""
                   }`}
-                  style={{ ["--group-color" as string]: GROUP_COLORS[i % GROUP_COLORS.length] }}
+                  style={{
+                    ["--group-color" as string]: GROUP_COLORS[i % GROUP_COLORS.length],
+                  }}
                   onClick={() => setSelectedGroup(name)}
                 >
                   <div className="rx-group-header">
@@ -409,7 +432,11 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                     />
                     <span
                       className={`rx-tag${samples.length >= 2 ? " rx-tag--ok" : " rx-tag--warn"}`}
-                      title={samples.length >= 2 ? l("有重复", "replicated") : l("单样本(无重复路径)", "single sample (no-replicate path)")}
+                      title={
+                        samples.length >= 2
+                          ? l("有重复", "replicated")
+                          : l("单样本(无重复路径)", "single sample (no-replicate path)")
+                      }
                     >
                       n={samples.length}
                     </span>
@@ -426,7 +453,9 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                   </div>
                   <div className="rx-group-dropzone">
                     {samples.length === 0 ? (
-                      <span className="rx-empty-tip">{l("拖拽或点击左侧样本加入", "Drag or click samples on the left")}</span>
+                      <span className="rx-empty-tip">
+                        {l("拖拽或点击左侧样本加入", "Drag or click samples on the left")}
+                      </span>
                     ) : (
                       samples.map((s) => (
                         <span
@@ -458,6 +487,9 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
         </div>
       </section>
 
+      {/* ── 批次协变量(可选) ── */}
+      <BatchEditor samples={allSamples} />
+
       {/* ── 比较 ── */}
       <section className="card">
         <div className="card-title">
@@ -477,7 +509,9 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
             )}
           </p>
           {cfg.comparisons.length === 0 ? (
-            <div className="rx-empty-tip">{l("还没有比较,点击「添加比较」", "No comparisons yet")}</div>
+            <div className="rx-empty-tip">
+              {l("还没有比较,点击「添加比较」", "No comparisons yet")}
+            </div>
           ) : (
             <div className="rx-table-wrap">
               <table className="rx-table rx-table--comps">
@@ -487,13 +521,13 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                     <th>{l("Case", "Case")}</th>
                     <th />
                     <th>{l("Control", "Control")}</th>
+                    <th>{l("路径", "Path")}</th>
                     <th />
                   </tr>
                 </thead>
                 <tbody>
                   {cfg.comparisons.map((c, i) => {
-                    const invalid =
-                      !c.case || !c.control || c.case === c.control;
+                    const invalid = !c.case || !c.control || c.case === c.control;
                     return (
                       <tr key={i} className={invalid ? "rx-invalid-row" : ""}>
                         <td>
@@ -501,13 +535,17 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                             type="text"
                             value={c.name}
                             placeholder={autoName(c)}
-                            onChange={(e) => updateComparison(i, { name: e.target.value })}
+                            onChange={(e) =>
+                              updateComparison(i, { name: e.target.value })
+                            }
                           />
                         </td>
                         <td>
                           <select
                             value={c.case}
-                            onChange={(e) => updateComparison(i, { case: e.target.value })}
+                            onChange={(e) =>
+                              updateComparison(i, { case: e.target.value })
+                            }
                           >
                             <option value="">—</option>
                             {Object.keys(cfg.groups).map((g) => (
@@ -521,7 +559,9 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                         <td>
                           <select
                             value={c.control}
-                            onChange={(e) => updateComparison(i, { control: e.target.value })}
+                            onChange={(e) =>
+                              updateComparison(i, { control: e.target.value })
+                            }
                           >
                             <option value="">—</option>
                             {Object.keys(cfg.groups).map((g) => (
@@ -529,6 +569,23 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                                 {g}
                               </option>
                             ))}
+                          </select>
+                        </td>
+                        <td>
+                          <select
+                            value={c.mode ?? "auto"}
+                            aria-label={l("比较路径", "Comparison path")}
+                            onChange={(e) =>
+                              updateComparison(i, {
+                                mode: e.target.value as Comparison["mode"],
+                              })
+                            }
+                          >
+                            <option value="auto">{l("自动", "auto")}</option>
+                            <option value="replicate">{l("有重复", "replicate")}</option>
+                            <option value="noreplicate">
+                              {l("无重复", "no replicate")}
+                            </option>
                           </select>
                         </td>
                         <td>
@@ -613,7 +670,10 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                 if (v !== undefined) d.de.bcv = v;
               })
             }
-            hint={l("人 0.4 | 同基因型模式生物 0.1 | 技术重复 0.01", "human 0.4 | isogenic 0.1 | technical 0.01")}
+            hint={l(
+              "人 0.4 | 同基因型模式生物 0.1 | 技术重复 0.01",
+              "human 0.4 | isogenic 0.1 | technical 0.01",
+            )}
           />
           <SelectField
             label={l("log2FC 收缩(DESeq2)", "LFC shrinkage (DESeq2)")}
@@ -642,6 +702,19 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
               { value: "min_count", label: l("最小计数", "min count") },
               { value: "none", label: l("不过滤", "none") },
             ]}
+          />
+          <SwitchField
+            label={l("在设计中校正批次", "Adjust for batch in design")}
+            checked={cfg.de.use_batch}
+            onChange={(v) =>
+              updateConfig((d) => {
+                d.de.use_batch = v;
+              })
+            }
+            hint={l(
+              "仅在批次已设置且设计矩阵满秩时生效；混杂批次会被引擎自动跳过并记录。",
+              "Used only when batches are set and the design matrix is full rank; confounded batches are skipped and logged.",
+            )}
           />
           {cfg.de.filter.method !== "none" && (
             <>
@@ -705,7 +778,11 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                 <span>{l("比较", "comparisons")}</span>
               </div>
               <div className="rx-summary-item rx-summary-item--wide">
-                <strong>{hasSingleton ? l("无重复路径", "no-replicate") : l("有重复路径", "replicate")}</strong>
+                <strong>
+                  {hasSingleton
+                    ? l("无重复路径", "no-replicate")
+                    : l("有重复路径", "replicate")}
+                </strong>
                 <span>
                   {hasSingleton
                     ? `edgeR exactTest · BCV=${cfg.de.bcv}`
@@ -737,13 +814,23 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                 {l("全部运行", "Run all")}
               </button>
               {running && (
-                <button type="button" className="btn rx-cancel-btn" onClick={() => void st.cancelRun()}>
+                <button
+                  type="button"
+                  className="btn rx-cancel-btn"
+                  onClick={() => void st.cancelRun()}
+                >
                   <IconPlayerStop size={14} stroke={1.75} /> {l("取消", "Cancel")}
                 </button>
               )}
               <span
                 className={`rx-tag${
-                  running ? " rx-tag--run" : done ? " rx-tag--ok" : failed ? " rx-tag--err" : ""
+                  running
+                    ? " rx-tag--run"
+                    : done
+                      ? " rx-tag--ok"
+                      : failed
+                        ? " rx-tag--err"
+                        : ""
                 }`}
               >
                 {running
@@ -770,11 +857,17 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
               {st.deSummary && <DeSummaryTable />}
               <div className="rx-done-actions">
                 <button type="button" className="btn btn-primary" onClick={goPlots}>
-                  <IconChartDots size={14} stroke={1.75} /> {l("前往绘图导出", "Go to plots")}
+                  <IconChartDots size={14} stroke={1.75} />{" "}
+                  {l("前往绘图导出", "Go to plots")}
                 </button>
                 {st.resultDir && (
-                  <button type="button" className="btn" onClick={() => void openInShell(st.resultDir)}>
-                    <IconFolderOpen size={13} stroke={1.75} /> {l("打开结果目录", "Open results")}
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => void openInShell(st.resultDir)}
+                  >
+                    <IconFolderOpen size={13} stroke={1.75} />{" "}
+                    {l("打开结果目录", "Open results")}
                   </button>
                 )}
               </div>
@@ -782,13 +875,17 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
           )}
           {failed && (
             <div className="rx-failed-panel">
-              <div className="rx-done-head rx-done-head--err">{l("运行失败", "Run failed")}</div>
+              <div className="rx-done-head rx-done-head--err">
+                {l("运行失败", "Run failed")}
+              </div>
               {lastError && <code className="rx-last-error">{lastError}</code>}
             </div>
           )}
           {cancelled && (
             <div className="rx-cancelled-panel">
-              <div className="rx-done-head rx-done-head--warn">{l("已取消(已生成的文件保留)", "Cancelled (files kept)")}</div>
+              <div className="rx-done-head rx-done-head--warn">
+                {l("已取消(已生成的文件保留)", "Cancelled (files kept)")}
+              </div>
             </div>
           )}
         </div>
@@ -803,6 +900,149 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
           document.body,
         )}
     </div>
+  );
+}
+
+/**
+ * Optional batch editor.  A batch is a technical covariate, not a biological
+ * group: it is passed to the R design as `~ batch + group` only when the
+ * design matrix is full rank.  Keeping this separate from group assignment
+ * prevents accidental use of batch labels as biological replicates.
+ */
+function BatchEditor({ samples }: { samples: string[] }) {
+  const { language } = useLanguage();
+  const l = (zh: string, en: string) => (language === "en" ? en : zh);
+  const st = useRnaSeq();
+  const cfg = st.config;
+  const batches = cfg.batch ?? {};
+  const assigned = new Set(Object.values(batches).flat());
+  const grouped = new Set(Object.values(cfg.groups).flat());
+  const missing = [...grouped].filter((sample) => !assigned.has(sample));
+
+  const addBatch = () => {
+    st.updateConfig((d) => {
+      const next = { ...(d.batch ?? {}) };
+      let i = Object.keys(next).length + 1;
+      while (next[`Batch${i}`]) i += 1;
+      next[`Batch${i}`] = [];
+      d.batch = next;
+    });
+  };
+
+  const renameBatch = (oldName: string, nextName: string) => {
+    const name = nextName.trim();
+    if (!name || name === oldName || batches[name]) return;
+    st.updateConfig((d) => {
+      const next: Record<string, string[]> = {};
+      for (const [key, value] of Object.entries(d.batch ?? {}))
+        next[key === oldName ? name : key] = value;
+      d.batch = next;
+    });
+  };
+
+  const toggleSample = (batch: string, sample: string) => {
+    st.updateConfig((d) => {
+      const next: Record<string, string[]> = {};
+      for (const [key, value] of Object.entries(d.batch ?? {})) {
+        next[key] = value.filter((item) => item !== sample);
+      }
+      if (!next[batch].includes(sample)) next[batch].push(sample);
+      d.batch = next;
+    });
+  };
+
+  return (
+    <Collapse
+      title={l("批次协变量（可选）", "Batch covariate (optional)")}
+      subtitle={l(
+        Object.keys(batches).length ? `${Object.keys(batches).length} 个批次` : "未设置",
+        Object.keys(batches).length
+          ? `${Object.keys(batches).length} batch(es)`
+          : "Not set",
+      )}
+    >
+      <div className="card-body">
+        <div className="rx-beta-note" style={{ marginBottom: 12 }}>
+          <span className="rx-beta-note-text">
+            {l(
+              "批次用于校正测序批次、文库批次等技术差异，不代表生物学分组。启用后，参与比较的每个样本都必须归属一个批次；若批次与分组完全混杂，引擎会自动跳过该协变量并写入日志。",
+              "Batch corrects technical variation such as sequencing or library batches. It is not a biological group. Once enabled, every sample in a comparison must belong to one batch; a confounded batch term is dropped and recorded in the log.",
+            )}
+          </span>
+          <button type="button" className="btn" onClick={addBatch}>
+            <IconPlus size={13} stroke={1.75} /> {l("添加批次", "Add batch")}
+          </button>
+        </div>
+        {Object.keys(batches).length === 0 ? (
+          <div className="rx-empty-tip">
+            {l(
+              "未设置批次时，分析不加入 batch 协变量。",
+              "Without batches, no batch covariate is included.",
+            )}
+          </div>
+        ) : (
+          <div className="rx-groups-box">
+            {Object.entries(batches).map(([name, members]) => (
+              <div key={name} className="rx-group-card rx-group-card--batch">
+                <div className="rx-group-header">
+                  <input
+                    className="rx-group-name"
+                    value={name}
+                    aria-label={l("批次名称", "Batch name")}
+                    onChange={(e) => renameBatch(name, e.target.value)}
+                  />
+                  <span
+                    className={`rx-tag${members.length ? " rx-tag--ok" : " rx-tag--warn"}`}
+                  >
+                    n={members.length}
+                  </span>
+                  <button
+                    type="button"
+                    className="rx-icon-btn rx-icon-btn--danger"
+                    aria-label={l("删除批次", "Delete batch")}
+                    onClick={() =>
+                      st.updateConfig((d) => {
+                        const next = { ...(d.batch ?? {}) };
+                        delete next[name];
+                        d.batch = next;
+                      })
+                    }
+                  >
+                    <IconTrash size={13} stroke={1.75} />
+                  </button>
+                </div>
+                <div className="rx-group-dropzone">
+                  {samples.map((sample) => {
+                    const checked = members.includes(sample);
+                    return (
+                      <button
+                        key={sample}
+                        type="button"
+                        className={`rx-sample-chip rx-sample-chip--pick${checked ? " checked" : ""}`}
+                        onClick={() => toggleSample(name, sample)}
+                      >
+                        <span className="rx-chip-check" aria-hidden="true">
+                          {checked ? "✓" : ""}
+                        </span>
+                        {sample}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {missing.length > 0 && Object.keys(batches).length > 0 && (
+          <div className="rx-alert rx-alert--warn">
+            {l(
+              `还有 ${missing.length} 个已分组样本未设置批次：${missing.join(", ")}`,
+              `${missing.length} grouped sample(s) have no batch: ${missing.join(", ")}`,
+            )}
+          </div>
+        )}
+      </div>
+    </Collapse>
   );
 }
 
@@ -830,8 +1070,12 @@ function DeSummaryTable() {
             <tr key={r.comparison}>
               <td>{r.comparison}</td>
               <td>
-                <span className={`rx-tag${r.path === "noreplicate" ? " rx-tag--warn" : " rx-tag--ok"}`}>
-                  {r.path === "noreplicate" ? l("无重复", "no-replicate") : l("有重复", "replicate")}
+                <span
+                  className={`rx-tag${r.path === "noreplicate" ? " rx-tag--warn" : " rx-tag--ok"}`}
+                >
+                  {r.path === "noreplicate"
+                    ? l("无重复", "no-replicate")
+                    : l("有重复", "replicate")}
                 </span>
               </td>
               <td style={{ fontSize: 12 }}>{r.method}</td>

@@ -237,7 +237,7 @@ export default function ImportStep() {
             <IconTag size={15} stroke={1.75} />
             <span>{l("样本显示名", "Sample display names")}</span>
             <span className="rx-title-actions">
-              <span style={{ fontSize: 12, color: "var(--text-3, #888)" }}>
+              <span className="rx-card-help">
                 {l("留空 = 使用原始列名;用于热图横轴、样本相关性图与 PCA 点标签", "Blank = keep column names; used on heatmaps, correlation and PCA")}
               </span>
             </span>

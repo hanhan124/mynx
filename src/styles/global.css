@@ -7,9 +7,12 @@
 @import "./golden-gate.css";
 
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
+}
+
+*::before,
+*::after {
+  box-sizing: inherit;
 }
 
 html,
@@ -87,16 +90,9 @@ button,
 button {
   border: none;
   cursor: pointer;
-  transition: background 200ms var(--ease-smooth, cubic-bezier(0.25, 0.1, 0.25, 1)),
-              transform 120ms var(--ease-smooth, cubic-bezier(0.25, 0.1, 0.25, 1)),
-              box-shadow 200ms var(--ease-smooth, cubic-bezier(0.25, 0.1, 0.25, 1));
   font-family: inherit;
   font-size: inherit;
   -webkit-tap-highlight-color: transparent;
-}
-
-button:active:not(:disabled) {
-  transform: scale(0.97);
 }
 
 select,
@@ -104,14 +100,6 @@ input {
   font-family: inherit;
   font-size: inherit;
   outline: none;
-}
-
-/* 全局焦点可见性 — macOS 蓝色焦点环。
-   注意:不要设置 border-radius,box-shadow 本就会自动贴合元素自身圆角;
-   之前的 inherit 会把圆角改继承自父级(通常为 0),导致聚焦瞬间按钮/卡片变方角。 */
-:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
 }
 
 /* 选中文字颜色 */

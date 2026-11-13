@@ -3,6 +3,7 @@
  * 字段名/默认值不得随意改动:R 端引擎按参考脚本原样消费这些值。
  */
 import type {
+  AdditionalPlotsOptions,
   Comparison,
   HeatmapStyle,
   OverallHeatmap,
@@ -160,6 +161,30 @@ export function defaultPlots(): PlotsConfig {
       legend_pos: "right",
       show_subtitle: false,
     },
+    additional: defaultAdditionalPlots(),
+  };
+}
+
+/** Reference-script QC and descriptive plots. */
+export function defaultAdditionalPlots(): AdditionalPlotsOptions {
+  return {
+    enabled: true,
+    ma: true,
+    sample_distance: true,
+    mds: true,
+    library_size: true,
+    expression_distribution: true,
+    deg_summary: true,
+    deg_dotplot: true,
+    gene_expression: true,
+    upset: true,
+    deg_matrix: true,
+    inferential_annotations: false,
+    top_n: 15,
+    label_top: 10,
+    genes: [...DEFAULT_MARKER_GENES],
+    width_mm: 89,
+    height_mm: 70,
   };
 }
 
@@ -173,6 +198,7 @@ export function defaultConfig(): RnaSeqConfig {
     output_dir: "",
     run_name: "auto",
     sample_labels: {},
+    batch: {},
     overall_genes: [...DEFAULT_MARKER_GENES],
     gene_clusters: Object.fromEntries(
       Object.entries(DEFAULT_GENE_CLUSTERS).map(([k, v]) => [k, [...v]]),

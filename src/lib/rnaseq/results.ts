@@ -6,14 +6,19 @@
 import { readTextAny, readBytesAny, readDirAny, joinPath, statAny } from "./io.ts";
 import { parseDelimited, detectDelimiter } from "./matrix.ts";
 import { deepMerge, defaultConfig } from "./defaults.ts";
-import type {
-  DeSummaryRow,
-  RnaSeqConfig,
-  ResultFileItem,
-} from "./types.ts";
+import type { DeSummaryRow, RnaSeqConfig, ResultFileItem } from "./types.ts";
 
-/** 运行目录下引擎产出的子目录 */
-export const RESULT_IMAGE_DIRS = ["heatmap", "plots"] as const;
+/** 运行目录下引擎产出的子目录(含参考脚本的 QC/DEG 分类目录) */
+export const RESULT_IMAGE_DIRS = [
+  "heatmap",
+  "plots",
+  "QC",
+  "PCA",
+  "MA",
+  "DEG",
+  "expression",
+  "overlap",
+] as const;
 
 function pathBase(path: string): string {
   const norm = path.replace(/[\\/]+$/, "");
@@ -71,9 +76,7 @@ export function mergeRunParams(
 }
 
 /** 列出运行目录下的图片(png/svg/pdf) */
-export async function listResultImages(
-  runDir: string,
-): Promise<ResultFileItem[]> {
+export async function listResultImages(runDir: string): Promise<ResultFileItem[]> {
   const out: ResultFileItem[] = [];
   for (const subdir of RESULT_IMAGE_DIRS) {
     const dir = joinPath(runDir, subdir);
@@ -105,7 +108,8 @@ export async function readImageDataURL(
     binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
   }
   const ext = name.slice(name.lastIndexOf(".") + 1).toLowerCase();
-  const mime = ext === "svg" ? "image/svg+xml" : ext === "pdf" ? "application/pdf" : "image/png";
+  const mime =
+    ext === "svg" ? "image/svg+xml" : ext === "pdf" ? "application/pdf" : "image/png";
   return `data:${mime};base64,${btoa(binary)}`;
 }
 
@@ -126,9 +130,7 @@ export function parseCsvText(text: string): Record<string, string>[] {
 }
 
 /** 读取 DE/DE_summary.csv */
-export async function readDeSummary(
-  runDir: string,
-): Promise<DeSummaryRow[] | null> {
+export async function readDeSummary(runDir: string): Promise<DeSummaryRow[] | null> {
   try {
     const text = await readTextAny(joinPath(runDir, "DE", "DE_summary.csv"));
     const rows = parseCsvText(text);
@@ -158,9 +160,7 @@ export async function readDeTable(
   comparison: string,
 ): Promise<Record<string, string>[] | null> {
   try {
-    const text = await readTextAny(
-      joinPath(runDir, "DE", `DE_${comparison}.csv`),
-    );
+    const text = await readTextAny(joinPath(runDir, "DE", `DE_${comparison}.csv`));
     return parseCsvText(text);
   } catch {
     return null;

@@ -311,19 +311,39 @@ export function NumField({
   hint?: string;
   placeholder?: string;
 }) {
+  const [draft, setDraft] = useState(value == null ? "" : String(value));
+
+  useEffect(() => {
+    // Sync values loaded from a config without interrupting in-progress edits.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraft(value == null ? "" : String(value));
+  }, [value]);
+
+  const commit = () => {
+    const text = draft.trim();
+    if (!text) {
+      onChange(undefined);
+      return;
+    }
+    const parsed = Number(text);
+    if (Number.isFinite(parsed)) onChange(parsed);
+  };
+
   return (
     <div className="rx-field">
       <FieldLabel label={label} hint={hint} />
       <input
         type="number"
-        value={value ?? ""}
+        value={draft}
         step={step}
         min={min}
         max={max}
         placeholder={placeholder ?? ""}
-        onChange={(e) => {
-          const v = e.target.value;
-          onChange(v === "" ? undefined : Number(v));
+        aria-label={label}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur();
         }}
       />
     </div>
@@ -350,6 +370,7 @@ export function TextField({
         type="text"
         value={value ?? ""}
         placeholder={placeholder ?? ""}
+        aria-label={label}
         onChange={(e) => onChange(e.target.value)}
       />
     </div>
@@ -375,6 +396,7 @@ export function SelectField<T extends string | number>({
       <FieldLabel label={label} hint={hint} />
       <select
         value={value as string}
+        aria-label={label}
         onChange={(e) => {
           const opt = options.find((o) => String(o.value) === e.target.value);
           if (opt) onChange(opt.value);

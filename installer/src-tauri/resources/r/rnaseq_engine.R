@@ -370,6 +370,15 @@ CONFIG <- list(
       point_size = 0.5, width_mm = 78, height_mm = 70,   # 画布上限;图例在右侧竖排,所以宽度比原来大
       legend_pos = "right",                              # 图例在右侧竖排(top/bottom 时自动改成一行)
       show_subtitle = FALSE                              # TRUE = 恢复方法/阈值那两行副标题
+    ),
+    additional = list(
+      enabled = TRUE,
+      ma = TRUE, sample_distance = TRUE, mds = TRUE,
+      library_size = TRUE, expression_distribution = TRUE,
+      deg_summary = TRUE, deg_dotplot = TRUE, gene_expression = TRUE,
+      upset = TRUE, deg_matrix = TRUE, inferential_annotations = FALSE,
+      top_n = 15, label_top = 10, genes = overall_genes,
+      width_mm = 89, height_mm = 70
     )
   )
 )
@@ -1262,7 +1271,9 @@ label_halo <- function(cfg) {
 # 坐标框本身是弹性(null)单位,不计入 —— 由调用方按需求定它的边长。
 grob_decor_in <- function(g) {
   lay <- g$layout; i <- which(lay$name == "panel")[1]
+  if (!length(i) || is.na(i)) return(list(left = 0, right = 0, top = 0, bottom = 0))
   l <- lay$l[i]; r <- lay$r[i]; t <- lay$t[i]; b <- lay$b[i]
+  if (anyNA(c(l, r, t, b))) return(list(left = 0, right = 0, top = 0, bottom = 0))
   sw <- function(u) if (!length(u)) 0 else sum(grid::convertWidth(u, "in", valueOnly = TRUE))
   sh <- function(u) if (!length(u)) 0 else sum(grid::convertHeight(u, "in", valueOnly = TRUE))
   list(left   = if (l > 1) sw(g$widths[seq_len(l - 1)]) else 0,
@@ -1323,6 +1334,180 @@ save_plot <- function(p, file_base, plots, width_mm, height_mm, square = FALSE) 
   }
   msg("   saved ", basename(file_base), " (", paste(fmts, collapse = "/"), "; ",
       round(w * 25.4), " x ", round(h * 25.4), " mm)")
+}
+
+
+# =============================================================================
+# 第五部分(附):QC 与描述性图
+#   这些图只用于样本/结果检查,不改变 DE 统计结果。每个开关对应一个实际输出。
+# =============================================================================
+additional_plot <- function(p, cfg, out_dir, subdir, name, a, square = FALSE) {
+  dir <- ensure_dir(out_dir, subdir)
+  save_plot(p, file.path(dir, name), cfg$plots,
+            nz(a$width_mm, 89), nz(a$height_mm, 70), square = square)
+}
+
+additional_on <- function(a, key) isTRUE(a[[key]])
+
+run_additional_plots <- function(cfg, counts, st, expr, out_dir) {
+  a <- cfg$plots$additional
+  if (is.null(a) || !isTRUE(a$enabled)) return(invisible(NULL))
+  samples <- st$sample
+  groups <- as.character(st$group)
+  labels <- map_labels(samples, resolve_labels(NULL, cfg))
+  fam <- nz(cfg$plots$font_family, "Arial")
+  bs <- nz(cfg$plots$base_size, 7)
+  pal <- palette_colors(nz(cfg$plots$group_palette, "npg"), max(3, length(unique(groups))))
+  group_cols <- setNames(pal[seq_along(unique(groups))], unique(groups))
+  w <- nz(a$width_mm, 89); h <- nz(a$height_mm, 70)
+
+  # 文库大小与检测基因数
+  lib <- data.frame(sample = samples, label = labels, group = groups,
+                    library_size = colSums(counts[, samples, drop = FALSE]),
+                    detected_genes = colSums(counts[, samples, drop = FALSE] > 0),
+                    stringsAsFactors = FALSE)
+  write_table(lib, file.path(ensure_dir(out_dir, "QC"), "library_size.csv"))
+  if (additional_on(a, "library_size")) {
+    p <- ggplot2::ggplot(lib, ggplot2::aes(x = stats::reorder(label, library_size), y = library_size, fill = group)) +
+      ggplot2::geom_col(width = 0.72) + ggplot2::coord_flip() +
+      ggplot2::scale_fill_manual(values = group_cols, drop = FALSE) +
+      ggplot2::labs(title = "Library size", x = NULL, y = "Raw counts", fill = "Group") +
+      ggplot2::theme_bw(base_size = bs, base_family = fam)
+    additional_plot(p, cfg, out_dir, "QC", "QC_library_size", a)
+  }
+
+  # 表达分布、样本距离、MDS/目标基因图需要表达矩阵
+  need_expr <- additional_on(a, "expression_distribution") || additional_on(a, "sample_distance") ||
+    additional_on(a, "mds") || additional_on(a, "gene_expression")
+  if (need_expr && is.null(expr)) expr <- compute_expression(counts, st, cfg$heatmap$transform)
+  if (!is.null(expr)) {
+    expr <- expr[, samples, drop = FALSE]
+    if (additional_on(a, "expression_distribution")) {
+      ed <- data.frame(expression = as.vector(as.matrix(expr)),
+                       sample = rep(labels, each = nrow(expr)),
+                       group = rep(groups, each = nrow(expr)), stringsAsFactors = FALSE)
+      p <- ggplot2::ggplot(ed, ggplot2::aes(x = stats::reorder(sample, expression, FUN = median), y = expression, fill = group)) +
+        ggplot2::geom_boxplot(outlier.size = 0.15, width = 0.72) + ggplot2::coord_flip() +
+        ggplot2::scale_fill_manual(values = group_cols, drop = FALSE) +
+        ggplot2::labs(title = "Expression distribution", x = NULL, y = "Transformed expression", fill = "Group") +
+        ggplot2::theme_bw(base_size = bs, base_family = fam)
+      additional_plot(p, cfg, out_dir, "QC", "QC_expression_distribution", a)
+    }
+    if (additional_on(a, "sample_distance") && ncol(expr) >= 2) {
+      d <- as.matrix(stats::dist(t(expr)))
+      dd <- expand.grid(x = labels, y = labels, stringsAsFactors = FALSE)
+      dd$distance <- as.vector(d)
+      p <- ggplot2::ggplot(dd, ggplot2::aes(x = x, y = y, fill = distance)) +
+        ggplot2::geom_tile() + ggplot2::scale_fill_viridis_c(name = "Distance") +
+        ggplot2::coord_fixed() + ggplot2::labs(title = "Sample distance", x = NULL, y = NULL) +
+        ggplot2::theme_bw(base_size = bs, base_family = fam) +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+      additional_plot(p, cfg, out_dir, "QC", "QC_sample_distance", a, square = TRUE)
+    }
+    if (additional_on(a, "mds") && ncol(expr) >= 3) {
+      md <- stats::cmdscale(stats::dist(t(expr)), k = 2, eig = TRUE)
+      md_df <- data.frame(MDS1 = md$points[, 1], MDS2 = md$points[, 2],
+                          sample = labels, group = groups, stringsAsFactors = FALSE)
+      p <- ggplot2::ggplot(md_df, ggplot2::aes(MDS1, MDS2, color = group, label = sample)) +
+        ggplot2::geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.2, color = "grey65") +
+        ggplot2::geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.2, color = "grey65") +
+        ggplot2::geom_point(size = 2.2) +
+        ggplot2::scale_color_manual(values = group_cols, drop = FALSE) +
+        ggplot2::labs(title = "MDS", x = "Dimension 1", y = "Dimension 2", color = "Group") +
+        ggplot2::theme_bw(base_size = bs, base_family = fam)
+      additional_plot(p, cfg, out_dir, "PCA", "MDS", a, square = TRUE)
+      write_table(md_df, file.path(ensure_dir(out_dir, "PCA"), "MDS_coordinates.csv"))
+    } else if (additional_on(a, "mds")) {
+      warn("MDS needs at least 3 samples; skipped")
+    }
+    if (additional_on(a, "gene_expression")) {
+      genes <- unique(trimws(as.character(unlist(nz(a$genes, character())))))
+      genes <- genes[nzchar(genes) & genes %in% rownames(expr)]
+      if (length(genes)) {
+        ge <- data.frame(gene = rep(genes, each = length(samples)), expression = as.vector(t(expr[genes, samples, drop = FALSE])),
+                         sample = rep(labels, times = length(genes)), group = rep(groups, times = length(genes)),
+                         stringsAsFactors = FALSE)
+        p <- ggplot2::ggplot(ge, ggplot2::aes(x = sample, y = expression, color = group)) +
+          ggplot2::geom_point(position = ggplot2::position_jitter(width = 0.12, height = 0), size = 1.8) +
+          ggplot2::facet_wrap(~gene, scales = "free_y") +
+          ggplot2::scale_color_manual(values = group_cols, drop = FALSE) +
+          ggplot2::labs(title = "Target gene expression", x = NULL, y = "Transformed expression", color = "Group") +
+          ggplot2::theme_bw(base_size = bs, base_family = fam) +
+          ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+        additional_plot(p, cfg, out_dir, "expression", "gene_expression", a)
+        write_table(ge, file.path(ensure_dir(out_dir, "expression"), "gene_expression.csv"))
+      } else warn("No target genes found for gene expression plot; skipped")
+    }
+  }
+
+  # DE 结果衍生图
+  cmp_names <- vapply(cfg$comparisons, function(x) as.character(x$name), "")
+  selected <- if (is.null(a$comparisons)) cmp_names else intersect(cmp_names, as.character(a$comparisons))
+  de_tables <- list()
+  for (nm in selected) {
+    f <- file.path(out_dir, "DE", paste0("DE_", nm, ".csv"))
+    if (!file.exists(f)) { warn("Additional plots: DE table not found for ", nm, "; skipped"); next }
+    d <- utils::read.csv(f, check.names = FALSE, stringsAsFactors = FALSE)
+    d <- d[is.finite(d$log2FC) & !is.na(d$padj), , drop = FALSE]
+    d$comparison <- nm
+    de_tables[[nm]] <- d
+    if (additional_on(a, "ma")) {
+      p <- ggplot2::ggplot(d, ggplot2::aes(ave_expr, log2FC, color = regulation)) +
+        ggplot2::geom_point(size = 0.45, alpha = 0.65) + ggplot2::geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.2) +
+        ggplot2::scale_color_manual(values = c(Up = "#C73E3A", Down = "#3C78B4", NS = "grey75"), drop = FALSE) +
+        ggplot2::labs(title = paste0("MA: ", nm), x = "Mean expression", y = "log2FC", color = NULL) +
+        ggplot2::theme_bw(base_size = bs, base_family = fam)
+      additional_plot(p, cfg, out_dir, "MA", paste0("MA_", nm), a)
+    }
+    counts_reg <- as.data.frame(table(factor(d$regulation, levels = c("Up", "Down", "NS"))))
+    names(counts_reg) <- c("regulation", "n")
+    if (additional_on(a, "deg_summary")) {
+      p <- ggplot2::ggplot(counts_reg, ggplot2::aes(regulation, n, fill = regulation)) +
+        ggplot2::geom_col(width = 0.64) + ggplot2::scale_fill_manual(values = c(Up = "#C73E3A", Down = "#3C78B4", NS = "grey75"), drop = FALSE) +
+        ggplot2::labs(title = paste0("DEG summary: ", nm), x = NULL, y = "Genes", fill = NULL) +
+        ggplot2::theme_bw(base_size = bs, base_family = fam) + ggplot2::theme(legend.position = "none")
+      additional_plot(p, cfg, out_dir, "DEG", paste0("DEG_summary_", nm), a)
+    }
+    if (additional_on(a, "deg_dotplot")) {
+      top_n <- max(1, as.integer(nz(a$top_n, 15)))
+      sig <- d[d$regulation %in% c("Up", "Down"), , drop = FALSE]
+      sig <- sig[order(sig$padj, -abs(sig$log2FC)), , drop = FALSE]
+      sig <- sig[seq_len(min(top_n, nrow(sig))), , drop = FALSE]
+      if (nrow(sig)) {
+        sig$gene <- factor(sig$gene, levels = rev(unique(sig$gene)))
+        p <- ggplot2::ggplot(sig, ggplot2::aes(gene, -log10(padj), size = abs(log2FC), color = regulation)) +
+          ggplot2::geom_point() + ggplot2::coord_flip() +
+          ggplot2::scale_color_manual(values = c(Up = "#C73E3A", Down = "#3C78B4"), drop = FALSE) +
+          ggplot2::labs(title = paste0("Top DEGs: ", nm), x = NULL, y = "-log10 adjusted P", size = "|log2FC|", color = NULL) +
+          ggplot2::theme_bw(base_size = bs, base_family = fam)
+        additional_plot(p, cfg, out_dir, "DEG", paste0("DEG_dotplot_", nm), a)
+      }
+    }
+  }
+  if (length(de_tables)) {
+    if (additional_on(a, "deg_matrix")) {
+      mat <- do.call(rbind, lapply(de_tables, function(d) c(Up = sum(d$regulation == "Up"), Down = sum(d$regulation == "Down"))))
+      mat <- as.data.frame(mat, check.names = FALSE); mat$comparison <- rownames(mat); rownames(mat) <- NULL
+      write_table(mat, file.path(ensure_dir(out_dir, "DEG"), "DEG_comparison_matrix.csv"))
+      long <- data.frame(
+        comparison = rep(mat$comparison, 2),
+        regulation = rep(c("Up", "Down"), each = nrow(mat)),
+        n = c(mat$Up, mat$Down),
+        stringsAsFactors = FALSE
+      )
+      p <- ggplot2::ggplot(long, ggplot2::aes(regulation, comparison, fill = n)) + ggplot2::geom_tile() +
+        ggplot2::scale_fill_viridis_c(name = "Genes") + ggplot2::labs(title = "DEG comparison matrix", x = NULL, y = NULL) +
+        ggplot2::theme_bw(base_size = bs, base_family = fam)
+      additional_plot(p, cfg, out_dir, "DEG", "DEG_comparison_matrix", a)
+    }
+    if (additional_on(a, "upset")) {
+      sizes <- data.frame(comparison = names(de_tables), significant = vapply(de_tables, function(d) sum(d$regulation %in% c("Up", "Down")), numeric(1)))
+      p <- ggplot2::ggplot(sizes, ggplot2::aes(stats::reorder(comparison, significant), significant)) + ggplot2::geom_col(fill = "#6C63A8", width = 0.68) +
+        ggplot2::coord_flip() + ggplot2::labs(title = "DEG overlap summary", x = NULL, y = "Significant genes") + ggplot2::theme_bw(base_size = bs, base_family = fam)
+      additional_plot(p, cfg, out_dir, "overlap", "DEG_overlap_summary", a)
+    }
+  }
+  invisible(TRUE)
 }
 
 run_pca <- function(cfg, st, expr, out_dir) {
@@ -1517,7 +1702,12 @@ run_pipeline <- function(cfg = CONFIG, steps = c("de", "heatmap", "plots")) {
   if ("de" %in% steps) run_all_comparisons(cfg, counts, st, out_dir)
 
   # 3. 热图(表达量只计算一次,供整体热图和所有选定基因热图共用)
-  need_expr <- "heatmap" %in% steps || ("plots" %in% steps && length(cfg$plots$pca) > 0)
+  additional_cfg <- cfg$plots$additional
+  additional_expr <- !is.null(additional_cfg) && isTRUE(additional_cfg$enabled) &&
+    any(vapply(c("expression_distribution", "sample_distance", "mds", "gene_expression"),
+               function(k) isTRUE(additional_cfg[[k]]), logical(1)))
+  need_expr <- "heatmap" %in% steps || ("plots" %in% steps &&
+    (length(cfg$plots$pca) > 0 || additional_expr))
   if (need_expr) expr <- compute_expression(counts, st, cfg$heatmap$transform)
   if ("heatmap" %in% steps) {
     run_overall_heatmap(cfg, counts, st, expr, out_dir)
@@ -1528,6 +1718,7 @@ run_pipeline <- function(cfg = CONFIG, steps = c("de", "heatmap", "plots")) {
   if ("plots" %in% steps) {
     run_pca(cfg, st, if (need_expr) expr else NULL, out_dir)
     run_volcano(cfg, out_dir)
+    run_additional_plots(cfg, counts, st, if (need_expr) expr else NULL, out_dir)
   }
 
   # 4. 记录运行环境和所用配置,方便复现

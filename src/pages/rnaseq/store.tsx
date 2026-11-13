@@ -194,7 +194,9 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
 
   // ── 运行状态 ──
   const [runStatus, setRunStatus] = useState<RunStatus>("idle");
-  const [runLogs, setRunLogs] = useState<{ ts: number; msg: string; level: string }[]>([]);
+  const [runLogs, setRunLogs] = useState<{ ts: number; msg: string; level: string }[]>(
+    [],
+  );
   const [runOutputDir, setRunOutputDir] = useState<string | null>(null);
   const [runExitCode, setRunExitCode] = useState<number | null>(null);
   const [elapsedSec, setElapsedSec] = useState(0);
@@ -225,6 +227,15 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
       if (steps.includes("de") && validComparisonsOf(cfg).length === 0) {
         showToast("请先完成分组并至少配置一个有效的比较(case ≠ control)", "error");
         return;
+      }
+      if (steps.includes("de") && Object.keys(cfg.batch ?? {}).length > 0) {
+        const grouped = new Set(Object.values(cfg.groups).flat());
+        const assigned = new Set(Object.values(cfg.batch).flat());
+        const missing = [...grouped].filter((sample) => !assigned.has(sample));
+        if (missing.length > 0) {
+          showToast(`批次设置不完整: ${missing.join(", ")} 尚未归属批次`, "error");
+          return;
+        }
       }
       setRunLogs([]);
       setRunOutputDir(null);
@@ -311,7 +322,9 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
       setResultImages(images);
       setHasResult(true);
       const norm = p.replace(/[\\/]+$/, "");
-      const runName = norm.slice(Math.max(norm.lastIndexOf("\\"), norm.lastIndexOf("/")) + 1);
+      const runName = norm.slice(
+        Math.max(norm.lastIndexOf("\\"), norm.lastIndexOf("/")) + 1,
+      );
       const baseDir = pathDir(norm);
       const setRun = (prev: RnaSeqConfig) => ({
         ...prev,
@@ -357,7 +370,10 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
     if (typeof r !== "string" || !r) return;
     try {
       const { writeFile } = await import("@tauri-apps/plugin-fs");
-      const { steps: _s, ...serializable } = configRef.current as unknown as Record<string, unknown>;
+      const { steps: _s, ...serializable } = configRef.current as unknown as Record<
+        string,
+        unknown
+      >;
       void _s;
       await writeFile(r, new TextEncoder().encode(JSON.stringify(serializable, null, 2)));
       showToast(`配置已保存:${r}`, "success");
@@ -383,7 +399,8 @@ export function RnaSeqProvider({ children }: { children: React.ReactNode }) {
       // 若含数据文件,尝试重新导入;失败仅提示
       const df = typeof parsed.data_file === "string" ? parsed.data_file : "";
       const cf =
-        parsed.input && typeof (parsed.input as Record<string, unknown>).count_file === "string"
+        parsed.input &&
+        typeof (parsed.input as Record<string, unknown>).count_file === "string"
           ? ((parsed.input as Record<string, unknown>).count_file as string)
           : "";
       if (df || cf) {
