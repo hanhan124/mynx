@@ -1966,17 +1966,19 @@ function HeatmapSettingsPanel({
       <SettingSection title={l("坐标轴标题", "Axis titles")}>
         <div className="qpcr-setting-grid qpcr-setting-grid--two">
           <Field label={l("X 轴标题", "X-axis title")}>
-            <input
+            <TextInput
+              size="sm"
               value={settings.xLabel}
               placeholder={l("留空则不显示", "Leave blank to hide")}
-              onChange={(e) => update("xLabel", e.target.value)}
+              onChange={(event) => update("xLabel", event.currentTarget.value)}
             />
           </Field>
           <Field label={l("Y 轴标题", "Y-axis title")}>
-            <input
+            <TextInput
+              size="sm"
               value={settings.yLabel}
               placeholder={l("留空则不显示", "Leave blank to hide")}
-              onChange={(e) => update("yLabel", e.target.value)}
+              onChange={(event) => update("yLabel", event.currentTarget.value)}
             />
           </Field>
         </div>
