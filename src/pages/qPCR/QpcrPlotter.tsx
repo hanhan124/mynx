@@ -1485,15 +1485,7 @@ function BarSettingsPanel({
           />
           <span className="qpcr-angle-control">
             <label>{l("标签角度", "Label angle")}</label>
-            <select
-              value={bar.xAngle}
-              onChange={(e) => update("xAngle", Number(e.target.value))}
-            >
-              <option value="0">0°</option>
-              <option value="30">30°</option>
-              <option value="45">45°</option>
-              <option value="90">90°</option>
-            </select>
+            <Select size="sm" data={["0", "30", "45", "90"]} value={String(bar.xAngle)} onChange={(value) => update("xAngle", Number(value ?? 0))} />
           </span>
         </div>
         <div className="qpcr-setting-inline-note">
@@ -1590,51 +1582,36 @@ function BarSettingsPanel({
         </div>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("比较模式", "Comparison mode")}>
-            <select
+            <Select
+              size="sm"
+              data={["vs_first", "vs_last", "vs_control", "custom", "all_pairwise", "adjacent"]}
               value={bar.sigMode}
-              onChange={(e) => update("sigMode", e.target.value)}
-            >
-              <option value="vs_first">vs first · 第一组</option>
-              <option value="vs_last">vs last · 最后一组</option>
-              <option value="vs_control">vs control · 指定对照</option>
-              <option value="custom">custom · 自定义比较</option>
-              <option value="all_pairwise">all pairwise · 两两</option>
-              <option value="adjacent">adjacent · 相邻</option>
-            </select>
+              onChange={(value) => update("sigMode", value ?? "vs_first")}
+            />
           </Field>
           <Field label={l("对照组", "Control group")}>
-            <select
+            <Select
+              size="sm"
+              data={[{ value: "", label: l("自动使用第一组", "Use first group") }, ...groups]}
               value={bar.controlGroup}
-              onChange={(e) => update("controlGroup", e.target.value)}
-            >
-              <option value="">{l("自动使用第一组", "Use first group")}</option>
-              {groups.map((group) => (
-                <option key={group}>{group}</option>
-              ))}
-            </select>
+              onChange={(value) => update("controlGroup", value ?? "")}
+            />
           </Field>
           <Field label={l("统计检验", "Statistical test")}>
-            <select
+            <Select
+              size="sm"
+              data={["auto", "t.test", "wilcox.test", "anova", "kruskal.test"]}
               value={bar.statTest}
-              onChange={(e) => update("statTest", e.target.value)}
-            >
-              <option value="auto">auto · 自动</option>
-              <option value="t.test">Welch t-test</option>
-              <option value="wilcox.test">Wilcoxon</option>
-              <option value="anova">ANOVA + Tukey</option>
-              <option value="kruskal.test">Kruskal-Wallis</option>
-            </select>
+              onChange={(value) => update("statTest", value ?? "auto")}
+            />
           </Field>
           <Field label={l("P 值校正", "P adjustment")}>
-            <select
+            <Select
+              size="sm"
+              data={["holm", "bonferroni", "BH", "none"]}
               value={bar.pAdjustMethod}
-              onChange={(e) => update("pAdjustMethod", e.target.value)}
-            >
-              <option value="holm">Holm · 推荐</option>
-              <option value="bonferroni">Bonferroni</option>
-              <option value="BH">BH / FDR</option>
-              <option value="none">none · 不校正</option>
-            </select>
+              onChange={(value) => update("pAdjustMethod", value ?? "holm")}
+            />
           </Field>
         </div>
         <div className="qpcr-setting-grid qpcr-setting-grid--two">
