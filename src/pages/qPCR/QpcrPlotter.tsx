@@ -1449,48 +1449,22 @@ function BarSettingsPanel({
         </div>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("轴线粗细", "Axis width")}>
-            <input
-              type="number"
-              min="0"
-              max="3"
-              step="0.1"
+            <NumberInput size="sm" min={0} max={3} step={0.1}
               value={bar.axisWidth}
-              onChange={(e) =>
-                update("axisWidth", safeNumber(e.target.value, bar.axisWidth))
-              }
+              onChange={(value) => update("axisWidth", safeNumber(String(value), bar.axisWidth))}
             />
           </Field>
           <Field label={l("刻度线长度", "Tick length")}>
-            <input
-              type="number"
-              min="0"
-              max="12"
-              step="0.5"
+            <NumberInput size="sm" min={0} max={12} step={0.5}
               value={bar.tickLength}
-              onChange={(e) =>
-                update("tickLength", safeNumber(e.target.value, bar.tickLength))
-              }
+              onChange={(value) => update("tickLength", safeNumber(String(value), bar.tickLength))}
             />
           </Field>
           <Field label={l("X 标签对齐", "X hjust")}>
-            <select
-              value={bar.xHjust}
-              onChange={(e) => update("xHjust", Number(e.target.value))}
-            >
-              <option value="0">左</option>
-              <option value="0.5">中</option>
-              <option value="1">右</option>
-            </select>
+            <Select size="sm" data={[{ value: "0", label: "左" }, { value: "0.5", label: "中" }, { value: "1", label: "右" }]} value={String(bar.xHjust)} onChange={(value) => update("xHjust", Number(value ?? 0.5))} />
           </Field>
           <Field label={l("X 标签垂直对齐", "X vjust")}>
-            <select
-              value={bar.xVjust}
-              onChange={(e) => update("xVjust", Number(e.target.value))}
-            >
-              <option value="0">上</option>
-              <option value="0.5">中</option>
-              <option value="1">下</option>
-            </select>
+            <Select size="sm" data={[{ value: "0", label: "上" }, { value: "0.5", label: "中" }, { value: "1", label: "下" }]} value={String(bar.xVjust)} onChange={(value) => update("xVjust", Number(value ?? 0.5))} />
           </Field>
         </div>
         <div className="qpcr-button-row">
