@@ -2077,16 +2077,12 @@ function HeatmapSettingsPanel({
             </select>
           </Field>
           <Field label={l("配色方案", "Color palette")}>
-            <select
+            <Select
+              size="sm"
+              data={Object.entries(HEATMAP_PALETTES).map(([key, palette]) => ({ value: key, label: l(palette.zh, palette.en) }))}
               value={settings.palette}
-              onChange={(e) => update("palette", e.target.value as HeatmapPalette)}
-            >
-              {Object.entries(HEATMAP_PALETTES).map(([key, palette]) => (
-                <option key={key} value={key}>
-                  {l(palette.zh, palette.en)}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => update("palette", (value ?? "blue-white-red") as HeatmapPalette)}
+            />
           </Field>
         </div>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
@@ -2111,30 +2107,23 @@ function HeatmapSettingsPanel({
             />
           </Field>
           <Field label={l("边框粗细", "Border width")}>
-            <input
-              type="number"
-              min="0"
-              max="3"
-              step="0.05"
+            <NumberInput
+              size="sm"
+              min={0}
+              max={3}
+              step={0.05}
               value={settings.tileBorderWidth}
-              onChange={(e) =>
-                update(
-                  "tileBorderWidth",
-                  safeNumber(e.target.value, settings.tileBorderWidth),
-                )
-              }
+              onChange={(value) => update("tileBorderWidth", safeNumber(String(value), settings.tileBorderWidth))}
             />
           </Field>
           <Field label={l("格内字号", "Cell text size")}>
-            <input
-              type="number"
-              min="1"
-              max="8"
-              step="0.5"
+            <NumberInput
+              size="sm"
+              min={1}
+              max={8}
+              step={0.5}
               value={settings.cellTextSize}
-              onChange={(e) =>
-                update("cellTextSize", safeNumber(e.target.value, settings.cellTextSize))
-              }
+              onChange={(value) => update("cellTextSize", safeNumber(String(value), settings.cellTextSize))}
             />
           </Field>
         </div>
