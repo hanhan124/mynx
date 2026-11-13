@@ -1382,20 +1382,22 @@ function BarSettingsPanel({
       <SettingSection title={l("坐标轴标题", "Axis titles")}>
         <div className="qpcr-setting-grid qpcr-setting-grid--two">
           <Field label={l("X 轴标题", "X-axis title")}>
-            <input
+            <TextInput
+              size="sm"
               value={bar.xLabel}
               placeholder={l("留空则不显示", "Leave blank to hide")}
-              onChange={(e) => update("xLabel", e.target.value)}
+              onChange={(event) => update("xLabel", event.currentTarget.value)}
             />
           </Field>
           <Field label={l("Y 轴标题", "Y-axis title")}>
-            <input
+            <TextInput
+              size="sm"
               value={bar.yLabel}
               placeholder={l(
                 "例如：Normalize to <i>tbp</i>",
                 "e.g. Normalize to <i>tbp</i>",
               )}
-              onChange={(e) => update("yLabel", e.target.value)}
+              onChange={(event) => update("yLabel", event.currentTarget.value)}
             />
           </Field>
         </div>
@@ -1871,42 +1873,31 @@ function HeatmapSettingsPanel({
       <SettingSection title={l("文件与版式", "File & layout")}>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("输出前缀", "Output prefix")}>
-            <input
+            <TextInput
+              size="sm"
               value={settings.outputPrefix}
-              onChange={(e) => update("outputPrefix", e.target.value)}
+              onChange={(event) => update("outputPrefix", event.currentTarget.value)}
             />
           </Field>
           <Field label={l("兼容格式", "Compatibility format")}>
-            <select
+            <Select
+              size="sm"
+              data={["png", "svg", "pdf"]}
               value={settings.format}
-              onChange={(e) => update("format", e.target.value as PlotFormat)}
-            >
-              <option value="png">PNG</option>
-              <option value="svg">SVG</option>
-              <option value="pdf">PDF</option>
-            </select>
+              onChange={(value) => update("format", (value ?? "png") as PlotFormat)}
+            />
           </Field>
           <Field label={l("颜色范围", "Color range")}>
-            <select
-              value={settings.zlim}
-              onChange={(e) => update("zlim", Number(e.target.value))}
-            >
-              <option value="1">±1</option>
-              <option value="2">±2</option>
-              <option value="3">±3</option>
-              <option value="4">±4</option>
-            </select>
+            <Select size="sm" data={["1", "2", "3", "4"]} value={String(settings.zlim)} onChange={(value) => update("zlim", Number(value ?? 1))} />
           </Field>
           <Field label={l("基础字号", "Base font size")}>
-            <input
-              type="number"
-              min="6"
-              max="20"
-              step="0.5"
+            <NumberInput
+              size="sm"
+              min={6}
+              max={20}
+              step={0.5}
               value={settings.baseSize}
-              onChange={(e) =>
-                update("baseSize", safeNumber(e.target.value, settings.baseSize))
-              }
+              onChange={(value) => update("baseSize", safeNumber(String(value), settings.baseSize))}
             />
           </Field>
         </div>
