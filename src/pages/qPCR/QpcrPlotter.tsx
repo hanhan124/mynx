@@ -2143,16 +2143,16 @@ function HeatmapSettingsPanel({
       <SettingSection title={l("Z-score 与聚类", "Z-score & clustering")}>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("标准化方式", "Scale")}>
-            <select
+            <Select
+              size="sm"
+              data={[
+                { value: "row", label: "row · 基因" },
+                { value: "column", label: "column · 分组" },
+                { value: "none", label: "none · 原始均值" },
+              ]}
               value={settings.heatmapScale}
-              onChange={(e) =>
-                update("heatmapScale", e.target.value as HeatmapSettings["heatmapScale"])
-              }
-            >
-              <option value="row">row · 基因</option>
-              <option value="column">column · 分组</option>
-              <option value="none">none · 原始均值</option>
-            </select>
+              onChange={(value) => update("heatmapScale", (value ?? "row") as HeatmapSettings["heatmapScale"])}
+            />
           </Field>
           <div className="qpcr-setting-span-two">
             <Toggle
