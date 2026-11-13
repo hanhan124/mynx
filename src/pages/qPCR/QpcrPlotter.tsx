@@ -1709,51 +1709,27 @@ function BarSettingsPanel({
         </div>
         <div className="qpcr-setting-grid qpcr-setting-grid--four qpcr-bracket-grid">
           <Field label={l("括号线宽", "Bracket width")}>
-            <input
-              type="number"
-              min="0.1"
-              max="3"
-              step="0.05"
+            <NumberInput size="sm" min={0.1} max={3} step={0.05}
               value={bar.bracketWidth}
-              onChange={(e) =>
-                update("bracketWidth", safeNumber(e.target.value, bar.bracketWidth))
-              }
+              onChange={(value) => update("bracketWidth", safeNumber(String(value), bar.bracketWidth))}
             />
           </Field>
           <Field label={l("标注字号", "Bracket text size")}>
-            <input
-              type="number"
-              min="1"
-              max="12"
-              step="0.5"
+            <NumberInput size="sm" min={1} max={12} step={0.5}
               value={bar.bracketTextSize}
-              onChange={(e) =>
-                update("bracketTextSize", safeNumber(e.target.value, bar.bracketTextSize))
-              }
+              onChange={(value) => update("bracketTextSize", safeNumber(String(value), bar.bracketTextSize))}
             />
           </Field>
           <Field label={l("标签间距", "Label gap")}>
-            <input
-              type="number"
-              min="0"
-              max="1"
-              step="0.01"
+            <NumberInput size="sm" min={0} max={1} step={0.01}
               value={bar.bracketLabelGap}
-              onChange={(e) =>
-                update("bracketLabelGap", safeNumber(e.target.value, bar.bracketLabelGap))
-              }
+              onChange={(value) => update("bracketLabelGap", safeNumber(String(value), bar.bracketLabelGap))}
             />
           </Field>
           <Field label={l("括号层间距", "Bracket step")}>
-            <input
-              type="number"
-              min="0.01"
-              max="0.5"
-              step="0.01"
+            <NumberInput size="sm" min={0.01} max={0.5} step={0.01}
               value={bar.bracketStep}
-              onChange={(e) =>
-                update("bracketStep", safeNumber(e.target.value, bar.bracketStep))
-              }
+              onChange={(value) => update("bracketStep", safeNumber(String(value), bar.bracketStep))}
             />
           </Field>
         </div>
