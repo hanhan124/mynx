@@ -235,6 +235,7 @@
 - 计算方法、对照组、重复次数和参考基因已切换到 Mantine `Select`，保留原有字段值、自动识别和运行中禁用逻辑。
 - 重复处理策略和图表颜色已切换到 Mantine `Select`、`ColorInput`，保留择优重复、离群值阈值和配置持久化行为。
 - qPCR 绘图工作区的数据文件、工作表、输出目录、设置导入导出和运行按钮已切换到 Mantine `Button`、`Select`，保留 `runQpcrPlot`、取消和 Rscript 检测边界。
+- 图表类型切换、预览重置、打开结果目录和取消运行已切换到 Mantine `Button`，保留柱状图/热图状态和运行反馈。
 - `npx tsc --noEmit` 已通过；运行态、Excel 文件选择和工作表切换仍需在 Tauri 窗口中人工检查。
 
 ### 页面切分

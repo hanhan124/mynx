@@ -1125,7 +1125,9 @@ export default function QpcrPlotter() {
             <div className="qpcr-rail-heading">
               <span>{l("绘图类型", "Plot type")}</span>
             </div>
-            <button
+            <Button
+              variant={kind === "bar" ? "light" : "default"}
+              size="sm"
               type="button"
               className={`qpcr-template-card${kind === "bar" ? " selected" : ""}`}
               onClick={() => setKind("bar")}
@@ -1137,8 +1139,10 @@ export default function QpcrPlotter() {
                 <strong>{l("qPCR 柱状图", "qPCR bar plot")}</strong>
               </span>
               {kind === "bar" && <IconChevronRight size={15} />}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={kind === "heatmap" ? "light" : "default"}
+              size="sm"
               type="button"
               className={`qpcr-template-card${kind === "heatmap" ? " selected" : ""}`}
               onClick={() => setKind("heatmap")}
@@ -1150,7 +1154,7 @@ export default function QpcrPlotter() {
                 <strong>{l("表达量热图", "Expression heatmap")}</strong>
               </span>
               {kind === "heatmap" && <IconChevronRight size={15} />}
-            </button>
+            </Button>
             <div className="qpcr-quick-presets">
               <div className="qpcr-rail-heading">
                 <span>{l("快速预设", "Quick presets")}</span>
@@ -1204,10 +1208,10 @@ export default function QpcrPlotter() {
                       : l("等待数据", "Waiting for data")}
                   </small>
                 </div>
-                <button type="button" className="btn" onClick={reset}>
+                <Button type="button" variant="default" size="xs" onClick={reset}>
                   <IconRefresh size={13} />
                   {l("恢复默认", "Reset")}
-                </button>
+                </Button>
               </div>
               <div className="qpcr-preview-stage">
                 {kind === "bar" ? (
@@ -1249,10 +1253,10 @@ export default function QpcrPlotter() {
                   label={l("允许按需安装 R 包", "Allow R package install")}
                   onChange={setAllowInstall}
                 />
-                <button type="button" className="qpcr-inline-reset" onClick={reset}>
+                <Button type="button" variant="subtle" size="xs" className="qpcr-inline-reset" onClick={reset}>
                   <IconSettings size={13} />
                   {l("全部恢复默认", "Reset all")}
-                </button>
+                </Button>
               </div>
             </div>
             {(logs.length > 0 || result) && (
@@ -1264,23 +1268,25 @@ export default function QpcrPlotter() {
                 {result && <p>{result}</p>}
                 <pre>{logs.join("\n")}</pre>
                 {result && outputDir && (
-                  <button
+                  <Button
+                    variant="default"
+                    size="xs"
                     type="button"
-                    className="btn"
                     onClick={() => void openInShell(outputDir)}
                   >
                     <IconFolderOpen size={13} />
                     {l("打开结果目录", "Open output folder")}
-                  </button>
+                  </Button>
                 )}
                 {running && (
-                  <button
+                  <Button
+                    variant="default"
+                    size="xs"
                     type="button"
-                    className="btn"
                     onClick={() => void cancelQpcrPlot()}
                   >
                     {l("取消运行", "Cancel")}
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
