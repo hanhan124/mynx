@@ -955,3 +955,54 @@
 .chart-studio__templates-scroll { flex: 1; min-height: 0; }
 .chart-studio__templates-scroll .mantine-ScrollArea-viewport { max-height: calc(100vh - 330px); }
 .chart-studio__search .mantine-TextInput-root { flex: 1; min-width: 0; }
+
+/* 3.1-2 workbench frame. The existing business panels keep their handlers
+   and fields while the layout gives the data view and inspector independent
+   columns and scroll boundaries. */
+.chart-studio__layout {
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  gap: 14px;
+}
+.chart-studio__work {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  align-items: start;
+  gap: 14px;
+}
+.chart-studio__data-panel,
+.chart-studio__run-card,
+.chart-studio__columns,
+.chart-studio__template-actions,
+.chart-studio__result {
+  grid-column: 1;
+  min-width: 0;
+}
+.chart-studio__inspector-panel {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-width: 0;
+  max-height: calc(100vh - 176px);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.chart-studio__presets-panel {
+  grid-column: 2;
+  min-width: 0;
+}
+.chart-studio__credit {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1180px) {
+  .chart-studio__layout { grid-template-columns: minmax(210px, 230px) minmax(0, 1fr); }
+  .chart-studio__work { grid-template-columns: minmax(0, 1fr) minmax(280px, 310px); }
+}
+@media (max-width: 960px) {
+  .chart-studio__layout { grid-template-columns: 1fr; }
+  .chart-studio__catalog { position: static; max-height: 260px; }
+  .chart-studio__work { grid-template-columns: 1fr; }
+  .chart-studio__inspector-panel,
+  .chart-studio__presets-panel,
+  .chart-studio__credit { grid-column: 1; grid-row: auto; }
+  .chart-studio__inspector-panel { max-height: none; overflow: visible; }
+}

@@ -1807,7 +1807,7 @@ export default function ChartStudioPage() {
           </ScrollArea>
         </aside>
         <section className="chart-studio__work">
-          <div className="card">
+          <div className="card chart-studio__data-panel">
             <div className="card-title">
               <IconFileSpreadsheet size={15} />
               {l("数据与输出", "Data & output")}
@@ -1953,7 +1953,7 @@ export default function ChartStudioPage() {
               </div>
             </div>
           </div>
-          <div className="card">
+          <div className="card chart-studio__inspector-panel">
             <div className="card-title">
               <span className="chart-studio__selected-icon">
                 <ChartTemplateIcon template={cfg.template} size={17} />
@@ -2700,7 +2700,7 @@ export default function ChartStudioPage() {
             )}
           </section>
           {presets.length > 0 && (
-            <div className="card">
+            <div className="card chart-studio__presets-panel">
               <div className="card-title">{l("已保存的参数", "Saved presets")}</div>
               <div className="chart-studio__presets">
                 {presets.map((preset) => (
