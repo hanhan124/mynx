@@ -43,7 +43,9 @@
   padding-block-start: var(--app-shell-header-offset, 38px);
   padding-inline-end: 0;
   padding-inline-start: var(--app-shell-navbar-offset, 56px);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--bg-primary);
 }
 
@@ -71,8 +73,11 @@
 /* ========= 标题栏 — macOS 风格 ========= */
 .title-bar {
   display: flex;
+  position: relative;
+  z-index: 20;
   align-items: center;
   justify-content: space-between;
+  flex: 0 0 40px;
   height: 40px;
   min-height: 40px;
   padding: 0 8px 0 14px;
@@ -103,8 +108,12 @@
 
 .title-bar-controls {
   display: flex;
+  position: relative;
+  z-index: 1;
   align-items: center;
   gap: 2px;
+  flex: 0 0 auto;
+  pointer-events: auto;
 }
 
 .language-switcher {

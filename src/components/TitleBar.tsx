@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { loadConfig, saveAlwaysOnTop } from "@/lib/config";
 import AppMark from "@/components/AppMark";
@@ -13,10 +14,10 @@ interface TitleBarProps {
 export default function TitleBar({ title = "Mynx" }: TitleBarProps) {
   const { t } = useLanguage();
   const [pinned, setPinned] = useState(false);
-  const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+  const isTauriRuntime = typeof window !== "undefined" && isTauri();
   const appWindow = useMemo(
-    () => (isTauri ? getCurrentWindow() : null),
-    [isTauri],
+    () => (isTauriRuntime ? getCurrentWindow() : null),
+    [isTauriRuntime],
   );
 
   useEffect(() => {
