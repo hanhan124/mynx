@@ -1506,95 +1506,53 @@ function BarSettingsPanel({
       <SettingSection title={l("字体与间距", "Typography & spacing")}>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("标题字号", "Title size")}>
-            <input
-              type="number"
-              min="6"
-              max="32"
-              step="1"
+            <NumberInput size="sm" min={6} max={32} step={1}
               value={bar.titleSize}
-              onChange={(e) =>
-                update("titleSize", safeNumber(e.target.value, bar.titleSize))
-              }
+              onChange={(value) => update("titleSize", safeNumber(String(value), bar.titleSize))}
             />
           </Field>
           <Field label={l("Y 轴标题字号", "Y title size")}>
-            <input
-              type="number"
-              min="6"
-              max="24"
-              step="1"
+            <NumberInput size="sm" min={6} max={24} step={1}
               value={bar.yLabelSize}
-              onChange={(e) =>
-                update("yLabelSize", safeNumber(e.target.value, bar.yLabelSize))
-              }
+              onChange={(value) => update("yLabelSize", safeNumber(String(value), bar.yLabelSize))}
             />
           </Field>
           <Field label={l("Y 刻度字号", "Y tick size")}>
-            <input
-              type="number"
-              min="6"
-              max="24"
-              step="1"
+            <NumberInput size="sm" min={6} max={24} step={1}
               value={bar.yTickSize}
-              onChange={(e) =>
-                update("yTickSize", safeNumber(e.target.value, bar.yTickSize))
-              }
+              onChange={(value) => update("yTickSize", safeNumber(String(value), bar.yTickSize))}
             />
           </Field>
           <Field label={l("X 刻度字号", "X tick size")}>
-            <input
-              type="number"
-              min="6"
-              max="24"
-              step="1"
+            <NumberInput size="sm" min={6} max={24} step={1}
               value={bar.xTickSize}
-              onChange={(e) =>
-                update("xTickSize", safeNumber(e.target.value, bar.xTickSize))
-              }
+              onChange={(value) => update("xTickSize", safeNumber(String(value), bar.xTickSize))}
             />
           </Field>
         </div>
         <div className="qpcr-setting-grid qpcr-setting-grid--four">
           <Field label={l("标题垂直偏移", "Title vjust")}>
-            <input
-              type="number"
-              min="-2"
-              max="2"
-              step="0.1"
+            <NumberInput size="sm" min={-2} max={2} step={0.1}
               value={bar.titleVjust}
-              onChange={(e) =>
-                update("titleVjust", safeNumber(e.target.value, bar.titleVjust))
-              }
+              onChange={(value) => update("titleVjust", safeNumber(String(value), bar.titleVjust))}
             />
           </Field>
           <Field label={l("统计 CSV 文件名", "Statistics CSV filename")}>
-            <input
+            <TextInput size="sm"
               value={bar.sigFile}
-              onChange={(e) => update("sigFile", e.target.value)}
+              onChange={(event) => update("sigFile", event.currentTarget.value)}
             />
           </Field>
           <Field label={l("基础字号", "Base font size")}>
-            <input
-              type="number"
-              min="6"
-              max="20"
-              step="0.5"
+            <NumberInput size="sm" min={6} max={20} step={0.5}
               value={bar.baseSize}
-              onChange={(e) =>
-                update("baseSize", safeNumber(e.target.value, bar.baseSize))
-              }
+              onChange={(value) => update("baseSize", safeNumber(String(value), bar.baseSize))}
             />
           </Field>
           <Field label={l("误差棒粗细", "Error width")}>
-            <input
-              type="number"
-              min="0.1"
-              max="3"
-              step="0.1"
+            <NumberInput size="sm" min={0.1} max={3} step={0.1}
               value={bar.errorWidth}
-              onChange={(e) =>
-                update("errorWidth", safeNumber(e.target.value, bar.errorWidth))
-              }
+              onChange={(value) => update("errorWidth", safeNumber(String(value), bar.errorWidth))}
             />
           </Field>
         </div>
