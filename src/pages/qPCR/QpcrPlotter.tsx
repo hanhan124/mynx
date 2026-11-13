@@ -1417,39 +1417,33 @@ function BarSettingsPanel({
             />
           </Field>
           <Field label={l("边框粗细", "Border width")}>
-            <input
-              type="number"
-              min="0"
-              max="3"
-              step="0.1"
+            <NumberInput
+              size="sm"
+              min={0}
+              max={3}
+              step={0.1}
               value={bar.barBorderWidth}
-              onChange={(e) =>
-                update("barBorderWidth", safeNumber(e.target.value, bar.barBorderWidth))
-              }
+              onChange={(value) => update("barBorderWidth", safeNumber(String(value), bar.barBorderWidth))}
             />
           </Field>
           <Field label={l("柱体宽度", "Bar width")}>
-            <input
-              type="number"
-              min="0.1"
-              max="1"
-              step="0.05"
+            <NumberInput
+              size="sm"
+              min={0.1}
+              max={1}
+              step={0.05}
               value={bar.barWidth}
-              onChange={(e) =>
-                update("barWidth", safeNumber(e.target.value, bar.barWidth))
-              }
+              onChange={(value) => update("barWidth", safeNumber(String(value), bar.barWidth))}
             />
           </Field>
           <Field label={l("横帽宽度", "Cap width")}>
-            <input
-              type="number"
-              min="0"
-              max="0.5"
-              step="0.05"
+            <NumberInput
+              size="sm"
+              min={0}
+              max={0.5}
+              step={0.05}
               value={bar.errorCap}
-              onChange={(e) =>
-                update("errorCap", safeNumber(e.target.value, bar.errorCap))
-              }
+              onChange={(value) => update("errorCap", safeNumber(String(value), bar.errorCap))}
             />
           </Field>
         </div>
