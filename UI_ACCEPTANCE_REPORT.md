@@ -178,7 +178,7 @@ UI 层取消按钮全部在位（qPCR/RNA-seq/绘图/图片转换均有取消入
 
 ```text
 Mynx version: 2.3.9
-Commit: 785cea1 (base) + working-tree fixes (18 files, +70/-1603, 未提交)
+Commit: `0cb735c` (包含恢复点 `d9ab0dd`、ChartStudio `e5118f6`、RNA-seq `0ca900c`)
 OS: Windows 10 19044 x64 (WebView2 157.0.4341.46)
 Node/npm: Node v24.13.0
 React: 18.2.0
@@ -197,6 +197,8 @@ qPCR numerical diff: Summary_All_Genes 数值为 2^-ΔCt，与手算一致（GAP
 RNA-seq output diff: 输出目录契约（DE/DEG/MA/PCA/QC/heatmap/plots/data/logs/prepared）完整，DE_summary 与 params.json 字段保持
 Chart output diff: mynx-bar-basic-ggplot2.png + .png.json manifest，命名契约保持
 Image output diff: 多页 TIFF 页码命名、subfolder 输出、源文件不覆盖保持；结果表体积经 serde 修复后正确
+Chart inspector 3.1-3B: 数据映射、导出尺寸/DPI、图形元素、统计和热图配置均由 Mantine 8 控件承载；targeted bar/heatmap/volcano 五格式 smoke ✓
+RNA-seq field controls: NumField/TextField/SelectField/SwitchField/ColorField 与基因编辑器均已切换 Mantine 8，原生控件扫描为 0
 Theme/light-dark result: 浅/深/跟随系统切换即时生效，重启后保留（config.json theme=system）
 zh/en result: 全部页面双语布局无溢出
 Cancel result: UI 取消入口在位；进程树终止由 test:rust/test:r:engine 覆盖（UI 实测未执行）
