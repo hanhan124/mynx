@@ -422,10 +422,11 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                   onClick={() => setSelectedGroup(name)}
                 >
                   <div className="rx-group-header">
-                    <input
-                      className="rx-group-name"
+                    <TextInput
+                      classNames={{ input: "rx-group-name" }}
                       value={name}
-                      onChange={(e) => renameGroup(name, e.target.value)}
+                      aria-label={l(`分组名称 ${name}`, `Group name ${name}`)}
+                      onChange={(e) => renameGroup(name, e.currentTarget.value)}
                       onClick={(e) => e.stopPropagation()}
                     />
                     <span

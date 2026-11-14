@@ -36,7 +36,7 @@ import { readImageDataURL } from "@/lib/rnaseq/results";
 import { cleanGeneList } from "@/lib/rnaseq/defaults";
 import { useLanguage } from "@/lib/i18n";
 import type { AdditionalPlotsOptions } from "@/lib/rnaseq/types";
-import { Button, TextInput } from "@mantine/core";
+import { Button, Textarea, TextInput } from "@mantine/core";
 
 /** 连续色板(热图 Z-score / 相关性) */
 const HEAT_PALETTES = [
@@ -470,14 +470,14 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                 "Marker genes (labelled on the left; one per line)",
               )}
             </span>
-            <textarea
-              className="rx-genes-textarea"
+            <Textarea
+              classNames={{ input: "rx-genes-textarea" }}
               rows={5}
               value={cfg.overall_heatmap.marker_genes.join("\n")}
               onChange={(e) =>
                 st.updateConfig((d) => {
                   d.overall_heatmap.marker_genes = cleanGeneList(
-                    e.target.value.split(/[\n,]/),
+                    e.currentTarget.value.split(/[\n,]/),
                   );
                 })
               }
@@ -1259,14 +1259,14 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
                 <span className="rx-field-label">
                   {l("目标基因（每行一个）", "Target genes (one per line)")}
                 </span>
-                <textarea
-                  className="rx-genes-textarea"
+                <Textarea
+                  classNames={{ input: "rx-genes-textarea" }}
                   rows={3}
                   value={cfg.plots.additional.genes.join("\n")}
                   onChange={(e) =>
                     st.updateConfig((d) => {
                       d.plots.additional.genes = cleanGeneList(
-                        e.target.value.split(/[\n,]/),
+                        e.currentTarget.value.split(/[\n,]/),
                       );
                     })
                   }
@@ -1375,24 +1375,25 @@ function GeneClustersEditor() {
     <div className="rx-gene-clusters">
       {entries.map(([name, genes], i) => (
         <div key={name} className="rx-cluster-row">
-          <input
-            className="rx-cluster-name"
+          <TextInput
+            classNames={{ input: "rx-cluster-name" }}
             value={name}
+            aria-label={l(`基因簇名称 ${name}`, `Gene cluster name ${name}`)}
             onChange={(e) => {
-              const nextName = e.target.value.trim();
+              const nextName = e.currentTarget.value.trim();
               if (!nextName || entries.some(([k]) => k === nextName)) return;
               const next: Record<string, string[]> = {};
               for (const [k, v] of entries) next[k === name ? nextName : k] = v;
               setClusters(next);
             }}
           />
-          <textarea
-            className="rx-cluster-genes"
+          <Textarea
+            classNames={{ input: "rx-cluster-genes" }}
             rows={Math.min(4, Math.max(1, Math.ceil(genes.length / 6)))}
             value={genes.join(", ")}
             placeholder="RPE65, MITF, …"
             onChange={(e) => {
-              const list = cleanGeneList(e.target.value.split(/[\n,]/));
+              const list = cleanGeneList(e.currentTarget.value.split(/[\n,]/));
               setClusters({ ...clusters, [name]: list });
             }}
           />

@@ -4,6 +4,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { IconChevronDown, IconInfoCircle } from "@tabler/icons-react";
+import { ColorInput, NumberInput, Select, Switch, TextInput } from "@mantine/core";
 import { useLanguage } from "@/lib/i18n";
 
 const FIELD_LABELS_EN: Record<string, string> = {
@@ -332,15 +333,14 @@ export function NumField({
   return (
     <div className="rx-field">
       <FieldLabel label={label} hint={hint} />
-      <input
-        type="number"
+      <NumberInput
         value={draft}
         step={step}
         min={min}
         max={max}
         placeholder={placeholder ?? ""}
         aria-label={label}
-        onChange={(e) => setDraft(e.target.value)}
+        onChange={(next) => setDraft(next === "" ? "" : String(next))}
         onBlur={commit}
         onKeyDown={(e) => {
           if (e.key === "Enter") e.currentTarget.blur();
@@ -366,12 +366,11 @@ export function TextField({
   return (
     <div className="rx-field rx-field--wide">
       <FieldLabel label={label} hint={hint} />
-      <input
-        type="text"
+      <TextInput
         value={value ?? ""}
         placeholder={placeholder ?? ""}
         aria-label={label}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(e.currentTarget.value)}
       />
     </div>
   );
@@ -394,20 +393,18 @@ export function SelectField<T extends string | number>({
   return (
     <div className="rx-field">
       <FieldLabel label={label} hint={hint} />
-      <select
-        value={value as string}
+      <Select
+        value={value == null ? null : String(value)}
         aria-label={label}
-        onChange={(e) => {
-          const opt = options.find((o) => String(o.value) === e.target.value);
+        data={options.map((o) => ({
+          value: String(o.value),
+          label: localizeFieldText(o.label, language) ?? o.label,
+        }))}
+        onChange={(next) => {
+          const opt = options.find((o) => String(o.value) === next);
           if (opt) onChange(opt.value);
         }}
-      >
-        {options.map((o) => (
-          <option key={String(o.value)} value={String(o.value)}>
-            {localizeFieldText(o.label, language)}
-          </option>
-        ))}
-      </select>
+      />
     </div>
   );
 }
@@ -427,16 +424,11 @@ export function SwitchField({
   return (
     <div className="rx-field">
       <FieldLabel label={label} hint={hint} />
-      <button
-        type="button"
-        role="switch"
-        aria-checked={!!checked}
+      <Switch
+        checked={!!checked}
         aria-label={label}
-        className={`rx-switch${checked ? " on" : ""}`}
-        onClick={() => onChange(!checked)}
-      >
-        <span className="rx-switch-knob" />
-      </button>
+        onChange={(e) => onChange(e.currentTarget.checked)}
+      />
     </div>
   );
 }
@@ -457,10 +449,11 @@ export function ColorField({
     <div className="rx-field rx-field--color">
       <FieldLabel label={label} hint={hint} />
       <div className="rx-color-row">
-        <input
-          type="color"
+        <ColorInput
           value={/^#[0-9a-fA-F]{6}$/.test(value ?? "") ? value : "#888888"}
-          onChange={(e) => onChange(e.target.value)}
+          format="hex"
+          aria-label={label}
+          onChange={onChange}
         />
         <span className="rx-color-hex">
           {value ?? localizeFieldText("默认", language)}

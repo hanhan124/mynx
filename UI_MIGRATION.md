@@ -347,6 +347,7 @@
 - RNA-seq 图形输出的结果目录输入、浏览、打开目录和返回差异分析操作已切换到 Mantine `TextInput`、`Button`。
 - RNA-seq 基因簇编辑器的“添加基因簇”操作已切换到 Mantine `Button`。
 - RNA-seq 选定基因热图的“添加图”操作已切换到 Mantine `Button`。
+- RNA-seq 共享字段适配层已切换到 Mantine `NumberInput`、`TextInput`、`Select`、`Switch`、`ColorInput`；绘图步骤的基因列表和基因簇编辑器使用 `Textarea`/`TextInput`，保留数字草稿、样本拖放和配置更新语义。
 
 ### 页面切分
 

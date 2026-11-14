@@ -19,6 +19,12 @@ Mynx 的 Mantine 8 迁移在 Windows 上通过验收：四大科研模块的关�
 
 自动复验：`npx tsc --noEmit`、`npm run build`、`npm test`、`npm run lint`、`npm run charts:check` 均已执行。构建、类型检查、测试和图表清单检查通过；lint 为 0 error / 19 个既有 warning。`charts:verify` 的 schema、来源、参考图和字段映射阶段通过；完整 57 模板 × 5 格式的 R smoke 在有限等待窗口内未完成，已停止残留进程并另外完成 bar、heatmap、volcano 三个模板的五格式 smoke（通过）。当前恢复点为 `d9ab0dd`，本轮代码变更待单独提交。
 
+### 1.2 追加检查点（RNA-seq 字段适配层）
+
+RNA-seq 共享字段、绘图基因列表和基因簇编辑器已完成 Mantine 8 控件收口：`NumberInput`、`TextInput`、`Select`、`Switch`、`ColorInput` 和 `Textarea`。数字输入仍然保留未提交草稿，样本拖放、配置更新、运行和取消调用未改动。静态检查确认 qPCR、RNA-seq 和图片转换页面不再包含原生 `input`/`select`/`textarea` 控件。
+
+本轮复验：`npx tsc --noEmit`、`npm test`、`npm run lint`、`npm run build` 通过；lint 仍为 0 error / 19 个既有 warning。真实 Tauri 截图沿用 §3 的 Windows 验收集，macOS 仍未验证。
+
 | 阶段（UI_MIGRATION.md） | 范围 | 验收状态 |
 | --- | --- | --- |
 | 1 基础设施 | `MantineProvider`、`src/lib/mantine-theme.ts`、`theme-context.tsx` 根级主题 | 通过（首次启动即应用保存主题，重启保留已实测） |
