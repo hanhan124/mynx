@@ -24,7 +24,7 @@
     "lint": "npm run lint --prefix mynx-next",
     "lint:fix": "npm run lint:fix --prefix mynx-next",
     "test": "npm run test --prefix mynx-next",
-    "test:rust": "cargo test --locked --manifest-path mynx-next/src-tauri/Cargo.toml",
+    "test:rust": "cargo test --workspace --locked --manifest-path mynx-next/src-tauri/Cargo.toml",
     "check:release": "npm run test && npm run test:rust && npm run installer:payload",
     "format": "npm run format --prefix mynx-next",
     "format:check": "npm run format:check --prefix mynx-next",

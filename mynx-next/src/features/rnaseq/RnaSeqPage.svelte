@@ -538,7 +538,11 @@
                   {/each}
                 </div>
               {:else if !rnaseq.hasResult}
-                <p class="text-[12px] text-text-secondary">{t("rnaseq.errNotRunDir")}</p>
+                <p class="text-[12px] text-text-secondary">
+                  {rnaseq.resultDir
+                    ? t("rnaseq.errNotRunDir")
+                    : t("rnaseq.resultDirPlaceholder")}
+                </p>
               {/if}
             </div>
           </div>

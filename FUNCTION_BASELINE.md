@@ -2,31 +2,39 @@
 
 ## 基线用途
 
-本文档定义 Mantine 8 UI 迁移前必须保护的输入、输出、文件、运行状态和测试路径。UI 迁移只能改变展示、布局和非核心交互，不得改变本文件中的契约。
+本文档定义 Mynx 必须保护的输入、输出、文件、运行状态和测试路径。UI 重构
+（Mantine 迁移、Svelte 5 + Rust 重建）只能改变展示、布局和非核心交互，
+不得改变本文件中的契约。
 
-基线生成时间为 2026-11-13。当前源码版本为 2.3.9。
+基线生成时间为 2026-11-13。当前源码版本为 2.3.9。2026-11-15 起新应用位于
+`mynx-next/`（Svelte 5 + Rust workspace，架构见
+`mynx-next/docs/ARCHITECTURE_NEXT.md`）；根级验证命令已指向新应用，
+legacy 入口保留为 `npm run legacy:*`。
 
 ## 当前自动检查
 
 | 命令 | 覆盖内容 | 当前结果 |
 | --- | --- | --- |
-| `npm run build` | TypeScript、Vite production build | 通过，Vite 对大 chunk 给出提示 |
-| `npm run lint` | ESLint `src/` | 通过，19 个 warning，新增主题上下文 Fast Refresh warning |
-| `npm test` | RNA-seq matrix smoke、chart schema smoke | 通过 |
-| `npm run test:rust` | Rust image service tests | 通过，9 个测试 |
+| `npm run build` | Svelte 5 + Vite production build（mynx-next） | 通过 |
+| `npm run typecheck` | svelte-check | 通过，0 errors |
+| `npm run lint` | ESLint（mynx-next） | 通过 |
+| `npm test` | vitest（前端 150+ 用例：契约、状态机、渲染 patch、golden 断言） | 通过 |
+| `npm run test:rust` | cargo test --locked（mynx-next workspace：contracts/jobs/core/image/qpcr/rnaseq/charts） | 通过，19 个套件 |
 | `npm run test:r:engine` | RNA-seq R engine full DE/heatmap/plots 和 DE-only | 通过 |
-| `npm run resources:check` | R 资源同步检查 | 发布前执行 |
+| `npm run resources:check` | R 资源同步检查（legacy 安装器路径） | 发布前执行 |
 | `npm run charts:check` | 图表 schema 和模板检查 | 发布前执行 |
 | `npm run charts:verify` | 图表契约、R smoke、视觉回归 | 发布前执行 |
 
-当前 build 的 Vite 提示包括 ExcelJS 约 938KB，以及多个超过 500KB 的 chunk。该提示属于性能基线，不得通过删减 ExcelJS 功能来消除。
+qPCR Excel 输出与 legacy 实现逐格 golden 对比（transform/calc/best/outlier/
+control-relative + 错误文案）；Excel 原生图表 XML 与 legacy 输出逐字节一致。
+图片转换管线为 legacy 1:1 移植（原测试全数移植）。
 
 ## 功能不变量
 
 ### 通用
 
 - 路由保持 `/`、`/settings`、`/qpcr`、`/rnaseq`、`/charts`、`/image` 和兼容重定向 `/tiff`
-- `HashRouter` 和 Tauri `mynx://navigate` 事件继续工作
+- hash 路由和 Tauri `mynx://navigate` 事件继续工作
 - Tauri 无边框窗口、拖拽、最小化、最大化、关闭、置顶、原生菜单和更新能力继续工作
 - 中文和英文状态由 `LanguageProvider` 管理
 - 主题值保持 `system`、`graphite`、`pearl`，历史值 `dark` 和 `light` 继续归一化
