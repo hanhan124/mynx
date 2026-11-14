@@ -30,7 +30,7 @@ import { sanitizeComparisonName } from "@/lib/rnaseq/defaults";
 import { validComparisonsOf } from "@/features/rnaseq/model/validation";
 import type { Comparison } from "@/lib/rnaseq/types";
 import { useLanguage } from "@/lib/i18n";
-import { Button, Select } from "@mantine/core";
+import { Button, Select, TextInput } from "@mantine/core";
 
 const GROUP_COLORS = [
   "#0a84ff",
@@ -529,62 +529,40 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                     return (
                       <tr key={i} className={invalid ? "rx-invalid-row" : ""}>
                         <td>
-                          <input
-                            type="text"
+                          <TextInput
+                            size="sm"
                             value={c.name}
                             placeholder={autoName(c)}
-                            onChange={(e) =>
-                              updateComparison(i, { name: e.target.value })
+                            onChange={(event) =>
+                              updateComparison(i, { name: event.currentTarget.value })
                             }
                           />
                         </td>
                         <td>
-                          <select
+                          <Select
+                            size="sm"
+                            data={[{ value: "", label: "—" }, ...Object.keys(cfg.groups)]}
                             value={c.case}
-                            onChange={(e) =>
-                              updateComparison(i, { case: e.target.value })
-                            }
-                          >
-                            <option value="">—</option>
-                            {Object.keys(cfg.groups).map((g) => (
-                              <option key={g} value={g}>
-                                {g}
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(value) => updateComparison(i, { case: value ?? "" })}
+                          />
                         </td>
                         <td className="rx-versus">vs</td>
                         <td>
-                          <select
+                          <Select
+                            size="sm"
+                            data={[{ value: "", label: "—" }, ...Object.keys(cfg.groups)]}
                             value={c.control}
-                            onChange={(e) =>
-                              updateComparison(i, { control: e.target.value })
-                            }
-                          >
-                            <option value="">—</option>
-                            {Object.keys(cfg.groups).map((g) => (
-                              <option key={g} value={g}>
-                                {g}
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(value) => updateComparison(i, { control: value ?? "" })}
+                          />
                         </td>
                         <td>
-                          <select
+                          <Select
+                            size="sm"
+                            data={["auto", "replicate", "noreplicate"]}
                             value={c.mode ?? "auto"}
                             aria-label={l("比较路径", "Comparison path")}
-                            onChange={(e) =>
-                              updateComparison(i, {
-                                mode: e.target.value as Comparison["mode"],
-                              })
-                            }
-                          >
-                            <option value="auto">{l("自动", "auto")}</option>
-                            <option value="replicate">{l("有重复", "replicate")}</option>
-                            <option value="noreplicate">
-                              {l("无重复", "no replicate")}
-                            </option>
-                          </select>
+                            onChange={(value) => updateComparison(i, { mode: (value ?? "auto") as Comparison["mode"] })}
+                          />
                         </td>
                         <td>
                           <button
