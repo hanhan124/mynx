@@ -1640,56 +1640,49 @@ function BarSettingsPanel({
                   className="qpcr-pair-row"
                   key={`${pair.gene}-${pair.control}-${pair.treatment}-${index}`}
                 >
-                  <select
+                  <Select
+                    size="xs"
+                    data={["ALL", ...genes]}
                     aria-label={l("比较基因", "Comparison gene")}
                     value={pair.gene}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       update(
                         "customPairs",
                         bar.customPairs.map((item, i) =>
-                          i === index ? { ...item, gene: e.target.value } : item,
+                          i === index ? { ...item, gene: value ?? "ALL" } : item,
                         ),
                       )
                     }
-                  >
-                    <option value="ALL">ALL</option>
-                    {genes.map((gene) => (
-                      <option key={gene}>{gene}</option>
-                    ))}
-                  </select>
-                  <select
+                  />
+                  <Select
+                    size="xs"
+                    data={groups}
                     aria-label={l("对照组", "Control group")}
                     value={pair.control}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       update(
                         "customPairs",
                         bar.customPairs.map((item, i) =>
-                          i === index ? { ...item, control: e.target.value } : item,
+                          i === index ? { ...item, control: value ?? "" } : item,
                         ),
                       )
                     }
-                  >
-                    {groups.map((group) => (
-                      <option key={group}>{group}</option>
-                    ))}
-                  </select>
+                  />
                   <span>vs</span>
-                  <select
+                  <Select
+                    size="xs"
+                    data={groups}
                     aria-label={l("处理组", "Treatment group")}
                     value={pair.treatment}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       update(
                         "customPairs",
                         bar.customPairs.map((item, i) =>
-                          i === index ? { ...item, treatment: e.target.value } : item,
+                          i === index ? { ...item, treatment: value ?? "" } : item,
                         ),
                       )
                     }
-                  >
-                    {groups.map((group) => (
-                      <option key={group}>{group}</option>
-                    ))}
-                  </select>
+                  />
                   <button
                     type="button"
                     aria-label={l("移除比较", "Remove pair")}
