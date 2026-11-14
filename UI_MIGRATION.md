@@ -203,6 +203,7 @@
 
 - 搜索引擎入口和清空搜索使用 Mantine `ActionIcon`。
 - 首页搜索输入使用 Mantine `TextInput`，保留搜索引擎、路由和外部浏览器行为。
+- 首页工具卡片入口已使用 Mantine `Button`，保留图标、徽标、主题色和工具路由。
 
 ### 首页
 
