@@ -184,6 +184,27 @@
 - 基础柱状图、火山图、PCA、热图、Venn、表格和一个高级模板通过图表回归。
 - 运行输出、参数清单、ZIP 包、预览路径和取消后的临时文件行为保持。
 
+### 3.1-3A 属性检查器第一批参数（已完成）
+
+状态为代码迁移完成，`npx tsc --noEmit`、`npx vite build`、`npm test`、`npm run charts:check`、`npm run lint` 通过。
+
+已迁移到 Mantine `Accordion` + 表单控件（右侧检查器顶部新增「标题与注释 / 字体与文字 / ggplot 主题 / 颜色与调色板 / 图例」五个折叠参数组）：
+
+- 标题与注释：`title`、`subtitle`、`caption`、`plotTag`（`TextInput`）、`showTitle`（`Switch`）、`titleSize`（`NumberInput`）、`titleHjust`（`Select`）。
+- 字体与文字：`fontFamily`（`Select`）、`baseSize`、`axisTextSize`、`axisTitleSize`（`NumberInput`）。
+- ggplot 主题：`ggTheme`（`Select`）。
+- 颜色与调色板：`color`（`ColorInput`，hex）、`palette`（`Select`）、`paletteReverse`（`Switch`）。
+- 图例：`showLegend`（`Switch`）+ `legendPosition`（`Select`，隐藏时禁用）。
+
+实现约定：
+
+- 新增 `src/lib/charts/inspector-fields.ts`：`createInitialChartConfig()`（原页面 `initial()` 上移）、`clampInspectorNumber()`（空输入返回 null 不提交默认值，合法 0 正确钳制）、`applyLegendToggle()`（开启图例时把遗留 `legendPosition: "none"` 归一为 `"right"`；R 层 `chart_runtime.R` 在 `showLegend=false` 时强制隐藏，语义保持）。对应值转换测试见 `src/lib/charts/inspector-fields.test.ts` 与 `npm run test:inspector`（已加入 `npm test` 链）。
+- `ChartConfig` 字段名、类型、默认值与 `useChartStudioState`、预设保存/加载/导入导出、论文规格写入这些字段的路径全部保持。
+- 删除被取代的旧样式：`.chart-studio__text-fields`（含 620px 媒体查询引用）；检查器新增 `.chart-studio__inspector-accordion` 局部样式。
+- 真实 UI 检查：浅色/深色 × 中文/英文 折叠面板布局、图例开关与位置禁用联动、ColorInput 取值在运行中的 Tauri 窗口验证通过。
+
+剩余参数分组（后续批次）：数据映射（`x`/`y`/`group`/`size`）、导出与尺寸（`format`/`width`/`height`/`dpi`/`publicationPreset`）、图形元素（`pointSize`/`lineWidth`/`alpha`/`axisLineWidth`/`gridLineWidth`/`showGrid`/`panelBorder`）、统计标注（`showRawPoints`/`showStats`/`statTest`/`pAdjustMethod`）、热图设置（`heatmapScale`/`heatmapClusterRows`/`heatmapClusterCols`）。
+
 ### 3.1 完成条件
 
 - `npm run build`、`npm run lint`、`npm test` 和 `npm run charts:check` 通过。

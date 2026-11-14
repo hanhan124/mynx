@@ -1,5 +1,18 @@
 import { useEffect, useMemo } from "react";
-import { Badge, Group, NavLink, ScrollArea, Stack, Text, TextInput } from "@mantine/core";
+import {
+  Accordion,
+  Badge,
+  ColorInput,
+  Group,
+  NavLink,
+  NumberInput,
+  ScrollArea,
+  Select,
+  Stack,
+  Switch,
+  Text,
+  TextInput,
+} from "@mantine/core";
 import HelpButton, { ChartStudioTutorial } from "@/components/HelpButton";
 import {
   IconChartAreaLine,
@@ -39,6 +52,11 @@ import {
   type ChartTemplate,
 } from "@/lib/charts/catalog";
 import { cancelChartRun, installR, runChart } from "@/lib/charts/runner";
+import {
+  applyLegendToggle,
+  clampInspectorNumber,
+  createInitialChartConfig,
+} from "@/lib/charts/inspector-fields";
 import { checkRscript, resetRscriptCache } from "@/shared/platform/r-runtime";
 import { openInShell, joinPath } from "@/shared/platform/files";
 import LoadingOverlay from "@/components/LoadingOverlay";
@@ -510,53 +528,7 @@ const samples: Record<string, string> = {
   "gsea-curve-ggplot2":
     "rank,score,inSet\n1,2.8,1\n2,2.5,0\n3,2.2,0\n4,2.0,1\n5,1.8,0\n6,1.5,0\n7,1.2,0\n8,1.0,1\n9,0.8,0\n10,0.6,0\n11,0.3,0\n12,0.1,1\n13,-0.2,0\n14,-0.5,0\n15,-0.8,0\n",
 };
-const initial = (): ChartConfig => ({
-  template: verifiedChartTemplates[0],
-  filePath: "",
-  outputDir: "",
-  x: "group",
-  y: "value",
-  group: "",
-  size: "",
-  title: "",
-  subtitle: "",
-  caption: "",
-  plotTag: "",
-  color: "#0A84FF",
-  format: "png",
-  width: 8,
-  height: 5,
-  dpi: 180,
-  ggTheme: "bw",
-  baseSize: 12,
-  fontFamily: "sans",
-  showLegend: true,
-  legendPosition: "right",
-  showGrid: true,
-  showTitle: true,
-  titleSize: 14,
-  titleHjust: 0.5,
-  axisTextSize: 10,
-  axisTitleSize: 11,
-  installMissing: true,
-  publicationPreset: "custom",
-  palette: "npg",
-  paletteReverse: false,
-  pointSize: 2.6,
-  lineWidth: 0.8,
-  barWidth: 0.72,
-  alpha: 0.8,
-  axisLineWidth: 0.45,
-  gridLineWidth: 0.25,
-  panelBorder: false,
-  heatmapClusterRows: true,
-  heatmapClusterCols: true,
-  heatmapScale: "none",
-  showRawPoints: true,
-  showStats: false,
-  statTest: "wilcox.test",
-  pAdjustMethod: "holm",
-});
+const initial = createInitialChartConfig;
 const templateDefaults: Record<
   string,
   { x: string; y: string; group?: string; size?: string }
@@ -2012,72 +1984,258 @@ export default function ChartStudioPage() {
                   )}
                 </div>
               )}
-              <div className="form-row chart-studio__text-fields">
-                <div className="form-group">
-                  <label htmlFor="chart-title">{l("图表标题", "Chart title")}</label>
-                  <input
-                    id="chart-title"
-                    value={cfg.title}
-                    onChange={(e) => change("title", e.target.value)}
-                    placeholder={l("留空则自动命名", "Leave blank for automatic naming")}
-                    disabled={running}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="chart-subtitle">
-                    {l("副标题（可选）", "Subtitle (optional)")}
-                  </label>
-                  <input
-                    id="chart-subtitle"
-                    value={cfg.subtitle}
-                    onChange={(e) => change("subtitle", e.target.value)}
-                    placeholder={l(
-                      "例如：处理组与对照组的差异",
-                      "e.g. Difference between treatment and control",
-                    )}
-                    disabled={running}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="chart-caption">
-                    {l("图注（可选）", "Caption (optional)")}
-                  </label>
-                  <input
-                    id="chart-caption"
-                    value={cfg.caption}
-                    onChange={(e) => change("caption", e.target.value)}
-                    placeholder={l(
-                      "例如：数据为均值 ± 标准误",
-                      "e.g. Values are mean ± SEM",
-                    )}
-                    disabled={running}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="chart-plot-tag">
-                    {l("面板标记（可选）", "Panel tag (optional)")}
-                  </label>
-                  <input
-                    id="chart-plot-tag"
-                    value={cfg.plotTag}
-                    onChange={(e) => change("plotTag", e.target.value)}
-                    placeholder={l("例如：A", "e.g. A")}
-                    maxLength={8}
-                    disabled={running}
-                  />
-                </div>
-              </div>
+              <Accordion
+                variant="contained"
+                defaultValue="titles"
+                className="chart-studio__inspector-accordion"
+              >
+                <Accordion.Item value="titles">
+                  <Accordion.Control>
+                    {l("标题与注释", "Titles & captions")}
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <Stack gap="sm">
+                      <TextInput
+                        label={l("图表标题", "Chart title")}
+                        value={cfg.title}
+                        onChange={(e) => change("title", e.currentTarget.value)}
+                        placeholder={l("留空则自动命名", "Leave blank for automatic naming")}
+                        disabled={running}
+                      />
+                      <TextInput
+                        label={l("副标题（可选）", "Subtitle (optional)")}
+                        value={cfg.subtitle}
+                        onChange={(e) => change("subtitle", e.currentTarget.value)}
+                        placeholder={l(
+                          "例如：处理组与对照组的差异",
+                          "e.g. Difference between treatment and control",
+                        )}
+                        disabled={running}
+                      />
+                      <TextInput
+                        label={l("图注（可选）", "Caption (optional)")}
+                        value={cfg.caption}
+                        onChange={(e) => change("caption", e.currentTarget.value)}
+                        placeholder={l(
+                          "例如：数据为均值 ± 标准误",
+                          "e.g. Values are mean ± SEM",
+                        )}
+                        disabled={running}
+                      />
+                      <TextInput
+                        label={l("面板标记（可选）", "Panel tag (optional)")}
+                        value={cfg.plotTag}
+                        onChange={(e) => change("plotTag", e.currentTarget.value)}
+                        placeholder={l("例如：A", "e.g. A")}
+                        maxLength={8}
+                        disabled={running}
+                      />
+                      <Group justify="space-between" gap="sm">
+                        <Switch
+                          label={l("显示标题", "Show title")}
+                          checked={cfg.showTitle}
+                          onChange={(e) => change("showTitle", e.currentTarget.checked)}
+                          disabled={running}
+                        />
+                      </Group>
+                      <Group grow gap="sm">
+                        <NumberInput
+                          label={l("标题字号", "Title font size")}
+                          min={8}
+                          max={32}
+                          step={1}
+                          value={cfg.titleSize}
+                          onChange={(raw) => {
+                            const next = clampInspectorNumber(raw, 8, 32);
+                            if (next !== null) change("titleSize", next);
+                          }}
+                          disabled={running}
+                        />
+                        <Select
+                          label={l("标题对齐", "Title alignment")}
+                          data={[
+                            { value: "0", label: l("左对齐", "Left") },
+                            { value: "0.5", label: l("居中", "Center") },
+                            { value: "1", label: l("右对齐", "Right") },
+                          ]}
+                          value={String(cfg.titleHjust)}
+                          onChange={(value) => {
+                            if (value !== null) change("titleHjust", Number(value));
+                          }}
+                          disabled={running}
+                        />
+                      </Group>
+                    </Stack>
+                  </Accordion.Panel>
+                </Accordion.Item>
+                <Accordion.Item value="fonts">
+                  <Accordion.Control>
+                    {l("字体与文字", "Fonts & text")}
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <Stack gap="sm">
+                      <Select
+                        label={l("字体", "Font")}
+                        data={[
+                          { value: "sans", label: l("无衬线", "Sans serif") },
+                          { value: "serif", label: l("衬线", "Serif") },
+                          { value: "mono", label: l("等宽", "Monospace") },
+                        ]}
+                        value={cfg.fontFamily}
+                        onChange={(value) => {
+                          if (value !== null) change("fontFamily", value);
+                        }}
+                        disabled={running}
+                      />
+                      <Group grow gap="sm">
+                        <NumberInput
+                          label={l("基础字号", "Base font size")}
+                          min={8}
+                          max={32}
+                          step={1}
+                          value={cfg.baseSize}
+                          onChange={(raw) => {
+                            const next = clampInspectorNumber(raw, 8, 32);
+                            if (next !== null) change("baseSize", next);
+                          }}
+                          disabled={running}
+                        />
+                        <NumberInput
+                          label={l("刻度字号", "Tick font size")}
+                          min={7}
+                          max={24}
+                          step={1}
+                          value={cfg.axisTextSize}
+                          onChange={(raw) => {
+                            const next = clampInspectorNumber(raw, 7, 24);
+                            if (next !== null) change("axisTextSize", next);
+                          }}
+                          disabled={running}
+                        />
+                        <NumberInput
+                          label={l("坐标轴字号", "Axis title size")}
+                          min={7}
+                          max={24}
+                          step={1}
+                          value={cfg.axisTitleSize}
+                          onChange={(raw) => {
+                            const next = clampInspectorNumber(raw, 7, 24);
+                            if (next !== null) change("axisTitleSize", next);
+                          }}
+                          disabled={running}
+                        />
+                      </Group>
+                    </Stack>
+                  </Accordion.Panel>
+                </Accordion.Item>
+                <Accordion.Item value="theme">
+                  <Accordion.Control>
+                    {l("ggplot 主题", "ggplot theme")}
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <Stack gap="sm">
+                      <Select
+                        label={l("主题", "Theme")}
+                        data={[
+                          { value: "auto", label: l("模板默认", "Template default") },
+                          { value: "minimal", label: "Minimal" },
+                          { value: "bw", label: l("黑白（BW）", "Black & white (BW)") },
+                          { value: "classic", label: "Classic" },
+                          { value: "light", label: "Light" },
+                          { value: "gray", label: "Gray" },
+                          { value: "dark", label: "Dark" },
+                          { value: "void", label: "Void" },
+                          { value: "linedraw", label: "Line draw" },
+                        ]}
+                        value={cfg.ggTheme}
+                        onChange={(value) => {
+                          if (value !== null) change("ggTheme", value as GgplotTheme);
+                        }}
+                        disabled={running}
+                      />
+                    </Stack>
+                  </Accordion.Panel>
+                </Accordion.Item>
+                <Accordion.Item value="colors">
+                  <Accordion.Control>
+                    {l("颜色与调色板", "Colors & palette")}
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <Stack gap="sm">
+                      <Group grow gap="sm">
+                        <ColorInput
+                          label={l("主颜色", "Primary color")}
+                          format="hex"
+                          value={cfg.color}
+                          onChange={(value) => change("color", value)}
+                          disabled={running}
+                        />
+                        <Select
+                          label={l("配色", "Palette")}
+                          data={[
+                            { value: "npg", label: "NPG" },
+                            { value: "jama", label: "JAMA" },
+                            { value: "lancet", label: "Lancet" },
+                            { value: "okabe-ito", label: "Okabe–Ito" },
+                            { value: "viridis", label: "Viridis" },
+                            { value: "gray", label: l("灰度", "Grayscale") },
+                          ]}
+                          value={cfg.palette}
+                          onChange={(value) => {
+                            if (value !== null) change("palette", value as PaletteId);
+                          }}
+                          disabled={running}
+                        />
+                      </Group>
+                      <Switch
+                        label={l("反转配色", "Reverse palette")}
+                        checked={cfg.paletteReverse}
+                        onChange={(e) => change("paletteReverse", e.currentTarget.checked)}
+                        disabled={running}
+                      />
+                    </Stack>
+                  </Accordion.Panel>
+                </Accordion.Item>
+                <Accordion.Item value="legend">
+                  <Accordion.Control>
+                    {l("图例", "Legend")}
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <Stack gap="sm">
+                      <Group grow gap="sm">
+                        <Switch
+                          label={l("显示图例", "Show legend")}
+                          checked={cfg.showLegend}
+                          onChange={(e) => {
+                            const next = applyLegendToggle(
+                              { showLegend: cfg.showLegend, legendPosition: cfg.legendPosition },
+                              e.currentTarget.checked,
+                            );
+                            change("showLegend", next.showLegend);
+                            change("legendPosition", next.legendPosition);
+                          }}
+                          disabled={running}
+                        />
+                        <Select
+                          label={l("图例位置", "Legend position")}
+                          data={[
+                            { value: "right", label: l("右侧", "Right") },
+                            { value: "left", label: l("左侧", "Left") },
+                            { value: "top", label: l("上方", "Top") },
+                            { value: "bottom", label: l("下方", "Bottom") },
+                          ]}
+                          value={cfg.legendPosition === "none" ? "right" : cfg.legendPosition}
+                          onChange={(value) => {
+                            if (value !== null) change("legendPosition", value as LegendPosition);
+                          }}
+                          disabled={running || !cfg.showLegend}
+                        />
+                      </Group>
+                    </Stack>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Accordion>
               <div className="form-row chart-studio__visual-options">
-                <div className="form-group">
-                  <label htmlFor="chart-color">{l("主颜色", "Primary color")}</label>
-                  <input
-                    id="chart-color"
-                    type="color"
-                    value={cfg.color}
-                    onChange={(e) => change("color", e.target.value)}
-                    disabled={running}
-                  />
-                </div>
                 <div className="form-group">
                   <label htmlFor="chart-format">{l("导出格式", "Export format")}</label>
                   <select
@@ -2183,170 +2341,6 @@ export default function ChartStudioPage() {
                 </div>
                 <div className="chart-studio__appearance-grid">
                   <div className="form-group">
-                    <label htmlFor="chart-gg-theme">{l("主题", "Theme")}</label>
-                    <select
-                      id="chart-gg-theme"
-                      value={cfg.ggTheme}
-                      onChange={(e) => change("ggTheme", e.target.value as GgplotTheme)}
-                      disabled={running}
-                    >
-                      <option value="auto">{l("模板默认", "Template default")}</option>
-                      <option value="minimal">Minimal</option>
-                      <option value="bw">{l("黑白（BW）", "Black & white (BW)")}</option>
-                      <option value="classic">Classic</option>
-                      <option value="light">Light</option>
-                      <option value="gray">Gray</option>
-                      <option value="dark">Dark</option>
-                      <option value="void">Void</option>
-                      <option value="linedraw">Line draw</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="chart-font-family">{l("字体", "Font")}</label>
-                    <select
-                      id="chart-font-family"
-                      value={cfg.fontFamily}
-                      onChange={(e) => change("fontFamily", e.target.value)}
-                      disabled={running}
-                    >
-                      <option value="sans">{l("无衬线", "Sans serif")}</option>
-                      <option value="serif">{l("衬线", "Serif")}</option>
-                      <option value="mono">{l("等宽", "Monospace")}</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="chart-palette">{l("配色", "Palette")}</label>
-                    <select
-                      id="chart-palette"
-                      value={cfg.palette}
-                      onChange={(e) => change("palette", e.target.value as PaletteId)}
-                      disabled={running}
-                    >
-                      <option value="npg">NPG</option>
-                      <option value="jama">JAMA</option>
-                      <option value="lancet">Lancet</option>
-                      <option value="okabe-ito">Okabe–Ito</option>
-                      <option value="viridis">Viridis</option>
-                      <option value="gray">{l("灰度", "Grayscale")}</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="chart-base-size">
-                      {l("基础字号", "Base font size")}
-                    </label>
-                    <input
-                      id="chart-base-size"
-                      type="number"
-                      min="8"
-                      max="32"
-                      step="1"
-                      value={cfg.baseSize}
-                      onChange={(e) =>
-                        change(
-                          "baseSize",
-                          Math.min(32, Math.max(8, Number(e.target.value) || 12)),
-                        )
-                      }
-                      disabled={running}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="chart-legend-position">
-                      {l("图例位置", "Legend position")}
-                    </label>
-                    <select
-                      id="chart-legend-position"
-                      value={cfg.showLegend ? cfg.legendPosition : "none"}
-                      onChange={(e) => {
-                        const value = e.target.value as LegendPosition;
-                        change("legendPosition", value);
-                        change("showLegend", value !== "none");
-                      }}
-                      disabled={running}
-                    >
-                      <option value="right">{l("右侧", "Right")}</option>
-                      <option value="left">{l("左侧", "Left")}</option>
-                      <option value="top">{l("上方", "Top")}</option>
-                      <option value="bottom">{l("下方", "Bottom")}</option>
-                      <option value="none">{l("不显示", "Hidden")}</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="chart-title-size">
-                      {l("标题字号", "Title font size")}
-                    </label>
-                    <input
-                      id="chart-title-size"
-                      type="number"
-                      min="8"
-                      max="32"
-                      step="1"
-                      value={cfg.titleSize}
-                      onChange={(e) =>
-                        change(
-                          "titleSize",
-                          Math.min(32, Math.max(8, Number(e.target.value) || 14)),
-                        )
-                      }
-                      disabled={running}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="chart-title-align">
-                      {l("标题对齐", "Title alignment")}
-                    </label>
-                    <select
-                      id="chart-title-align"
-                      value={String(cfg.titleHjust)}
-                      onChange={(e) => change("titleHjust", Number(e.target.value))}
-                      disabled={running}
-                    >
-                      <option value="0">{l("左对齐", "Left")}</option>
-                      <option value="0.5">{l("居中", "Center")}</option>
-                      <option value="1">{l("右对齐", "Right")}</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="chart-axis-text-size">
-                      {l("刻度字号", "Tick font size")}
-                    </label>
-                    <input
-                      id="chart-axis-text-size"
-                      type="number"
-                      min="7"
-                      max="24"
-                      step="1"
-                      value={cfg.axisTextSize}
-                      onChange={(e) =>
-                        change(
-                          "axisTextSize",
-                          Math.min(24, Math.max(7, Number(e.target.value) || 10)),
-                        )
-                      }
-                      disabled={running}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="chart-axis-title-size">
-                      {l("坐标轴字号", "Axis title size")}
-                    </label>
-                    <input
-                      id="chart-axis-title-size"
-                      type="number"
-                      min="7"
-                      max="24"
-                      step="1"
-                      value={cfg.axisTitleSize}
-                      onChange={(e) =>
-                        change(
-                          "axisTitleSize",
-                          Math.min(24, Math.max(7, Number(e.target.value) || 11)),
-                        )
-                      }
-                      disabled={running}
-                    />
-                  </div>
-                  <div className="form-group">
                     <label htmlFor="chart-point-size">{l("点大小", "Point size")}</label>
                     <input
                       id="chart-point-size"
@@ -2450,24 +2444,6 @@ export default function ChartStudioPage() {
                       disabled={running}
                     />
                     {l("显示网格线", "Show grid lines")}
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={cfg.showTitle}
-                      onChange={(e) => change("showTitle", e.target.checked)}
-                      disabled={running}
-                    />
-                    {l("显示标题", "Show title")}
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={cfg.paletteReverse}
-                      onChange={(e) => change("paletteReverse", e.target.checked)}
-                      disabled={running}
-                    />
-                    {l("反转配色", "Reverse palette")}
                   </label>
                   <label>
                     <input
