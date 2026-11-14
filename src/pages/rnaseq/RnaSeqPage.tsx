@@ -24,7 +24,7 @@ import PlotsStep from "./PlotsStep";
 import { RnaSeqTutorial } from "./RnaSeqTutorial";
 import { useLanguage } from "@/lib/i18n";
 import { installRRuntime } from "@/lib/rnaseq/runner";
-import { Button, Group, Stack, Text, ThemeIcon } from "@mantine/core";
+import { Button, Group, Stack, Tabs, Text, ThemeIcon } from "@mantine/core";
 
 type StepId = "import" | "analysis" | "plots";
 
@@ -124,26 +124,17 @@ function RnaSeqInner() {
       </Group>
 
       {/* 三步工作流 */}
-      <div className="rx-steps" role="tablist">
-        <span
-          className="rx-steps-indicator"
-          style={{ transform: `translateX(${steps.findIndex((s) => s.id === step) * 100}%)` }}
-        />
+      <Tabs value={step} onChange={(value) => value && goStep(value as StepId)} className="rx-steps">
+        <Tabs.List>
         {steps.map((s, i) => {
           const Icon = s.icon;
           return (
-            <button
+            <Tabs.Tab
               key={s.id}
-              type="button"
-              role="tab"
-              aria-selected={step === s.id}
-              className={`rx-steps-btn${step === s.id ? " active" : ""}`}
-              onClick={() => goStep(s.id)}
+              value={s.id}
+              leftSection={<Icon size={14} stroke={1.75} />}
             >
-              <Icon size={14} stroke={1.75} />
-              <span>
-                {i + 1}. {s.label}
-              </span>
+              {i + 1}. {s.label}
               <span
                 className={`rx-steps-dot${
                   (s.id === "import" && !!st.config.data_file) ||
@@ -153,10 +144,11 @@ function RnaSeqInner() {
                     : ""
                 }`}
               />
-            </button>
+            </Tabs.Tab>
           );
         })}
-      </div>
+        </Tabs.List>
+      </Tabs>
 
       <details className="rx-project-menu">
         <summary>
