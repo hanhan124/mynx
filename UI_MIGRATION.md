@@ -289,6 +289,7 @@
 - RNA-seq 分组添加和目标分组选择已切换到 Mantine `Button`、`Select`，保留拖拽分组和样本分配逻辑。
 - RNA-seq 差异分析完成后的绘图导出、打开结果目录操作已切换到 Mantine `Button`。
 - RNA-seq 图形输出的结果目录输入、浏览、打开目录和返回差异分析操作已切换到 Mantine `TextInput`、`Button`。
+- RNA-seq 选定基因热图的“添加图”操作已切换到 Mantine `Button`。
 
 ### 页面切分
 
