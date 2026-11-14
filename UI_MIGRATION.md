@@ -213,6 +213,13 @@
 
 ## 阶段 5  图片转换
 
+### 5.0 页面头部与文件入口（进行中）
+
+- 页面头部已使用 Mantine `Group`、`Stack`、`Text` 和 `ThemeIcon`。
+- 添加文件、添加文件夹和清空操作已切换到 Mantine `Button`。
+- 保留拖放、文件收集、缩略图、任务取消和转换服务调用。
+- `npx tsc --noEmit`、`npm test` 已通过；实际批量转换和取消仍待 Tauri 窗口验收。
+
 ### 页面切分
 
 1. `FileDropPanel` 负责拖放和文件列表。
