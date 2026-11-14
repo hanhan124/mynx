@@ -45,6 +45,22 @@ pub async fn tasks_list(state: State<'_, SharedState>) -> Result<Vec<TaskRecord>
     Ok(state.jobs.list())
 }
 
+/// Home-page aggregate: recent task history, failure alerts and
+/// recently-used output directories (SQLite-backed).
+#[tauri::command]
+pub async fn home_data(state: State<'_, SharedState>) -> Result<serde_json::Value, MynxError> {
+    let store = state.settings.clone_store_handle();
+    tauri::async_runtime::spawn_blocking(move || {
+        serde_json::json!({
+            "recentTasks": store.recent_tasks(8),
+            "recentFailures": store.recent_failures(3),
+            "recentOutputs": store.recent_outputs(6),
+        })
+    })
+    .await
+    .map_err(|e| MynxError::internal(e.to_string()))
+}
+
 /// Cancel a running task (cooperative token + hard-kill hook).
 #[tauri::command]
 pub async fn tasks_cancel(state: State<'_, SharedState>, id: u64) -> Result<bool, MynxError> {

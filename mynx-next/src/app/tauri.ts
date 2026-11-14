@@ -106,6 +106,11 @@ export function openPath(path: string): Promise<boolean> {
   return call("open_path", { path });
 }
 
+/** Home-page aggregate: recent tasks, failure alerts, recent outputs. */
+export function homeData(): Promise<Record<string, unknown>> {
+  return call("home_data", {});
+}
+
 /* ---------------------------------------------------------------------------
  * Tauri events (legacy contract names preserved).
  * ------------------------------------------------------------------------- */

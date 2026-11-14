@@ -33,6 +33,7 @@ pub fn run() {
             commands::settings::settings_migrate_legacy,
             commands::settings::tasks_list,
             commands::settings::tasks_cancel,
+            commands::settings::home_data,
             commands::r_runtime::r_status,
             commands::r_runtime::r_check_dependencies,
             commands::r_runtime::r_install_runtime,

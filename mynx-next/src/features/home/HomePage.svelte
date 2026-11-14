@@ -14,6 +14,8 @@
   import StateBadge from "../../components/StateBadge.svelte";
   import EmptyState from "../../components/EmptyState.svelte";
   import IconListCheck from "@tabler/icons-svelte/icons/list-check";
+  import IconAlertTriangle from "@tabler/icons-svelte/icons/alert-triangle";
+  import IconFolderOpen from "@tabler/icons-svelte/icons/folder-open";
 
   interface ToolCard {
     route: string;
@@ -30,12 +32,16 @@
   ];
 
   let recentTasks = $state<TaskRecord[] | null>(null);
+  let recentFailures = $state<Record<string, unknown>[] | null>(null);
+  let recentOutputs = $state<Record<string, unknown>[] | null>(null);
 
-  function loadRecentTasks(): void {
+  function loadHomeData(): void {
     client
-      .tasksList()
-      .then((tasks) => {
-        recentTasks = tasks.slice(0, 5);
+      .homeData()
+      .then((data) => {
+        recentTasks = ((data.recentTasks ?? []) as TaskRecord[]).slice(0, 5);
+        recentFailures = (data.recentFailures ?? []) as Record<string, unknown>[];
+        recentOutputs = (data.recentOutputs ?? []) as Record<string, unknown>[];
       })
       .catch((err: unknown) => {
         const detail =
@@ -46,10 +52,15 @@
       });
   }
 
-  loadRecentTasks();
+  loadHomeData();
 
   function openTool(route: string): void {
     navigate(route);
+  }
+
+  function openOutput(path: unknown): void {
+    if (typeof path !== "string") return;
+    client.openPath(path).catch(() => undefined);
   }
 </script>
 
@@ -84,6 +95,34 @@
 
   <RStatusCard />
 
+  {#if recentFailures !== null && recentFailures.length > 0}
+    <section
+      class="mynx-card border-danger/50 p-4"
+      role="alert"
+      aria-label={t("home.recentFailures")}
+    >
+      <h2 class="flex items-center gap-2 text-[13px] font-semibold text-danger">
+        <IconAlertTriangle size={16} stroke={1.6} />
+        {t("home.recentFailures")}
+      </h2>
+      <ul class="mt-2 flex flex-col divide-y divide-border">
+        {#each recentFailures as failure (String(failure.id ?? failure.label ?? ""))}
+          <li class="flex items-start gap-2 py-2">
+            <span class="mynx-truncate min-w-0 flex-1 text-[12px]" title={String(failure.label ?? "")}>
+              {String(failure.label ?? "")}
+            </span>
+            <span
+              class="mynx-truncate max-w-[45%] text-[11px] text-danger"
+              title={String(failure.error ?? "")}
+            >
+              {String(failure.error ?? "")}
+            </span>
+          </li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
+
   <section class="mynx-card p-4" aria-label={t("home.recentTasks")}>
     <h2 class="text-[13px] font-semibold">{t("home.recentTasks")}</h2>
     {#if recentTasks === null}
@@ -107,4 +146,28 @@
       </ul>
     {/if}
   </section>
+
+  {#if recentOutputs !== null && recentOutputs.length > 0}
+    <section class="mynx-card p-4" aria-label={t("home.recentOutputs")}>
+      <h2 class="text-[13px] font-semibold">{t("home.recentOutputs")}</h2>
+      <ul class="mt-2 flex flex-col divide-y divide-border">
+        {#each recentOutputs as output, index (index)}
+          <li class="flex items-center gap-2 py-2">
+            <IconFolderOpen size={14} stroke={1.6} class="shrink-0 text-text-secondary" />
+            <span class="mynx-truncate min-w-0 flex-1 font-mono text-[11px]" title={String(output.path ?? "")}>
+              {String(output.path ?? "")}
+            </span>
+            <button
+              type="button"
+              class="mynx-btn px-2 py-1 text-[11px]"
+              onclick={() => openOutput(output.path)}
+              aria-label={t("home.openOutputDir", { path: String(output.path ?? "") })}
+            >
+              {t("common.openDir")}
+            </button>
+          </li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
 </section>
