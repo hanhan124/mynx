@@ -1412,9 +1412,10 @@ function GeneClustersEditor() {
         </div>
       ))}
       <div>
-        <button
+        <Button
           type="button"
-          className="btn"
+          variant="default"
+          size="sm"
           onClick={() => {
             let i = entries.length + 1;
             while (clusters[`Cluster${i}`]) i++;
@@ -1422,7 +1423,7 @@ function GeneClustersEditor() {
           }}
         >
           + {l("添加基因簇", "Add cluster")}
-        </button>
+        </Button>
       </div>
     </div>
   );
