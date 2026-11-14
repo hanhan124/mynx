@@ -35,7 +35,8 @@ export function toCommandError(err: unknown): CommandError {
   return new CommandError("internal", String(err));
 }
 
-async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
+/** Shared invoke helper: failed commands reject with a `CommandError`. */
+export async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   try {
     return await invoke<T>(command, args);
   } catch (err) {
