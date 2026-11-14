@@ -494,9 +494,9 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
           <IconFlask size={15} stroke={1.75} />
           <span>{l("差异比较", "Comparisons")}</span>
           <span className="rx-title-actions">
-            <button type="button" className="btn" onClick={addComparison}>
+            <Button type="button" variant="default" size="sm" onClick={addComparison}>
               <IconPlus size={13} stroke={1.75} /> {l("添加比较", "Add comparison")}
-            </button>
+            </Button>
           </span>
         </div>
         <div className="card-body">
