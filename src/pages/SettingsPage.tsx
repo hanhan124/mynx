@@ -6,6 +6,7 @@ import ThemePicker from "@/components/ThemePicker";
 import { loadConfig, saveAlwaysOnTop } from "@/lib/config";
 import { useLanguage, type Language } from "@/lib/i18n";
 import { useTheme } from "@/hooks/useTheme";
+import { SegmentedControl, Switch } from "@mantine/core";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -109,20 +110,16 @@ export default function SettingsPage() {
                   <div className="settings-row-copy">
                     <strong>{t("settings.language")}</strong>
                   </div>
-                  <div className="settings-segmented" role="radiogroup" aria-label={t("settings.language")}>
-                    {(["zh", "en"] as Language[]).map((item) => (
-                      <button
-                        key={item}
-                        type="button"
-                        role="radio"
-                        aria-checked={language === item}
-                        className={language === item ? "is-active" : ""}
-                        onClick={() => setLanguage(item)}
-                      >
-                        {item === "zh" ? t("settings.language.zh") : t("settings.language.en")}
-                      </button>
-                    ))}
-                  </div>
+                  <SegmentedControl
+                    size="sm"
+                    aria-label={t("settings.language")}
+                    value={language}
+                    onChange={(value) => setLanguage(value as Language)}
+                    data={[
+                      { value: "zh", label: t("settings.language.zh") },
+                      { value: "en", label: t("settings.language.en") },
+                    ]}
+                  />
                 </div>
               </div>
             </section>
@@ -136,16 +133,11 @@ export default function SettingsPage() {
                   <div className="settings-row-copy">
                     <strong>{t("settings.alwaysOnTop")}</strong>
                   </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={alwaysOnTop}
+                  <Switch
+                    checked={alwaysOnTop}
                     aria-label={t("settings.alwaysOnTop")}
-                    className={`settings-switch${alwaysOnTop ? " is-on" : ""}`}
-                    onClick={() => void setWindowPinned(!alwaysOnTop)}
-                  >
-                    <span />
-                  </button>
+                    onChange={(event) => void setWindowPinned(event.currentTarget.checked)}
+                  />
                 </div>
               </div>
             </section>
