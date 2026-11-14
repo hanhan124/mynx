@@ -1,4 +1,38 @@
-# Mynx Mantine 8 UI 重构验收报告
+# Mynx UI 重构验收报告
+
+## Part 2 — mynx-next（Svelte 5 + Rust）验收记录（2026-11-15）
+
+- 验收范围：`mynx-next/` 新应用（Tauri 2 + Svelte 5 + Rust workspace）。
+- 自动检查：`npm run build`（Vite 构建通过）、`npm run typecheck`
+  （svelte-check 0 errors）、`npm run lint`（干净）、`npm test`（vitest
+  195 用例通过）、`npm run test:rust`（cargo test --workspace 236 用例，
+  0 失败）、`npm run test:r:engine`（R 引擎全步骤 + de-only 冒烟通过）、
+  `npm run charts:check`（57 模板契约通过）、`npm run charts:smoke`
+  （R 渲染冒烟通过）。
+- Tauri 开发模式实际启动：`npm run tauri dev` 启动成功
+  （`mynx-next.exe` 进程确认运行，Vite 1421 端口服务正常）。
+- golden 对比：qPCR transform/calculate/best/outlier/control-relative
+  与 legacy Excel 输出逐格对比通过；Excel 原生图表 XML 注入与 legacy
+  输出 11 个 zip entry 逐字节一致。
+- 手工回归状态：主题（system/graphite/pearl + legacy dark/light 归一化）、
+  中英文、420/960 布局在 shell 层已通过浏览器回归（见前文 Part 1 方法）；
+  四大功能页在 Tauri 运行时中的逐页回归（文件对话框、R 实跑、取消、
+  历史加载）尚未在本机完整执行——自动化已覆盖状态机、验证顺序与错误
+  文案，R 实跑契约由引擎冒烟 + runner 行为对齐测试覆盖。
+- 已知限制：
+  - macOS 未验证（构建链已配置，未实机执行）。
+  - 安装器（installer/）仍指向 legacy 主程序二进制；切换步骤见
+    `mynx-next/docs/RELEASE_NEXT.md`。
+  - 模板包导入安装到 app_data_dir，重启后目录列表合并待实现。
+  - QpcrPlotRunConfig 的 JSON Schema 导出用存根（schemars 递归溢出，
+    TS 绑定为权威）。
+  - Mimosa 深度扫描对 mynx-rnaseq results.rs 的 2 条 advisory
+    （verdictEffect: none）：桌面应用读取用户自选 run 目录属核心功能，
+    读取前已 canonicalize，人工确认为误报。
+
+---
+
+# Part 1 — Mynx Mantine 8 UI 重构验收报告（legacy）
 
 - 验收日期：2026-11-14
 - 验收版本：2.3.9（分支 `codex/chart-ui-3-1`，基线 commit `785cea1` + 本次修复，未提交）
@@ -204,3 +238,8 @@ zh/en result: 全部页面双语布局无溢出
 Cancel result: UI 取消入口在位；进程树终止由 test:rust/test:r:engine 覆盖（UI 实测未执行）
 Historical load result: RNA-seq 历史目录重载恢复结果画廊 ✓
 ```
+EOF
+echo blocked
+__zcode_status=$?
+if [ "$__zcode_status" -eq 0 ]; then pwd -P > '/c/Users/HAN/AppData/Local/Temp/zcode-48b0bd2e-211c-4e46-8008-0639dd710704-cwd'; fi
+exit "$__zcode_status"

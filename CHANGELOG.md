@@ -1,5 +1,24 @@
 # Mynx 更新日志
 
+## [Unreleased] — 3.0.0 重构（mynx-next）
+
+### 架构重写（桌面框架保持 Tauri 2）
+- 前端从 React 18 + Mantine 8 + React Router 完全迁移到 **Svelte 5**（runes 状态）+ **Tailwind CSS 4** + Bits UI + Tabler（Svelte 版）+ TanStack Table/Virtual；新工作台式布局（标题栏 + 导航轨 + 主工作区 + 底部任务抽屉），旧 UI 全部退役（legacy 保留为参照，`npm run legacy:*`）。
+- 业务逻辑全面下沉到 **Rust workspace**（mynx-contracts / jobs / core / image / qpcr / rnaseq / charts）：qPCR 转换与计算、counts 导入规范化、Excel 原生图表 XML 注入、图片转换管线、R 进程编排（Rscript 发现 / 依赖检测 / ASCII 暂存 / 进程树终止）全部在 Rust；契约类型单一来源在 Rust（ts-rs 生成 TS 绑定 + JSON Schema 导出到 `mynx-next/contracts/`）。
+- 任务运行时 `JobManager`：idle/running/success/error/cancelled 状态机、协作取消 + R 进程树硬杀、任务中心实时事件（`mynx://task-changed`）。
+- 持久化迁移到 SQLite（设置沿用 legacy config key：theme / alwaysOnTop / chartColor / chartStudioPresets / imageConverterOptions，启动时从旧 config.json 无损迁移）；任务历史与最近输出目录入库；localStorage 不再承载核心业务。
+- 新应用根目录 `mynx-next/`；根级 dev/build/test/lint/test:rust 命令切换到新应用，legacy 入口保留（`npm run legacy:*`）。
+
+### 功能保留
+- qPCR：transform / calculate / 择优重复 / 离群值剔除 / control-relative 与 legacy Excel 输出逐格 golden 对比；原生 Excel 图表 XML 与 legacy 逐字节一致；R 绘图（qpcr_plot_runner.R）参数契约不变。
+- RNA-seq：RnaSeqConfig（params.json）契约与默认值保持；counts 导入（csv/tsv/xlsx/featureCounts/htseq、重复基因、取整）与 legacy 断言一致；引擎调用、ASCII 暂存、prepared/params.json 恢复、历史目录、取消语义保持。
+- 科研绘图：57 模板目录 / manifest / 渲染契约、预设（chartStudioPresets）、ZIP 图表包 / 模板包导出导入保持。
+- 图片转换：SUPPORTED_EXTENSIONS、ConvertEvent、水印 / 多页 TIFF / EXIF / 输出策略与 legacy 一致（legacy 测试全数移植）。
+- 路由（含 /tiff 重定向）、菜单事件、窗口控制、置顶、更新器、拖放 fs scope 授权全部保持；中英文词典迁移（400+ 键 × 2 语言，键奇偶测试锁定）。
+
+### 验证
+- 前端 vitest 195 用例、Rust 236 用例（含 qPCR golden fixtures、图表 XML 字节级对比、matrix 冒烟断言移植）、R 引擎冒烟、图表契约检查全部通过；Tauri 开发模式实际启动验证通过。
+
 ## [2.3.9] - 2026-11-08
 
 ### 许可证

@@ -71,3 +71,6 @@ scripts/build-singlefile.cjs
 
 # Local RNA-seq figure comparison output
 .rnaseq-figure-compare-output/
+
+# mynx-next generated ts-rs bindings duplicate (authoritative copy lives in mynx-next/src/lib/contracts/generated)
+mynx-next/src-tauri/crates/mynx-contracts/bindings/

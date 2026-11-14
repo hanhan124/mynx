@@ -78,19 +78,25 @@ sudo codesign --force --deep --sign - /Applications/Mynx.app
 
 环境:Node.js ≥ 22,Rust ≥ 1.77(stable);Windows 构建需 Visual Studio Build Tools(C++ 工作负载),macOS 构建需 Xcode Command Line Tools。
 
+> 2026-11 起主应用迁移至 `mynx-next/`(Tauri 2 + Svelte 5 + Rust workspace)。
+> 根级命令已指向新应用;legacy React/Mantine 应用保留为参照
+> (`npm run legacy:dev` / `legacy:build` 等),发布切换步骤见
+> `mynx-next/docs/RELEASE_NEXT.md`。
+
 ```bash
 npm install && cd installer && npm install && cd ..
 
-npm run tauri dev          # 主应用开发模式
-npm run installer:dev      # 安装器开发模式
+npm run tauri dev          # 主应用开发模式(mynx-next)
+npm run installer:dev      # 安装器开发模式(legacy 安装器,切换见 RELEASE_NEXT)
 
-npm run installer:build    # Windows:主应用 + 自建安装器(产物 release-installer/)
-npm run mac:build          # macOS Apple Silicon:.app / .dmg / updater tarball
-
-npm run build              # 前端类型检查与构建
-npm run lint               # ESLint
-npm run check:release      # 测试套件 + cargo test + 安装器 payload 同步
+npm run build              # 前端构建(Svelte 5 + Vite)
+npm run typecheck          # svelte-check
+npm run lint               # ESLint(Svelte 5)
+npm test                   # vitest
+npm run test:rust          # cargo test --workspace --locked(mynx-next)
 npm run test:r:engine      # RNA-seq 引擎契约冒烟测试(需本机 R)
+npm run charts:check       # 图表模板契约检查
+npm run check:release      # 测试套件 + cargo test + 安装器 payload 同步
 npm run version:check && npm run resources:check
 ```
 
@@ -98,9 +104,14 @@ npm run version:check && npm run resources:check
 
 ```text
 mynx/
-├── src/                # React 主应用
-├── src-tauri/          # Rust 后端、Tauri 配置与 R 引擎(r/)
-├── installer/          # Windows 安装器
+├── mynx-next/          # 新主应用:Tauri 2 + Svelte 5 + Rust workspace
+│   ├── src/            #   前端(app 壳 / features / 生成的契约类型)
+│   ├── src-tauri/      #   应用 crate + mynx-* 业务 crates + R 引擎(r/)
+│   ├── contracts/      #   JSON Schema(task-event/error/project/result)
+│   └── docs/           #   ARCHITECTURE_NEXT / TASK_PROTOCOL / …
+├── src/                # legacy React 主应用(参照)
+├── src-tauri/          # legacy Rust 后端(参照)
+├── installer/          # Windows 安装器(切换步骤见 RELEASE_NEXT)
 ├── scripts/            # 版本同步、资源校验与冒烟测试脚本
 ├── tests/r/            # R 引擎数值回归基准
 └── .github/workflows/  # GitHub Actions
