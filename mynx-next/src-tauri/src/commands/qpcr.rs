@@ -2,8 +2,8 @@
 //! runner orchestration (port of qpcr-plot-runner.ts).
 
 use mynx_contracts::qpcr::{
-    CalcRequest, CalcResult, QpcrPlotRunConfig, QpcrPlotRunResult, TransformRequest,
-    TransformResult,
+    CalcRequest, CalcResult, ChartInjectionRequest, QpcrPlotRunConfig, QpcrPlotRunResult,
+    TransformRequest, TransformResult,
 };
 use mynx_contracts::task::{LogLine, MynxError, TaskKind};
 use mynx_contracts::WIRE_VERSION;
@@ -27,6 +27,15 @@ pub async fn qpcr_transform(
 #[tauri::command]
 pub async fn qpcr_calculate(request: CalcRequest) -> Result<CalcResult, MynxError> {
     let join = tauri::async_runtime::spawn_blocking(move || mynx_qpcr::calculate(request));
+    join.await
+        .map_err(|e| MynxError::internal(e.to_string()))?
+}
+
+/// Inject native Excel chart XML into a saved workbook (Rust zip port).
+#[tauri::command]
+pub async fn qpcr_inject_charts(request: ChartInjectionRequest) -> Result<bool, MynxError> {
+    let join =
+        tauri::async_runtime::spawn_blocking(move || mynx_qpcr::inject_charts(&request));
     join.await
         .map_err(|e| MynxError::internal(e.to_string()))?
 }

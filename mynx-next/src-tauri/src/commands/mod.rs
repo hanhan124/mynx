@@ -5,5 +5,6 @@ pub mod app;
 pub mod image;
 pub mod qpcr;
 pub mod r_runtime;
+pub mod rnaseq;
 pub mod settings;
 pub mod weather;

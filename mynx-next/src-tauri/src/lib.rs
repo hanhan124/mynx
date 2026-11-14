@@ -44,6 +44,16 @@ pub fn run() {
             commands::qpcr::qpcr_transform,
             commands::qpcr::qpcr_calculate,
             commands::qpcr::qpcr_plot_run,
+            commands::qpcr::qpcr_inject_charts,
+            commands::rnaseq::rnaseq_default_config,
+            commands::rnaseq::rnaseq_merge_config,
+            commands::rnaseq::rnaseq_import_counts,
+            commands::rnaseq::rnaseq_run,
+            commands::rnaseq::rnaseq_cancel,
+            commands::rnaseq::rnaseq_list_runs,
+            commands::rnaseq::rnaseq_load_params,
+            commands::rnaseq::rnaseq_read_de_summary,
+            commands::rnaseq::rnaseq_list_result_files,
             commands::weather::weather_by_ip,
         ])
         .setup(|app| {

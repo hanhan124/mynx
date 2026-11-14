@@ -11,7 +11,6 @@
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::path::PathBuf;
 
 use mynx_contracts::rnaseq::{
     CountRounding, DuplicateGenes, ImportData, ImportRequest, MatrixFormat,
@@ -132,8 +131,9 @@ pub(crate) fn to_csv_text(headers: &[String], body: &[Vec<String>]) -> String {
             .has_headers(false)
             .flexible(true)
             .from_writer(&mut buffer);
-        let cells =
-            |row: &[String]| row.iter().map(String::as_str).collect::<Vec<&str>>();
+        fn cells(row: &[String]) -> Vec<&str> {
+            row.iter().map(String::as_str).collect()
+        }
         writer.write_record(cells(headers)).expect("in-memory csv write");
         for row in body {
             writer.write_record(cells(row)).expect("in-memory csv write");
@@ -238,6 +238,7 @@ fn drop_comment_rows(rows: Vec<Vec<String>>) -> Vec<Vec<String>> {
 
 // ── normalization (port of normalizeCountMatrix) ────────────────────────────
 
+#[derive(Debug)]
 pub(crate) struct NormalizedMatrix {
     pub(crate) headers: Vec<String>,
     pub(crate) body: Vec<Vec<String>>,
@@ -312,7 +313,7 @@ fn normalize_count_matrix(
         }
         MatrixFormat::Htseq => {
             keep_idx.push(gene_idx);
-            for idx in 1..raw_headers.len() {
+            for idx in 0..raw_headers.len() {
                 if idx == gene_idx {
                     continue;
                 }
@@ -323,7 +324,7 @@ fn normalize_count_matrix(
         }
         MatrixFormat::CountsMatrix => {
             keep_idx.push(gene_idx);
-            for idx in 1..raw_headers.len() {
+            for idx in 0..raw_headers.len() {
                 if idx == gene_idx {
                     continue;
                 }
@@ -804,7 +805,7 @@ pub fn import_counts(request: ImportRequest) -> Result<ImportData, MynxError> {
         data_file,
         converted,
         format: Some(format.to_string()),
-        matrix_format: Some(applied),
+        matrix_format: Some(applied.clone()),
         matrix_format_applied: Some(applied),
         warnings,
     })
@@ -816,6 +817,7 @@ mod tests {
     use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
 
+
     fn rows(spec: &[&[&str]]) -> Vec<Vec<String>> {
         spec.iter()
             .map(|row| row.iter().map(|cell| cell.to_string()).collect())
@@ -825,7 +827,6 @@ mod tests {
     /// Legacy preset spellings (`normalizeMatrixFormat`): the typed
     /// `MatrixFormat` enum on ImportRequest makes the unknown-preset fallback
     /// a test-only path.
-    #[cfg(test)]
     fn normalize_matrix_format(preset: &str) -> MatrixFormat {
         match preset.trim().to_lowercase().as_str() {
             "featurecounts" | "feature_counts" | "fc" => MatrixFormat::Featurecounts,
@@ -1044,11 +1045,11 @@ mod tests {
 
     #[test]
     fn duplicate_gene_strategies_match_engine() {
+        // body rows only — apply_input_options runs after normalization
         let data = vec![
-            vec!["gene".into(), "S1".into(), "S2".into()],
-            vec!["a".into(), "5".into(), "6".into()],
-            vec!["a".into(), "10".into(), "20".into()],
-            vec!["b".into(), "2".into(), "3".into()],
+            vec!["a".to_string(), "5".to_string(), "6".to_string()],
+            vec!["a".to_string(), "10".to_string(), "20".to_string()],
+            vec!["b".to_string(), "2".to_string(), "3".to_string()],
         ];
         let (sum, transformed) =
             apply_input_options(data.clone(), true, DuplicateGenes::Sum, CountRounding::Round);
@@ -1056,8 +1057,8 @@ mod tests {
         assert_eq!(
             sum,
             vec![
-                vec!["a".into(), "15".into(), "26".into()],
-                vec!["b".into(), "2".into(), "3".into()],
+                vec!["a".to_string(), "15".to_string(), "26".to_string()],
+                vec!["b".to_string(), "2".to_string(), "3".to_string()],
             ]
         );
 
@@ -1066,8 +1067,8 @@ mod tests {
         assert_eq!(
             max_mean,
             vec![
-                vec!["a".into(), "10".into(), "20".into()],
-                vec!["b".into(), "2".into(), "3".into()],
+                vec!["a".to_string(), "10".to_string(), "20".to_string()],
+                vec!["b".to_string(), "2".to_string(), "3".to_string()],
             ]
         );
 
@@ -1076,61 +1077,63 @@ mod tests {
         assert_eq!(
             unique,
             vec![
-                vec!["a".into(), "5".into(), "6".into()],
-                vec!["a_dup1".into(), "10".into(), "20".into()],
-                vec!["b".into(), "2".into(), "3".into()],
+                vec!["a".to_string(), "5".to_string(), "6".to_string()],
+                vec!["a_dup1".to_string(), "10".to_string(), "20".to_string()],
+                vec!["b".to_string(), "2".to_string(), "3".to_string()],
             ]
         );
     }
 
     #[test]
     fn rounding_modes_match_engine() {
-        let data = vec![
-            vec!["gene".into(), "S1".into(), "S2".into(), "S3".into()],
-            vec!["g".into(), "2.5".into(), "2.4".into(), "-0.5".into()],
-        ];
+        // body rows only — apply_input_options runs after normalization
+        let data = vec![vec![
+            "g".to_string(),
+            "2.5".to_string(),
+            "2.4".to_string(),
+            "-0.5".to_string(),
+        ]];
         let (round, changed) =
             apply_input_options(data.clone(), true, DuplicateGenes::Sum, CountRounding::Round);
         assert!(changed);
         assert_eq!(
-            round[1],
-            vec!["g".into(), "3".into(), "2".into(), "0".into()]
+            round[0],
+            vec!["g".to_string(), "3".to_string(), "2".to_string(), "0".to_string()]
         );
 
         let (floor, _) =
             apply_input_options(data.clone(), true, DuplicateGenes::Sum, CountRounding::Floor);
         assert_eq!(
-            floor[1],
-            vec!["g".into(), "2".into(), "2".into(), "-1".into()]
+            floor[0],
+            vec!["g".to_string(), "2".to_string(), "2".to_string(), "-1".to_string()]
         );
 
         let (ceiling, _) =
             apply_input_options(data, true, DuplicateGenes::Sum, CountRounding::Ceiling);
         assert_eq!(
-            ceiling[1],
-            vec!["g".into(), "3".into(), "3".into(), "0".into()]
+            ceiling[0],
+            vec!["g".to_string(), "3".to_string(), "3".to_string(), "0".to_string()]
         );
     }
 
     #[test]
     fn rounding_integers_is_a_no_op() {
         let data = vec![
-            vec!["gene".into(), "S1".into()],
-            vec!["g1".into(), "5".into()],
-            vec!["g2".into(), "7".into()],
+            vec!["g1".to_string(), "5".to_string()],
+            vec!["g2".to_string(), "7".to_string()],
         ];
         let (body, transformed) =
             apply_input_options(data, true, DuplicateGenes::Sum, CountRounding::Round);
         assert!(!transformed);
-        assert_eq!(body[1][1], "5");
+        assert_eq!(body[0][1], "5");
     }
 
     #[test]
     fn empty_gene_dropping_follows_request() {
         let data = vec![
-            vec!["gene".into(), "S1".into()],
-            vec!["".into(), "1".into()],
-            vec!["g1".into(), "2".into()],
+            vec!["gene".to_string(), "S1".to_string()],
+            vec!["".to_string(), "1".to_string()],
+            vec!["g1".to_string(), "2".to_string()],
         ];
         let dropped =
             normalize_count_matrix(&data, MatrixFormat::CountsMatrix, true, 1)
