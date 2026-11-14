@@ -281,7 +281,8 @@ export default function ImportStep() {
           <div className="form-group">
             <label>{l("输出根目录", "Output root")}</label>
             <div className="rx-path-row">
-              <input
+              <TextInput
+                size="sm"
                 className="rx-path-input"
                 value={cfg.output_dir}
                 readOnly
@@ -380,25 +381,29 @@ function PreviewCard() {
               </table>
             </div>
             <div className="rx-pager">
-              <button
+              <Button
                 type="button"
                 className="btn rx-pager-btn"
+                size="sm"
+                variant="default"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
                 ‹
-              </button>
+              </Button>
               <span className="rx-pager-info">
                 {data.page} / {data.total_pages} · {data.total.toLocaleString()} {l("行", "rows")}
               </span>
-              <button
+              <Button
                 type="button"
                 className="btn rx-pager-btn"
+                size="sm"
+                variant="default"
                 disabled={page >= data.total_pages}
                 onClick={() => setPage((p) => p + 1)}
               >
                 ›
-              </button>
+              </Button>
             </div>
           </>
         ) : (
