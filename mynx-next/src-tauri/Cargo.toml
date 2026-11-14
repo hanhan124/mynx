@@ -8,7 +8,7 @@ members = [
 
 [package]
 name = "mynx-next"
-version = "3.0.0"
+version = "2.3.9"
 description = "Mynx — qPCR tools, RNA-seq workbench, scientific chart studio and image converter"
 license = "Apache-2.0"
 authors = ["Mynx Team"]

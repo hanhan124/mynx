@@ -25,6 +25,29 @@ const targets = [
     file: path.join(root, "src-tauri", "Cargo.toml"),
     type: "toml-pkg",
   },
+  // 新应用 (mynx-next): tauri.conf.json
+  {
+    file: path.join(root, "mynx-next", "src-tauri", "tauri.conf.json"),
+    type: "json",
+    path: ["version"],
+  },
+  // 新应用 (mynx-next): Cargo.toml
+  {
+    file: path.join(root, "mynx-next", "src-tauri", "Cargo.toml"),
+    type: "toml-pkg",
+  },
+  // 新应用 (mynx-next): package.json
+  {
+    file: path.join(root, "mynx-next", "package.json"),
+    type: "json",
+    path: ["version"],
+  },
+  // 新应用 (mynx-next): Cargo.lock（工作区根包）
+  {
+    file: path.join(root, "mynx-next", "src-tauri", "Cargo.lock"),
+    type: "toml-lock-pkg",
+    packageName: "mynx-next",
+  },
   // installer: Cargo.toml
   {
     file: path.join(root, "installer", "src-tauri", "Cargo.toml"),
