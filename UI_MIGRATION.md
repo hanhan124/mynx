@@ -275,6 +275,13 @@
 
 ## 阶段 7  RNA-seq 工作台
 
+### 7.0 页面头部与项目操作（进行中）
+
+- 页面头部已使用 Mantine `Group`、`Stack`、`Text` 和 `ThemeIcon`。
+- 配置加载、结果目录加载和配置保存已切换到 Mantine `Button`。
+- 保留 `RnaSeqProvider`、配置文件、结果目录、Rscript 检测和三步流程状态。
+- `npx tsc --noEmit`、`npm test` 已通过；完整 R/Rust 运行回归仍待运行环境验收。
+
 ### 页面切分
 
 1. `RnaSeqPageHeader`
