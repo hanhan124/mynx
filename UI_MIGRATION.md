@@ -199,6 +199,11 @@
 - 窗口置顶已使用 Mantine `Switch`，保留 `config.json`、Tauri 窗口和广播逻辑。
 - 设置支持区域的帮助、官网、关于和 Showcase 入口已切换到 Mantine `Button`。
 
+### 首页基础控件（进行中）
+
+- 搜索引擎入口和清空搜索使用 Mantine `ActionIcon`。
+- 首页搜索输入使用 Mantine `TextInput`，保留搜索引擎、路由和外部浏览器行为。
+
 ### 首页
 
 1. 用 `SimpleGrid` 替换工具卡片网格。
