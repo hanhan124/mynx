@@ -193,6 +193,11 @@
 
 ## 阶段 4  首页、设置和通用反馈
 
+### 设置页面基础控件（进行中）
+
+- 语言切换已使用 Mantine `SegmentedControl`。
+- 窗口置顶已使用 Mantine `Switch`，保留 `config.json`、Tauri 窗口和广播逻辑。
+
 ### 首页
 
 1. 用 `SimpleGrid` 替换工具卡片网格。
