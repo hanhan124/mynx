@@ -1,0 +1,5 @@
+render_chart <- function(data, cfg, manifest) {
+  chart_validate_columns(data, list(x = cfg$x, y = cfg$y), c("x", "y")); data[[cfg$x]] <- as.factor(data[[cfg$x]]); data$.mynx_one <- 1
+  p <- ggplot2::ggplot(data, ggplot2::aes_string(x = ".mynx_one", y = cfg$y, fill = cfg$x)) + ggplot2::geom_col(width = 1, colour = "white") + ggplot2::coord_polar(theta = "y") + ggplot2::theme_void() + ggplot2::labs(title = cfg$title %||% NULL)
+  chart_open_device(cfg$outputPath, cfg$format); print(p); grDevices::dev.off(); cfg$outputPath
+}

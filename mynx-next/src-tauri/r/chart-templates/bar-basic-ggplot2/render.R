@@ -1,0 +1,1 @@
+render_chart <- function(data, cfg, manifest) { p <- ggplot2::ggplot(data, ggplot2::aes_string(x = cfg$x, y = cfg$y)) + ggplot2::geom_col(fill = cfg$color %||% "#69b3a2") + ggplot2::theme_minimal() + ggplot2::labs(title = cfg$title %||% "Basic barplot", x = NULL, y = NULL); chart_open_device(cfg$outputPath, cfg$format); print(p); grDevices::dev.off(); cfg$outputPath }

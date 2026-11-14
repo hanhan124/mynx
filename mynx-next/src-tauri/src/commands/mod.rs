@@ -1,0 +1,8 @@
+//! Tauri command adapters. Each module wires a feature service into the
+//! typed command surface the Svelte client consumes.
+
+pub mod app;
+pub mod image;
+pub mod r_runtime;
+pub mod settings;
+pub mod weather;

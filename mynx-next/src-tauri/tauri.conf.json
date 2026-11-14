@@ -1,0 +1,69 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
+  "productName": "Mynx",
+  "version": "3.0.0",
+  "identifier": "com.fanguanghan.mynx",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1421",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "title": "Mynx",
+        "width": 960,
+        "height": 540,
+        "minWidth": 420,
+        "minHeight": 500,
+        "resizable": true,
+        "decorations": false
+      }
+    ],
+    "macOSPrivateApi": true,
+    "security": {
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$HOME/**",
+          "$DOCUMENTS/**",
+          "$DOWNLOADS/**",
+          "$DESKTOP/**",
+          "$TEMP/**",
+          "$RESOURCE/**"
+        ]
+      },
+      "csp": "default-src 'self'; img-src 'self' data: asset: http://asset.localhost blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; connect-src 'self' ipc: http://ipc.localhost https://github.com https://api.github.com https://release-assets.githubusercontent.com https://objects.githubusercontent.com https://api.open-meteo.com https://api.bigdatacloud.net https://ipwho.is https://ipapi.co http://ip-api.com"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [],
+    "license": "Apache-2.0",
+    "resources": {
+      "r/": "r/"
+    },
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/hanhan124/mynx/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEEwQzk1NEE3MDlEMjEzQgpSV1E3SVoxd1NwVU1DZ1pqR244a0lWMlo1OUNmT1ExL0JhTU9ZRksxTlBMYnc0WnNRRnN2Q0NLZwo="
+    }
+  }
+}

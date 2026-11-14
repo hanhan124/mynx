@@ -1,0 +1,167 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window. Permissions are scoped to the minimum set the app actually uses: reading/writing user-selected files (xlsx) and cleaning up R-run temp files.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-close",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-unmaximize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-set-decorations",
+    "core:window:allow-set-title-bar-style",
+    "core:window:allow-set-effects",
+    "core:window:allow-set-title",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-start-dragging",
+    "core:window:allow-set-size",
+    "core:window:allow-set-position",
+    "dialog:default",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-message",
+    "dialog:allow-ask",
+    "dialog:allow-confirm",
+
+    {
+      "comment": "read-file: load user-selected .xlsx workbooks (qPCR) and re-read saved xlsx for chart injection; also plot images (SVG/PNG) for the RNA-seq gallery.",
+      "identifier": "fs:allow-read-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$DOCUMENTS/**" },
+        { "path": "$DOWNLOADS/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" },
+        { "path": "$RESOURCE/**" }
+      ]
+    },
+    {
+      "comment": "read-text-file: params.json / normalized CSV reads for RNA-seq runs.",
+      "identifier": "fs:allow-read-text-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$DOCUMENTS/**" },
+        { "path": "$DOWNLOADS/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" },
+        { "path": "$RESOURCE/**" }
+      ]
+    },
+    {
+      "comment": "read-dir + stat + exists + mkdir: scan run output dirs, locate runner.R resources, create run/output dirs (RNA-seq).",
+      "identifier": "fs:allow-read-dir",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$DOCUMENTS/**" },
+        { "path": "$DOWNLOADS/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" },
+        { "path": "$RESOURCE/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-stat",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$DOCUMENTS/**" },
+        { "path": "$DOWNLOADS/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" },
+        { "path": "$RESOURCE/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$DOCUMENTS/**" },
+        { "path": "$DOWNLOADS/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" },
+        { "path": "$RESOURCE/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-mkdir",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$DOCUMENTS/**" },
+        { "path": "$DOWNLOADS/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" }
+      ]
+    },
+    {
+      "comment": "write-file: persist xlsx results + write temp .ps1/.sh conversion scripts.",
+      "identifier": "fs:allow-write-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$DOCUMENTS/**" },
+        { "path": "$DOWNLOADS/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" }
+      ]
+    },
+    {
+      "comment": "remove: clean up R-run temp files in $TEMP (qPCR plot runner).",
+      "identifier": "fs:allow-remove",
+      "allow": [
+        { "path": "$TEMP/**" }
+      ]
+    },
+
+    {
+      "comment": "shell:allow-execute enables Command.execute() — used by the macOS/Linux TIFF converter to run `chmod +x` on the temp .sh script.",
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "powershell",
+          "cmd": "powershell.exe",
+          "args": true
+        },
+        {
+          "name": "bash",
+          "cmd": "bash",
+          "args": true
+        }
+      ]
+    },
+    {
+      "comment": "shell:allow-spawn enables Command.spawn() — used by both the Windows (PowerShell) and Unix (bash) TIFF converters to run the temp conversion script and stream stdout PROGRESS/RESULT lines.",
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "powershell",
+          "cmd": "powershell.exe",
+          "args": true
+        },
+        {
+          "name": "bash",
+          "cmd": "bash",
+          "args": true
+        },
+        {
+          "name": "winget",
+          "cmd": "winget.exe",
+          "args": [
+            "install",
+            "--id",
+            "RProject.R",
+            "--exact",
+            "--accept-package-agreements",
+            "--accept-source-agreements"
+          ]
+        }
+      ]
+    },
+    "shell:allow-kill",
+    "shell:allow-open",
+
+    "store:default",
+    "updater:default",
+    "os:default",
+    "process:allow-restart"
+  ]
+}

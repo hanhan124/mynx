@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Mynx command errors",
+  "mynxError": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "MynxError",
+    "description": "Structured error returned by commands. Serialized as a tagged map so the\nfrontend can localize by `code` while still showing the raw message.",
+    "type": "object",
+    "properties": {
+      "v": {
+        "type": "integer",
+        "format": "uint32",
+        "minimum": 0
+      },
+      "code": {
+        "$ref": "#/$defs/ErrorCode"
+      },
+      "message": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "v",
+      "code",
+      "message"
+    ],
+    "$defs": {
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "io",
+          "validation",
+          "notFound",
+          "cancelled",
+          "process",
+          "internal"
+        ]
+      }
+    }
+  }
+}

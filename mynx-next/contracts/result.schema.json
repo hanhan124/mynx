@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Mynx results",
+  "logLine": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "LogLine",
+    "description": "One streamed log line (Channel payload for run logs).",
+    "type": "object",
+    "properties": {
+      "v": {
+        "type": "integer",
+        "format": "uint32",
+        "minimum": 0
+      },
+      "tsMs": {
+        "type": "integer",
+        "format": "int64"
+      },
+      "level": {
+        "$ref": "#/$defs/LogLevel"
+      },
+      "message": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "v",
+      "tsMs",
+      "level",
+      "message"
+    ],
+    "$defs": {
+      "LogLevel": {
+        "description": "Log severity classification shared by the R runner and log drawers.",
+        "type": "string",
+        "enum": [
+          "info",
+          "warning",
+          "error",
+          "success"
+        ]
+      }
+    }
+  }
+}

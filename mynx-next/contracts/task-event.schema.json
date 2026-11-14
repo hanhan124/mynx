@@ -1,0 +1,321 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Mynx task events",
+  "taskRecord": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "TaskRecord",
+    "description": "One task-center row. Progress is a 0..=1 fraction when known.",
+    "type": "object",
+    "properties": {
+      "v": {
+        "type": "integer",
+        "format": "uint32",
+        "minimum": 0
+      },
+      "id": {
+        "type": "integer",
+        "format": "uint64",
+        "minimum": 0
+      },
+      "kind": {
+        "$ref": "#/$defs/TaskKind"
+      },
+      "label": {
+        "type": "string"
+      },
+      "status": {
+        "$ref": "#/$defs/TaskStatus"
+      },
+      "createdAtMs": {
+        "type": "integer",
+        "format": "int64"
+      },
+      "startedAtMs": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "format": "int64"
+      },
+      "finishedAtMs": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "format": "int64"
+      },
+      "progress": {
+        "type": [
+          "number",
+          "null"
+        ],
+        "format": "double"
+      },
+      "detail": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "error": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "outputDir": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "v",
+      "id",
+      "kind",
+      "label",
+      "status",
+      "createdAtMs"
+    ],
+    "$defs": {
+      "TaskKind": {
+        "description": "Stable identifiers for the task center; the UI maps these to icons and\ni18n labels. Feature pages may also carry their own event streams.",
+        "type": "string",
+        "enum": [
+          "imageConvert",
+          "qpcrPlot",
+          "qpcrExcel",
+          "rnaseqRun",
+          "chartRun",
+          "rInstall",
+          "rDependencyCheck"
+        ]
+      },
+      "TaskStatus": {
+        "description": "Terminal lifecycle state of a task. `Running` covers everything between\nstart and a terminal state; `Queued` exists for jobs accepted but not yet\nstarted (image conversion keeps this transient).",
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed",
+          "cancelled"
+        ]
+      }
+    }
+  },
+  "logLine": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "LogLine",
+    "description": "One streamed log line (Channel payload for run logs).",
+    "type": "object",
+    "properties": {
+      "v": {
+        "type": "integer",
+        "format": "uint32",
+        "minimum": 0
+      },
+      "tsMs": {
+        "type": "integer",
+        "format": "int64"
+      },
+      "level": {
+        "$ref": "#/$defs/LogLevel"
+      },
+      "message": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "v",
+      "tsMs",
+      "level",
+      "message"
+    ],
+    "$defs": {
+      "LogLevel": {
+        "description": "Log severity classification shared by the R runner and log drawers.",
+        "type": "string",
+        "enum": [
+          "info",
+          "warning",
+          "error",
+          "success"
+        ]
+      }
+    }
+  },
+  "convertEvent": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "ConvertEvent",
+    "description": "Per-file / batch lifecycle events streamed over a Tauri `Channel`.\nDiscriminated by the `kind` tag; `rename_all_fields` keeps every member\ncamelCase (a serde field rename here silently drops fields on the JS side).",
+    "oneOf": [
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "started"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "kind",
+          "total"
+        ]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "item"
+          },
+          "index": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "originalBytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "outputBytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "kind",
+          "index",
+          "total",
+          "source",
+          "status",
+          "outputs",
+          "originalBytes",
+          "outputBytes"
+        ]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "finished"
+          },
+          "status": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "failed": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          },
+          "totalInput": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "totalOutput": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "watermarkApplied": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "status",
+          "ok",
+          "failed",
+          "totalInput",
+          "totalOutput",
+          "watermarkApplied"
+        ]
+      }
+    ]
+  },
+  "chartRunEvent": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "ChartRunEvent",
+    "description": "Parsed `chart_event` line from `chart_runtime.R` (one JSON object per\nline on stdout): `{ timestamp, stage, level, message, progress, detail }`.",
+    "type": "object",
+    "properties": {
+      "v": {
+        "type": "integer",
+        "format": "uint32",
+        "minimum": 0
+      },
+      "tsMs": {
+        "type": "integer",
+        "format": "int64"
+      },
+      "stage": {
+        "type": "string"
+      },
+      "level": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "progress": {
+        "type": [
+          "number",
+          "null"
+        ],
+        "format": "double"
+      },
+      "detail": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "v",
+      "tsMs",
+      "stage",
+      "level",
+      "message"
+    ]
+  }
+}
