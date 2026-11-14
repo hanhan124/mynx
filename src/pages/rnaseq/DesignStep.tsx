@@ -854,19 +854,20 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
               </div>
               {st.deSummary && <DeSummaryTable />}
               <div className="rx-done-actions">
-                <button type="button" className="btn btn-primary" onClick={goPlots}>
+                <Button type="button" size="sm" onClick={goPlots}>
                   <IconChartDots size={14} stroke={1.75} />{" "}
                   {l("前往绘图导出", "Go to plots")}
-                </button>
+                </Button>
                 {st.resultDir && (
-                  <button
+                  <Button
                     type="button"
-                    className="btn"
+                    variant="default"
+                    size="sm"
                     onClick={() => void openInShell(st.resultDir)}
                   >
                     <IconFolderOpen size={13} stroke={1.75} />{" "}
                     {l("打开结果目录", "Open results")}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
