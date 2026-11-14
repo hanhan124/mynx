@@ -243,6 +243,7 @@
 - 热图标签角度、对齐、刻度字号和轴标题字号已切换到 Mantine `Select`、`NumberInput`。
 - 柱状图轴线、刻度、字体、统计检验、P 值校正、标签样式和括号参数已继续切换到 Mantine `Select`、`NumberInput`、`TextInput`。
 - 当前 qPCR 参数面板类型检查、构建和自动测试通过；真实 Excel 导入、绘图运行、取消和结果文件验收仍待 Tauri 窗口可交互时完成。
+- 自定义比较对的基因、对照组和处理组已切换到 Mantine `Select`，保留比较数组增删和统计标注参数。
 - `npx tsc --noEmit` 已通过；运行态、Excel 文件选择和工作表切换仍需在 Tauri 窗口中人工检查。
 
 ### 页面切分
