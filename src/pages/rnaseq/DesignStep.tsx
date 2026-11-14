@@ -793,32 +793,37 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
           </div>
           <div className="rx-run-bar">
             <div className="rx-run-left">
-              <button
+              <Button
                 type="button"
-                className="btn btn-primary rx-run-btn"
+                className="rx-run-btn"
+                size="sm"
                 disabled={running || !importReady || !designReady}
                 onClick={() => void run(["de"])}
               >
                 <IconPlayerPlay size={14} stroke={1.75} />
                 {l("运行差异分析", "Run DE analysis")}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="btn rx-run-btn"
+                className="rx-run-btn"
+                variant="default"
+                size="sm"
                 disabled={running || !importReady || !designReady}
                 onClick={() => void run(["de", "heatmap", "plots"])}
                 title={l("差异分析 + 全部图形一次完成", "DE + all figures in one go")}
               >
                 {l("全部运行", "Run all")}
-              </button>
+              </Button>
               {running && (
-                <button
+                <Button
                   type="button"
-                  className="btn rx-cancel-btn"
+                  className="rx-cancel-btn"
+                  variant="default"
+                  size="sm"
                   onClick={() => void st.cancelRun()}
                 >
                   <IconPlayerStop size={14} stroke={1.75} /> {l("取消", "Cancel")}
-                </button>
+                </Button>
               )}
               <span
                 className={`rx-tag${
