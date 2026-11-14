@@ -20,6 +20,7 @@ import { loadConverterSettings, saveConverterSettings } from "@/lib/config";
 import { useDropZone } from "@/hooks/useDropZone";
 import { useLanguage } from "@/lib/i18n";
 import { showToast } from "@/components/Toast";
+import { Button, Group, Stack, Text, ThemeIcon } from "@mantine/core";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import HelpButton, { ImageConvertTutorial } from "@/components/HelpButton";
 import FileList, { type FileItem } from "./FileList";
@@ -232,18 +233,20 @@ export default function ImageConvertPage() {
         onCancel={handleCancel}
       />
 
-      <div className="panel-header">
-        <div className="panel-icon panel-icon--accent">
-          <IconPhotoFilled size={18} color="white" stroke={1.75} />
-        </div>
-        <div className="panel-title">
-          <h2>{t("imgconv.title")}</h2>
-          <p>{t("imgconv.subtitle")}</p>
-        </div>
-        <div className="panel-actions">
+      <Group className="panel-header" justify="space-between" wrap="nowrap" gap="sm">
+        <Group gap="sm" wrap="nowrap" miw={0}>
+          <ThemeIcon size={36} radius="md" color="blue">
+            <IconPhotoFilled size={18} stroke={1.75} />
+          </ThemeIcon>
+          <Stack gap={2} miw={0}>
+            <Text fw={700} size="lg" truncate>{t("imgconv.title")}</Text>
+            <Text size="sm" c="dimmed" truncate>{t("imgconv.subtitle")}</Text>
+          </Stack>
+        </Group>
+        <Group className="panel-actions" gap="xs" wrap="nowrap">
           <HelpButton>{(close) => <ImageConvertTutorial onClose={close} />}</HelpButton>
-        </div>
-      </div>
+        </Group>
+      </Group>
 
       <div className="card-grid card-grid--2">
         <div className="card">
@@ -264,16 +267,16 @@ export default function ImageConvertPage() {
               )}
             </div>
             <div className="btn-row">
-              <button className="btn" onClick={handlePickFiles} disabled={loading}>
+              <Button size="sm" variant="default" onClick={handlePickFiles} disabled={loading}>
                 {t("imgconv.addFiles")}
-              </button>
-              <button className="btn" onClick={handlePickFolder} disabled={loading}>
+              </Button>
+              <Button size="sm" variant="default" onClick={handlePickFolder} disabled={loading}>
                 {t("imgconv.addFolder")}
-              </button>
+              </Button>
               {items.length > 0 && (
-                <button className="btn" onClick={clearAll} disabled={loading}>
+                <Button size="sm" variant="subtle" color="red" onClick={clearAll} disabled={loading}>
                   {t("imgconv.clear")}
-                </button>
+                </Button>
               )}
             </div>
             {items.length > 0 && (
