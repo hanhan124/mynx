@@ -19,7 +19,7 @@ import { importPage } from "@/lib/rnaseq/matrix";
 import { openInShell } from "@/lib/rnaseq/io";
 import type { MatrixFormat, PageData } from "@/lib/rnaseq/types";
 import { useLanguage } from "@/lib/i18n";
-import { Button } from "@mantine/core";
+import { Button, TextInput } from "@mantine/core";
 
 const FMT_CARDS: { id: MatrixFormat; zh: string; en: string; subZh: string; subEn: string }[] = [
   {
@@ -283,28 +283,29 @@ export default function ImportStep() {
                 readOnly
                 placeholder={l("默认:~/Mynx/rnaseq_runs", "Default: ~/Mynx/rnaseq_runs")}
               />
-              <button type="button" className="btn" onClick={() => void pickDir()}>
+              <Button type="button" variant="default" size="sm" aria-label={l("选择输出目录", "Choose output directory")} onClick={() => void pickDir()}>
                 <IconFolderOpen size={13} stroke={1.75} />
-              </button>
+              </Button>
             </div>
           </div>
           <div className="form-group">
             <label>{l("运行名(auto = 时间戳)", "Run name (auto = timestamp)")}</label>
-            <input
-              type="text"
+            <TextInput
+              size="sm"
+              label={l("运行名(auto = 时间戳)", "Run name (auto = timestamp)")}
               value={cfg.run_name}
-              onChange={(e) =>
+              onChange={(event) =>
                 st.updateConfig((d) => {
-                  d.run_name = e.target.value;
+                  d.run_name = event.currentTarget.value;
                 })
               }
               placeholder="auto"
             />
           </div>
           {cfg.output_dir && (
-            <button type="button" className="btn" onClick={() => void openInShell(cfg.output_dir)}>
+            <Button type="button" variant="default" size="sm" onClick={() => void openInShell(cfg.output_dir)}>
               <IconFolderOpen size={13} stroke={1.75} /> {l("打开目录", "Open folder")}
-            </button>
+            </Button>
           )}
         </div>
       </details>
