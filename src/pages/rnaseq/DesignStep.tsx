@@ -951,9 +951,9 @@ function BatchEditor({ samples }: { samples: string[] }) {
               "Batch corrects technical variation such as sequencing or library batches. It is not a biological group. Once enabled, every sample in a comparison must belong to one batch; a confounded batch term is dropped and recorded in the log.",
             )}
           </span>
-          <button type="button" className="btn" onClick={addBatch}>
+          <Button type="button" variant="default" size="sm" onClick={addBatch}>
             <IconPlus size={13} stroke={1.75} /> {l("添加批次", "Add batch")}
-          </button>
+          </Button>
         </div>
         {Object.keys(batches).length === 0 ? (
           <div className="rx-empty-tip">
