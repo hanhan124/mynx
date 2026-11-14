@@ -24,6 +24,7 @@ import PlotsStep from "./PlotsStep";
 import { RnaSeqTutorial } from "./RnaSeqTutorial";
 import { useLanguage } from "@/lib/i18n";
 import { installRRuntime } from "@/lib/rnaseq/runner";
+import { Button, Group, Stack, Text, ThemeIcon } from "@mantine/core";
 
 type StepId = "import" | "analysis" | "plots";
 
@@ -106,19 +107,21 @@ function RnaSeqInner() {
 
   return (
     <div className="page-shell page-shell--wide unified-page unified-page--rnaseq">
-      <div className="panel-header">
-        <div className="panel-icon panel-icon--purple">
-          <IconMicroscope size={18} color="white" stroke={1.75} />
-        </div>
-        <div className="panel-title">
-          <h2>{t("rnaseq.title")}</h2>
-          <p>{t("rnaseq.subtitle")}</p>
-        </div>
-        <div className="panel-actions">
+      <Group className="panel-header" justify="space-between" wrap="nowrap" gap="sm">
+        <Group gap="sm" wrap="nowrap" miw={0}>
+          <ThemeIcon size={36} radius="md" color="violet">
+            <IconMicroscope size={18} stroke={1.75} />
+          </ThemeIcon>
+          <Stack gap={2} miw={0}>
+            <Text fw={700} size="lg" truncate>{t("rnaseq.title")}</Text>
+            <Text size="sm" c="dimmed" truncate>{t("rnaseq.subtitle")}</Text>
+          </Stack>
+        </Group>
+        <Group className="panel-actions" gap="xs" wrap="nowrap">
           {rscriptTag()}
           <HelpButton>{(close) => <RnaSeqTutorial onClose={close} />}</HelpButton>
-        </div>
-      </div>
+        </Group>
+      </Group>
 
       {/* 三步工作流 */}
       <div className="rx-steps" role="tablist">
@@ -160,12 +163,13 @@ function RnaSeqInner() {
           {t("rnaseq.loadConfig")} / {t("rnaseq.loadResult")} / {t("rnaseq.saveConfig")}
         </summary>
         <div className="rx-project-menu-actions">
-          <button type="button" className="btn" onClick={() => void st.loadConfig()}>
+          <Button type="button" variant="default" size="sm" onClick={() => void st.loadConfig()}>
             <IconFileImport size={13} stroke={1.75} /> {t("rnaseq.loadConfig")}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn"
+            variant="default"
+            size="sm"
             onClick={async () => {
               const { open } = await import("@tauri-apps/plugin-dialog");
               const picked = await open({
@@ -180,10 +184,10 @@ function RnaSeqInner() {
             }}
           >
             <IconFolderOpen size={13} stroke={1.75} /> {t("rnaseq.loadResult")}
-          </button>
-          <button type="button" className="btn" onClick={() => void st.saveConfig()}>
+          </Button>
+          <Button type="button" variant="default" size="sm" onClick={() => void st.saveConfig()}>
             <IconDeviceFloppy size={13} stroke={1.75} /> {t("rnaseq.saveConfig")}
-          </button>
+          </Button>
         </div>
       </details>
 
