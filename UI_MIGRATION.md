@@ -293,6 +293,7 @@
 - RNA-seq 比较名称、case/control 分组和比较路径已切换到 Mantine `TextInput`、`Select`，保留比较契约。
 - RNA-seq 批次设置的“添加批次”操作已切换到 Mantine `Button`。
 - RNA-seq 比较表格的移除操作已切换到 Mantine `ActionIcon`，保留危险语义色和无障碍标签。
+- RNA-seq 批次名称输入和删除批次操作已切换到 Mantine `TextInput`、`ActionIcon`。
 - RNA-seq 图形输出的结果目录输入、浏览、打开目录和返回差异分析操作已切换到 Mantine `TextInput`、`Button`。
 - RNA-seq 基因簇编辑器的“添加基因簇”操作已切换到 Mantine `Button`。
 - RNA-seq 选定基因热图的“添加图”操作已切换到 Mantine `Button`。
