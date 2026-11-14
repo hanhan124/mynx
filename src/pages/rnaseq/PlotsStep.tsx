@@ -507,9 +507,10 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
           `${Object.keys(cfg.gene_clusters).length} clusters / ${Object.values(cfg.gene_clusters).flat().length} genes`,
         )}
         right={
-          <button
+          <Button
             type="button"
-            className="btn"
+            variant="default"
+            size="sm"
             onClick={() =>
               st.updateConfig((d) => {
                 const i = d.selected_heatmaps.length + 1;
@@ -533,7 +534,7 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
             }
           >
             <IconPlus size={13} stroke={1.75} /> {l("添加图", "Add figure")}
-          </button>
+          </Button>
         }
         defaultOpen
       >
