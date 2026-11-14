@@ -30,7 +30,7 @@ import { sanitizeComparisonName } from "@/lib/rnaseq/defaults";
 import { validComparisonsOf } from "@/features/rnaseq/model/validation";
 import type { Comparison } from "@/lib/rnaseq/types";
 import { useLanguage } from "@/lib/i18n";
-import { Button, Select, TextInput } from "@mantine/core";
+import { ActionIcon, Button, Select, TextInput } from "@mantine/core";
 
 const GROUP_COLORS = [
   "#0a84ff",
@@ -565,9 +565,12 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                           />
                         </td>
                         <td>
-                          <button
+                          <ActionIcon
                             type="button"
-                            className="rx-icon-btn rx-icon-btn--danger"
+                            variant="subtle"
+                            color="red"
+                            size="sm"
+                            aria-label={l("移除比较", "Remove comparison")}
                             onClick={() =>
                               updateConfig((d) => {
                                 d.comparisons.splice(i, 1);
@@ -575,7 +578,7 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                             }
                           >
                             <IconTrash size={13} stroke={1.75} />
-                          </button>
+                          </ActionIcon>
                         </td>
                       </tr>
                     );
