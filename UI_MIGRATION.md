@@ -281,6 +281,7 @@
 - 配置加载、结果目录加载和配置保存已切换到 Mantine `Button`。
 - 保留 `RnaSeqProvider`、配置文件、结果目录、Rscript 检测和三步流程状态。
 - `npx tsc --noEmit`、`npm test` 已通过；完整 R/Rust 运行回归仍待运行环境验收。
+- 三步导入、分析、绘图导航已切换到 Mantine `Tabs`，保留数据文件和分析结果前置条件。
 
 ### 页面切分
 
