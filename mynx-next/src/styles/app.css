@@ -1,0 +1,311 @@
+@import "tailwindcss";
+
+/*
+ * Mynx visual system tokens (Svelte 5 + Tailwind 4).
+ * Flat surfaces, 1px borders, no gradients, no glass, no decorative shadows.
+ * Pearl (light) values are the :root defaults; graphite (dark) overrides live
+ * under [data-theme="graphite"]. The theme attribute is always a concrete
+ * resolved theme ("pearl" | "graphite"), never "system".
+ */
+@theme {
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef0f3;
+  --color-border: #d9dde3;
+  --color-text: #1a2233;
+  --color-text-secondary: #5a6376;
+  --color-accent: #2f6fed;
+  --color-accent-hover: #2758c7;
+  --color-success: #157f3d;
+  --color-warning: #b45309;
+  --color-danger: #b91c1c;
+
+  --font-sans: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+}
+
+[data-theme="graphite"] {
+  --color-bg: #16181d;
+  --color-surface: #1f2229;
+  --color-surface-2: #262a33;
+  --color-border: #333947;
+  --color-text: #e8eaf0;
+  --color-text-secondary: #9aa2b1;
+  --color-accent: #5c8dff;
+  --color-accent-hover: #7ba3ff;
+  --color-success: #3fb96f;
+  --color-warning: #d97706;
+  --color-danger: #ef5350;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: #ffffff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+
+  /* Thin scrollbars (WebView2/Chromium + Firefox). */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-secondary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Buttons ---------------------------------------------------------------- */
+
+  .mynx-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .mynx-btn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+    border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  }
+
+  .mynx-btn:active:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
+  }
+
+  .mynx-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .mynx-btn-primary {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #ffffff;
+  }
+
+  .mynx-btn-primary:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+
+  .mynx-btn-danger {
+    background: var(--color-surface);
+    border-color: color-mix(in srgb, var(--color-danger) 55%, var(--color-border));
+    color: var(--color-danger);
+  }
+
+  .mynx-btn-danger:hover:not(:disabled) {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    color: #ffffff;
+  }
+
+  /* Inputs ----------------------------------------------------------------- */
+
+  .mynx-input {
+    height: 30px;
+    padding: 0 8px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 13px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mynx-input::placeholder {
+    color: var(--color-text-secondary);
+  }
+
+  .mynx-input:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+  }
+
+  .mynx-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 25%, transparent);
+  }
+
+  .mynx-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  textarea.mynx-input {
+    height: auto;
+    min-height: 64px;
+    padding: 6px 8px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  /* Badges (task states) --------------------------------------------------- */
+
+  .mynx-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    font-size: 11px;
+    line-height: 16px;
+    white-space: nowrap;
+  }
+
+  .mynx-badge-queued {
+    background: var(--color-surface-2);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+  }
+
+  .mynx-badge-running {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+    color: var(--color-accent);
+  }
+
+  .mynx-badge-success {
+    background: color-mix(in srgb, var(--color-success) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
+    color: var(--color-success);
+  }
+
+  .mynx-badge-error {
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-danger) 40%, transparent);
+    color: var(--color-danger);
+  }
+
+  .mynx-badge-cancelled {
+    background: var(--color-surface-2);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+  }
+
+  /* Surfaces --------------------------------------------------------------- */
+
+  .mynx-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+  }
+
+  .mynx-divider {
+    height: 1px;
+    border: none;
+    background: var(--color-border);
+  }
+
+  /* Text ------------------------------------------------------------------- */
+
+  .mynx-mono {
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .mynx-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .mynx-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-2);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    line-height: 16px;
+    white-space: nowrap;
+  }
+
+  .mynx-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--color-accent);
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+  }
+
+  .mynx-link:hover {
+    text-decoration: underline;
+  }
+
+  .mynx-link:disabled {
+    color: var(--color-text-secondary);
+    cursor: not-allowed;
+    text-decoration: none;
+  }
+}
