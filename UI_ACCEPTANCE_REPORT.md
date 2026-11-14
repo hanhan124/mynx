@@ -32,6 +32,26 @@
   - **历史结果加载：RNA-seq 历史面板通过真实 Rust IPC 扫描
     `~/Mynx/rnaseq_runs` 列出 4 个运行目录**（2 个真实历史 run +
     验证用临时目录），历史/参数恢复契约由 merge_run_params 测试锁定。
+  - **真实图片转换全状态机（CDP 驱动真实 UI，120 张 1600×1200 PNG）**：
+    - idle → **running**：进度条 62%、"正在转换 (116/188)…"、运行按钮
+      禁用、取消按钮可用（截图 image-1280 之前的 page-1440 运行帧）。
+    - **cancelled**：运行中点击取消 → 任务徽标 running → cancelled，
+      界面出现"已取消"，已生成文件保留（badges 序列
+      `success,running,running → success,cancelled` 逐帧捕获）。
+    - **success**：任务徽标 success，输出目录 `PNG_output_<时间戳>`
+      落盘 155 个 PNG，抽样像素级对比源图 **完全一致**（无损管线
+      端到端验证）。
+    - 触发方式：通过应用自身的拖放事件契约
+      （tauri://drag-drop + image_collect_files）注入 120 个文件后
+      点击真实"开始转换/取消"按钮；文件对话框 UI 无法自动化（CUA
+      不能置前原生对话框），其余流程全部经真实按钮与真实 Rust 管线。
+  - **1280px / 1440px 运行时布局（真实窗口 resize）**：通过
+    `plugin:window|set_size` 将窗口实际调整为 1280×800 与 1440×900，
+    逐路由检查 6 条路由（/ /image /qpcr /rnaseq /charts /settings）
+    全部无水平溢出、内容完整；运行时截图存于
+    `mynx-next/docs/acceptance-screenshots/`（page-1280.png、
+    page-1440.png、image-success.png 等 6 张，含深色主题、设置页、
+    转换进行中与完成态）。
   - disabled/idle 状态：图片页未添加文件时运行按钮显示
     「请先添加图片」禁用态；running/success/error/cancelled 徽标由
     state 测试锁定并在任务抽屉渲染。
@@ -43,11 +63,9 @@
 - 已知限制（剩余项）：
   - **macOS 未实机验证**（构建链已配置：mac:build 脚本指向 mynx-next；
     无 Apple Silicon 机器可用，发布前需实机回归）。
-  - 文件对话框驱动的 R 实跑/图片批量转换未在运行时自动化（CUA 无法
-    置前原生对话框）；对应契约由 golden fixtures、引擎冒烟与管线移植
-    测试覆盖，取消语义由任务中心测试锁定。
-  - 1280/1440px 布点未在运行时逐点截图（shell 层浏览器回归已覆盖
-    420/960；布局为流式 flex，风险低）。
+  - 文件对话框本身未自动化（CUA 不能置前原生对话框）；文件注入走
+    应用自身拖放事件契约，其余（运行/取消/结果/输出目录）全部经真实
+    UI 按钮与真实 Rust 管线完成。
   - 安装器（installer/）仍指向 legacy 主程序二进制；切换步骤见
     `mynx-next/docs/RELEASE_NEXT.md`。
   - 模板包导入安装到 app_data_dir，重启后目录列表合并待实现。
