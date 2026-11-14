@@ -4,6 +4,7 @@ import {
   IconPhotoFilled,
 } from "@tabler/icons-react";
 import { useLanguage } from "@/lib/i18n";
+import { Select, TextInput } from "@mantine/core";
 import {
   baseName,
   IMAGE_EXTENSIONS,
@@ -107,49 +108,47 @@ export default function OptionsPanel({
       {/* ── 压缩设置 ── */}
       <div className="form-group">
         <label>{t("imgconv.compression")}</label>
-        <select
+        <Select
+          size="sm"
+          data={[{ value: "lossless", label: t("imgconv.modeLossless") }, { value: "lossy", label: t("imgconv.modeLossy") }]}
+          label={t("imgconv.compression")}
           value={settings.mode}
-          onChange={(e) => onChange({ mode: e.target.value as ConverterSettings["mode"] })}
-        >
-          <option value="lossless">{t("imgconv.modeLossless")}</option>
-          <option value="lossy">{t("imgconv.modeLossy")}</option>
-        </select>
+          onChange={(value) => onChange({ mode: (value ?? "lossless") as ConverterSettings["mode"] })}
+        />
       </div>
 
       {settings.mode === "lossless" ? (
         <div className="form-group">
           <label>{t("imgconv.optimizeLevel")}</label>
-          <select
-            value={settings.optimizeLevel}
-            onChange={(e) => onChange({ optimizeLevel: Number(e.target.value) })}
-          >
-            <option value={1}>{t("imgconv.levelFast")}</option>
-            <option value={2}>{t("imgconv.levelBalanced")}</option>
-            <option value={3}>{t("imgconv.levelMax")}</option>
-          </select>
+          <Select
+            size="sm"
+            data={[{ value: "1", label: t("imgconv.levelFast") }, { value: "2", label: t("imgconv.levelBalanced") }, { value: "3", label: t("imgconv.levelMax") }]}
+            label={t("imgconv.optimizeLevel")}
+            value={String(settings.optimizeLevel)}
+            onChange={(value) => onChange({ optimizeLevel: Number(value ?? 2) })}
+          />
         </div>
       ) : (
         <div className="form-row">
           <div className="form-group">
             <label>{t("imgconv.colors")}</label>
-            <select
-              value={settings.colors}
-              onChange={(e) => onChange({ colors: Number(e.target.value) })}
-            >
-              {COLOR_COUNTS.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            <Select
+              size="sm"
+              data={COLOR_COUNTS.map((c) => String(c))}
+              label={t("imgconv.colors")}
+              value={String(settings.colors)}
+              onChange={(value) => onChange({ colors: Number(value ?? 256) })}
+            />
           </div>
           <div className="form-group">
             <label>{t("imgconv.dither")}</label>
-            <select
+            <Select
+              size="sm"
+              data={[{ value: "1", label: t("imgconv.yes") }, { value: "0", label: t("imgconv.no") }]}
+              label={t("imgconv.dither")}
               value={yesNo(settings.dither)}
-              onChange={(e) => onChange({ dither: e.target.value === "1" })}
-            >
-              <option value="1">{t("imgconv.yes")}</option>
-              <option value="0">{t("imgconv.no")}</option>
-            </select>
+              onChange={(value) => onChange({ dither: value === "1" })}
+            />
           </div>
         </div>
       )}
@@ -195,11 +194,12 @@ export default function OptionsPanel({
         <>
           <div className="form-group">
             <label>{t("imgconv.wmContent")}</label>
-            <input
-              type="text"
+            <TextInput
+              size="sm"
+              label={t("imgconv.wmContent")}
               value={wm.content}
               placeholder={t("imgconv.wmContentHint")}
-              onChange={(e) => patchWm({ content: e.target.value })}
+              onChange={(event) => patchWm({ content: event.currentTarget.value })}
             />
           </div>
           <div className="form-row">
