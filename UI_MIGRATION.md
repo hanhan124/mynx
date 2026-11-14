@@ -142,7 +142,7 @@
 
 ### 3.1-2 数据映射与参数检查器
 
-本次完成三栏工作区结构。数据导入、参数控件和绘图调用继续使用现有实现，后续再按本节逐项迁移。
+状态：三栏工作区和 3.1-3A 第一批检查器迁移已完成；3.1-3B 参数组已完成 Mantine 8 迁移。
 
 基础设施补验收：修复 AppShell 主内容区被全局 `overflow: hidden` 阻断的问题；无边框 Tauri 窗口继续使用自定义标题栏，并改用官方 `isTauri()` 运行时检测，确保最小化、最大化和关闭控件在 dev 与打包环境中可见。
 
@@ -166,6 +166,21 @@
 - 缺少字段、未知字段和不支持文件类型的提示保持。
 - 运行中表单禁用、焦点态、错误态和中英文布局通过检查。
 - 不改变 `ChartConfig`、R 参数 JSON 或模板字段映射。
+
+### 3.1-3B 属性检查器第二批参数（已完成）
+
+`src/pages/charts/ChartStudioPage.tsx` 中剩余的可见原生表单控件已替换为 Mantine 8：
+
+- 数据映射：`x`、`y`、`group`、`size` 使用 `TextInput`，保留模板条件显示和原始字符串。
+- 导出与尺寸：`format`、`publicationPreset` 使用 `Select`；`width`、`height`、`dpi` 使用 `NumberInput`。
+- 图形元素：`pointSize`、`lineWidth`、`alpha`、`axisLineWidth`、`gridLineWidth` 使用 `NumberInput`；`showGrid`、`panelBorder` 使用 `Switch`。
+- 统计标注：`showRawPoints`、`showStats` 使用 `Switch`；`statTest`、`pAdjustMethod` 使用 `Select`。
+- 热图：`heatmapScale` 使用 `Select`；行/列聚类使用 `Switch`。
+- 按需安装缺少的 R 包使用 `Switch`，运行中统一禁用。
+
+数值变更全部经过 `clampInspectorNumber`：空字符串保留编辑中的旧值，0 值不被默认值覆盖，边界仍按原有 `ChartConfig` 语义钳制。未修改模板目录、字段映射、R runner、输出格式、预设读写或取消 API。
+
+验证：`npx tsc --noEmit`、`npm test`、`npm run lint`、`npm run charts:check` 和 `npm run build` 已执行；`lint` 保持基线的 19 个 warning、无 error。Windows Tauri 截图和 macOS 实机验证状态记录在 `UI_ACCEPTANCE_REPORT.md`。
 
 ### 3.1-3 预览、运行状态与结果导出
 

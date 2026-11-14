@@ -335,7 +335,13 @@
   border-color: var(--gg-hairline);
   backdrop-filter: blur(36px) saturate(160%);
   -webkit-backdrop-filter: blur(36px) saturate(160%);
-}/* The utility search window is a separate route{ background: var(--bg-primary); border-color: var(--gg-hairline); }
+}
+
+/* The utility search window is a separate route. */
+.search-window {
+  background: var(--bg-primary);
+  border-color: var(--gg-hairline);
+}
 
 .modal-overlay {
   background:

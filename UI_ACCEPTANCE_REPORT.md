@@ -13,6 +13,12 @@ Mynx 的 Mantine 8 迁移在 Windows 上通过验收：四大科研模块的关�
 
 ## 1. 迁移模块清单
 
+### 1.1 追加检查点（ChartStudio 3.1-3B）
+
+本轮在已有 Windows 验收结果之上完成了 ChartStudio 右侧检查器第二批参数迁移。数据映射、导出格式与论文规格、尺寸/DPI、图形元素、统计标注、热图设置和按需安装选项均已使用 Mantine 8 控件；没有改动 `ChartConfig`、模板 manifest、R runner、输出文件命名或取消 API。数值输入保留空值编辑态并正确接受 0。
+
+自动复验：`npx tsc --noEmit`、`npm run build`、`npm test`、`npm run lint`、`npm run charts:check` 均已执行。构建、类型检查、测试和图表清单检查通过；lint 为 0 error / 19 个既有 warning。`charts:verify` 的 schema、来源、参考图和字段映射阶段通过；完整 57 模板 × 5 格式的 R smoke 在有限等待窗口内未完成，已停止残留进程并另外完成 bar、heatmap、volcano 三个模板的五格式 smoke（通过）。当前恢复点为 `d9ab0dd`，本轮代码变更待单独提交。
+
 | 阶段（UI_MIGRATION.md） | 范围 | 验收状态 |
 | --- | --- | --- |
 | 1 基础设施 | `MantineProvider`、`src/lib/mantine-theme.ts`、`theme-context.tsx` 根级主题 | 通过（首次启动即应用保存主题，重启保留已实测） |

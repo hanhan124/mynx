@@ -358,6 +358,7 @@ const publicationPresets: Record<
   PublicationPreset,
   {
     label: string;
+    labelEn: string;
     width: number;
     height: number;
     dpi: number;
@@ -372,6 +373,7 @@ const publicationPresets: Record<
 > = {
   custom: {
     label: "自定义",
+    labelEn: "Custom",
     width: 8,
     height: 5,
     dpi: 300,
@@ -385,6 +387,7 @@ const publicationPresets: Record<
   },
   "nature-single": {
     label: "Nature 单栏 · 89 mm",
+    labelEn: "Nature single · 89 mm",
     width: 3.5,
     height: 2.65,
     dpi: 600,
@@ -398,6 +401,7 @@ const publicationPresets: Record<
   },
   "nature-double": {
     label: "Nature 双栏 · 183 mm",
+    labelEn: "Nature double · 183 mm",
     width: 7.2,
     height: 4.9,
     dpi: 600,
@@ -411,6 +415,7 @@ const publicationPresets: Record<
   },
   "general-single": {
     label: "通用单栏 · 85 mm",
+    labelEn: "General single · 85 mm",
     width: 3.35,
     height: 2.55,
     dpi: 600,
@@ -424,6 +429,7 @@ const publicationPresets: Record<
   },
   "general-double": {
     label: "通用双栏 · 170 mm",
+    labelEn: "General double · 170 mm",
     width: 6.7,
     height: 4.8,
     dpi: 600,
@@ -1846,68 +1852,56 @@ export default function ChartStudioPage() {
                   </button>
                 )}
               </div>
-              <div className="form-row chart-studio__mapping-row">
-                <div className="form-group">
-                  <label htmlFor="chart-x">
-                    {l("X / 分类列", "X / category column")}
-                  </label>
-                  <input
-                    id="chart-x"
-                    value={cfg.x}
-                    onChange={(e) => change("x", e.target.value)}
-                    placeholder="如 group"
-                    disabled={running}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="chart-y">{l("Y / 数值列", "Y / value column")}</label>
-                  <input
-                    id="chart-y"
-                    value={cfg.y}
-                    onChange={(e) => change("y", e.target.value)}
-                    placeholder="如 value"
-                    disabled={running}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="chart-group">
-                    {l("分组 / 颜色列（可选）", "Group / color column (optional)")}
-                  </label>
-                  <input
-                    id="chart-group"
-                    value={cfg.group}
-                    onChange={(e) => change("group", e.target.value)}
-                    placeholder="如 treatment"
-                    disabled={running}
-                  />
-                </div>
+              <Group className="chart-studio__mapping-row" grow gap="sm" wrap="wrap" align="flex-start">
+                <TextInput
+                  label={l("X / 分类列", "X / category column")}
+                  value={cfg.x}
+                  onChange={(e) => change("x", e.currentTarget.value)}
+                  placeholder="如 group"
+                  disabled={running}
+                  style={{ flex: "1 1 150px" }}
+                />
+                <TextInput
+                  label={l("Y / 数值列", "Y / value column")}
+                  value={cfg.y}
+                  onChange={(e) => change("y", e.currentTarget.value)}
+                  placeholder="如 value"
+                  disabled={running}
+                  style={{ flex: "1 1 150px" }}
+                />
+                <TextInput
+                  label={l("分组 / 颜色列（可选）", "Group / color column (optional)")}
+                  value={cfg.group}
+                  onChange={(e) => change("group", e.currentTarget.value)}
+                  placeholder="如 treatment"
+                  disabled={running}
+                  style={{ flex: "1 1 180px" }}
+                />
                 {["bubble", "bubble_map", "map", "choropleth", "alluvial"].includes(
                   cfg.template.kind,
                 ) && (
-                  <div className="form-group">
-                    <label htmlFor="chart-size">
-                      {cfg.template.kind === "choropleth"
+                  <TextInput
+                    label={
+                      cfg.template.kind === "choropleth"
                         ? l("空间几何列（WKT）", "Spatial geometry column (WKT)")
                         : cfg.template.kind === "alluvial"
                           ? l("流量数值列", "Flow value column")
-                          : l("大小 / 权重列（可选）", "Size / weight column (optional)")}
-                    </label>
-                    <input
-                      id="chart-size"
-                      value={cfg.size}
-                      onChange={(e) => change("size", e.target.value)}
-                      placeholder={
-                        cfg.template.kind === "choropleth"
-                          ? "如 wkt"
-                          : cfg.template.kind === "alluvial"
-                            ? "如 value"
-                            : "如 size 或 value"
-                      }
-                      disabled={running}
-                    />
-                  </div>
+                          : l("大小 / 权重列（可选）", "Size / weight column (optional)")
+                    }
+                    value={cfg.size}
+                    onChange={(e) => change("size", e.currentTarget.value)}
+                    placeholder={
+                      cfg.template.kind === "choropleth"
+                        ? "如 wkt"
+                        : cfg.template.kind === "alluvial"
+                          ? "如 value"
+                          : "如 size 或 value"
+                    }
+                    disabled={running}
+                    style={{ flex: "1 1 180px" }}
+                  />
                 )}
-              </div>
+              </Group>
               <div className="chart-studio__file-row chart-studio__output-row">
                 <div>
                   <strong>{l("输出文件夹", "Output folder")}</strong>
@@ -2235,330 +2229,269 @@ export default function ChartStudioPage() {
                   </Accordion.Panel>
                 </Accordion.Item>
               </Accordion>
-              <div className="form-row chart-studio__visual-options">
-                <div className="form-group">
-                  <label htmlFor="chart-format">{l("导出格式", "Export format")}</label>
-                  <select
-                    id="chart-format"
+              <Stack className="chart-studio__visual-options" gap="sm">
+                <Group grow gap="sm" align="flex-start" wrap="wrap">
+                  <Select
+                    label={l("导出格式", "Export format")}
+                    data={[
+                      { value: "png", label: l("PNG（位图）", "PNG (raster)") },
+                      { value: "tiff", label: l("TIFF（投稿位图）", "TIFF (publication raster)") },
+                      { value: "svg", label: l("SVG（矢量）", "SVG (vector)") },
+                      { value: "pdf", label: l("PDF（矢量）", "PDF (vector)") },
+                      { value: "eps", label: l("EPS（矢量）", "EPS (vector)") },
+                    ]}
                     value={cfg.format}
-                    onChange={(e) =>
-                      change("format", e.target.value as ChartConfig["format"])
-                    }
+                    onChange={(value) => {
+                      if (value !== null) change("format", value as ChartConfig["format"]);
+                    }}
                     disabled={running}
-                  >
-                    <option value="png">{l("PNG（位图）", "PNG (raster)")}</option>
-                    <option value="tiff">
-                      {l("TIFF（投稿位图）", "TIFF (publication raster)")}
-                    </option>
-                    <option value="svg">{l("SVG（矢量）", "SVG (vector)")}</option>
-                    <option value="pdf">{l("PDF（矢量）", "PDF (vector)")}</option>
-                    <option value="eps">{l("EPS（矢量）", "EPS (vector)")}</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-row chart-studio__publication-row">
-                <div className="form-group">
-                  <label htmlFor="chart-publication-preset">
-                    {l("论文规格", "Publication preset")}
-                  </label>
-                  <select
-                    id="chart-publication-preset"
+                    style={{ flex: "1 1 180px" }}
+                  />
+                  <Select
+                    label={l("论文规格", "Publication preset")}
+                    data={Object.entries(publicationPresets).map(([value, preset]) => ({
+                      value,
+                      label: language === "en" ? preset.labelEn : preset.label,
+                    }))}
                     value={cfg.publicationPreset}
-                    onChange={(e) =>
-                      applyPublicationPreset(e.target.value as PublicationPreset)
-                    }
+                    onChange={(value) => {
+                      if (value !== null) applyPublicationPreset(value as PublicationPreset);
+                    }}
                     disabled={running}
-                  >
-                    {Object.entries(publicationPresets).map(([id, preset]) => (
-                      <option key={id} value={id}>
-                        {preset.label}
-                      </option>
-                    ))}
-                  </select>
-                  <small className="form-hint">
-                    {l(
-                      "按最终排版宽度设置，生成后仍可微调。",
-                      "Set by final layout width; you can refine it after generation.",
-                    )}
-                  </small>
-                </div>
-              </div>
-              <div className="form-row form-row--three">
-                <div className="form-group">
-                  <label htmlFor="chart-width">{l("宽度（英寸）", "Width (in)")}</label>
-                  <input
-                    id="chart-width"
-                    type="number"
-                    min="2"
-                    max="30"
-                    step="0.5"
+                    style={{ flex: "1 1 220px" }}
+                  />
+                </Group>
+                <Text size="xs" c="dimmed">
+                  {l(
+                    "按最终排版宽度设置，生成后仍可微调。",
+                    "Set by final layout width; you can refine it after generation.",
+                  )}
+                </Text>
+                <Group grow gap="sm" align="flex-start" wrap="wrap">
+                  <NumberInput
+                    label={l("宽度（英寸）", "Width (in)")}
+                    min={2}
+                    max={30}
+                    step={0.5}
                     value={cfg.width}
-                    onChange={(e) =>
-                      change("width", Math.max(2, Number(e.target.value) || 8))
-                    }
+                    onChange={(raw) => {
+                      const next = clampInspectorNumber(raw, 2, 30);
+                      if (next !== null) change("width", next);
+                    }}
                     disabled={running}
+                    style={{ flex: "1 1 120px" }}
                   />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="chart-height">{l("高度（英寸）", "Height (in)")}</label>
-                  <input
-                    id="chart-height"
-                    type="number"
-                    min="2"
-                    max="30"
-                    step="0.5"
+                  <NumberInput
+                    label={l("高度（英寸）", "Height (in)")}
+                    min={2}
+                    max={30}
+                    step={0.5}
                     value={cfg.height}
-                    onChange={(e) =>
-                      change("height", Math.max(2, Number(e.target.value) || 5))
-                    }
+                    onChange={(raw) => {
+                      const next = clampInspectorNumber(raw, 2, 30);
+                      if (next !== null) change("height", next);
+                    }}
                     disabled={running}
+                    style={{ flex: "1 1 120px" }}
                   />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="chart-dpi">
-                    {l("PNG 清晰度（DPI）", "PNG resolution (DPI)")}
-                  </label>
-                  <input
-                    id="chart-dpi"
-                    type="number"
-                    min="72"
-                    max="600"
-                    step="12"
+                  <NumberInput
+                    label={l("PNG 清晰度（DPI）", "PNG resolution (DPI)")}
+                    min={72}
+                    max={600}
+                    step={12}
                     value={cfg.dpi}
-                    onChange={(e) =>
-                      change(
-                        "dpi",
-                        Math.min(600, Math.max(72, Number(e.target.value) || 180)),
-                      )
-                    }
+                    onChange={(raw) => {
+                      const next = clampInspectorNumber(raw, 72, 600);
+                      if (next !== null) change("dpi", next);
+                    }}
                     disabled={running}
+                    style={{ flex: "1 1 140px" }}
                   />
-                </div>
-              </div>
+                </Group>
+              </Stack>
               <div className="chart-studio__appearance">
                 <div className="chart-studio__appearance-title">
                   {l("ggplot 外观", "ggplot appearance")}
                 </div>
-                <div className="chart-studio__appearance-grid">
-                  <div className="form-group">
-                    <label htmlFor="chart-point-size">{l("点大小", "Point size")}</label>
-                    <input
-                      id="chart-point-size"
-                      type="number"
-                      min="0.5"
-                      max="12"
-                      step="0.1"
-                      value={cfg.pointSize}
-                      onChange={(e) =>
-                        change(
-                          "pointSize",
-                          Math.min(12, Math.max(0.5, Number(e.target.value) || 2.6)),
-                        )
-                      }
-                      disabled={running}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="chart-line-width">{l("线宽", "Line width")}</label>
-                    <input
-                      id="chart-line-width"
-                      type="number"
-                      min="0.1"
-                      max="6"
-                      step="0.1"
-                      value={cfg.lineWidth}
-                      onChange={(e) =>
-                        change(
-                          "lineWidth",
-                          Math.min(6, Math.max(0.1, Number(e.target.value) || 0.8)),
-                        )
-                      }
-                      disabled={running}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="chart-alpha">{l("透明度", "Opacity")}</label>
-                    <input
-                      id="chart-alpha"
-                      type="number"
-                      min="0.05"
-                      max="1"
-                      step="0.05"
-                      value={cfg.alpha}
-                      onChange={(e) =>
-                        change(
-                          "alpha",
-                          Math.min(1, Math.max(0.05, Number(e.target.value) || 0.8)),
-                        )
-                      }
-                      disabled={running}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="chart-axis-line-width">
-                      {l("轴线宽度", "Axis line width")}
-                    </label>
-                    <input
-                      id="chart-axis-line-width"
-                      type="number"
-                      min="0"
-                      max="3"
-                      step="0.05"
-                      value={cfg.axisLineWidth}
-                      onChange={(e) =>
-                        change(
-                          "axisLineWidth",
-                          Math.min(3, Math.max(0, Number(e.target.value) || 0.45)),
-                        )
-                      }
-                      disabled={running}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="chart-grid-line-width">
-                      {l("网格线宽度", "Grid line width")}
-                    </label>
-                    <input
-                      id="chart-grid-line-width"
-                      type="number"
-                      min="0"
-                      max="2"
-                      step="0.05"
-                      value={cfg.gridLineWidth}
-                      onChange={(e) =>
-                        change(
-                          "gridLineWidth",
-                          Math.min(2, Math.max(0, Number(e.target.value) || 0.25)),
-                        )
-                      }
-                      disabled={running}
-                    />
-                  </div>
-                </div>
-                <div className="chart-studio__appearance-toggles">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={cfg.showGrid}
-                      onChange={(e) => change("showGrid", e.target.checked)}
-                      disabled={running}
-                    />
-                    {l("显示网格线", "Show grid lines")}
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={cfg.panelBorder}
-                      onChange={(e) => change("panelBorder", e.target.checked)}
-                      disabled={running}
-                    />
-                    {l("显示面板边框", "Show panel border")}
-                  </label>
-                </div>
-                <div className="chart-studio__stats-options">
-                  <span className="chart-studio__stats-title">
+                <Group className="chart-studio__appearance-grid" grow gap="sm" wrap="wrap" align="flex-start">
+                  <NumberInput
+                    label={l("点大小", "Point size")}
+                    min={0.5}
+                    max={12}
+                    step={0.1}
+                    value={cfg.pointSize}
+                    onChange={(raw) => {
+                      const next = clampInspectorNumber(raw, 0.5, 12);
+                      if (next !== null) change("pointSize", next);
+                    }}
+                    disabled={running}
+                    style={{ flex: "1 1 120px" }}
+                  />
+                  <NumberInput
+                    label={l("线宽", "Line width")}
+                    min={0.1}
+                    max={6}
+                    step={0.1}
+                    value={cfg.lineWidth}
+                    onChange={(raw) => {
+                      const next = clampInspectorNumber(raw, 0.1, 6);
+                      if (next !== null) change("lineWidth", next);
+                    }}
+                    disabled={running}
+                    style={{ flex: "1 1 120px" }}
+                  />
+                  <NumberInput
+                    label={l("透明度", "Opacity")}
+                    min={0.05}
+                    max={1}
+                    step={0.05}
+                    value={cfg.alpha}
+                    onChange={(raw) => {
+                      const next = clampInspectorNumber(raw, 0.05, 1);
+                      if (next !== null) change("alpha", next);
+                    }}
+                    disabled={running}
+                    style={{ flex: "1 1 120px" }}
+                  />
+                  <NumberInput
+                    label={l("轴线宽度", "Axis line width")}
+                    min={0}
+                    max={3}
+                    step={0.05}
+                    value={cfg.axisLineWidth}
+                    onChange={(raw) => {
+                      const next = clampInspectorNumber(raw, 0, 3);
+                      if (next !== null) change("axisLineWidth", next);
+                    }}
+                    disabled={running}
+                    style={{ flex: "1 1 120px" }}
+                  />
+                  <NumberInput
+                    label={l("网格线宽度", "Grid line width")}
+                    min={0}
+                    max={2}
+                    step={0.05}
+                    value={cfg.gridLineWidth}
+                    onChange={(raw) => {
+                      const next = clampInspectorNumber(raw, 0, 2);
+                      if (next !== null) change("gridLineWidth", next);
+                    }}
+                    disabled={running}
+                    style={{ flex: "1 1 120px" }}
+                  />
+                </Group>
+                <Group className="chart-studio__appearance-toggles" gap="md" wrap="wrap">
+                  <Switch
+                    label={l("显示网格线", "Show grid lines")}
+                    checked={cfg.showGrid}
+                    onChange={(e) => change("showGrid", e.currentTarget.checked)}
+                    disabled={running}
+                  />
+                  <Switch
+                    label={l("显示面板边框", "Show panel border")}
+                    checked={cfg.panelBorder}
+                    onChange={(e) => change("panelBorder", e.currentTarget.checked)}
+                    disabled={running}
+                  />
+                </Group>
+                <Stack className="chart-studio__stats-options" gap="sm">
+                  <Text size="xs" fw={600} className="chart-studio__stats-title">
                     {l("统计标注（分组分布图）", "Statistics (group distributions)")}
-                  </span>
-                  <label>
-                    <input
-                      type="checkbox"
+                  </Text>
+                  <Group gap="md" wrap="wrap" align="flex-end">
+                    <Switch
+                      label={l("原始点", "Raw points")}
                       checked={cfg.showRawPoints}
-                      onChange={(e) => change("showRawPoints", e.target.checked)}
+                      onChange={(e) => change("showRawPoints", e.currentTarget.checked)}
                       disabled={running}
                     />
-                    {l("原始点", "Raw points")}
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
+                    <Switch
+                      label={l("组间 P 值", "Between-group P values")}
                       checked={cfg.showStats}
-                      onChange={(e) => change("showStats", e.target.checked)}
+                      onChange={(e) => change("showStats", e.currentTarget.checked)}
                       disabled={running}
                     />
-                    {l("组间 P 值", "Between-group P values")}
-                  </label>
-                  <select
-                    value={cfg.statTest}
-                    onChange={(e) =>
-                      change("statTest", e.target.value as ChartConfig["statTest"])
-                    }
-                    disabled={running}
-                    aria-label={l("统计检验", "Statistical test")}
-                  >
-                    <option value="wilcox.test">Wilcoxon</option>
-                    <option value="t.test">{l("t 检验", "t test")}</option>
-                  </select>
-                  <select
-                    value={cfg.pAdjustMethod}
-                    onChange={(e) =>
-                      change(
-                        "pAdjustMethod",
-                        e.target.value as ChartConfig["pAdjustMethod"],
-                      )
-                    }
-                    disabled={running}
-                    aria-label={l("多重比较校正", "Multiple-comparison adjustment")}
-                  >
-                    <option value="holm">{l("Holm 校正", "Holm adjustment")}</option>
-                    <option value="bonferroni">Bonferroni</option>
-                    <option value="BH">Benjamini–Hochberg</option>
-                    <option value="none">{l("不校正", "No adjustment")}</option>
-                  </select>
-                </div>
+                    <Select
+                      label={l("统计检验", "Statistical test")}
+                      data={[
+                        { value: "wilcox.test", label: "Wilcoxon" },
+                        { value: "t.test", label: l("t 检验", "t test") },
+                      ]}
+                      value={cfg.statTest}
+                      onChange={(value) => {
+                        if (value !== null) change("statTest", value as ChartConfig["statTest"]);
+                      }}
+                      disabled={running}
+                      style={{ flex: "1 1 150px" }}
+                    />
+                    <Select
+                      label={l("多重比较校正", "Multiple-comparison adjustment")}
+                      data={[
+                        { value: "holm", label: l("Holm 校正", "Holm adjustment") },
+                        { value: "bonferroni", label: "Bonferroni" },
+                        { value: "BH", label: "Benjamini–Hochberg" },
+                        { value: "none", label: l("不校正", "No adjustment") },
+                      ]}
+                      value={cfg.pAdjustMethod}
+                      onChange={(value) => {
+                        if (value !== null) {
+                          change("pAdjustMethod", value as ChartConfig["pAdjustMethod"]);
+                        }
+                      }}
+                      disabled={running}
+                      style={{ flex: "1 1 180px" }}
+                    />
+                  </Group>
+                </Stack>
                 {(cfg.template.kind === "heatmap" ||
                   cfg.template.kind === "correlogram") && (
-                  <div className="chart-studio__heatmap-options">
-                    <span className="chart-studio__stats-title">
+                  <Stack className="chart-studio__heatmap-options" gap="sm">
+                    <Text size="xs" fw={600} className="chart-studio__stats-title">
                       {l("热图设置", "Heatmap settings")}
-                    </span>
-                    <select
-                      value={cfg.heatmapScale}
-                      onChange={(e) =>
-                        change(
-                          "heatmapScale",
-                          e.target.value as ChartConfig["heatmapScale"],
-                        )
-                      }
-                      disabled={running}
-                      aria-label={l("热图标准化方式", "Heatmap scaling")}
-                    >
-                      <option value="none">{l("不标准化", "No scaling")}</option>
-                      <option value="row">{l("按行标准化", "Scale rows")}</option>
-                      <option value="column">{l("按列标准化", "Scale columns")}</option>
-                    </select>
-                    <label>
-                      <input
-                        type="checkbox"
+                    </Text>
+                    <Group gap="md" wrap="wrap" align="flex-end">
+                      <Select
+                        label={l("热图标准化方式", "Heatmap scaling")}
+                        data={[
+                          { value: "none", label: l("不标准化", "No scaling") },
+                          { value: "row", label: l("按行标准化", "Scale rows") },
+                          { value: "column", label: l("按列标准化", "Scale columns") },
+                        ]}
+                        value={cfg.heatmapScale}
+                        onChange={(value) => {
+                          if (value !== null) {
+                            change("heatmapScale", value as ChartConfig["heatmapScale"]);
+                          }
+                        }}
+                        disabled={running}
+                        style={{ flex: "1 1 180px" }}
+                      />
+                      <Switch
+                        label={l("行聚类", "Cluster rows")}
                         checked={cfg.heatmapClusterRows}
-                        onChange={(e) => change("heatmapClusterRows", e.target.checked)}
+                        onChange={(e) => change("heatmapClusterRows", e.currentTarget.checked)}
                         disabled={running}
                       />
-                      {l("行聚类", "Cluster rows")}
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
+                      <Switch
+                        label={l("列聚类", "Cluster columns")}
                         checked={cfg.heatmapClusterCols}
-                        onChange={(e) => change("heatmapClusterCols", e.target.checked)}
+                        onChange={(e) => change("heatmapClusterCols", e.currentTarget.checked)}
                         disabled={running}
                       />
-                      {l("列聚类", "Cluster columns")}
-                    </label>
-                  </div>
+                    </Group>
+                  </Stack>
                 )}
               </div>
-              <label className="chart-studio__check">
-                <input
-                  type="checkbox"
-                  checked={cfg.installMissing}
-                  onChange={(e) => change("installMissing", e.target.checked)}
-                  disabled={running}
-                />
-                {l(
+              <Switch
+                className="chart-studio__check"
+                checked={cfg.installMissing}
+                onChange={(e) => change("installMissing", e.currentTarget.checked)}
+                label={l(
                   "允许按需安装缺少的 R 包（仅本次所需）",
                   "Allow installation of missing R packages (only for this run)",
                 )}
-              </label>
+                disabled={running}
+              />
               <button
                 type="button"
                 className="btn btn-primary btn-full"

@@ -4,6 +4,8 @@
 
 Mynx 的统一 UI 规范以 `DESIGN.md` 为准，当前问题以 `UI_AUDIT.md` 为准，迁移顺序以 `UI_MIGRATION.md` 为准，功能保护范围以 `FUNCTION_BASELINE.md` 为准。任何前端改动都要先确认对应页面、状态和文件契约。
 
+实现层的可编码令牌和组件契约集中记录在 `MYNX_UI_SPEC.md`。当本文件与旧页面 CSS 冲突时，先按 `UI_MIGRATION.md` 完成对应页面回归，再退役旧规则；不要通过新增全局覆盖层解决局部布局问题。
+
 ## Mantine 版本
 
 - 只使用 Mantine 8 API，所有 `@mantine/*` 包保持同一 8.x 小版本
@@ -95,3 +97,9 @@ npm run check:release
 - 是否提供焦点、禁用、错误、运行和取消状态
 - 是否通过相关自动检查和手工回归
 - 是否更新了对应设计或基线文档
+
+## 当前迁移检查点
+
+- 现有 UI/Rust 修复和验收报告已保存于本地 checkpoint `d9ab0dd`。
+- ChartStudio 3.1-3B 的数据映射、导出格式/尺寸/DPI、图形元素、统计标注和热图参数使用 Mantine 8 控件；字段名、默认值、0 值、空值草稿和 R 参数契约保持不变。
+- 新增或修改基础控件时同步检查 `/ui-showcase`，页面回归至少覆盖浅色、深色、中文、英文、420px、960px、焦点和运行中状态。
