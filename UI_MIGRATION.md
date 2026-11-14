@@ -287,6 +287,7 @@
 - RNA-seq 手动路径、样本显示名输入已切换到 Mantine `TextInput`，文件选择入口使用 Mantine `Button`。
 - RNA-seq 输出路径输入和数据预览分页按钮已切换到 Mantine 控件，保留分页状态和数据预览逻辑。
 - RNA-seq 分组添加和目标分组选择已切换到 Mantine `Button`、`Select`，保留拖拽分组和样本分配逻辑。
+- RNA-seq 差异分析完成后的绘图导出、打开结果目录操作已切换到 Mantine `Button`。
 
 ### 页面切分
 
