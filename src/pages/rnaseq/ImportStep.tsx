@@ -19,6 +19,7 @@ import { importPage } from "@/lib/rnaseq/matrix";
 import { openInShell } from "@/lib/rnaseq/io";
 import type { MatrixFormat, PageData } from "@/lib/rnaseq/types";
 import { useLanguage } from "@/lib/i18n";
+import { Button } from "@mantine/core";
 
 const FMT_CARDS: { id: MatrixFormat; zh: string; en: string; subZh: string; subEn: string }[] = [
   {
@@ -133,9 +134,9 @@ export default function ImportStep() {
                 <div className="file-name">{st.importSourcePath.split(/[\\/]/).pop()}</div>
                 <div className="file-path">{st.importSourcePath}</div>
               </div>
-              <button type="button" className="btn" onClick={() => void pickFile()}>
+              <Button type="button" variant="default" size="sm" onClick={() => void pickFile()}>
                 {l("更换文件", "Replace")}
-              </button>
+              </Button>
             </div>
           )}
 
