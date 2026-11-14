@@ -109,6 +109,7 @@ pub async fn rnaseq_run(
         app_state
             .settings
             .touch_output(&dir, TaskKind::RnaseqRun);
+        app_state.settings.touch_project(&dir, "rnaseqRun");
     }
     Ok(result)
 }

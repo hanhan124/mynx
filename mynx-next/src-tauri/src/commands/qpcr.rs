@@ -89,6 +89,11 @@ pub async fn qpcr_plot_run(
         r if r.cancelled => job.mark_cancelled(),
         r => job.fail(r.error.clone().unwrap_or_default()),
     }
+    if result.ok {
+        if let Some(dir) = &result.output_dir {
+            app_state.settings.touch_project(dir, "qpcrPlot");
+        }
+    }
     Ok(result)
 }
 

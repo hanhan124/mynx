@@ -246,6 +246,9 @@ pub async fn charts_run(
         app_state
             .settings
             .touch_output(&config.output_dir, TaskKind::ChartRun);
+        app_state
+            .settings
+            .touch_project(&config.output_dir, "chartRun");
         ChartRunResult {
             v: WIRE_VERSION,
             ok: true,

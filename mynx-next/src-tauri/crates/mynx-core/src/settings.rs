@@ -38,6 +38,12 @@ CREATE TABLE IF NOT EXISTS recent_outputs (
     last_used_ms INTEGER NOT NULL,
     PRIMARY KEY (path, kind)
 );
+CREATE TABLE IF NOT EXISTS projects (
+    path           TEXT PRIMARY KEY,
+    name           TEXT NOT NULL,
+    kind           TEXT NOT NULL,
+    last_opened_ms INTEGER NOT NULL
+);
 "#;
 
 impl SettingsStore {
@@ -303,6 +309,62 @@ impl SettingsStore {
             Some(iter) => iter.filter_map(|r| r.ok()).collect(),
             None => Vec::new(),
         }
+    }
+
+    /// Upsert a project entry (working file or output directory) in the
+    /// project index. `kind` mirrors the task kinds that produced it.
+    pub fn touch_project(&self, path: &str, kind: &str) {
+        if path.trim().is_empty() {
+            return;
+        }
+        let name = std::path::Path::new(path)
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_else(|| path.to_string());
+        let _ = self.conn.lock().unwrap().execute(
+            "INSERT INTO projects (path, name, kind, last_opened_ms) VALUES (?1, ?2, ?3, ?4)
+             ON CONFLICT(path) DO UPDATE SET
+               last_opened_ms = excluded.last_opened_ms,
+               name = excluded.name,
+               kind = excluded.kind",
+            params![path, name, kind, now_ms()],
+        );
+    }
+
+    /// Recently-used projects, newest first.
+    pub fn recent_projects(&self, limit: u32) -> Vec<serde_json::Value> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = match conn.prepare(
+            "SELECT path, name, kind, last_opened_ms FROM projects
+             ORDER BY last_opened_ms DESC LIMIT ?1",
+        ) {
+            Ok(stmt) => stmt,
+            Err(_) => return Vec::new(),
+        };
+        let rows = stmt
+            .query_map(params![limit], |row| {
+                Ok(serde_json::json!({
+                    "path": row.get::<_, String>(0)?,
+                    "name": row.get::<_, String>(1)?,
+                    "kind": row.get::<_, String>(2)?,
+                    "lastOpenedMs": row.get::<_, i64>(3)?,
+                }))
+            })
+            .ok();
+        match rows {
+            Some(iter) => iter.filter_map(|r| r.ok()).collect(),
+            None => Vec::new(),
+        }
+    }
+
+    /// Remove a project entry from the index.
+    pub fn remove_project(&self, path: &str) -> bool {
+        self.conn
+            .lock()
+            .unwrap()
+            .execute("DELETE FROM projects WHERE path = ?1", params![path])
+            .map(|n| n > 0)
+            .unwrap_or(false)
     }
 }
 

@@ -16,6 +16,7 @@
   import IconListCheck from "@tabler/icons-svelte/icons/list-check";
   import IconAlertTriangle from "@tabler/icons-svelte/icons/alert-triangle";
   import IconFolderOpen from "@tabler/icons-svelte/icons/folder-open";
+  import IconSearch from "@tabler/icons-svelte/icons/search";
 
   interface ToolCard {
     route: string;
@@ -33,7 +34,20 @@
 
   let recentTasks = $state<TaskRecord[] | null>(null);
   let recentFailures = $state<Record<string, unknown>[] | null>(null);
+  let recentProjects = $state<Record<string, unknown>[] | null>(null);
   let recentOutputs = $state<Record<string, unknown>[] | null>(null);
+  let toolQuery = $state("");
+
+  const visibleTools = $derived.by(() => {
+    const q = toolQuery.trim().toLowerCase();
+    if (!q) return tools;
+    return tools.filter(
+      (tool) =>
+        t(tool.titleKey).toLowerCase().includes(q) ||
+        t(tool.descKey).toLowerCase().includes(q) ||
+        tool.route.includes(q),
+    );
+  });
 
   function loadHomeData(): void {
     client
@@ -41,6 +55,7 @@
       .then((data) => {
         recentTasks = ((data.recentTasks ?? []) as TaskRecord[]).slice(0, 5);
         recentFailures = (data.recentFailures ?? []) as Record<string, unknown>[];
+        recentProjects = (data.recentProjects ?? []) as Record<string, unknown>[];
         recentOutputs = (data.recentOutputs ?? []) as Record<string, unknown>[];
       })
       .catch((err: unknown) => {
@@ -58,6 +73,11 @@
     navigate(route);
   }
 
+  function openProject(path: unknown): void {
+    if (typeof path !== "string") return;
+    client.openPath(path).catch(() => undefined);
+  }
+
   function openOutput(path: unknown): void {
     if (typeof path !== "string") return;
     client.openPath(path).catch(() => undefined);
@@ -70,8 +90,19 @@
     <p class="text-[12px] text-text-secondary">{t("about.tagline")}</p>
   </header>
 
+  <div class="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 focus-within:border-accent">
+    <IconSearch size={15} stroke={1.6} class="shrink-0 text-text-secondary" />
+    <input
+      type="text"
+      class="w-full bg-transparent text-[13px] outline-none"
+      placeholder={t("home.searchTools")}
+      bind:value={toolQuery}
+      aria-label={t("home.searchTools")}
+    />
+  </div>
+
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-    {#each tools as tool (tool.route)}
+    {#each visibleTools as tool (tool.route)}
       {@const ToolIcon = tool.icon}
       <button
         type="button"
@@ -146,6 +177,30 @@
       </ul>
     {/if}
   </section>
+
+  {#if recentProjects !== null && recentProjects.length > 0}
+    <section class="mynx-card p-4" aria-label={t("home.projects")}>
+      <h2 class="text-[13px] font-semibold">{t("home.projects")}</h2>
+      <ul class="mt-2 flex flex-col divide-y divide-border">
+        {#each recentProjects as project, index (index)}
+          <li class="flex items-center gap-2 py-2">
+            <span class="mynx-truncate min-w-0 flex-1 font-mono text-[11px]" title={String(project.path ?? "")}>
+              {String(project.name ?? project.path ?? "")}
+            </span>
+            <span class="text-[10px] uppercase text-text-secondary">{String(project.kind ?? "")}</span>
+            <button
+              type="button"
+              class="mynx-btn px-2 py-1 text-[11px]"
+              onclick={() => openProject(project.path)}
+              aria-label={t("home.openProject", { path: String(project.path ?? "") })}
+            >
+              {t("common.openDir")}
+            </button>
+          </li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
 
   {#if recentOutputs !== null && recentOutputs.length > 0}
     <section class="mynx-card p-4" aria-label={t("home.recentOutputs")}>

@@ -165,6 +165,33 @@ export function toggleLanguage(): void {
   setLanguage(app.language === "zh" ? "en" : "zh");
 }
 
+/** Patch persisted settings with a partial document (best effort). */
+export async function patchSettings(patch: Record<string, unknown>): Promise<void> {
+  try {
+    const { settingsLoad, settingsSave } = await import("./tauri.js");
+    const doc = await settingsLoad();
+    await settingsSave({ ...doc, ...patch } as never);
+  } catch {
+    // Settings persistence is best effort (dev/browser mode has no backend).
+  }
+}
+
+/** Set the theme preference and persist it (command palette / settings). */
+export function setTheme(preference: ThemeId): void {
+  applyTheme(preference);
+  void patchSettings({ theme: preference });
+}
+
+/** Toggle always-on-top via the window API and persist the result. */
+export function toggleAlwaysOnTop(): void {
+  const next = !app.alwaysOnTop;
+  app.alwaysOnTop = next;
+  void import("./tauri.js").then(({ setAlwaysOnTop }) =>
+    setAlwaysOnTop(next).catch(() => (app.alwaysOnTop = !next)),
+  );
+  void patchSettings({ alwaysOnTop: next });
+}
+
 /**
  * Optimistically flip the always-on-top state. Callers with access to the
  * Tauri client should call `setAlwaysOnTop` and revert on failure (see

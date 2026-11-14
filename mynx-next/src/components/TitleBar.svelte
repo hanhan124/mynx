@@ -8,6 +8,7 @@
   import IconSquare from "@tabler/icons-svelte/icons/square";
   import IconCopy from "@tabler/icons-svelte/icons/copy";
   import IconX from "@tabler/icons-svelte/icons/x";
+  import CommandPalette from "./CommandPalette.svelte";
   import { app, setAlwaysOnTopState } from "../app/state.svelte";
   import { t } from "../app/i18n.svelte";
   import { routeTitleKey } from "../lib/router.svelte";
@@ -68,6 +69,9 @@
   </div>
 
   <div class="flex shrink-0 items-stretch">
+    <div class="flex items-center px-1.5">
+      <CommandPalette />
+    </div>
     <button
       type="button"
       class="relative flex w-[46px] items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text"
