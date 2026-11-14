@@ -6,7 +6,7 @@ import ThemePicker from "@/components/ThemePicker";
 import { loadConfig, saveAlwaysOnTop } from "@/lib/config";
 import { useLanguage, type Language } from "@/lib/i18n";
 import { useTheme } from "@/hooks/useTheme";
-import { SegmentedControl, Switch } from "@mantine/core";
+import { Button, SegmentedControl, Switch } from "@mantine/core";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -147,22 +147,22 @@ export default function SettingsPage() {
             <section className="settings-panel-section" aria-labelledby="settings-support-title">
               <h2 id="settings-support-title">{t("settings.support")}</h2>
               <div className="settings-card">
-                <button type="button" className="settings-link-row" onClick={() => void openHelp()}>
+                <Button type="button" variant="subtle" className="settings-link-row" fullWidth onClick={() => void openHelp()}>
                   <span className="settings-row-copy"><strong>{t("settings.help")}</strong></span>
                   <IconChevronRight size={16} stroke={1.75} />
-                </button>
-                <button type="button" className="settings-link-row" onClick={() => void openWebsite()}>
+                </Button>
+                <Button type="button" variant="subtle" className="settings-link-row" fullWidth onClick={() => void openWebsite()}>
                   <span className="settings-row-copy"><strong>{t("settings.website")}</strong></span>
                   <IconChevronRight size={16} stroke={1.75} />
-                </button>
-                <button type="button" className="settings-link-row" onClick={() => setShowAbout(true)}>
+                </Button>
+                <Button type="button" variant="subtle" className="settings-link-row" fullWidth onClick={() => setShowAbout(true)}>
                   <span className="settings-row-copy"><strong>{t("settings.about")}</strong></span>
                   <IconChevronRight size={16} stroke={1.75} />
-                </button>
-                <button type="button" className="settings-link-row" onClick={openShowcase}>
+                </Button>
+                <Button type="button" variant="subtle" className="settings-link-row" fullWidth onClick={openShowcase}>
                   <span className="settings-row-copy"><strong>{t("settings.showcase")}</strong></span>
                   <IconChevronRight size={16} stroke={1.75} />
-                </button>
+                </Button>
               </div>
             </section>
           )}
