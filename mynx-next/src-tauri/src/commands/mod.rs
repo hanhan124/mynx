@@ -2,6 +2,7 @@
 //! typed command surface the Svelte client consumes.
 
 pub mod app;
+pub mod charts;
 pub mod image;
 pub mod qpcr;
 pub mod r_runtime;

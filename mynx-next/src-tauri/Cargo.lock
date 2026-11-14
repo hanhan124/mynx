@@ -2812,12 +2812,8 @@ name = "mynx-charts"
 version = "3.0.0"
 dependencies = [
  "calamine",
- "csv",
  "mynx-contracts",
- "serde",
  "serde_json",
- "thiserror 1.0.69",
- "tokio",
  "zip 2.6.1",
 ]
 
@@ -2883,7 +2879,7 @@ dependencies = [
 
 [[package]]
 name = "mynx-next"
-version = "3.0.0"
+version = "2.3.9"
 dependencies = [
  "mynx-charts",
  "mynx-contracts",

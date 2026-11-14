@@ -54,6 +54,13 @@ pub fn run() {
             commands::rnaseq::rnaseq_load_params,
             commands::rnaseq::rnaseq_read_de_summary,
             commands::rnaseq::rnaseq_list_result_files,
+            commands::charts::charts_import_data,
+            commands::charts::charts_read_manifest,
+            commands::charts::charts_list_templates,
+            commands::charts::charts_export_zip,
+            commands::charts::charts_install_template_package,
+            commands::charts::charts_run,
+            commands::charts::charts_cancel,
             commands::weather::weather_by_ip,
         ])
         .setup(|app| {

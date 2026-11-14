@@ -65,12 +65,60 @@ pub struct ChartRunConfig {
 
 impl Default for ChartRunConfig {
     fn default() -> Self {
-        serde_json::from_value(serde_json::json!({
-            "filePath": "", "outputDir": "", "template": "", "kind": "",
-            "x": "group", "y": "value", "title": "", "color": "#0A84FF",
-            "format": "png", "installMissing": true
-        }))
-        .expect("default ChartRunConfig must deserialize")
+        // Plain literal — NEVER deserialize inside Default: serde container
+        // `default` calls Default::default() during from_value, which would
+        // recurse infinitely.
+        Self {
+            file_path: String::new(),
+            output_dir: String::new(),
+            template: String::new(),
+            kind: String::new(),
+            gallery_url: None,
+            source_repo_path: None,
+            x: "group".into(),
+            y: "value".into(),
+            group: None,
+            size: None,
+            title: String::new(),
+            subtitle: None,
+            caption: None,
+            plot_tag: None,
+            color: "#0A84FF".into(),
+            format: "png".into(),
+            width: None,
+            height: None,
+            dpi: None,
+            gg_theme: None,
+            base_size: None,
+            font_family: None,
+            show_legend: None,
+            legend_position: None,
+            show_grid: None,
+            show_title: None,
+            title_size: None,
+            title_hjust: None,
+            axis_text_size: None,
+            axis_title_size: None,
+            publication_preset: None,
+            palette: None,
+            palette_reverse: None,
+            point_size: None,
+            line_width: None,
+            bar_width: None,
+            alpha: None,
+            axis_line_width: None,
+            grid_line_width: None,
+            panel_border: None,
+            show_raw_points: None,
+            show_stats: None,
+            stat_test: None,
+            p_adjust_method: None,
+            heatmap_cluster_rows: None,
+            heatmap_cluster_cols: None,
+            heatmap_scale: None,
+            install_missing: true,
+            verified: None,
+        }
     }
 }
 
