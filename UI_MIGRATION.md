@@ -198,6 +198,7 @@
 - 语言切换已使用 Mantine `SegmentedControl`。
 - 窗口置顶已使用 Mantine `Switch`，保留 `config.json`、Tauri 窗口和广播逻辑。
 - 设置支持区域的帮助、官网、关于和 Showcase 入口已切换到 Mantine `Button`。
+- 设置左侧分区导航已切换到 Mantine vertical `Tabs`，保留四个分区和面板状态。
 
 ### 首页基础控件（进行中）
 
