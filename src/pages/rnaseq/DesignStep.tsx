@@ -970,20 +970,23 @@ function BatchEditor({ samples }: { samples: string[] }) {
             {Object.entries(batches).map(([name, members]) => (
               <div key={name} className="rx-group-card rx-group-card--batch">
                 <div className="rx-group-header">
-                  <input
+                  <TextInput
+                    size="sm"
                     className="rx-group-name"
                     value={name}
                     aria-label={l("批次名称", "Batch name")}
-                    onChange={(e) => renameBatch(name, e.target.value)}
+                    onChange={(event) => renameBatch(name, event.currentTarget.value)}
                   />
                   <span
                     className={`rx-tag${members.length ? " rx-tag--ok" : " rx-tag--warn"}`}
                   >
                     n={members.length}
                   </span>
-                  <button
+                  <ActionIcon
                     type="button"
-                    className="rx-icon-btn rx-icon-btn--danger"
+                    variant="subtle"
+                    color="red"
+                    size="sm"
                     aria-label={l("删除批次", "Delete batch")}
                     onClick={() =>
                       st.updateConfig((d) => {
@@ -994,7 +997,7 @@ function BatchEditor({ samples }: { samples: string[] }) {
                     }
                   >
                     <IconTrash size={13} stroke={1.75} />
-                  </button>
+                  </ActionIcon>
                 </div>
                 <div className="rx-group-dropzone">
                   {samples.map((sample) => {
