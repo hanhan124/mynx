@@ -30,6 +30,7 @@ import { sanitizeComparisonName } from "@/lib/rnaseq/defaults";
 import { validComparisonsOf } from "@/features/rnaseq/model/validation";
 import type { Comparison } from "@/lib/rnaseq/types";
 import { useLanguage } from "@/lib/i18n";
+import { Button, Select } from "@mantine/core";
 
 const GROUP_COLORS = [
   "#0a84ff",
@@ -343,9 +344,9 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                 "Drag samples into a group, or click to add to the selected group",
               )}
             </span>
-            <button type="button" className="btn" onClick={addGroup}>
+            <Button type="button" variant="default" size="sm" onClick={addGroup}>
               <IconPlus size={13} stroke={1.75} /> {l("添加分组", "Add group")}
-            </button>
+            </Button>
           </span>
         </div>
         <div className="card-body">
@@ -362,17 +363,14 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                 <span className="rx-assign-count">
                   {l("点击样本加入:", "Click sample to add to:")}
                 </span>
-                <select
+                <Select
+                  size="xs"
+                  data={Object.keys(cfg.groups)}
+                  aria-label={l("目标分组", "Target group")}
                   className="rx-assign-target"
                   value={selectedGroup}
-                  onChange={(e) => setSelectedGroup(e.target.value)}
-                >
-                  {Object.keys(cfg.groups).map((g) => (
-                    <option key={g} value={g}>
-                      {g}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => setSelectedGroup(value ?? "")}
+                />
               </div>
               <div className="rx-sample-pool">
                 {pool.length === 0 ? (
