@@ -284,6 +284,7 @@
 - 三步导入、分析、绘图导航已切换到 Mantine `Tabs`，保留数据文件和分析结果前置条件。
 - RNA-seq 导入步骤的“更换文件”操作已切换到 Mantine `Button`，保留原有文件选择和导入状态。
 - RNA-seq 输出目录选择、运行名和打开目录操作已切换到 Mantine `Button`、`TextInput`。
+- RNA-seq 手动路径、样本显示名输入已切换到 Mantine `TextInput`，文件选择入口使用 Mantine `Button`。
 
 ### 页面切分
 
