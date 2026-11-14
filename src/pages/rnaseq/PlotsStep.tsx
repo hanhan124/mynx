@@ -36,6 +36,7 @@ import { readImageDataURL } from "@/lib/rnaseq/results";
 import { cleanGeneList } from "@/lib/rnaseq/defaults";
 import { useLanguage } from "@/lib/i18n";
 import type { AdditionalPlotsOptions } from "@/lib/rnaseq/types";
+import { Button, TextInput } from "@mantine/core";
 
 /** 连续色板(热图 Z-score / 相关性) */
 const HEAT_PALETTES = [
@@ -303,29 +304,32 @@ export default function PlotsStep({ goAnalysis }: { goAnalysis: () => void }) {
             )}
           </p>
           <div className="rx-path-row">
-            <input
+            <TextInput
+              size="sm"
               className="rx-path-input"
               value={st.resultDir}
               readOnly
               placeholder={l("尚未加载结果目录", "No result directory loaded")}
             />
-            <button type="button" className="btn" onClick={() => void browseResult()}>
+            <Button type="button" variant="default" size="sm" onClick={() => void browseResult()}>
               {l("浏览", "Browse")}
-            </button>
+            </Button>
             {st.hasResult && (
-              <button
+              <Button
                 type="button"
-                className="btn"
+                variant="default"
+                size="sm"
+                aria-label={l("打开结果目录", "Open result directory")}
                 onClick={() => void openInShell(st.resultDir)}
               >
                 <IconFolderOpen size={13} stroke={1.75} />
-              </button>
+              </Button>
             )}
           </div>
           {!st.hasResult && (
-            <button type="button" className="btn" onClick={goAnalysis}>
+            <Button type="button" variant="default" size="sm" onClick={goAnalysis}>
               {l("前往差异分析", "Go to DE analysis")}
-            </button>
+            </Button>
           )}
         </div>
       </section>
