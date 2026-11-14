@@ -1,0 +1,5 @@
+{
+  "repeatCountMismatch": "分组 \"对照组\" 从第 2 行开始有 3 个重复，但当前设置为 4 个。请检查重复次数或 Transformed Data 数据。",
+  "mutuallyExclusive": "择优重复数与离群值剔除不能同时启用，请只选一种",
+  "missingControlGroup": "相对对照方法需要指定对照组"
+}

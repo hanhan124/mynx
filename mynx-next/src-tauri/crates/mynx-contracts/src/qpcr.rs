@@ -14,9 +14,11 @@ use ts_rs::TS;
 
 /// Flattened cell value. Rich ExcelJS values (formulas, rich text) are
 /// resolved to their plain cached value by the worker before crossing IPC.
+/// Adjacently tagged (`{"t":"num","v":1.5}`) — internally-tagged enums
+/// cannot carry primitive newtype payloads across serde.
 #[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "qpcr/")]
-#[serde(tag = "t", rename_all = "camelCase")]
+#[serde(tag = "t", content = "v", rename_all = "camelCase")]
 pub enum CellValue {
     Empty,
     Num(f64),
@@ -67,7 +69,7 @@ pub struct WorkbookSnapshot {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "qpcr/")]
-#[serde(tag = "t", rename_all = "camelCase")]
+#[serde(tag = "t", content = "v", rename_all = "camelCase")]
 pub enum PatchValue {
     Empty,
     Num(f64),

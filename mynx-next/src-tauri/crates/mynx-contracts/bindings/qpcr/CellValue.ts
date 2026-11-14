@@ -3,5 +3,7 @@
 /**
  * Flattened cell value. Rich ExcelJS values (formulas, rich text) are
  * resolved to their plain cached value by the worker before crossing IPC.
+ * Adjacently tagged (`{"t":"num","v":1.5}`) — internally-tagged enums
+ * cannot carry primitive newtype payloads across serde.
  */
-export type CellValue = { "t": "empty" } | { "t": "num" } & number | { "t": "text" } & string;
+export type CellValue = { "t": "empty" } | { "t": "num", "v": number } | { "t": "text", "v": string };

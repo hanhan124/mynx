@@ -391,6 +391,131 @@ pub async fn run_script(
     proc::run_streamed_shell(&script, token, &sink, Some(CANCEL_NOTE)).await
 }
 
+/// qPCR plot runner orchestration (port of qpcr-plot-runner.ts): copy the
+/// workbook to an ASCII temp path, write the config JSON beside it, run
+/// qpcr_plot_runner.R, clean up temp files and classify the result.
+pub async fn run_qpcr_plot(
+    rscript: &str,
+    script_path: &str,
+    config: &mynx_contracts::qpcr::QpcrPlotRunConfig,
+    log: LogSink,
+    token: &CancellationToken,
+) -> mynx_contracts::qpcr::QpcrPlotRunResult {
+    use mynx_contracts::qpcr::QpcrPlotRunResult;
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    let tmp = std::env::temp_dir();
+    let params_path = tmp.join(format!("mynx_qpcr_plot_{timestamp}.json"));
+    let input_copy = tmp.join(format!("mynx_qpcr_input_{timestamp}.xlsx"));
+
+    let result =
+        run_qpcr_plot_inner(rscript, script_path, config, &params_path, &input_copy, log, token)
+            .await;
+
+    let _ = tokio::fs::remove_file(&params_path).await;
+    let _ = tokio::fs::remove_file(&input_copy).await;
+    result
+}
+
+async fn run_qpcr_plot_inner(
+    rscript: &str,
+    script_path: &str,
+    config: &mynx_contracts::qpcr::QpcrPlotRunConfig,
+    params_path: &std::path::Path,
+    input_copy: &std::path::Path,
+    log: LogSink,
+    token: &CancellationToken,
+) -> mynx_contracts::qpcr::QpcrPlotRunResult {
+    use mynx_contracts::qpcr::QpcrPlotRunResult;
+    let failed = |error: String| QpcrPlotRunResult {
+        v: WIRE_VERSION,
+        ok: false,
+        output_dir: None,
+        files: vec![],
+        statistics_file: None,
+        error: Some(error),
+        cancelled: false,
+    };
+
+    // Always copy the workbook to the ASCII temp path (legacy behavior:
+    // readFile + writeFile unconditionally, config.filePath repointed).
+    if let Err(error) = tokio::fs::copy(&config.file_path, input_copy).await {
+        return failed(format!("读取输入文件失败: {error}"));
+    }
+
+    // Config JSON with filePath repointed to the ASCII copy.
+    let mut config_value = match serde_json::to_value(config) {
+        Ok(value) => value,
+        Err(error) => return failed(format!("序列化配置失败: {error}")),
+    };
+    if let Some(obj) = config_value.as_object_mut() {
+        obj.insert(
+            "filePath".to_string(),
+            serde_json::Value::String(input_copy.to_string_lossy().into_owned()),
+        );
+    }
+    if let Err(error) = std::fs::File::create(params_path)
+        .and_then(|mut file| {
+            use std::io::Write as _;
+            serde_json::to_writer_pretty(&mut file, &config_value)
+                .map_err(std::io::Error::other)
+        })
+    {
+        return failed(format!("写入临时配置失败: {error}"));
+    }
+
+    let exit = run_script(
+        rscript,
+        script_path,
+        &params_path.to_string_lossy(),
+        log,
+        token,
+    )
+    .await;
+    if token.is_cancelled() {
+        return QpcrPlotRunResult {
+            v: WIRE_VERSION,
+            ok: false,
+            output_dir: None,
+            files: vec![],
+            statistics_file: None,
+            error: Some("QPCR_PLOT_CANCELLED".to_string()),
+            cancelled: true,
+        };
+    }
+    if exit.code != 0 {
+        let stderr = exit.stderr.trim();
+        let failure_note = if stderr.is_empty() {
+            "R 未能生成 qPCR 图表".to_string()
+        } else {
+            stderr.to_string()
+        };
+        return failed(failure_note);
+    }
+
+    let statistics_file = if config.kind == "bar" {
+        let sig = if config.sig_file.trim().is_empty() {
+            "statistical_analysis_summary.csv"
+        } else {
+            config.sig_file.trim()
+        };
+        Some(join_path(&[&config.output_dir, sig]))
+    } else {
+        None
+    };
+    QpcrPlotRunResult {
+        v: WIRE_VERSION,
+        ok: true,
+        output_dir: Some(config.output_dir.clone()),
+        files: vec![],
+        statistics_file,
+        error: None,
+        cancelled: false,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

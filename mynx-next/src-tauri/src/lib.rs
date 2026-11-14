@@ -41,6 +41,9 @@ pub fn run() {
             commands::image::image_convert_start,
             commands::image::image_convert_cancel,
             commands::image::image_thumbnail,
+            commands::qpcr::qpcr_transform,
+            commands::qpcr::qpcr_calculate,
+            commands::qpcr::qpcr_plot_run,
             commands::weather::weather_by_ip,
         ])
         .setup(|app| {

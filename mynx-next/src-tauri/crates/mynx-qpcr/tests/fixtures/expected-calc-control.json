@@ -1,0 +1,6002 @@
+{
+  "patch": {
+    "removeSheets": [
+      "__NON_PROTECTED__"
+    ],
+    "upsertSheets": [
+      {
+        "name": "Summary_All_Genes",
+        "rows": [
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Gene"
+                },
+                "bold": true,
+                "fill": "DDEBF7",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Group_Name"
+                },
+                "bold": true,
+                "fill": "DDEBF7",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Repeat1"
+                },
+                "bold": true,
+                "fill": "BDD7EE",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Repeat2"
+                },
+                "bold": true,
+                "fill": "BDD7EE",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Repeat3"
+                },
+                "bold": true,
+                "fill": "BDD7EE",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Average"
+                },
+                "bold": true,
+                "fill": "E2EFDA",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Stdev"
+                },
+                "bold": true,
+                "fill": "E2EFDA",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Method"
+                },
+                "bold": true,
+                "fill": "FCE4D6",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "GAPDH_Ct_R1"
+                },
+                "bold": true,
+                "fill": "FFF2CC",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "GAPDH_Ct_R2"
+                },
+                "bold": true,
+                "fill": "FFF2CC",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "GAPDH_Ct_R3"
+                },
+                "bold": true,
+                "fill": "FFF2CC",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Target_Ct_R1"
+                },
+                "bold": true,
+                "fill": "E4DFEC",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Target_Ct_R2"
+                },
+                "bold": true,
+                "fill": "E4DFEC",
+                "bottomBorder": true
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Target_Ct_R3"
+                },
+                "bold": true,
+                "fill": "E4DFEC",
+                "bottomBorder": true
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "TNF"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.0000000000000009
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.0000000000000009
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9999999999999983
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.4749679539501263e-15
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.3
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "TNF"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.9999999999999967
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.6245047927124718
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.8660659830736148
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.830190258595361
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.19030098102507248
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 23.8
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 23.9
+                },
+                "bold": false,
+                "fill": "FFFFFF00",
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "TNF"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 16.000000000000014
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 16.000000000000014
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.0717734625362925
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 11.023924487512106
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 8.618815609928394
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.8
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 21
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 21.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 25
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "IL6"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.0667605809091056
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.0667605809091056
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.8664788381817884
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9999999999999999
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.11563271807738398
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.3
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 30.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 30.4
+                },
+                "bold": false,
+                "fill": "FFFFFF00",
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 30.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "IL6"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 2.1335211618182064
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.6169066849841853
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 2.1335211618182064
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.9613163362068662
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.2982675072673798
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 29.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 29.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 29.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "IL6"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.0000016526772273670017
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.0000018984276124175348
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.0000017712955944300096
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.0000017741334780715152
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.2289976861570314e-7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.8
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 50
+                },
+                "bold": false,
+                "fill": "FFFFFF00",
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 50
+                },
+                "bold": false,
+                "fill": "FFFFFF00",
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 50
+                },
+                "bold": false,
+                "fill": "FFFFFF00",
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "干扰素γ"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9315405226237345
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9984004114253067
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.070059065950959
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.06927312411087187
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.3
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 26.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 26.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 26.3
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "干扰素γ"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.621906253406513
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.4119514025165467
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.7383160811227665
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.5907245790152753
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.16540162778466286
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 25.9
+                },
+                "bold": false,
+                "fill": "FFFFFF00",
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 25.9
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 25.9
+                },
+                "bold": false,
+                "fill": "FFFFFF00",
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "干扰素γ"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 6.487625013626052
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 6.487625013626052
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 6.487625013626052
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 6.487625013626052
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.8
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24.1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24.3
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "VeryLongGeneNameForCappingCheckAlpha"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9984004114253073
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.0700590659509597
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9315405226237329
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.06927312411087302
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.3
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 28
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 28.1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 28.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "VeryLongGeneNameForCappingCheckAlpha"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.411951402516544
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.146860910232613
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.6219062534065138
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.3935728553852236
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.23805534600969566
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 27.8
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 27.9
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 27.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "VeryLongGeneNameForCappingCheckAlpha"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.9968008228506147
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 2.4583501776150674
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.9968008228506098
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 2.150650607772097
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.26647564421755626
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.8
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 27.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 27.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 27.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          }
+        ],
+        "fontName": "Times New Roman",
+        "leftAlign": true,
+        "identityFillCols": [
+          1,
+          2
+        ],
+        "freezeX": 2,
+        "freezeY": 1,
+        "colWidths": [
+          42,
+          16,
+          24,
+          24,
+          24,
+          24,
+          22,
+          41,
+          11,
+          11,
+          11,
+          12,
+          12,
+          12
+        ],
+        "a1Note": null
+      },
+      {
+        "name": "TNF",
+        "rows": [
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "GAPDH"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "TNF"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Normalized Expression"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Average"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Stdev"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Group_Name"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Method"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.0000000000000009
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.4749679539501263e-15
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.3
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.0000000000000009
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9999999999999983
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 23.8
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.9999999999999967
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.830190258595361
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.19030098102507248
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 23.9
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.6245047927124718
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.8660659830736148
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 21
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 16.000000000000014
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 11.023924487512106
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 8.618815609928394
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.8
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 21.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 16.000000000000014
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 25
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.0717734625362925
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Group_Name"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Average"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Stdev"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.4749679539501263e-15
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.830190258595361
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.19030098102507248
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 11.023924487512106
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 8.618815609928394
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          }
+        ],
+        "fontName": "Times New Roman",
+        "leftAlign": true,
+        "identityFillCols": [],
+        "freezeX": 0,
+        "freezeY": 0,
+        "colWidths": [],
+        "a1Note": null
+      },
+      {
+        "name": "IL6",
+        "rows": [
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "GAPDH"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "IL6"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Normalized Expression"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Average"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Stdev"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Group_Name"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Method"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 30.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.0667605809091056
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9999999999999999
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.11563271807738398
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.3
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 30.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.0667605809091056
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 30.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.8664788381817884
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 29.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 2.1335211618182064
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.9613163362068662
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.2982675072673798
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 29.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.6169066849841853
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 29.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 2.1335211618182064
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 50
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.0000016526772273670017
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.0000017741334780715152
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.2289976861570314e-7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.8
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 50
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.0000018984276124175348
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 50
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.0000017712955944300096
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Group_Name"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Average"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Stdev"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9999999999999999
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.11563271807738398
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.9613163362068662
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.2982675072673798
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.0000017741334780715152
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.2289976861570314e-7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          }
+        ],
+        "fontName": "Times New Roman",
+        "leftAlign": true,
+        "identityFillCols": [],
+        "freezeX": 0,
+        "freezeY": 0,
+        "colWidths": [],
+        "a1Note": null
+      },
+      {
+        "name": "干扰素γ",
+        "rows": [
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "GAPDH"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "干扰素γ"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Normalized Expression"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Average"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Stdev"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Group_Name"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Method"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 26.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9315405226237345
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.06927312411087187
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.3
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 26.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9984004114253067
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 26.3
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.070059065950959
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 25.9
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.621906253406513
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.5907245790152753
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.16540162778466286
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 25.9
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.4119514025165467
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 25.9
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.7383160811227665
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24.1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 6.487625013626052
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 6.487625013626052
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.8
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24.3
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 6.487625013626052
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 24.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 6.487625013626052
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Group_Name"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Average"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Stdev"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.06927312411087187
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.5907245790152753
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.16540162778466286
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 6.487625013626052
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          }
+        ],
+        "fontName": "Times New Roman",
+        "leftAlign": true,
+        "identityFillCols": [],
+        "freezeX": 0,
+        "freezeY": 0,
+        "colWidths": [],
+        "a1Note": null
+      },
+      {
+        "name": "VeryLongGeneNameForCappingCheck",
+        "rows": [
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "GAPDH"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "VeryLongGeneNameForCappingCheckAlpha"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Normalized Expression"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Average"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Stdev"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Group_Name"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Method"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 28
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9984004114253073
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.06927312411087302
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.3
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 28.1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.0700590659509597
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 28.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.9315405226237329
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 27.8
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.411951402516544
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.3935728553852236
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.23805534600969566
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.2
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 27.9
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.146860910232613
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 27.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.6219062534065138
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 27.5
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.9968008228506147
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 2.150650607772097
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.26647564421755626
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.8
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 27.4
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 2.4583501776150674
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "num",
+                  "v": 20.7
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 27.6
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.9968008228506098
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Control-relative (ΔΔCt) (control: 对照组)"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Group_Name"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Average"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "text",
+                  "v": "Stdev"
+                },
+                "bold": true,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "对照组"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.06927312411087302
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "低剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 1.3935728553852236
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.23805534600969566
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "value": {
+                  "t": "text",
+                  "v": "高剂量"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 2.150650607772097
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "num",
+                  "v": 0.26647564421755626
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              },
+              {
+                "value": {
+                  "t": "empty"
+                },
+                "bold": false,
+                "fill": null,
+                "bottomBorder": false
+              }
+            ]
+          }
+        ],
+        "fontName": "Times New Roman",
+        "leftAlign": true,
+        "identityFillCols": [],
+        "freezeX": 0,
+        "freezeY": 0,
+        "colWidths": [],
+        "a1Note": null
+      }
+    ]
+  },
+  "geneSheetNames": [
+    "TNF",
+    "IL6",
+    "干扰素γ",
+    "VeryLongGeneNameForCappingCheck"
+  ],
+  "methodNote": "Control-relative (ΔΔCt) (control: 对照组)",
+  "chartSeries": [
+    {
+      "geneName": "TNF",
+      "refGene": "GAPDH",
+      "points": [
+        {
+          "name": "对照组",
+          "avg": 1,
+          "stdev": 1.4749679539501263e-15
+        },
+        {
+          "name": "低剂量",
+          "avg": 1.830190258595361,
+          "stdev": 0.19030098102507248
+        },
+        {
+          "name": "高剂量",
+          "avg": 11.023924487512106,
+          "stdev": 8.618815609928394
+        }
+      ],
+      "groupCol": 1,
+      "dataStartRow": 14,
+      "dataRowCount": 3
+    },
+    {
+      "geneName": "IL6",
+      "refGene": "GAPDH",
+      "points": [
+        {
+          "name": "对照组",
+          "avg": 0.9999999999999999,
+          "stdev": 0.11563271807738398
+        },
+        {
+          "name": "低剂量",
+          "avg": 1.9613163362068662,
+          "stdev": 0.2982675072673798
+        },
+        {
+          "name": "高剂量",
+          "avg": 0.0000017741334780715152,
+          "stdev": 1.2289976861570314e-7
+        }
+      ],
+      "groupCol": 1,
+      "dataStartRow": 14,
+      "dataRowCount": 3
+    },
+    {
+      "geneName": "干扰素γ",
+      "refGene": "GAPDH",
+      "points": [
+        {
+          "name": "对照组",
+          "avg": 1,
+          "stdev": 0.06927312411087187
+        },
+        {
+          "name": "低剂量",
+          "avg": 1.5907245790152753,
+          "stdev": 0.16540162778466286
+        },
+        {
+          "name": "高剂量",
+          "avg": 6.487625013626052,
+          "stdev": 0
+        }
+      ],
+      "groupCol": 1,
+      "dataStartRow": 14,
+      "dataRowCount": 3
+    },
+    {
+      "geneName": "VeryLongGeneNameForCappingCheck",
+      "refGene": "GAPDH",
+      "points": [
+        {
+          "name": "对照组",
+          "avg": 1,
+          "stdev": 0.06927312411087302
+        },
+        {
+          "name": "低剂量",
+          "avg": 1.3935728553852236,
+          "stdev": 0.23805534600969566
+        },
+        {
+          "name": "高剂量",
+          "avg": 2.150650607772097,
+          "stdev": 0.26647564421755626
+        }
+      ],
+      "groupCol": 1,
+      "dataStartRow": 14,
+      "dataRowCount": 3
+    }
+  ]
+}

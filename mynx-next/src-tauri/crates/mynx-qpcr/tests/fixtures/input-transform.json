@@ -1,0 +1,1340 @@
+{
+  "v": 1,
+  "source": {
+    "name": "Data",
+    "columnCount": 3,
+    "rowCount": 46,
+    "rows": [
+      {
+        "row": 1,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "样本"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "Target"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "text",
+              "v": "Cq"
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 2,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "GAPDH"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 20.1
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 3,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "GAPDH"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 20.3
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 4,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "GAPDH"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 20.2
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 5,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "TNF"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 24.5
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 6,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "TNF"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 24.7
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 7,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "TNF"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 24.6
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 8,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "IL6"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 30.2
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 9,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "IL6"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "empty"
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 10,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "IL6"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 30.6
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 11,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "干扰素γ"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 26.4
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 12,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "干扰素γ"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 26.5
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 13,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "干扰素γ"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 26.3
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 14,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "VeryLongGeneNameForCappingCheckAlpha"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "text",
+              "v": "28.0"
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 15,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "VeryLongGeneNameForCappingCheckAlpha"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 28.1
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 16,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "VeryLongGeneNameForCappingCheckAlpha"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 28.2
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 17,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "GAPDH"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 20.4
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 18,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "GAPDH"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 20.2
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 19,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "GAPDH"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 20.5
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 20,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "TNF"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 23.8
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 21,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "TNF"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "empty"
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 22,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "TNF"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 24
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 23,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "IL6"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 29.5
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 24,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "IL6"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 29.7
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 25,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "IL6"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 29.6
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 26,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "干扰素γ"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "empty"
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 27,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "干扰素γ"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 25.9
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 28,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "干扰素γ"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "empty"
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 29,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "VeryLongGeneNameForCappingCheckAlpha"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 27.8
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 30,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "VeryLongGeneNameForCappingCheckAlpha"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 27.9
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 31,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "低剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "VeryLongGeneNameForCappingCheckAlpha"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 27.7
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 32,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "高剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "GAPDH"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 20.6
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 33,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "高剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "GAPDH"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 20.8
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 34,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "高剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "GAPDH"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 20.7
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 35,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "高剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "TNF"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 21
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 36,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "高剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "TNF"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 21.2
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 37,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "高剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "TNF"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 25
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 38,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "高剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "干扰素γ"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 24.1
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 39,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "高剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "干扰素γ"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 24.3
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 40,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "高剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "干扰素γ"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 24.2
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 41,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "高剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "VeryLongGeneNameForCappingCheckAlpha"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 27.5
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 42,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "高剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "VeryLongGeneNameForCappingCheckAlpha"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 27.4
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 43,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "高剂量"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "VeryLongGeneNameForCappingCheckAlpha"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 27.6
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 44,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": ""
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "TNF"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 21
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 45,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "对照组"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": ""
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 21
+            },
+            "yellowFill": false
+          }
+        ]
+      },
+      {
+        "row": 46,
+        "cells": [
+          {
+            "col": 1,
+            "value": {
+              "t": "text",
+              "v": "   "
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 2,
+            "value": {
+              "t": "text",
+              "v": "TNF"
+            },
+            "yellowFill": false
+          },
+          {
+            "col": 3,
+            "value": {
+              "t": "num",
+              "v": 22
+            },
+            "yellowFill": false
+          }
+        ]
+      }
+    ]
+  }
+}
