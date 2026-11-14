@@ -1089,9 +1089,11 @@ function LogArea() {
     <div className="rx-log-section">
       <div className="rx-log-head">
         <span>{st.runLogs.length} 条日志</span>
-        <button
+        <ActionIcon
           type="button"
-          className="rx-icon-btn"
+          variant="subtle"
+          size="sm"
+          aria-label="复制日志"
           title="复制日志"
           onClick={() => {
             void navigator.clipboard.writeText(st.runLogs.map((x) => x.msg).join("\n"));
@@ -1099,7 +1101,7 @@ function LogArea() {
           }}
         >
           <IconCopy size={13} stroke={1.75} />
-        </button>
+        </ActionIcon>
       </div>
       <div className="rx-log-area" ref={ref} role="log">
         {st.runLogs.map((x, i) => (
