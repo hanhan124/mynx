@@ -230,7 +230,7 @@ export default function UpdateNotification() {
                   <div className="update-body">{state.releaseNotes}</div>
                 )}
               </div>
-              <button className="update-close" onClick={handleDismiss}>
+              <button className="update-close" aria-label={t("window.close")} onClick={handleDismiss}>
                 <IconX size={14} stroke={1.75} />
               </button>
             </div>
@@ -287,7 +287,7 @@ export default function UpdateNotification() {
               <div className="update-title-area">
                 <div className="update-title">{t("update.complete")}</div>
               </div>
-              <button className="update-close" onClick={handleDismiss}>
+              <button className="update-close" aria-label={t("window.close")} onClick={handleDismiss}>
                 <IconX size={14} stroke={1.75} />
               </button>
             </div>
@@ -316,7 +316,7 @@ export default function UpdateNotification() {
                 <div className="update-title">{t("update.failed")}</div>
                 {state.error && <div className="update-body">{state.error}</div>}
               </div>
-              <button className="update-close" onClick={handleDismiss}>
+              <button className="update-close" aria-label={t("window.close")} onClick={handleDismiss}>
                 <IconX size={14} stroke={1.75} />
               </button>
             </div>

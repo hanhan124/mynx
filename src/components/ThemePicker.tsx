@@ -101,9 +101,7 @@ export default function ThemePicker({ value, onSelect }: ThemePickerProps) {
               : <ThemeMockup colors={MOCKUP_COLORS[theme.id]} />
             }
             <div className="theme-tile-info">
-              <div className="theme-tile-labels">
-                <span className="theme-tile-name">{t(`theme.${theme.id}.name`)}</span>
-              </div>
+              <span className="theme-tile-name">{t(`theme.${theme.id}.name`)}</span>
               <span className={`theme-tile-check ${active ? "theme-tile-check--active" : "theme-tile-check--inactive"}`}>
                 <IconCheck size={14} stroke={1.75} />
               </span>

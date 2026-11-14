@@ -38,7 +38,12 @@ export function RnaSeqTutorial({ onClose }: { onClose: () => void }) {
             )}
           </div>
         </div>
-        <button type="button" className="tutorial__close" onClick={onClose}>
+        <button
+          type="button"
+          className="tutorial__close"
+          aria-label={l("关闭", "Close")}
+          onClick={onClose}
+        >
           <IconX size={16} stroke={1.75} />
         </button>
       </div>

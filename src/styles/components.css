@@ -1,12 +1,5 @@
 /* ========= Modal — macOS 风格 ========= */
 
-.help-center-intro,
-.help-center-note {
-  color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.55;
-}
-
 .help-center-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -327,27 +320,9 @@
     grid-template-columns: 1fr 1fr;
     align-items: start;
   }
-  .card-grid--3 {
-    grid-template-columns: repeat(3, 1fr);
-    align-items: start;
-  }
 }
 
 /* ========= 步骤编号 ========= */
-.step-num {
-  width: 18px;
-  height: 18px;
-  min-width: 18px;
-  background: var(--accent-gradient);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
-  box-shadow: var(--shadow-accent);
-}
 
 /* ========= 文件/文件夹展示 ========= */
 .file-display {
@@ -815,11 +790,6 @@
 .toast.success .toast-icon { color: var(--green); }
 .toast.error .toast-icon { color: var(--red); }
 .toast.info .toast-icon { color: var(--accent); }
-
-.convert-options {
-  display: flex;
-  flex-direction: column;
-}
 
 /* ========= 动画 ========= */
 @keyframes fadeIn {

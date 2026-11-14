@@ -294,7 +294,6 @@ export default function ImportStep() {
             </div>
           </div>
           <div className="form-group">
-            <label>{l("运行名(auto = 时间戳)", "Run name (auto = timestamp)")}</label>
             <TextInput
               size="sm"
               label={l("运行名(auto = 时间戳)", "Run name (auto = timestamp)")}

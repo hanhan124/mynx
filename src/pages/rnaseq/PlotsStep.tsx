@@ -1400,6 +1400,7 @@ function GeneClustersEditor() {
           <button
             type="button"
             className="rx-icon-btn rx-icon-btn--danger"
+            aria-label={l(`删除基因簇 ${name}`, `Delete gene cluster ${name}`)}
             onClick={() => {
               const next = { ...clusters };
               delete next[name];

@@ -13,7 +13,7 @@ import { tools } from "@/lib/tools";
 import { open as openInBrowser } from "@tauri-apps/plugin-shell";
 import { searchUrl, isSearchEngine, SEARCH_ENGINES, type SearchEngine } from "@/lib/search-engines";
 import { getToolTranslationKey, useLanguage } from "@/lib/i18n";
-import { ActionIcon, Button, TextInput } from "@mantine/core";
+import { ActionIcon, TextInput, UnstyledButton } from "@mantine/core";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -236,10 +236,9 @@ export default function Home() {
               filtered.map((tool) => {
                 const Icon = tool.icon;
                 return (
-                  <Button
+                  <UnstyledButton
                     key={tool.path}
                     type="button"
-                    variant="subtle"
                     className="tool-card"
                     style={{ "--tile-accent": tool.accent } as CSSProperties}
                     onClick={() => navigate(tool.path)}
@@ -263,7 +262,7 @@ export default function Home() {
                       stroke={1.75}
                       className="tool-card-arrow"
                     />
-                  </Button>
+                  </UnstyledButton>
                 );
               })
             ) : (

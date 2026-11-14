@@ -101,7 +101,7 @@ export default function Transform({ workbook, sheetName, onComplete, onProgress,
       )}
 
       {status === 'error' && (
-        <div className="result-success" style={{ color: 'var(--red)', background: 'rgba(255,59,48,0.08)' }}>
+        <div className="result-success result-error">
           <IconCircleXFilled size={14} stroke={1.75} />
           <div>{errorMsg}</div>
         </div>

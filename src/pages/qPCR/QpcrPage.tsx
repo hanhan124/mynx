@@ -130,7 +130,7 @@ export default function QpcrPage() {
     <div className="page-shell page-shell--wide qpcr-page unified-page unified-page--qpcr">
       <LoadingOverlay visible={loading} text={loadingText} progress={progress} />
 
-      <Group className="panel-header qpcr-page-header" justify="space-between" wrap="nowrap" gap="sm">
+      <Group className="panel-header" justify="space-between" wrap="nowrap" gap="sm">
         <Group gap="sm" wrap="nowrap" miw={0}>
           <ThemeIcon size={36} radius="md" color="blue" variant="filled">
             <IconDna size={18} stroke={1.75} />
@@ -177,7 +177,7 @@ export default function QpcrPage() {
       {/* 步骤 1 + 2: 宽屏并排(转换 / 计算), 窄屏自动回退单列堆叠 */}
       <div className="card-grid card-grid--2 qpcr-processing-grid">
         {/* 步骤 1: 转换 — 始终显示 */}
-        <section className="card qpcr-step-card qpcr-step-card--transform">
+        <section className="card qpcr-step-card">
           <div className="qpcr-step-head">
             <span className="qpcr-step-index">01</span>
             <span className="qpcr-step-heading">
@@ -199,7 +199,7 @@ export default function QpcrPage() {
         </section>
 
         {/* 步骤 2: 计算 — 始终显示 */}
-        <section className="card qpcr-step-card qpcr-step-card--calculate">
+        <section className="card qpcr-step-card">
           <div className="qpcr-step-head">
             <span className="qpcr-step-index">02</span>
             <span className="qpcr-step-heading">

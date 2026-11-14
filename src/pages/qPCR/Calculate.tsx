@@ -148,7 +148,6 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
     <>
       <div className="form-row">
         <div className="form-group">
-          <label>{t('qpcr.method')}</label>
           <Select
             size="sm"
             data={[
@@ -163,7 +162,6 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
         </div>
         {needsControl && (
           <div className="form-group">
-            <label>{t('qpcr.controlGroup')}</label>
             <Select
               size="sm"
               data={groupNames.length > 0 ? groupNames : [{ value: '', label: t('qpcr.transformFirst') }]}
@@ -178,7 +176,6 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
 
       <div className="form-row form-row--three">
         <div className="form-group">
-          <label>{t('qpcr.repeats')}</label>
           <Select
             size="sm"
             data={Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }))}
@@ -197,7 +194,6 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
           />
         </div>
         <div className="form-group">
-          <label>{t('qpcr.referenceGene')}</label>
           <Select
             size="sm"
             data={hasGenes ? effectiveGeneNames : [{ value: '', label: t('qpcr.transformFirst') }]}
@@ -208,7 +204,6 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
           />
         </div>
         <div className="form-group">
-          <label>{t('qpcr.chartColor')}</label>
           <div className="color-picker-row">
             <ColorInput
               size="sm"
@@ -248,7 +243,6 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
               ] },
               { value: '0', label: `0 — ${t('qpcr.disabled')}` },
             ]}
-            label={t('qpcr.replicateHandling')}
             value={replicateOption}
             onChange={(value) => setReplicateOption(value ?? '0')}
             disabled={status === 'processing'}
@@ -273,7 +267,7 @@ export default function Calculate({ workbook, geneNames, onComplete, onProgress,
       )}
 
       {status === 'error' && (
-        <div className="result-success" style={{ color: '#ff453a', background: 'rgba(255,69,58,0.08)' }}>
+        <div className="result-success result-error">
           <IconCircleXFilled size={14} stroke={1.75} />
           <div>{errorMsg}</div>
         </div>

@@ -107,7 +107,6 @@ export default function OptionsPanel({
 
       {/* ── 压缩设置 ── */}
       <div className="form-group">
-        <label>{t("imgconv.compression")}</label>
         <Select
           size="sm"
           data={[{ value: "lossless", label: t("imgconv.modeLossless") }, { value: "lossy", label: t("imgconv.modeLossy") }]}
@@ -119,7 +118,6 @@ export default function OptionsPanel({
 
       {settings.mode === "lossless" ? (
         <div className="form-group">
-          <label>{t("imgconv.optimizeLevel")}</label>
           <Select
             size="sm"
             data={[{ value: "1", label: t("imgconv.levelFast") }, { value: "2", label: t("imgconv.levelBalanced") }, { value: "3", label: t("imgconv.levelMax") }]}
@@ -131,7 +129,6 @@ export default function OptionsPanel({
       ) : (
         <div className="form-row">
           <div className="form-group">
-            <label>{t("imgconv.colors")}</label>
             <Select
               size="sm"
               data={COLOR_COUNTS.map((c) => String(c))}
@@ -141,7 +138,6 @@ export default function OptionsPanel({
             />
           </div>
           <div className="form-group">
-            <label>{t("imgconv.dither")}</label>
             <Select
               size="sm"
               data={[{ value: "1", label: t("imgconv.yes") }, { value: "0", label: t("imgconv.no") }]}
@@ -177,7 +173,6 @@ export default function OptionsPanel({
         </div>
       ) : (
         <div className="form-group">
-          <label>{t("imgconv.watermark")}</label>
           <Select
             size="sm"
             data={[{ value: "0", label: t("imgconv.watermarkOff") }, { value: "1", label: t("imgconv.watermarkOn") }]}
@@ -191,7 +186,6 @@ export default function OptionsPanel({
       {settings.watermarkOn && wm.kind === "text" && (
         <>
           <div className="form-group">
-            <label>{t("imgconv.wmContent")}</label>
             <TextInput
               size="sm"
               label={t("imgconv.wmContent")}
@@ -202,21 +196,17 @@ export default function OptionsPanel({
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>{t("imgconv.font")}</label>
               <Select size="sm" data={FONTS} label={t("imgconv.font")} value={wm.font} onChange={(value) => patchWm({ font: value ?? FONTS[0] })} />
             </div>
             <div className="form-group">
-              <label>{t("imgconv.fontSize")}</label>
               <Select size="sm" data={FONT_SIZES.map(String)} label={t("imgconv.fontSize")} value={String(wm.fontSize)} onChange={(value) => patchWm({ fontSize: Number(value ?? 72) })} />
             </div>
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>{t("imgconv.bold")}</label>
               <Select size="sm" data={[{ value: "1", label: t("imgconv.yes") }, { value: "0", label: t("imgconv.no") }]} label={t("imgconv.bold")} value={yesNo(wm.bold)} onChange={(value) => patchWm({ bold: value === "1" })} />
             </div>
             <div className="form-group">
-              <label>{t("imgconv.color")}</label>
               <Select size="sm" data={[{ value: "white", label: t("imgconv.white") }, { value: "black", label: t("imgconv.black") }]} label={t("imgconv.color")} value={wm.color} onChange={(value) => patchWm({ color: (value ?? "white") as WatermarkSettings["color"] })} />
             </div>
           </div>
@@ -237,23 +227,19 @@ export default function OptionsPanel({
         <>
           <div className="form-row">
             <div className="form-group">
-              <label>{t("imgconv.opacity")}</label>
               <Select size="sm" data={["1", "0.85", "0.7", "0.5"]} label={t("imgconv.opacity")} value={String(wm.opacity)} onChange={(value) => patchWm({ opacity: Number(value ?? 0.85) })} />
             </div>
             <div className="form-group">
-              <label>{t("imgconv.position")}</label>
               <Select size="sm" data={["top-left", "top-center", "top-right", "center-left", "center", "center-right", "bottom-left", "bottom-center", "bottom-right", "tile"]} label={t("imgconv.position")} value={wm.position} onChange={(value) => patchWm({ position: (value ?? "bottom-right") as WatermarkPosition })} />
             </div>
           </div>
           {wm.kind === "image" && (
             <div className="form-group">
-              <label>{t("imgconv.logoScale")}</label>
               <Select size="sm" data={["0.1", "0.15", "0.25", "0.4", "0.6"]} label={t("imgconv.logoScale")} value={String(wm.scale)} onChange={(value) => patchWm({ scale: Number(value ?? 0.25) })} />
             </div>
           )}
           {wm.kind === "text" && (
             <div className="form-group">
-              <label>{t("imgconv.background")}</label>
               <Select size="sm" data={["none", "opaque", "semi", "light"]} label={t("imgconv.background")} value={wm.background} onChange={(value) => patchWm({ background: (value ?? "none") as WatermarkSettings["background"] })} />
             </div>
           )}
@@ -262,7 +248,6 @@ export default function OptionsPanel({
 
       {/* ── 输出设置 ── */}
       <div className="form-group">
-        <label>{t("imgconv.output")}</label>
         <Select
           size="sm"
           data={[{ value: "subfolder", label: t("imgconv.outSubfolder") }, { value: "alongside", label: t("imgconv.outAlongside") }, { value: "custom", label: t("imgconv.outCustom") }]}

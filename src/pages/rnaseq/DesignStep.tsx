@@ -441,6 +441,7 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                     <button
                       type="button"
                       className="rx-icon-btn rx-icon-btn--danger"
+                      aria-label={l("删除分组", "Delete group")}
                       onClick={(e) => {
                         e.stopPropagation();
                         void removeGroup(name);
@@ -465,6 +466,7 @@ export default function DesignStep({ goPlots }: { goPlots: () => void }) {
                           <button
                             type="button"
                             className="rx-remove-x"
+                            aria-label={l("移出样本", "Remove sample")}
                             onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1049,8 +1051,8 @@ function DeSummaryTable() {
             <th>{l("路径", "Path")}</th>
             <th>{l("方法", "Method")}</th>
             <th>{l("基因数", "Tested")}</th>
-            <th style={{ color: "#c0392b" }}>Up</th>
-            <th style={{ color: "#2471a3" }}>Down</th>
+            <th style={{ color: "var(--red)" }}>Up</th>
+            <th style={{ color: "var(--accent)" }}>Down</th>
           </tr>
         </thead>
         <tbody>
