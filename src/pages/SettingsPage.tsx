@@ -6,7 +6,7 @@ import ThemePicker from "@/components/ThemePicker";
 import { loadConfig, saveAlwaysOnTop } from "@/lib/config";
 import { useLanguage, type Language } from "@/lib/i18n";
 import { useTheme } from "@/hooks/useTheme";
-import { Button, SegmentedControl, Switch } from "@mantine/core";
+import { Button, SegmentedControl, Switch, Tabs } from "@mantine/core";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -67,25 +67,21 @@ export default function SettingsPage() {
           <div className="settings-nav-title">
             <strong>{t("settings.title")}</strong>
           </div>
-          <div className="settings-nav-list" role="tablist" aria-orientation="vertical">
+          <Tabs value={activeSection} onChange={(value) => value && setActiveSection(value as SettingsSectionId)} orientation="vertical" className="settings-nav-list">
+            <Tabs.List>
             {settingsSections.map((item) => {
-              const selected = item.id === activeSection;
               return (
-                <button
+                <Tabs.Tab
                   key={item.id}
-                  type="button"
-                  role="tab"
                   id={`settings-tab-${item.id}`}
-                  aria-selected={selected}
-                  aria-controls="settings-panel"
-                  className={`settings-nav-item${selected ? " is-active" : ""}`}
-                  onClick={() => setActiveSection(item.id)}
+                  value={item.id}
                 >
-                  <span>{item.label}</span>
-                </button>
+                  {item.label}
+                </Tabs.Tab>
               );
             })}
-          </div>
+            </Tabs.List>
+          </Tabs>
         </aside>
 
         <main id="settings-panel" className="settings-detail" role="tabpanel" aria-labelledby={`settings-tab-${activeSection}`}>
