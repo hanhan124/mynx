@@ -1,26 +1,53 @@
 # Mynx UI 重构验收报告
 
-## Part 2 — mynx-next（Svelte 5 + Rust）验收记录（2026-11-15）
+## Part 2 — mynx-next（Svelte 5 + Rust）验收记录（2026-11-15，二次更新）
 
 - 验收范围：`mynx-next/` 新应用（Tauri 2 + Svelte 5 + Rust workspace）。
 - 自动检查：`npm run build`（Vite 构建通过）、`npm run typecheck`
   （svelte-check 0 errors）、`npm run lint`（干净）、`npm test`（vitest
   195 用例通过）、`npm run test:rust`（cargo test --workspace 236 用例，
-  0 失败）、`npm run test:r:engine`（R 引擎全步骤 + de-only 冒烟通过）、
-  `npm run charts:check`（57 模板契约通过）、`npm run charts:smoke`
-  （R 渲染冒烟通过）。
+  0 失败）、**`cargo clippy --workspace --all-targets`（0 警告，ts-rs
+  serde 属性解析噪音除外）**、`npm run test:r:engine`（R 引擎全步骤 +
+  de-only 冒烟通过）、`npm run charts:check`（57 模板契约通过）、
+  **`npm run charts:verify` 全量通过**（schema smoke、清单/来源/参考图/
+  字段映射、R 渲染 smoke、`charts:visual` Python 视觉回归 57/57 完整
+  输出、缺失 0）、`npm run resources:check`（351 个 R 资源文件）、
+  `npm run check:release` 通过。
 - Tauri 开发模式实际启动：`npm run tauri dev` 启动成功
   （`mynx-next.exe` 进程确认运行，Vite 1421 端口服务正常）。
 - golden 对比：qPCR transform/calculate/best/outlier/control-relative
   与 legacy Excel 输出逐格对比通过；Excel 原生图表 XML 注入与 legacy
   输出 11 个 zip entry 逐字节一致。
-- 手工回归状态：主题（system/graphite/pearl + legacy dark/light 归一化）、
-  中英文、420/960 布局在 shell 层已通过浏览器回归（见前文 Part 1 方法）；
-  四大功能页在 Tauri 运行时中的逐页回归（文件对话框、R 实跑、取消、
-  历史加载）尚未在本机完整执行——自动化已覆盖状态机、验证顺序与错误
-  文案，R 实跑契约由引擎冒烟 + runner 行为对齐测试覆盖。
-- 已知限制：
-  - macOS 未验证（构建链已配置，未实机执行）。
+- **Tauri 运行时内手工回归（Windows 实机，UI 自动化 + 无障碍树逐项核对）**：
+  - 原生菜单完整（Mynx/File/Edit/View/Window/Help 六个子菜单）。
+  - 窗口控制齐备（关闭/最大化/最小化/置顶/任务中心/命令面板触发钮）。
+  - 首页：工具搜索输入框过滤四个工具卡、R 环境卡真实检测
+    （Rscript 可用，路径 `C:\Program Files\R\R-4.6.0\bin\Rscript.exe`，
+    真实 Rust 文件系统扫描）、最近任务、失败任务提醒、最近项目、
+    最近输出目录。
+  - 命令面板（Ctrl+K）：12 个条目（6 跳转 + 6 操作：三态主题、中英切换、
+    置顶、任务抽屉），跳转动作实际执行并正确导航。
+  - 路由导航：主页 → /image → /settings → /rnaseq 全部正确渲染；
+    图片页完整（压缩模式/优化强度/输出位置/水印全部选项组）。
+  - **历史结果加载：RNA-seq 历史面板通过真实 Rust IPC 扫描
+    `~/Mynx/rnaseq_runs` 列出 4 个运行目录**（2 个真实历史 run +
+    验证用临时目录），历史/参数恢复契约由 merge_run_params 测试锁定。
+  - disabled/idle 状态：图片页未添加文件时运行按钮显示
+    「请先添加图片」禁用态；running/success/error/cancelled 徽标由
+    state 测试锁定并在任务抽屉渲染。
+  - 中文界面全量渲染（a11y 树逐项核对）。
+- 旧依赖审计：根 package.json 全部依赖（React/Mantine 等）仍被 legacy
+  参照树与 `npm run legacy:*` 验证入口引用（逐包 grep 确认 21-30 处引用），
+  无"无用依赖"可删；mynx-next 自身依赖集零 React/Mantine。legacy 旧 CSS
+  保留在 legacy 树内（原 1560 行死代码已在 Part 1 清理）。
+- 已知限制（剩余项）：
+  - **macOS 未实机验证**（构建链已配置：mac:build 脚本指向 mynx-next；
+    无 Apple Silicon 机器可用，发布前需实机回归）。
+  - 文件对话框驱动的 R 实跑/图片批量转换未在运行时自动化（CUA 无法
+    置前原生对话框）；对应契约由 golden fixtures、引擎冒烟与管线移植
+    测试覆盖，取消语义由任务中心测试锁定。
+  - 1280/1440px 布点未在运行时逐点截图（shell 层浏览器回归已覆盖
+    420/960；布局为流式 flex，风险低）。
   - 安装器（installer/）仍指向 legacy 主程序二进制；切换步骤见
     `mynx-next/docs/RELEASE_NEXT.md`。
   - 模板包导入安装到 app_data_dir，重启后目录列表合并待实现。
