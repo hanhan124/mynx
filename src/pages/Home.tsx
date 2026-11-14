@@ -13,6 +13,7 @@ import { tools } from "@/lib/tools";
 import { open as openInBrowser } from "@tauri-apps/plugin-shell";
 import { searchUrl, isSearchEngine, SEARCH_ENGINES, type SearchEngine } from "@/lib/search-engines";
 import { getToolTranslationKey, useLanguage } from "@/lib/i18n";
+import { ActionIcon, TextInput } from "@mantine/core";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -112,8 +113,9 @@ export default function Home() {
         >
           <div className="home-search-box">
             <div ref={enginePickerRef} className="home-search-engine-picker">
-              <button
+              <ActionIcon
                 type="button"
+                variant="subtle"
                 className="home-search-engine-trigger"
                 onClick={() => setEngineMenuOpen((open) => !open)}
                 aria-label={t("home.chooseEngine")}
@@ -127,7 +129,7 @@ export default function Home() {
                   stroke={2}
                   aria-hidden="true"
                 />
-              </button>
+              </ActionIcon>
               {engineMenuOpen && (
                 <div className="home-search-engine-menu" role="menu">
                   <div className="home-search-engine-menu-title">
@@ -166,10 +168,11 @@ export default function Home() {
                 </div>
               )}
             </div>
-            <input
+            <TextInput
+              size="sm"
               className="home-search-input"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(event) => setQuery(event.currentTarget.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
@@ -180,14 +183,16 @@ export default function Home() {
               aria-label={t("home.searchAria")}
             />
             {query && (
-              <button
+              <ActionIcon
                 type="button"
+                variant="subtle"
+                size="sm"
                 className="home-search-clear"
                 onClick={() => setQuery("")}
                 aria-label={t("home.clear")}
               >
                 <IconX size={14} stroke={1.75} />
-              </button>
+              </ActionIcon>
             )}
           </div>
         </form>
