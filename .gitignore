@@ -39,8 +39,9 @@ src-tauri/gen/
 # Cargo (local build target redirect)
 .cargo/
 
-# Internal docs (not for GitHub)
-docs/
+# Internal docs (not for GitHub) — root docs/ only; mynx-next/docs is
+# versioned (architecture/protocol/compatibility deliverables)
+/docs/
 
 # Workbuddy (local AI agent context)
 .workbuddy/
