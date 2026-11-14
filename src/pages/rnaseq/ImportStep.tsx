@@ -204,15 +204,19 @@ export default function ImportStep() {
           <details className="rx-import-advanced">
             <summary>{l("手动输入文件路径", "Enter file path manually")}</summary>
             <div className="rx-path-row">
-              <input
+              <TextInput
+                size="sm"
                 className="rx-path-input"
                 value={st.importSourcePath}
                 placeholder="D:\data\gene.counts.csv"
                 readOnly
               />
-              <button
+              <Button
                 type="button"
                 className="btn"
+                size="sm"
+                variant="default"
+                aria-label={l("选择文件", "Choose file")}
                 onClick={async () => {
                   const picked = await open({ multiple: false });
                   if (!picked) return;
@@ -225,7 +229,7 @@ export default function ImportStep() {
                 }}
               >
                 <IconFolderOpen size={13} stroke={1.75} />
-              </button>
+              </Button>
             </div>
           </details>
         </div>
@@ -248,12 +252,12 @@ export default function ImportStep() {
               {sampleCols.map((s) => (
                 <label key={s} className="rx-field">
                   <span className="rx-field-label">{s}</span>
-                  <input
-                    type="text"
+                  <TextInput
+                    size="sm"
                     value={cfg.sample_labels[s] ?? ""}
                     placeholder={s}
-                    onChange={(e) => {
-                      const v = e.target.value;
+                    onChange={(event) => {
+                      const v = event.currentTarget.value;
                       st.updateConfig((d) => {
                         if (v) d.sample_labels[s] = v;
                         else delete d.sample_labels[s];
