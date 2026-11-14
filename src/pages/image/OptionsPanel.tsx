@@ -4,7 +4,7 @@ import {
   IconPhotoFilled,
 } from "@tabler/icons-react";
 import { useLanguage } from "@/lib/i18n";
-import { Select, TextInput } from "@mantine/core";
+import { Button, Select, TextInput } from "@mantine/core";
 import {
   baseName,
   IMAGE_EXTENSIONS,
@@ -157,36 +157,34 @@ export default function OptionsPanel({
       {settings.watermarkOn ? (
         <div className="form-row">
           <div className="form-group">
-            <label>{t("imgconv.watermark")}</label>
-            <select
+            <Select
+              size="sm"
+              data={[{ value: "0", label: t("imgconv.watermarkOff") }, { value: "1", label: t("imgconv.watermarkOn") }]}
+              label={t("imgconv.watermark")}
               value={yesNo(settings.watermarkOn)}
-              onChange={(e) => onChange({ watermarkOn: e.target.value === "1" })}
-            >
-              <option value="0">{t("imgconv.watermarkOff")}</option>
-              <option value="1">{t("imgconv.watermarkOn")}</option>
-            </select>
+              onChange={(value) => onChange({ watermarkOn: value === "1" })}
+            />
           </div>
           <div className="form-group">
-            <label>{t("imgconv.wmKind")}</label>
-            <select
+            <Select
+              size="sm"
+              data={[{ value: "text", label: t("imgconv.wmText") }, { value: "image", label: t("imgconv.wmImage") }]}
+              label={t("imgconv.wmKind")}
               value={wm.kind}
-              onChange={(e) => patchWm({ kind: e.target.value as WatermarkSettings["kind"] })}
-            >
-              <option value="text">{t("imgconv.wmText")}</option>
-              <option value="image">{t("imgconv.wmImage")}</option>
-            </select>
+              onChange={(value) => patchWm({ kind: (value ?? "text") as WatermarkSettings["kind"] })}
+            />
           </div>
         </div>
       ) : (
         <div className="form-group">
           <label>{t("imgconv.watermark")}</label>
-          <select
+          <Select
+            size="sm"
+            data={[{ value: "0", label: t("imgconv.watermarkOff") }, { value: "1", label: t("imgconv.watermarkOn") }]}
+            label={t("imgconv.watermark")}
             value={yesNo(settings.watermarkOn)}
-            onChange={(e) => onChange({ watermarkOn: e.target.value === "1" })}
-          >
-            <option value="0">{t("imgconv.watermarkOff")}</option>
-            <option value="1">{t("imgconv.watermarkOn")}</option>
-          </select>
+            onChange={(value) => onChange({ watermarkOn: value === "1" })}
+          />
         </div>
       )}
 
@@ -251,10 +249,10 @@ export default function OptionsPanel({
       {settings.watermarkOn && wm.kind === "image" && (
         <div className="form-group">
           <label>{t("imgconv.logo")}</label>
-          <button type="button" className="btn btn-full" onClick={chooseLogo}>
+          <Button type="button" variant="default" fullWidth onClick={chooseLogo}>
             <IconPhotoFilled size={14} stroke={1.75} />
             {wm.imagePath ? baseName(wm.imagePath) : t("imgconv.chooseLogo")}
-          </button>
+          </Button>
         </div>
       )}
 
