@@ -37,16 +37,6 @@ fn file_exists(path: &str) -> bool {
     fs::metadata(path).map(|metadata| metadata.is_file()).unwrap_or(false)
 }
 
-/// History/run-dir reads only accept absolute paths — relative segments
-/// (e.g. `..`) never make sense for run directories picked from the UI.
-fn ensure_absolute_run_dir(run_dir: &str) -> Result<(), MynxError> {
-    let path = std::path::Path::new(run_dir);
-    if !path.is_absolute() {
-        return Err(MynxError::validation("run 目录必须为绝对路径"));
-    }
-    Ok(())
-}
-
 /// JS `localeCompare` approximation for the ASCII file/dir names the engine
 /// produces: case-insensitive primary comparison, byte order tiebreak (so
 /// uppercase sorts before lowercase, like the ICU tertiary level).
@@ -513,6 +503,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn merge_params_follows_deep_merge_semantics() {
         let mut base = RnaSeqConfig::default();
         base.output_dir = "D:/orig".to_string();
@@ -550,6 +541,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn merge_run_params_overrides_output_dir_and_drops_steps() {
         let mut current = RnaSeqConfig::default();
         current.output_dir = "D:/current".to_string();

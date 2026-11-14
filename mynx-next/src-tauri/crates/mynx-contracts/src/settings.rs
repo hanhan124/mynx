@@ -1,7 +1,6 @@
 //! Settings contracts. Key names match the legacy `config.json` store so a
 //! user's existing settings migrate losslessly into SQLite.
 
-use crate::WIRE_VERSION;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;

@@ -67,6 +67,9 @@ async fn remove_temp_files(tmp_runner_params: &str, tmp_target_params: &str) {
 /// Windows wrapper. Note: `New-Item` on Windows PowerShell 5.1 has no
 /// `-LiteralPath`; the .NET `CreateDirectory` robustly handles any path
 /// (brackets/Unicode included).
+// Parameter list mirrors the legacy staging contract one-to-one; grouping
+// into a struct would obscure the line-by-line correspondence.
+#[allow(clippy::too_many_arguments)]
 fn build_windows_script(
     staging: bool,
     output_dir: &str,
@@ -401,7 +404,7 @@ pub async fn run_qpcr_plot(
     log: LogSink,
     token: &CancellationToken,
 ) -> mynx_contracts::qpcr::QpcrPlotRunResult {
-    use mynx_contracts::qpcr::QpcrPlotRunResult;
+    
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_millis())
@@ -458,7 +461,7 @@ async fn run_qpcr_plot_inner(
     }
     if let Err(error) = std::fs::File::create(params_path)
         .and_then(|mut file| {
-            use std::io::Write as _;
+            
             serde_json::to_writer_pretty(&mut file, &config_value)
                 .map_err(std::io::Error::other)
         })

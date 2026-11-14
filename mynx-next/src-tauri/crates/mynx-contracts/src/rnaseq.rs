@@ -3,7 +3,6 @@
 //! the reference engine. Legacy params.json files (written by the previous
 //! frontend) deserialize via serde defaults.
 
-use crate::WIRE_VERSION;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -202,6 +201,7 @@ impl Default for DeOptions {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "rnaseq/")]
 #[serde(rename_all = "snake_case", default)]
+#[derive(Default)]
 pub struct Comparison {
     pub name: String,
     pub case: String,
@@ -210,11 +210,6 @@ pub struct Comparison {
     pub mode: Option<ComparisonMode>,
 }
 
-impl Default for Comparison {
-    fn default() -> Self {
-        Self { name: String::new(), case: String::new(), control: String::new(), mode: None }
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "rnaseq/")]
@@ -343,6 +338,7 @@ impl Default for OverallHeatmap {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "rnaseq/")]
 #[serde(rename_all = "snake_case", default)]
+#[derive(Default)]
 pub struct SelectedHeatmapOptions {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cluster_rows: Option<bool>,
@@ -360,23 +356,11 @@ pub struct SelectedHeatmapOptions {
     pub width: Option<f64>,
 }
 
-impl Default for SelectedHeatmapOptions {
-    fn default() -> Self {
-        Self {
-            cluster_rows: None,
-            cluster_columns: None,
-            show_row_dend: None,
-            show_column_dend: None,
-            border: None,
-            show_row_title: None,
-            width: None,
-        }
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "rnaseq/")]
 #[serde(rename_all = "snake_case", default)]
+#[derive(Default)]
 pub struct SelectedHeatmapJob {
     pub name: String,
     pub title: String,
@@ -394,19 +378,6 @@ pub struct SelectedHeatmapJob {
     pub options: SelectedHeatmapOptions,
 }
 
-impl Default for SelectedHeatmapJob {
-    fn default() -> Self {
-        Self {
-            name: String::new(),
-            title: String::new(),
-            enabled: None,
-            samples: None,
-            gene_groups: None,
-            n_clusters: None,
-            options: SelectedHeatmapOptions::default(),
-        }
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "rnaseq/")]

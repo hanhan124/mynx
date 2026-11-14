@@ -61,7 +61,7 @@ impl JobManager {
     }
 
     /// Register a new job and return its handle.
-    pub fn start(&self, kind: TaskKind, label: impl Into<String>) -> JobHandle {
+    pub fn start(&self, kind: TaskKind, label: impl Into<String>) -> JobHandle<'_> {
         let id = self.next_id.fetch_add(1, Ordering::SeqCst);
         let now = now_ms();
         let record = TaskRecord {
@@ -93,7 +93,7 @@ impl JobManager {
     }
 
     /// Test/infrastructure helper: create a job already queued.
-    pub fn start_queued(&self, kind: TaskKind, label: impl Into<String>) -> JobHandle {
+    pub fn start_queued(&self, kind: TaskKind, label: impl Into<String>) -> JobHandle<'_> {
         let handle = self.start(kind, label);
         self.update(handle.id, |r| r.status = TaskStatus::Queued);
         handle
@@ -152,7 +152,7 @@ impl JobManager {
     pub fn list(&self) -> Vec<TaskRecord> {
         let mut records: Vec<TaskRecord> =
             self.jobs.lock().unwrap().values().map(|e| e.record()).collect();
-        records.sort_by(|a, b| b.created_at_ms.cmp(&a.created_at_ms));
+        records.sort_by_key(|record| std::cmp::Reverse(record.created_at_ms));
         records
     }
 

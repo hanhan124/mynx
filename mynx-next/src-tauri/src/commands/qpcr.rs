@@ -9,7 +9,7 @@ use mynx_contracts::task::{LogLine, MynxError, TaskKind};
 use mynx_contracts::WIRE_VERSION;
 use std::sync::Arc;
 use tauri::ipc::Channel;
-use tauri::{Emitter, Manager, State};
+use tauri::{Manager, State};
 
 use crate::state::SharedState;
 

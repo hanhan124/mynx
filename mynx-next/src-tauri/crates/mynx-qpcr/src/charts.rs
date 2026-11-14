@@ -27,12 +27,12 @@
 //!   `extractChartData` never produced them), so they consume no chart index.
 //! - Deliberate deviations in the skip path (all gene sheets resolve in the
 //!   real pipeline, so the happy path is byte-identical to legacy):
-//!   a) `[Content_Types].xml` overrides are only written for chart parts that
-//!      actually exist — the legacy loop added orphan overrides for skipped
-//!      indices, producing an invalid OPC package.
-//!   b) The summary drawing's relationships target the actual chart part of
-//!      each processed series — the legacy mapped by processed order, which
-//!      pointed at the wrong (or a missing) chart when a sheet was skipped.
+//!   - `[Content_Types].xml` overrides are only written for chart parts that
+//!     actually exist — the legacy loop added orphan overrides for skipped
+//!     indices, producing an invalid OPC package.
+//!   - The summary drawing's relationships target the actual chart part of
+//!     each processed series — the legacy mapped by processed order, which
+//!     pointed at the wrong (or a missing) chart when a sheet was skipped.
 
 use std::collections::HashMap;
 use std::io::{Cursor, Read, Write};
@@ -188,8 +188,9 @@ fn parse_color_hex(hex: &str) -> u32 {
 }
 
 /// Build the rich-text runs for the Y-axis title.
-///  - ref-normalized:   "Normalize to <i>{refGene}</i>"
-///  - control-relative: "Normalize to {controlGroup} (<i>{refGene}</i>)"
+/// - ref-normalized:   "Normalize to <i>{refGene}</i>"
+/// - control-relative: "Normalize to {controlGroup} (<i>{refGene}</i>)"
+///
 /// Gene names are rendered italic (i="1"); group names are not.
 fn build_val_axis_title_runs(
     ref_gene: &str,

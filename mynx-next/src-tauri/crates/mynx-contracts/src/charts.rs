@@ -1,7 +1,6 @@
 //! Scientific chart studio contracts: run configuration for
 //! `r/chart_runner.R`, template manifests, and streamed run events.
 
-use crate::WIRE_VERSION;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -158,6 +157,7 @@ pub struct ChartRunResult {
 #[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "charts/")]
 #[serde(rename_all = "camelCase", default)]
+#[derive(Default)]
 pub struct ChartTemplateManifest {
     pub id: String,
     pub name: String,
@@ -177,28 +177,11 @@ pub struct ChartTemplateManifest {
     pub extra: serde_json::Map<String, serde_json::Value>,
 }
 
-impl Default for ChartTemplateManifest {
-    fn default() -> Self {
-        Self {
-            id: String::new(),
-            name: String::new(),
-            family: String::new(),
-            status: String::new(),
-            source_url: None,
-            source_repo_path: None,
-            packages: Vec::new(),
-            outputs: Vec::new(),
-            data_roles: Vec::new(),
-            reference_path: None,
-            reference_image_url: None,
-            extra: Default::default(),
-        }
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "charts/")]
 #[serde(rename_all = "camelCase", default)]
+#[derive(Default)]
 pub struct ChartDataRole {
     pub key: String,
     pub label: String,
@@ -207,17 +190,6 @@ pub struct ChartDataRole {
     pub description: Option<String>,
 }
 
-impl Default for ChartDataRole {
-    fn default() -> Self {
-        Self {
-            key: String::new(),
-            label: String::new(),
-            accepted_types: Vec::new(),
-            required: false,
-            description: None,
-        }
-    }
-}
 
 /// Imported dataset for field mapping (from `charts_import_data`).
 #[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]

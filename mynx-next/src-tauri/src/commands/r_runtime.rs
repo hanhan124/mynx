@@ -1,7 +1,7 @@
 //! R runtime commands: discovery, dependency checks, install tasks.
 
 use mynx_contracts::r::{RDependencyStatus, RInstallEvent, RInstallResult, RScriptStatus};
-use mynx_contracts::task::{LogLevel, LogLine, MynxError, TaskKind};
+use mynx_contracts::task::{LogLine, MynxError, TaskKind};
 use mynx_contracts::WIRE_VERSION;
 use std::sync::Arc;
 use tauri::ipc::Channel;

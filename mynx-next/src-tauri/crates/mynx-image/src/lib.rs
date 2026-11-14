@@ -86,7 +86,7 @@ pub fn start(options: ConvertOptions, emitter: impl Fn(ConvertEvent) + Send + Sy
     }
     std::thread::spawn(move || {
         let _guard = RegistryGuard(id);
-        let _ = run(&options, &emitter, &cancelled);
+        run(&options, &emitter, &cancelled);
     });
     id
 }
@@ -475,7 +475,7 @@ fn decoding_result_to_rgba(
                         255,
                     )
                 }
-                _ => (p[0], p[1], p[2], p[3].min(255)),
+                _ => (p[0], p[1], p[2], p[3]),
             };
             *dst = image::Rgba([r, g, b, a]);
         }
@@ -544,8 +544,8 @@ fn render_svg(bytes: &[u8]) -> Result<RgbaImage, String> {
     // PNG stays usable, but cap the allocation.
     let base_max = base_w.max(base_h);
     let scale = (1024.0 / base_max).clamp(1.0, 8.0);
-    let width = ((base_w * scale).ceil() as u32).min(8192).max(1);
-    let height = ((base_h * scale).ceil() as u32).min(8192).max(1);
+    let width = ((base_w * scale).ceil() as u32).clamp(1, 8192);
+    let height = ((base_h * scale).ceil() as u32).clamp(1, 8192);
 
     let mut pixmap = resvg::tiny_skia::Pixmap::new(width, height)
         .ok_or_else(|| "SVG 画布创建失败".to_string())?;
@@ -563,9 +563,9 @@ fn render_svg(bytes: &[u8]) -> Result<RgbaImage, String> {
             (0, 0, 0)
         } else {
             (
-                ((px[0] as u32 * 255 + a / 2) / a) as u8,
-                ((px[1] as u32 * 255 + a / 2) / a) as u8,
-                ((px[2] as u32 * 255 + a / 2) / a) as u8,
+                ((px[0] as u32 * 255 + a / 2) / a.max(1)) as u8,
+                ((px[1] as u32 * 255 + a / 2) / a.max(1)) as u8,
+                ((px[2] as u32 * 255 + a / 2) / a.max(1)) as u8,
             )
         };
         *dst = image::Rgba([r, g, b, px[3]]);
@@ -765,7 +765,7 @@ fn apply_text_watermark(img: &mut RgbaImage, text: &str, wm: &WatermarkOptions, 
             let pad_x = (wm.font_size / 5).max(8) as i32;
             let pad_y = (wm.font_size / 8).max(6) as i32;
             let rect = imageproc::rect::Rect::at(x - pad_x, y - pad_y)
-                .of_size((tw as u32 + 2 * pad_x as u32).min(width.max(1)), (th as u32 + 2 * pad_y as u32).min(height.max(1)));
+                .of_size((tw + 2 * pad_x as u32).min(width.max(1)), (th + 2 * pad_y as u32).min(height.max(1)));
             imageproc::drawing::draw_filled_rect_mut(
                 img,
                 rect,
@@ -850,8 +850,8 @@ fn apply_logo_watermark(img: &mut RgbaImage, logo: &RgbaImage, wm: &WatermarkOpt
             let src = scaled.get_pixel(col, row).0;
             let dst = img.get_pixel_mut(px, py);
             let a = src[3] as f64 / 255.0;
-            for c in 0..3 {
-                dst.0[c] = ((src[c] as f64) * a + (dst.0[c] as f64) * (1.0 - a)).round() as u8;
+            for (c, s) in src.iter().take(3).enumerate() {
+                dst.0[c] = ((*s as f64) * a + (dst.0[c] as f64) * (1.0 - a)).round() as u8;
             }
             dst.0[3] = ((src[3] as f64) + (dst.0[3] as f64) * (1.0 - a)).round() as u8;
         }

@@ -1,7 +1,6 @@
 //! External R runtime contracts: Rscript discovery, dependency status and
 //! install progress.
 
-use crate::WIRE_VERSION;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;

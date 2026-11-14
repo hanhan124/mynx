@@ -382,7 +382,7 @@ fn locate_rscript() -> String {
     versions.sort_by(|a, b| {
         let a_name = a.file_name().unwrap_or_default();
         let b_name = b.file_name().unwrap_or_default();
-        b_name.cmp(&a_name)
+        b_name.cmp(a_name)
     });
     for dir in versions {
         for candidate in [

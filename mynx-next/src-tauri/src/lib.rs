@@ -6,7 +6,7 @@ mod error;
 mod state;
 
 use state::AppState;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use tauri::{
     menu::{AboutMetadata, MenuBuilder, SubmenuBuilder},
     DragDropEvent, Emitter, Manager, RunEvent, WebviewEvent, WindowEvent,

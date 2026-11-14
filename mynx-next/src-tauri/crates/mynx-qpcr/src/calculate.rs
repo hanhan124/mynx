@@ -141,7 +141,7 @@ pub fn calculate(request: CalcRequest) -> Result<CalcResult, MynxError> {
             "Group_Name".to_string(),
             "Method".to_string(),
         ];
-        gene_sheet.push_row(headers.into_iter().map(|h| cell::bold_text(h)).collect());
+        gene_sheet.push_row(headers.into_iter().map(cell::bold_text).collect());
 
         // Pass 1: read contiguous group blocks and compute the raw
         // per-replicate relative expression 2^-(target − ref). Block
@@ -205,7 +205,7 @@ pub fn calculate(request: CalcRequest) -> Result<CalcResult, MynxError> {
                 }
             };
             let ctrl_avg = ctrl.raw_re.iter().fold(0.0, |a, b| a + b) / ctrl.raw_re.len() as f64;
-            if !(ctrl_avg > 0.0) {
+            if ctrl_avg.partial_cmp(&0.0) != Some(std::cmp::Ordering::Greater) {
                 return Err(MynxError::validation(format!(
                     "对照组 \"{}\" 平均值无效（基因 {}）",
                     control_group, target_gene
@@ -716,7 +716,7 @@ fn build_outlier_removed(
             let kept_vals: Vec<f64> = keep.iter().map(|&i| row.repeats[i]).collect();
             let mean = kept_vals.iter().fold(0.0, |a, b| a + b) / kept_vals.len() as f64;
             let sd = sample_stdev(&kept_vals);
-            if !(sd > 0.0) {
+            if sd.partial_cmp(&0.0) != Some(std::cmp::Ordering::Greater) {
                 break; // all equal, nothing to remove
             }
             let mut worst_pos = 0usize;
@@ -797,7 +797,7 @@ mod tests {
         }
     }
     use super::*;
-    use mynx_contracts::qpcr::PatchValue;
+    
 
     fn row(repeats: Vec<f64>) -> SummaryRow {
         SummaryRow {

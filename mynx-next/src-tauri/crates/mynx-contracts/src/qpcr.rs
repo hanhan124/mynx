@@ -5,7 +5,6 @@
 //! computed here so results stay numerically identical to the legacy VBA /
 //! TS implementations.
 
-use crate::WIRE_VERSION;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -166,18 +165,15 @@ pub struct TransformResult {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "qpcr/")]
 #[serde(rename_all = "kebab-case")]
+#[derive(Default)]
 pub enum CalcMethod {
     /// Relative to the reference gene: 2^-(target − reference).
+    #[default]
     RefNormalized,
     /// Standard ΔΔCt: divide by the control group's mean expression.
     ControlRelative,
 }
 
-impl Default for CalcMethod {
-    fn default() -> Self {
-        Self::RefNormalized
-    }
-}
 
 impl Default for CalcOptions {
     fn default() -> Self {

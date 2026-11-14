@@ -5,8 +5,7 @@
 //! losslessly.
 
 use mynx_contracts::settings::{ChartPreset, LegacySettings, SettingsDoc, ThemeId};
-use mynx_contracts::task::{TaskKind, TaskStatus};
-use mynx_contracts::WIRE_VERSION;
+use mynx_contracts::task::TaskKind;
 use rusqlite::{params, Connection, OptionalExtension};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
@@ -335,6 +334,8 @@ fn normalize_chart_color(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mynx_contracts::task::TaskStatus;
+    use mynx_contracts::WIRE_VERSION;
 
     fn temp_store() -> (tempdir::TempDir, SettingsStore) {
         let dir = tempdir::TempDir::new("mynx-settings-test").unwrap();

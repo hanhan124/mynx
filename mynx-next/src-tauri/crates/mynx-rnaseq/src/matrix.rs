@@ -151,7 +151,7 @@ fn is_numeric_cell(cell: &str) -> bool {
     if value.is_empty() || value == "NA" || value == "NaN" || value == "nan" || value == "." {
         return true;
     }
-    value.parse::<f64>().map_or(false, |number| number.is_finite())
+    value.parse::<f64>().is_ok_and(|number| number.is_finite())
 }
 
 /// `colMostlyNumeric`: at least 85% of the first non-empty cells (up to
@@ -313,7 +313,7 @@ fn normalize_count_matrix(
         }
         MatrixFormat::Htseq => {
             keep_idx.push(gene_idx);
-            for idx in 0..raw_headers.len() {
+            for (idx, _header) in raw_headers.iter().enumerate() {
                 if idx == gene_idx {
                     continue;
                 }
@@ -324,7 +324,7 @@ fn normalize_count_matrix(
         }
         MatrixFormat::CountsMatrix => {
             keep_idx.push(gene_idx);
-            for idx in 0..raw_headers.len() {
+            for (idx, _header) in raw_headers.iter().enumerate() {
                 if idx == gene_idx {
                     continue;
                 }
