@@ -1835,9 +1835,10 @@ dependencies = [
 
 [[package]]
 name = "mynx-installer"
-version = "2.3.9"
+version = "3.0.0"
 dependencies = [
  "dirs 5.0.1",
+ "flate2",
  "serde",
  "serde_json",
  "tauri",

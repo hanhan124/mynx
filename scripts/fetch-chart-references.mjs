@@ -3,7 +3,7 @@ import path from "node:path";
 
 const root = process.cwd();
 const inventoryPath = path.join(root, "docs", "chart-gallery-inventory.json");
-const templateRoot = path.join(root, "src-tauri", "r", "chart-templates");
+const templateRoot = path.join(root, "mynx-next", "src-tauri", "r", "chart-templates");
 const write = process.argv.includes("--write");
 const idsArg = process.argv.find((arg) => arg.startsWith("--ids="));
 const selectedIds = idsArg ? new Set(idsArg.slice("--ids=".length).split(",").map((id) => id.trim()).filter(Boolean)) : null;

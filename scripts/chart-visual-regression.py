@@ -16,7 +16,7 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageOps, ImageStat
 
 ROOT = Path(__file__).resolve().parents[1]
-TEMPLATE_ROOT = ROOT / "src-tauri" / "r" / "chart-templates"
+TEMPLATE_ROOT = ROOT / "mynx-next" / "src-tauri" / "r" / "chart-templates"
 REPORT = ROOT / "docs" / "chart-visual-regression.json"
 
 inventory = json.loads((ROOT / "docs" / "chart-gallery-inventory.json").read_text(encoding="utf-8"))

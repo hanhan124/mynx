@@ -69,12 +69,12 @@
   </div>
 
   <div class="flex shrink-0 items-stretch">
-    <div class="flex items-center px-1.5">
+    <div class="flex items-center px-1.5 max-[520px]:px-1">
       <CommandPalette />
     </div>
     <button
       type="button"
-      class="relative flex w-[46px] items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text"
+      class="relative flex w-[46px] max-[520px]:w-11 items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text"
       onclick={() => (app.taskDrawerOpen = !app.taskDrawerOpen)}
       aria-label={t("task.center")}
       aria-expanded={app.taskDrawerOpen}
@@ -92,7 +92,7 @@
 
     <button
       type="button"
-      class="flex w-[46px] items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text {app.alwaysOnTop
+      class="flex w-[46px] max-[520px]:w-11 items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text {app.alwaysOnTop
         ? 'text-accent'
         : ''}"
       onclick={togglePin}

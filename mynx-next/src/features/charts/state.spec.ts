@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ChartImportedData } from "../../lib/contracts/generated/charts/ChartImportedData.js";
 import type { SettingsDoc } from "../../lib/contracts/generated/settings/SettingsDoc.js";
 import type { ChartPreset } from "../../lib/contracts/generated/settings/ChartPreset.js";
 import type { JsonValue } from "../../lib/contracts/generated/serde_json/JsonValue.js";
@@ -10,15 +11,19 @@ import {
   clearData,
   deletePreset,
   importDataFile,
+  loadChartStudioSettings,
   loadPreset,
   localizeChartError,
   localizeChartEventMessage,
   mergeImportedPresets,
   requestCancel,
+  refreshRStatus,
   runGeneration,
+  selectTemplate,
   savePreset,
   templateFieldDefaults,
   toneOfEvent,
+  useSampleData,
   validateRunInputs,
 } from "./state.svelte.js";
 import { createInitialChartConfig } from "./inspector-fields.js";
@@ -31,12 +36,20 @@ const mocks = vi.hoisted(() => ({
   rStatus: vi.fn(),
   rInstallRuntime: vi.fn(),
   importChartData: vi.fn(),
+  writeFile: vi.fn(),
   runChart: vi.fn(),
   cancelChartRun: vi.fn(),
   readChartManifest: vi.fn(),
 }));
+const pathMocks = vi.hoisted(() => ({
+  homeDir: vi.fn(),
+  join: vi.fn(),
+  resourceDir: vi.fn(),
+  tempDir: vi.fn(),
+}));
 
 vi.mock("../../app/tauri.js", () => ({
+  setAlwaysOnTop: vi.fn().mockResolvedValue(undefined),
   settingsLoad: mocks.settingsLoad,
   settingsSave: mocks.settingsSave,
   tasksList: mocks.tasksList,
@@ -55,6 +68,40 @@ vi.mock("./client.js", () => ({
   exportChartZip: vi.fn(),
   installChartTemplatePackage: vi.fn(),
 }));
+vi.mock("@tauri-apps/api/path", () => pathMocks);
+vi.mock("@tauri-apps/plugin-fs", () => ({
+  readTextFile: vi.fn(),
+  writeFile: mocks.writeFile,
+  writeTextFile: vi.fn(),
+}));
+
+function deferred<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason?: unknown) => void;
+} {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
+
+function importedData(filePath: string): ChartImportedData {
+  return {
+    v: 1,
+    filePath,
+    columns: ["group", "value"],
+    rows: [
+      ["A", 1],
+      ["B", 2],
+    ],
+    totalRows: 2,
+    warnings: [],
+  };
+}
 
 function makeDoc(overrides: Partial<SettingsDoc> = {}): SettingsDoc {
   return {
@@ -73,9 +120,11 @@ function makeDoc(overrides: Partial<SettingsDoc> = {}): SettingsDoc {
 function resetState(): void {
   chartState.cfg = createInitialChartConfig();
   chartState.imported = null;
+  chartState.importing = false;
   chartState.manifest = null;
   chartState.presets = [];
   chartState.runPhase = "idle";
+  chartState.rFound = null;
   chartState.installingR = false;
   chartState.cancelling = false;
   chartState.rInstallPrompt = false;
@@ -85,6 +134,8 @@ function resetState(): void {
   chartState.selectedTemplateId = DEFAULT_TEMPLATE.id;
   app.toasts.splice(0, app.toasts.length);
   for (const mock of Object.values(mocks)) mock.mockReset();
+  for (const mock of Object.values(pathMocks)) mock.mockReset();
+  mocks.readChartManifest.mockResolvedValue(makeManifest());
 }
 
 function lastToast(): { level: string; message: string } | undefined {
@@ -121,8 +172,20 @@ function makeManifest(): {
     packages: ["ggplot2"],
     outputs: ["png", "svg"],
     dataRoles: [
-      { key: "category", label: "分类", acceptedTypes: ["string"], required: true, description: "柱标签" },
-      { key: "value", label: "数值", acceptedTypes: ["number"], required: true, description: "柱高度" },
+      {
+        key: "category",
+        label: "分类",
+        acceptedTypes: ["string"],
+        required: true,
+        description: "柱标签",
+      },
+      {
+        key: "value",
+        label: "数值",
+        acceptedTypes: ["number"],
+        required: true,
+        description: "柱高度",
+      },
     ],
     referencePath: "reference.png",
     referenceImageUrl: null,
@@ -131,6 +194,89 @@ function makeManifest(): {
 
 beforeEach(() => {
   resetState();
+});
+
+describe("R status on chart page re-entry", () => {
+  it("reuses recent availability and allows a forced refresh", async () => {
+    mocks.rStatus.mockResolvedValue({
+      v: 1,
+      found: true,
+      rscript: "Rscript",
+    });
+
+    await refreshRStatus();
+    await refreshRStatus();
+    expect(mocks.rStatus).toHaveBeenCalledTimes(1);
+
+    await refreshRStatus(true);
+    expect(mocks.rStatus).toHaveBeenCalledTimes(2);
+    expect(chartState.rFound).toBe(true);
+  });
+
+  it("coalesces simultaneous status checks", async () => {
+    let resolveStatus!: (value: { v: 1; found: boolean; rscript: string }) => void;
+    mocks.rStatus.mockReturnValue(
+      new Promise((resolve) => {
+        resolveStatus = resolve;
+      }),
+    );
+
+    const first = refreshRStatus();
+    const second = refreshRStatus();
+    expect(mocks.rStatus).toHaveBeenCalledTimes(1);
+
+    resolveStatus({ v: 1, found: true, rscript: "Rscript" });
+    await Promise.all([first, second]);
+    expect(chartState.rFound).toBe(true);
+  });
+});
+
+describe("template selection requests", () => {
+  it("coalesces same-template reads and ignores older selection results", async () => {
+    const [firstId, secondId] = [...templateById.keys()].slice(0, 2);
+    const resolveById = new Map<string, (manifest: ReturnType<typeof makeManifest>) => void>();
+    mocks.readChartManifest.mockImplementation(
+      (templateId: string) =>
+        new Promise((resolve) => {
+          resolveById.set(templateId, resolve);
+        }),
+    );
+
+    const firstRequest = selectTemplate(firstId);
+    const duplicateFirstRequest = selectTemplate(firstId);
+    expect(mocks.readChartManifest).toHaveBeenCalledTimes(1);
+
+    const secondRequest = selectTemplate(secondId);
+    expect(mocks.readChartManifest).toHaveBeenCalledTimes(2);
+    resolveById.get(secondId)!({ ...makeManifest(), id: secondId });
+    await secondRequest;
+    resolveById.get(firstId)!({ ...makeManifest(), id: firstId });
+    await Promise.all([firstRequest, duplicateFirstRequest]);
+
+    expect(chartState.selectedTemplateId).toBe(secondId);
+    expect(chartState.manifest?.id).toBe(secondId);
+  });
+});
+
+describe("chart settings initialization", () => {
+  it("does not replace an output path entered while defaults are loading", async () => {
+    let resolveOutputDir!: (value: string) => void;
+    pathMocks.homeDir.mockResolvedValue("C:/Users/test");
+    pathMocks.join.mockReturnValue(
+      new Promise((resolve) => {
+        resolveOutputDir = resolve;
+      }),
+    );
+    mocks.settingsLoad.mockResolvedValue(makeDoc());
+
+    loadChartStudioSettings();
+    await vi.waitFor(() => expect(pathMocks.join).toHaveBeenCalledTimes(1));
+    chartState.cfg = { ...chartState.cfg, outputDir: "D:/custom-output" };
+    resolveOutputDir("C:/Users/test/Mynx/charts");
+    await Promise.resolve();
+
+    expect(chartState.cfg.outputDir).toBe("D:/custom-output");
+  });
 });
 
 describe("preset persistence (chartStudioPresets)", () => {
@@ -184,6 +330,20 @@ describe("preset persistence (chartStudioPresets)", () => {
     expect(chartState.cfg.dpi).toBe(600);
     expect(chartState.cfg.baseSize).toBe(createInitialChartConfig().baseSize);
     expect(chartState.cfg.template).toBe(DEFAULT_TEMPLATE.id);
+  });
+
+  it("loadPreset updates the selected template and its manifest", async () => {
+    const templateId = [...templateById.keys()].find((id) => id !== DEFAULT_TEMPLATE.id)!;
+    const config = JSON.parse(
+      JSON.stringify({ ...createInitialChartConfig(), template: templateId, title: "跨模板预设" }),
+    ) as JsonValue;
+    mocks.readChartManifest.mockResolvedValue({ ...makeManifest(), id: templateId });
+
+    await loadPreset({ id: "p2", name: "另一类图表", config, updatedAt: 2 });
+
+    expect(chartState.cfg.template).toBe(templateId);
+    expect(chartState.selectedTemplateId).toBe(templateId);
+    expect(chartState.manifest?.id).toBe(templateId);
   });
 
   it("loadPreset migrates legacy parameter ids onto catalog templates", async () => {
@@ -274,17 +434,7 @@ describe("field mapping helpers", () => {
 
   it("imports data, stores the preview and auto-maps", async () => {
     mocks.readChartManifest.mockResolvedValue(makeManifest());
-    mocks.importChartData.mockResolvedValue({
-      v: 1,
-      filePath: "C:/data/group.csv",
-      columns: ["group", "value"],
-      rows: [
-        ["A", 1],
-        ["B", 2],
-      ],
-      totalRows: 2,
-      warnings: [],
-    });
+    mocks.importChartData.mockResolvedValue(importedData("C:/data/group.csv"));
     chartState.manifest = makeManifest();
 
     await importDataFile("C:/data/group.csv");
@@ -293,6 +443,75 @@ describe("field mapping helpers", () => {
     expect(chartState.cfg.filePath).toBe("C:/data/group.csv");
     expect(chartState.cfg.x).toBe("group");
     expect(chartState.cfg.y).toBe("value");
+    expect(chartState.importing).toBe(false);
+  });
+
+  it("waits for the selected template manifest before mapping imported data", async () => {
+    const pendingManifest = deferred<ReturnType<typeof makeManifest>>();
+    mocks.readChartManifest.mockReturnValue(pendingManifest.promise);
+    mocks.importChartData.mockResolvedValue(importedData("C:/data/group.csv"));
+    chartState.manifest = null;
+
+    const importing = importDataFile("C:/data/group.csv");
+    await vi.waitFor(() => {
+      expect(mocks.readChartManifest).toHaveBeenCalledWith(DEFAULT_TEMPLATE.id);
+    });
+    expect(chartState.imported).toBeNull();
+
+    pendingManifest.resolve(makeManifest());
+    await importing;
+
+    expect(chartState.imported?.filePath).toBe("C:/data/group.csv");
+    expect(chartState.cfg.x).toBe("group");
+    expect(chartState.cfg.y).toBe("value");
+  });
+
+  it("keeps the latest selected file when imports finish out of order", async () => {
+    const older = deferred<ChartImportedData>();
+    const newer = deferred<ChartImportedData>();
+    mocks.importChartData.mockImplementation((path: string) =>
+      path.endsWith("older.csv") ? older.promise : newer.promise,
+    );
+
+    const olderImport = importDataFile("C:/data/older.csv");
+    const newerImport = importDataFile("C:/data/newer.csv");
+    newer.resolve(importedData("C:/data/newer.csv"));
+    await newerImport;
+    older.resolve(importedData("C:/data/older.csv"));
+    await olderImport;
+
+    expect(chartState.imported?.filePath).toBe("C:/data/newer.csv");
+    expect(chartState.cfg.filePath).toBe("C:/data/newer.csv");
+    expect(chartState.importing).toBe(false);
+  });
+
+  it("does not restore imported data after the user clears during import", async () => {
+    const pending = deferred<ChartImportedData>();
+    mocks.importChartData.mockReturnValue(pending.promise);
+
+    const importing = importDataFile("C:/data/slow.csv");
+    clearData();
+    pending.resolve(importedData("C:/data/slow.csv"));
+    await importing;
+
+    expect(chartState.imported).toBeNull();
+    expect(chartState.cfg.filePath).toBe("");
+    expect(chartState.importing).toBe(false);
+  });
+
+  it("invalidates a sample file still being prepared when the user clears", async () => {
+    const pendingDirectory = deferred<string>();
+    pathMocks.tempDir.mockReturnValue(pendingDirectory.promise);
+
+    const sample = useSampleData();
+    expect(chartState.importing).toBe(true);
+    clearData();
+    pendingDirectory.resolve("C:/temp");
+    await sample;
+
+    expect(mocks.writeFile).not.toHaveBeenCalled();
+    expect(mocks.importChartData).not.toHaveBeenCalled();
+    expect(chartState.imported).toBeNull();
     expect(chartState.importing).toBe(false);
   });
 
@@ -343,7 +562,11 @@ describe("run validation + run build", () => {
       totalRows: 0,
       warnings: [],
     };
-    expect(validateRunInputs(cfg, manifest, imported)?.key).toBe("charts.errFillRole");
+    expect(validateRunInputs(cfg, manifest, imported)).toMatchObject({
+      key: "charts.errFillRole",
+      roleKey: "value",
+      field: "y",
+    });
   });
 
   it("blocks a run when the mapped column is not in the data", () => {
@@ -364,15 +587,16 @@ describe("run validation + run build", () => {
       warnings: [],
     };
     const invalid = validateRunInputs(cfg, manifest, imported);
-    expect(invalid?.key).toBe("charts.errColumnMissing");
+    expect(invalid).toMatchObject({
+      key: "charts.errColumnMissing",
+      roleKey: "value",
+      field: "y",
+    });
   });
 
   it("injects catalog-only fields into the wire config", () => {
     const template = templateById.get("bar-basic-ggplot2")!;
-    const config = buildRunConfig(
-      { ...createInitialChartConfig(), group: "", size: "" },
-      template,
-    );
+    const config = buildRunConfig({ ...createInitialChartConfig(), group: "", size: "" }, template);
     expect(config.kind).toBe("bar");
     expect(config.galleryUrl).toBe(template.galleryUrl);
     expect(config.sourceRepoPath).toBe(template.sourceRepoPath ?? null);
@@ -389,21 +613,35 @@ describe("run lifecycle", () => {
   });
 
   it("streams events, resolves with the output and flips to success", async () => {
-    mocks.runChart.mockImplementation(
-      (_config: unknown, onEvent: (event: unknown) => void) => {
-        onEvent({ v: 1, tsMs: 1, stage: "data", level: "info", message: "data.reading", progress: 25, detail: null });
-        onEvent({ v: 1, tsMs: 2, stage: "save", level: "info", message: "save.complete", progress: 100, detail: null });
-        return Promise.resolve({
-          v: 1,
-          ok: true,
-          outputPath: "C:/out/mynx-bar-basic-ggplot2.png",
-          outputDir: "C:/out",
-          files: ["mynx-bar-basic-ggplot2.png", "mynx-bar-basic-ggplot2.json"],
-          error: null,
-          cancelled: false,
-        });
-      },
-    );
+    mocks.runChart.mockImplementation((_config: unknown, onEvent: (event: unknown) => void) => {
+      onEvent({
+        v: 1,
+        tsMs: 1,
+        stage: "data",
+        level: "info",
+        message: "data.reading",
+        progress: 25,
+        detail: null,
+      });
+      onEvent({
+        v: 1,
+        tsMs: 2,
+        stage: "save",
+        level: "info",
+        message: "save.complete",
+        progress: 100,
+        detail: null,
+      });
+      return Promise.resolve({
+        v: 1,
+        ok: true,
+        outputPath: "C:/out/mynx-bar-basic-ggplot2.png",
+        outputDir: "C:/out",
+        files: ["mynx-bar-basic-ggplot2.png", "mynx-bar-basic-ggplot2.json"],
+        error: null,
+        cancelled: false,
+      });
+    });
     const manifest = makeManifest();
     chartState.manifest = manifest;
     chartState.imported = {

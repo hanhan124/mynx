@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Logo } from "./components/Logo";
 import { Welcome } from "./pages/Welcome";
@@ -37,6 +37,17 @@ export default function App() {
     });
   }, []);
 
+  useEffect(() => {
+    const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    const applyTheme = () => {
+      document.documentElement.dataset.theme = colorScheme.matches ? "graphite" : "pearl";
+    };
+
+    applyTheme();
+    colorScheme.addEventListener("change", applyTheme);
+    return () => colorScheme.removeEventListener("change", applyTheme);
+  }, []);
+
   // ESC 键关闭(进行中状态需二次确认)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -56,7 +67,7 @@ export default function App() {
 
   const handleMinimize = () => win.minimize();
 
-  const title = mode === "uninstall" ? "卸载 Mynx" : "安装 Mynx";
+  const title = mode === "uninstall" ? "卸载" : "安装";
 
   const handleLaunch = async () => {
     if (!result) return;
@@ -68,16 +79,44 @@ export default function App() {
     win.close();
   };
 
+  const handleInstallDone = useCallback((installResult: InstallResult) => {
+    setResult(installResult);
+    setInstallStep("done");
+  }, []);
+
+  const handleUninstallDone = useCallback(() => {
+    setUninstallStep("done");
+  }, []);
+
   return (
     <div className="installer">
-      {/* === macOS 风格标题栏 === */}
+      {/* Match the Mynx app title bar and window controls. */}
       <div className="titlebar" data-tauri-drag-region>
-        <div className="traffic-lights">
-          <button className="tl tl--close" title="关闭" onClick={handleClose} />
-          <button className="tl tl--min" title="最小化" onClick={handleMinimize} />
-          <button className="tl tl--zoom" disabled title="缩放(不可用)" />
+        <div className="titlebar__brand" data-tauri-drag-region>
+          <Logo size={16} />
+          <span className="titlebar__name" data-tauri-drag-region>Mynx</span>
+          <span className="titlebar__title" data-tauri-drag-region>{title}</span>
         </div>
-        <div className="titlebar__title">{title}</div>
+        <div className="titlebar__controls">
+          <button
+            type="button"
+            className="window-control"
+            title="最小化"
+            aria-label="最小化"
+            onClick={handleMinimize}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
+          </button>
+          <button
+            type="button"
+            className="window-control window-control--close"
+            title="关闭"
+            aria-label="关闭"
+            onClick={handleClose}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12" /></svg>
+          </button>
+        </div>
       </div>
 
       {/* === 内容 === */}
@@ -96,10 +135,7 @@ export default function App() {
           <Installing
             path={choice.path}
             options={choice.options}
-            onDone={(r) => {
-              setResult(r);
-              setInstallStep("done");
-            }}
+            onDone={handleInstallDone}
           />
         )}
 
@@ -116,7 +152,7 @@ export default function App() {
 
         {mode === "uninstall" && uninstallStep === "removing" && (
           <UninstallProgress
-            onDone={() => setUninstallStep("done")}
+            onDone={handleUninstallDone}
           />
         )}
 

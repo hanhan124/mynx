@@ -6,6 +6,7 @@
   import IconDna2 from "@tabler/icons-svelte/icons/dna-2";
   import IconChartHistogram from "@tabler/icons-svelte/icons/chart-histogram";
   import IconSettingsCog from "@tabler/icons-svelte/icons/settings-cog";
+  import IconExternalLink from "@tabler/icons-svelte/icons/external-link";
   import IconPalette from "@tabler/icons-svelte/icons/palette";
   import IconLanguage from "@tabler/icons-svelte/icons/language";
   import IconPin from "@tabler/icons-svelte/icons/pin";
@@ -14,6 +15,8 @@
   import { t } from "../app/i18n.svelte";
   import { app, setTheme, toggleLanguage, toggleAlwaysOnTop } from "../app/state.svelte";
   import { navigate } from "../lib/router.svelte";
+  import * as client from "../app/tauri.js";
+  import { MYNX_WEBSITE_URL } from "../app/tauri.js";
   import type { IconComponent } from "../lib/icons.js";
 
   interface PaletteItem {
@@ -36,6 +39,7 @@
     { id: "nav-rnaseq", label: t("nav.rnaseq"), group: "navigate", icon: IconDna2, keywords: "rnaseq 转录组 de 差异", run: () => navigate("/rnaseq") },
     { id: "nav-charts", label: t("nav.charts"), group: "navigate", icon: IconChartHistogram, keywords: "charts 绘图 figure chart", run: () => navigate("/charts") },
     { id: "nav-settings", label: t("nav.settings"), group: "navigate", icon: IconSettingsCog, keywords: "settings 设置 preferences", run: () => navigate("/settings") },
+    { id: "nav-website", label: t("nav.website"), group: "navigate", icon: IconExternalLink, keywords: "website 网站 home homepage", run: () => void client.openExternal(MYNX_WEBSITE_URL).catch(() => {}) },
     { id: "act-theme-graphite", label: `${t("theme.title")}: ${t("theme.graphite.name")}`, group: "action", icon: IconPalette, keywords: "theme dark 深色 graphite", run: () => setTheme("graphite") },
     { id: "act-theme-pearl", label: `${t("theme.title")}: ${t("theme.pearl.name")}`, group: "action", icon: IconPalette, keywords: "theme light 浅色 pearl", run: () => setTheme("pearl") },
     { id: "act-theme-system", label: `${t("theme.title")}: ${t("theme.system.name")}`, group: "action", icon: IconPalette, keywords: "theme system 跟随系统", run: () => setTheme("system") },
@@ -107,18 +111,18 @@
 >
   <IconSearch size={13} stroke={1.6} />
   <span class="hidden sm:inline">{t("palette.open")}</span>
-  <kbd class="rounded border border-border bg-surface-2 px-1 text-[10px]">Ctrl K</kbd>
+  <kbd class="hidden rounded border border-border bg-surface-2 px-1 text-[10px] min-[521px]:inline">Ctrl K</kbd>
 </button>
 
 <Dialog.Root bind:open>
   <Dialog.Portal>
     <Dialog.Overlay class="fixed inset-0 z-40 bg-black/40" />
     <Dialog.Content
-      class="fixed left-1/2 top-[12%] z-50 w-[min(520px,92vw)] -translate-x-1/2 rounded-lg border border-border bg-surface p-0 shadow-lg outline-none"
+      class="fixed left-1/2 top-[12%] z-50 w-[min(520px,92vw)] -translate-x-1/2 rounded-lg border border-border bg-surface p-0 outline-none"
       onkeydown={onTriggerKeydown}
     >
       <Dialog.Title class="sr-only">{t("palette.open")}</Dialog.Title>
-      <div class="flex items-center gap-2 border-b border-border px-3 py-2">
+      <div class="flex items-center gap-2 border-b border-border px-3 py-2 focus-within:border-b-accent">
         <IconSearch size={15} stroke={1.6} class="text-text-secondary" />
         <input
           type="text"

@@ -1,5 +1,5 @@
 suppressPackageStartupMessages(library(jsonlite))
-source("src-tauri/r/chart_runtime.R")
+source("mynx-next/src-tauri/r/chart_runtime.R")
 data <- data.frame(group = c("A", "B"), value = c(1, 2))
 chart_validate_data(data, list(x = "group", y = "value"))
 missing_mapping_failed <- FALSE

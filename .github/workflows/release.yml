@@ -69,8 +69,9 @@ jobs:
 
           const versions = [
             ['package.json', version],
-            ['src-tauri/tauri.conf.json', readJson('src-tauri/tauri.conf.json').version],
-            ['src-tauri/Cargo.toml', readCargoVersion('src-tauri/Cargo.toml')],
+            ['mynx-next/package.json', readJson('mynx-next/package.json').version],
+            ['mynx-next/src-tauri/tauri.conf.json', readJson('mynx-next/src-tauri/tauri.conf.json').version],
+            ['mynx-next/src-tauri/Cargo.toml', readCargoVersion('mynx-next/src-tauri/Cargo.toml')],
             ['installer/package.json', readJson('installer/package.json').version],
             ['installer/src-tauri/tauri.conf.json', readJson('installer/src-tauri/tauri.conf.json').version],
             ['installer/src-tauri/Cargo.toml', readCargoVersion('installer/src-tauri/Cargo.toml')],
@@ -83,13 +84,6 @@ jobs:
 
           console.log(`Release version verified: ${expectedTag}`);
           NODE
-
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git tag -a "$TAG" -m "release: $TAG"
-            git push origin "$TAG"
-          fi
 
           echo "release_tag=$TAG" >> "$GITHUB_OUTPUT"
 
@@ -118,13 +112,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare-tag.outputs.release_tag }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || needs.prepare-tag.outputs.release_tag }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            mynx-next/package-lock.json
+            installer/package-lock.json
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -139,16 +137,21 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: |
-            src-tauri
+            mynx-next/src-tauri
             installer/src-tauri
 
       - name: Install npm dependencies
         run: npm ci
 
+      - name: Install new app dependencies
+        run: npm ci --prefix mynx-next
+
       - name: Verify version and shared contracts
         run: |
           npm run version:check
           npm run resources:check
+          npm run typecheck
+          npm run lint
           npm run test
           npm run test:rust
 
@@ -173,12 +176,16 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          npx tauri build --no-bundle
+          npm run tauri --prefix mynx-next -- build --no-bundle
           if ($LASTEXITCODE -ne 0) { throw "main app build failed" }
-          if (-not (Test-Path "src-tauri/target/release/mynx.exe")) {
-            throw "mynx.exe not produced"
+          if (-not (Test-Path "mynx-next/src-tauri/target/release/mynx-next.exe")) {
+            throw "mynx-next.exe not produced"
           }
-          Write-Host "OK: mynx.exe ($([math]::Round((Get-Item 'src-tauri/target/release/mynx.exe').Length/1MB,1)) MB)"
+          Write-Host "OK: mynx-next.exe ($([math]::Round((Get-Item 'mynx-next/src-tauri/target/release/mynx-next.exe').Length/1MB,1)) MB)"
+
+      - name: Build uninstall-only executable (Windows)
+        if: runner.os == 'Windows'
+        run: npm run installer:uninstaller
 
       - name: Sync installer payload (Windows)
         if: runner.os == 'Windows'
@@ -215,14 +222,16 @@ jobs:
           if (-not $sig) { throw "installer signature is empty" }
           Write-Host "Installer signed successfully"
 
+      - name: Record installer provenance
+        if: runner.os == 'Windows'
+        run: node scripts/post-installer-build.cjs
+
       - name: Upload Windows artifacts
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: windows-assets
-          path: |
-            installer/src-tauri/target/release/mynx-installer.exe
-            installer/src-tauri/target/release/mynx-installer.exe.sig
+          path: release-installer/*
           if-no-files-found: error
 
       # ── macOS: build Apple Silicon .app + .dmg + updater .app.tar.gz ─────
@@ -247,14 +256,14 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: '11.0'
         run: |
           set -euo pipefail
-          npx tauri build --target aarch64-apple-darwin --bundles app,dmg
+          npm run tauri --prefix mynx-next -- build --target aarch64-apple-darwin --bundles app,dmg
 
-          app_count=$(find src-tauri/target/aarch64-apple-darwin -name '*.app' -type d | wc -l | tr -d ' ')
+          app_count=$(find mynx-next/src-tauri/target/aarch64-apple-darwin -name '*.app' -type d | wc -l | tr -d ' ')
           if [ "$app_count" -lt 1 ]; then
             echo "macOS .app bundle not produced" >&2
             exit 1
           fi
-          find src-tauri/target/aarch64-apple-darwin -name '*.app' -type d -print
+          find mynx-next/src-tauri/target/aarch64-apple-darwin -name '*.app' -type d -print
 
       - name: Inject fix script into DMG
         if: runner.os == 'macOS'
@@ -263,10 +272,10 @@ jobs:
           set -euo pipefail
 
           # The fix script must be executable when extracted from the DMG.
-          chmod +x src-tauri/scripts/fix-damaged.command
+          chmod +x scripts/fix-damaged.command
 
           # Locate the Tauri-produced DMG (read-only UDZO format).
-          DMG_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
+          DMG_DIR="mynx-next/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
           ORIG_DMG=$(find "$DMG_DIR" -name '*.dmg' -type f | head -1)
           if [ -z "$ORIG_DMG" ]; then
             echo "::error::Original DMG not found for fix script injection" >&2
@@ -296,7 +305,7 @@ jobs:
           echo "=== DMG contents before injection ==="
           ls -la "$MOUNT_POINT"
 
-          cp src-tauri/scripts/fix-damaged.command "$MOUNT_POINT/修复损坏.command"
+          cp scripts/fix-damaged.command "$MOUNT_POINT/修复损坏.command"
           chmod +x "$MOUNT_POINT/修复损坏.command"
 
           # Ad-hoc sign both the .app and the .command script. On macOS 26
@@ -365,38 +374,38 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          dmg_count=$(find src-tauri/target -name '*.dmg' -type f | wc -l | tr -d ' ')
-          tgz_count=$(find src-tauri/target -name '*.app.tar.gz' -type f | wc -l | tr -d ' ')
-          sig_count=$(find src-tauri/target -name '*.app.tar.gz.sig' -type f | wc -l | tr -d ' ')
+          dmg_count=$(find mynx-next/src-tauri/target -name '*.dmg' -type f | wc -l | tr -d ' ')
+          tgz_count=$(find mynx-next/src-tauri/target -name '*.app.tar.gz' -type f | wc -l | tr -d ' ')
+          sig_count=$(find mynx-next/src-tauri/target -name '*.app.tar.gz.sig' -type f | wc -l | tr -d ' ')
 
           if [ "$dmg_count" -ne 1 ]; then
             echo "Expected exactly 1 macOS DMG, found $dmg_count" >&2
-            find src-tauri/target -name '*.dmg' -type f -print
+            find mynx-next/src-tauri/target -name '*.dmg' -type f -print
             exit 1
           fi
           if [ "$tgz_count" -ne 1 ]; then
             echo "Expected exactly 1 macOS updater .app.tar.gz, found $tgz_count" >&2
-            find src-tauri/target -name '*.app.tar.gz' -type f -print
+            find mynx-next/src-tauri/target -name '*.app.tar.gz' -type f -print
             exit 1
           fi
           if [ "$sig_count" -ne 1 ]; then
             echo "Expected exactly 1 macOS updater .app.tar.gz.sig, found $sig_count" >&2
-            find src-tauri/target -name '*.app.tar.gz.sig' -type f -print
+            find mynx-next/src-tauri/target -name '*.app.tar.gz.sig' -type f -print
             exit 1
           fi
 
-          sig_path=$(find src-tauri/target -name '*.app.tar.gz.sig' -type f | head -1)
+          sig_path=$(find mynx-next/src-tauri/target -name '*.app.tar.gz.sig' -type f | head -1)
           if [ ! -s "$sig_path" ]; then
             echo "macOS updater signature is empty: $sig_path" >&2
             exit 1
           fi
 
           printf 'macOS DMG:\n'
-          find src-tauri/target -name '*.dmg' -type f -print
+          find mynx-next/src-tauri/target -name '*.dmg' -type f -print
           printf 'macOS updater:\n'
-          find src-tauri/target -name '*.app.tar.gz' -type f -print
+          find mynx-next/src-tauri/target -name '*.app.tar.gz' -type f -print
           printf 'macOS signature:\n'
-          find src-tauri/target -name '*.app.tar.gz.sig' -type f -print
+          find mynx-next/src-tauri/target -name '*.app.tar.gz.sig' -type f -print
 
       - name: Upload macOS artifacts
         if: runner.os == 'macOS'
@@ -404,9 +413,9 @@ jobs:
         with:
           name: macos-assets
           path: |
-            src-tauri/target/**/*.dmg
-            src-tauri/target/**/*.app.tar.gz
-            src-tauri/target/**/*.app.tar.gz.sig
+            mynx-next/src-tauri/target/**/*.dmg
+            mynx-next/src-tauri/target/**/*.app.tar.gz
+            mynx-next/src-tauri/target/**/*.app.tar.gz.sig
           if-no-files-found: error
 
   # ════════════════════════════════════════════════════════════════════════
@@ -422,7 +431,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare-tag.outputs.release_tag }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || needs.prepare-tag.outputs.release_tag }}
+          fetch-depth: 0
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -443,6 +453,7 @@ jobs:
           # Windows assets
           find artifacts/windows-assets -name 'mynx-installer.exe' -exec cp {} release-assets/ \;
           find artifacts/windows-assets -name 'mynx-installer.exe.sig' -exec cp {} release-assets/ \;
+          find artifacts/windows-assets -name 'mynx-installer.exe.build.json' -exec cp {} release-assets/ \;
 
           # macOS assets (Apple Silicon)
           find artifacts/macos-assets -name '*.dmg' -exec cp {} release-assets/ \;
@@ -560,6 +571,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare-tag.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
           draft: false
           prerelease: false
           generate_release_notes: true

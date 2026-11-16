@@ -1,6 +1,7 @@
 # Mynx 发版指南
 
-适用于 Windows 安装器和 macOS Apple Silicon 安装包。当前版本：**2.3.8**。
+适用于 Mynx 3.x（`mynx-next/`）Windows 安装器和 macOS Apple Silicon 安装包。
+仓库根目录 `src/` 与 `src-tauri/` 仅作 legacy reference，不参与交付构建。
 
 ## 1. GitHub 上传边界
 
@@ -8,13 +9,13 @@
 
 以下内容是源码、构建配置或 CI 必需文件：
 
-- `src/`、`public/`、`src-tauri/`、`installer/` 源码与配置
+- `mynx-next/`、`installer/` 源码与配置
 - `scripts/`
 - `package.json`、`package-lock.json`
 - `installer/package.json`、`installer/package-lock.json`
-- `src-tauri/Cargo.toml`、`src-tauri/Cargo.lock`
+- `mynx-next/src-tauri/Cargo.toml`、`mynx-next/src-tauri/Cargo.lock`
 - `installer/src-tauri/Cargo.toml`、`installer/src-tauri/Cargo.lock`
-- `src-tauri/tauri.conf.json`、`installer/src-tauri/tauri.conf.json`
+- `mynx-next/src-tauri/tauri.conf.json`、`installer/src-tauri/tauri.conf.json`
 - `.github/workflows/release.yml`
 - `CHANGELOG.md`、`README.md`、`RELEASE_GUIDE.md`、`LICENSE`
 
@@ -24,10 +25,10 @@
 |---|---|
 | `node_modules/`、`installer/node_modules/` | npm 依赖，可由 lock 文件恢复 |
 | `dist/`、`installer/dist/` | 前端构建产物 |
-| `src-tauri/target/`、`installer/src-tauri/target/`、`target/` | Rust/Tauri 构建产物 |
-| `src-tauri/gen/`、`.cargo/` | Tauri/Rust 本地生成文件 |
+| `mynx-next/src-tauri/target/`、`installer/src-tauri/target/`、`target/` | Rust/Tauri 构建产物 |
+| `mynx-next/src-tauri/gen/`、`.cargo/` | Tauri/Rust 本地生成文件 |
 | `release-installer/` | 本地安装器输出 |
-| `installer/src-tauri/resources/mynx.exe` | CI 构建时由 `npm run installer:payload` 生成 |
+| `installer/src-tauri/resources/mynx.exe`、`mynx-payload.json` | 从新应用构建产物生成，禁止手工替换 |
 | `*.key`、`*.key.pub`、`.env`、`.env.local` | 签名密钥和环境变量，禁止公开 |
 | `docs/` | 内部文档和计划 |
 | `.claude/`、`.workbuddy/`、`.zcode/`、`.mimosa/` | 本地工具数据 |
@@ -58,20 +59,21 @@ git check-ignore -v <文件路径>
 
 ## 2. 版本号规则
 
-以根目录 `package.json` 的 `version` 为唯一来源。运行同步脚本后，以下六处必须一致：
+以根目录 `package.json` 的 `version` 为唯一来源。发布校验以下七处必须一致：
 
 1. `package.json`
-2. `src-tauri/tauri.conf.json`
-3. `src-tauri/Cargo.toml`
-4. `installer/package.json`
-5. `installer/src-tauri/tauri.conf.json`
-6. `installer/src-tauri/Cargo.toml`
+2. `mynx-next/package.json`
+3. `mynx-next/src-tauri/tauri.conf.json`
+4. `mynx-next/src-tauri/Cargo.toml`
+5. `installer/package.json`
+6. `installer/src-tauri/tauri.conf.json`
+7. `installer/src-tauri/Cargo.toml`
 
 锁文件也必须保持最新：
 
 - `package-lock.json`
 - `installer/package-lock.json`
-- `src-tauri/Cargo.lock`
+- `mynx-next/src-tauri/Cargo.lock`
 - `installer/src-tauri/Cargo.lock`
 
 可用以下命令一次性校验版本与 R 运行时资源：
@@ -86,14 +88,14 @@ npm run resources:check
 ### 3.1 更新版本和日志
 
 ```bash
-npm version 2.3.8 --no-git-tag-version
+npm version <new-version> --no-git-tag-version
 node scripts/sync-version.cjs
 ```
 
 在 `CHANGELOG.md` 顶部添加：
 
 ```markdown
-## [2.3.8] - YYYY-MM-DD
+## [<new-version>] - YYYY-MM-DD
 
 ### 新增 / 优化 / 修复
 - ...
@@ -104,7 +106,7 @@ node scripts/sync-version.cjs
 ```bash
 npm install --package-lock-only
 cd installer && npm install --package-lock-only && cd ..
-cargo generate-lockfile --manifest-path src-tauri/Cargo.toml
+cargo generate-lockfile --manifest-path mynx-next/src-tauri/Cargo.toml
 cargo generate-lockfile --manifest-path installer/src-tauri/Cargo.toml
 ```
 

@@ -1,7 +1,7 @@
 /**
  * rnaseq_engine.R 契约冒烟测试 — 模拟 GUI 生成 params.json 的完整链路。
  *
- * 1. 用 src/lib/rnaseq/defaults.ts 的 defaultConfig() 作为参数基线(与 GUI 一致)
+ * 1. 仅提供当前运行所需的输入/分组覆盖,其余使用 R 引擎契约默认值
  * 2. 写入合成计数矩阵(含中文组名,验证编码链路)
  * 3. 调 Rscript 运行 r/rnaseq_engine.R(全步骤 + 仅 de 两轮)
  * 4. 断言输出布局与 DE_summary 内容
@@ -14,8 +14,16 @@ import { mkdtempSync, writeFileSync, readFileSync, existsSync, readdirSync, mkdi
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { defaultConfig } from "../src/lib/rnaseq/defaults.ts";
-import type { RnaSeqConfig } from "../src/lib/rnaseq/types.ts";
+type SmokeConfig = {
+  run_name: string;
+  output_dir: string;
+  steps: string[];
+  data_file: string;
+  input: { count_file: string };
+  groups: Record<string, string[]>;
+  sample_labels: Record<string, string>;
+  comparisons: { name: string; case: string; control: string }[];
+};
 
 let failed = 0;
 function check(name: string, cond: boolean, detail?: unknown) {
@@ -92,20 +100,20 @@ const csvPath = join(work, "gene.count.csv");
 const csv = ["gene", ...SAMPLES].join(",") + "\n" + GENES.map((g, i) => `${g},${counts[i].join(",")}`).join("\n");
 writeFileSync(csvPath, csv, "utf8");
 
-// ── 参数:GUI defaultConfig() 基线 + 场景覆盖(中文组名)──
-// 注意:与 runner.ts 的 runR 一致,引擎拿到的 output_dir 是「运行目录」本身
-// (= 输出根目录/run_name),结果直接写入其中。
-function buildParams(steps: string[]): RnaSeqConfig {
-  const cfg = defaultConfig();
-  cfg.run_name = `smoke_${steps.join("_").replace(/[^a-z]/g, "")}`;
-  cfg.output_dir = join(runBase, cfg.run_name);
-  cfg.steps = steps;
-  cfg.data_file = csvPath;
-  cfg.input.count_file = csvPath;
-  cfg.groups = { "对照组": ["CTL_1", "CTL_2", "CTL_3"], "处理组": ["TREAT_1", "TREAT_2", "TREAT_3"] };
-  cfg.sample_labels = { CTL_1: "Control-1", TREAT_1: "Treated-1" };
-  cfg.comparisons = [{ name: "Treatment_vs_Control", case: "处理组", control: "对照组" }];
-  return cfg;
+// ── 参数:最小 UI 覆盖 + 引擎默认值(中文组名)──
+// RnaSeqConfig 的完整定义和默认值以 Rust contract + R 引擎为准,测试只覆盖本场景变量。
+function buildParams(steps: string[]): SmokeConfig {
+  const run_name = `smoke_${steps.join("_").replace(/[^a-z]/g, "")}`;
+  return {
+    run_name,
+    output_dir: join(runBase, run_name),
+    steps,
+    data_file: csvPath,
+    input: { count_file: csvPath },
+    groups: { "对照组": ["CTL_1", "CTL_2", "CTL_3"], "处理组": ["TREAT_1", "TREAT_2", "TREAT_3"] },
+    sample_labels: { CTL_1: "Control-1", TREAT_1: "Treated-1" },
+    comparisons: [{ name: "Treatment_vs_Control", case: "处理组", control: "对照组" }],
+  };
 }
 
 function runEngine(steps: string[]): { code: number; stdout: string; runDir: string } {
@@ -113,7 +121,7 @@ function runEngine(steps: string[]): { code: number; stdout: string; runDir: str
   const runDir = params.output_dir ?? "";
   const paramsPath = join(work, `params_${params.run_name}.json`);
   writeFileSync(paramsPath, JSON.stringify(params, null, 2), "utf8");
-  const r = spawnSync(rscript, [join("src-tauri", "r", "rnaseq_engine.R"), paramsPath], {
+  const r = spawnSync(rscript, [join("mynx-next", "src-tauri", "r", "rnaseq_engine.R"), paramsPath], {
     cwd: process.cwd(),
     encoding: "utf8",
     timeout: 10 * 60 * 1000,

@@ -18,12 +18,12 @@ legacy 入口保留为 `npm run legacy:*`。
 | `npm run build` | Svelte 5 + Vite production build（mynx-next） | 通过 |
 | `npm run typecheck` | svelte-check | 通过，0 errors |
 | `npm run lint` | ESLint（mynx-next） | 通过 |
-| `npm test` | vitest（前端 150+ 用例：契约、状态机、渲染 patch、golden 断言） | 通过 |
-| `npm run test:rust` | cargo test --locked（mynx-next workspace：contracts/jobs/core/image/qpcr/rnaseq/charts） | 通过，19 个套件 |
-| `npm run test:r:engine` | RNA-seq R engine full DE/heatmap/plots 和 DE-only | 通过 |
-| `npm run resources:check` | R 资源同步检查（legacy 安装器路径） | 发布前执行 |
-| `npm run charts:check` | 图表 schema 和模板检查 | 发布前执行 |
-| `npm run charts:verify` | 图表契约、R smoke、视觉回归 | 发布前执行 |
+| `npm test` | vitest（前端契约、状态机、渲染 patch、golden 与竞态断言） | 通过，13 个文件/211 项（2026-11-16） |
+| `npm run test:rust` | cargo test --locked（mynx-next workspace：contracts/jobs/core/image/qpcr/rnaseq/charts） | 通过（2026-11-16） |
+| `npm run test:r:engine` | RNA-seq R engine full DE/heatmap/plots 和 DE-only | 通过（2026-11-16） |
+| `npm run resources:check` | 主应用与 Windows 安装器 R 资源同步检查 | 通过，351/351（2026-11-16） |
+| `npm run charts:check` | 图表 schema、模板、链接、参考图和字段映射检查 | 通过（2026-11-16） |
+| `npm run charts:verify` | 图表契约、57 个模板的 R 格式 smoke、视觉报告 | 285 次渲染通过、0 缺失；57 项需人工视觉复核（2026-11-16） |
 
 qPCR Excel 输出与 legacy 实现逐格 golden 对比（transform/calc/best/outlier/
 control-relative + 错误文案）；Excel 原生图表 XML 与 legacy 输出逐字节一致。

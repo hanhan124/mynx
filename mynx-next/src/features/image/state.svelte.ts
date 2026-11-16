@@ -114,10 +114,7 @@ export function mergeSettings(saved: unknown): ConverterSettings {
  * ------------------------------------------------------------------------- */
 
 /** Maps page settings onto the Rust `ConvertOptions` contract. */
-export function buildConvertOptions(
-  settings: ConverterSettings,
-  files: string[],
-): ConvertOptions {
+export function buildConvertOptions(settings: ConverterSettings, files: string[]): ConvertOptions {
   const wm = settings.watermark;
   return {
     files,
@@ -161,9 +158,29 @@ export interface ImageFileItem {
 
 /** Extensions accepted by the Rust backend (legacy SUPPORTED_EXTENSIONS). */
 export const IMAGE_EXTENSIONS = [
-  "png", "jpg", "jpeg", "jfif", "tif", "tiff", "webp", "bmp", "gif", "ico",
-  "tga", "pnm", "pbm", "pgm", "ppm", "pam", "qoi", "dds", "svg",
+  "png",
+  "jpg",
+  "jpeg",
+  "jfif",
+  "tif",
+  "tiff",
+  "webp",
+  "bmp",
+  "gif",
+  "ico",
+  "tga",
+  "pnm",
+  "pbm",
+  "pgm",
+  "ppm",
+  "pam",
+  "qoi",
+  "dds",
+  "svg",
 ] as const;
+
+let intakeGeneration = 0;
+let activeIntakes = 0;
 
 const IMAGE_EXTENSION_SET = new Set<string>(IMAGE_EXTENSIONS);
 
@@ -215,7 +232,10 @@ export interface ImageState {
   settings: ConverterSettings;
   results: ItemResult[];
   summary: FinishedSummary | null;
+  collectingFiles: boolean;
   running: boolean;
+  cancelling: boolean;
+  cancelRequested: boolean;
   /** 0..100, null when idle. */
   progress: number | null;
   progressText: string;
@@ -228,7 +248,10 @@ export const imageState = $state<ImageState>({
   settings: { ...DEFAULT_SETTINGS },
   results: [],
   summary: null,
+  collectingFiles: false,
   running: false,
+  cancelling: false,
+  cancelRequested: false,
   progress: null,
   progressText: "",
   jobId: null,
@@ -304,33 +327,56 @@ export function updateWatermark(patch: Partial<WatermarkSettings>): void {
  * ------------------------------------------------------------------------- */
 
 export function appendFiles(paths: string[]): void {
+  if (imageState.running) return;
   const seen = new SvelteSet(imageState.files.map((item) => item.path));
-  const additions = paths
-    .filter((path) => !seen.has(path))
-    .map((path) => ({
+  const additions: (typeof imageState.files)[number][] = [];
+  for (const path of paths) {
+    if (seen.has(path)) continue;
+    seen.add(path);
+    additions.push({
       path,
       name: baseName(path),
       size: null,
       thumb: null,
       dims: null,
-    }));
+    });
+  }
   if (additions.length > 0) imageState.files.push(...additions);
 }
 
 export async function addPaths(paths: string[]): Promise<void> {
   if (!paths.length) return;
-  let expanded: string[];
+  if (imageState.running) {
+    pushToast("info", t("imgconv.filesLockedDuringRun"));
+    return;
+  }
+  const generation = intakeGeneration;
+  activeIntakes += 1;
+  imageState.collectingFiles = true;
   try {
-    expanded = await collectImageFiles(paths);
-  } catch (error) {
-    pushToast("error", `${t("imgconv.collectFailed")}: ${detailOf(error)}`);
-    return;
+    let expanded: string[];
+    try {
+      expanded = await collectImageFiles(paths);
+    } catch (error) {
+      if (generation === intakeGeneration) {
+        pushToast("error", `${t("imgconv.collectFailed")}: ${detailOf(error)}`);
+      }
+      return;
+    }
+    if (generation !== intakeGeneration) return;
+    if (imageState.running) {
+      pushToast("info", t("imgconv.filesLockedDuringRun"));
+      return;
+    }
+    if (!expanded.length) {
+      pushToast("info", t("imgconv.noFiles"));
+      return;
+    }
+    appendFiles(expanded);
+  } finally {
+    activeIntakes = Math.max(0, activeIntakes - 1);
+    imageState.collectingFiles = activeIntakes > 0;
   }
-  if (!expanded.length) {
-    pushToast("info", t("imgconv.noFiles"));
-    return;
-  }
-  appendFiles(expanded);
 }
 
 export function removeItem(path: string): void {
@@ -341,6 +387,8 @@ export function removeItem(path: string): void {
 }
 
 export function clearAll(): void {
+  if (imageState.running) return;
+  intakeGeneration += 1;
   imageState.files.splice(0, imageState.files.length);
   pendingThumbs.clear();
 }
@@ -377,7 +425,12 @@ async function pumpThumbnails(): Promise<void> {
           pendingThumbs.add(item.path);
           try {
             const thumb = await fetchImageThumbnail(item.path, THUMBNAIL_MAX_SIZE);
-            applyThumbnail(item.path, thumb.dataUrl, thumb.fileSize, `${thumb.width}×${thumb.height}`);
+            applyThumbnail(
+              item.path,
+              thumb.dataUrl,
+              thumb.fileSize,
+              `${thumb.width}×${thumb.height}`,
+            );
           } catch {
             // Failure keeps thumb = null so the row shows the generic icon.
           }
@@ -430,6 +483,8 @@ export function handleConvertEvent(event: ConvertEvent): void {
   // finished
   imageState.summary = event;
   imageState.running = false;
+  imageState.cancelling = false;
+  imageState.cancelRequested = false;
   imageState.progress = null;
   imageState.jobId = null;
   if (event.status === "cancelled") {
@@ -447,30 +502,55 @@ export function handleConvertEvent(event: ConvertEvent): void {
 }
 
 export async function runConversion(): Promise<void> {
-  if (imageState.running || imageState.files.length === 0) return;
+  if (imageState.running || imageState.collectingFiles || imageState.files.length === 0) return;
   const files = imageState.files.map((item) => item.path);
   // Persist the exact options used by this run (flushes pending debounce).
   void saveImageSettingsNow();
   imageState.results = [];
   imageState.summary = null;
   imageState.running = true;
+  imageState.cancelling = false;
+  imageState.cancelRequested = false;
   imageState.progress = 0;
   imageState.progressText = `${t("imgconv.converting")} (0/${files.length})…`;
   const options = buildConvertOptions(imageState.settings, files);
   try {
-    imageState.jobId = await startImageConvert(options, handleConvertEvent);
+    const jobId = await startImageConvert(options, handleConvertEvent);
+    if (!imageState.running) return;
+    imageState.jobId = jobId;
+    if (imageState.cancelRequested) sendCancelRequest(jobId);
   } catch (error) {
+    if (!imageState.running) return;
     imageState.running = false;
+    imageState.jobId = null;
+    imageState.cancelling = false;
+    imageState.cancelRequested = false;
     imageState.progress = null;
     pushToast("error", `${t("imgconv.failed")}: ${detailOf(error)}`);
   }
 }
 
-export function cancelConversion(): void {
-  const jobId = imageState.jobId;
-  if (jobId !== null) {
-    void cancelImageConvert(jobId).catch(() => {
-      // The finished event may already have arrived; nothing else to do.
+function sendCancelRequest(jobId: number): void {
+  void cancelImageConvert(jobId)
+    .then((accepted) => {
+      if (!accepted && imageState.running && imageState.jobId === jobId) {
+        imageState.cancelling = false;
+        imageState.cancelRequested = false;
+        pushToast("info", t("imgconv.cancelFailed"));
+      }
+    })
+    .catch((error) => {
+      if (!imageState.running || imageState.jobId !== jobId) return;
+      imageState.cancelling = false;
+      imageState.cancelRequested = false;
+      pushToast("error", `${t("imgconv.cancelFailed")}: ${detailOf(error)}`);
     });
-  }
+}
+
+export function cancelConversion(): void {
+  if (!imageState.running || imageState.cancelling) return;
+  imageState.cancelling = true;
+  imageState.cancelRequested = true;
+  const jobId = imageState.jobId;
+  if (jobId !== null) sendCancelRequest(jobId);
 }

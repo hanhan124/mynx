@@ -13,7 +13,8 @@ struct InstallContext {
     default_install_path: String,
     installed_path: Option<String>,
     installed_version: Option<String>,
-    payload_size_mb: u32,
+    installed_size_mib: f64,
+    temporary_size_mib: f64,
     is_admin: bool,
 }
 
@@ -22,6 +23,9 @@ fn get_install_context(app: tauri::AppHandle) -> InstallContext {
     let program_files =
         std::env::var("ProgramFiles").unwrap_or_else(|_| r"C:\Program Files".to_string());
 
+    #[cfg(feature = "uninstaller")]
+    let mode = "uninstall";
+    #[cfg(not(feature = "uninstaller"))]
     let mode = if std::env::args().any(|a| a == "--uninstall") {
         "uninstall"
     } else {
@@ -40,7 +44,8 @@ fn get_install_context(app: tauri::AppHandle) -> InstallContext {
         default_install_path: format!(r"{}\Mynx", program_files),
         installed_path,
         installed_version,
-        payload_size_mb: (install::PAYLOAD_SIZE / 1024 / 1024) as u32,
+        installed_size_mib: install::estimated_installed_size_bytes() as f64 / (1024.0 * 1024.0),
+        temporary_size_mib: install::temporary_space_required_bytes() as f64 / (1024.0 * 1024.0),
         is_admin: elevate::is_elevated(),
     }
 }
@@ -50,7 +55,15 @@ async fn perform_install(
     app: tauri::AppHandle,
     opts: install::InstallOptions,
 ) -> Result<install::InstallResult, String> {
-    install::perform_install(&app, opts)
+    #[cfg(feature = "uninstaller")]
+    {
+        let _ = (app, opts);
+        Err("卸载程序不包含安装载荷".into())
+    }
+    #[cfg(not(feature = "uninstaller"))]
+    {
+        install::perform_install(&app, opts)
+    }
 }
 
 #[tauri::command]
@@ -90,7 +103,7 @@ pub fn run() {
     // 自动更新模式:tauri updater 以 `/P /UPDATE …` 启动本安装器并已退出旧应用,
     // 跳过向导直接静默升级(沿用已装路径与快捷方式,装完启动新版)。
     // 静默失败时回落到向导模式,用户可手动完成。
-    if install::is_update_launch() {
+    if !cfg!(feature = "uninstaller") && install::is_update_launch() {
         if !elevate::is_elevated() {
             // runas 提权会透传全部参数,/UPDATE 不丢失
             elevate::relaunch_as_admin();

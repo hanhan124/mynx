@@ -10,6 +10,7 @@
     "checkJs": true,
     "isolatedModules": true,
     "skipLibCheck": true,
+    "noEmit": true,
     "types": ["vite/client"],
     "strict": true,
     "strictBindCallApply": true,
@@ -21,6 +22,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "tests/**/*.ts"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "tests/**/*.ts"]
 }

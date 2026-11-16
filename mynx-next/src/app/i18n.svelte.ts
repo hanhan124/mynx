@@ -20,8 +20,10 @@ const zh: Dictionary = {
   "nav.about": "关于",
   "nav.settings": "设置",
   "nav.beta": "测试版",
-  "app.workbench": "Mynx 科研工作台",
+  "nav.primary": "主导航",
+  "app.name": "Mynx",
   "app.ready": "就绪",
+  "app.pageLoadFailed": "页面加载失败，请重试。",
   "theme.title": "主题设置",
   "theme.choose": "选择配色风格",
   "settings.title": "设置",
@@ -44,7 +46,7 @@ const zh: Dictionary = {
   "settings.about": "关于 Mynx",
   "settings.about.description": "版本与更新",
   "settings.showcase": "组件展示",
-  "settings.showcase.description": "查看 Mantine 8 基础控件",
+  "settings.showcase.description": "查看 Mynx 基础控件",
   "home.chooseEngine": "选择搜索引擎",
   "home.searchPlaceholder": "搜索工具，或输入网页关键词",
   "home.searchAria": "搜索工具或输入问题",
@@ -64,9 +66,14 @@ const zh: Dictionary = {
   "tool.image.title": "图片转 PNG",
   "tool.image.description": "全格式转 PNG · 压缩 · 水印",
   "imgconv.title": "图片转 PNG",
+  "imgconv.progress": "图片转换进度",
   "imgconv.subtitle": "批量转换 / 压缩 / 加水印，输出 PNG",
   "imgconv.files": "源文件",
   "imgconv.dropHint": "把图片文件或文件夹拖到这里，或用下方按钮添加",
+  "imgconv.collectingFiles": "正在读取文件列表…",
+  "imgconv.filesLockedDuringRun": "转换进行中，暂时不能添加文件",
+  "imgconv.cancelling": "正在取消…",
+  "imgconv.cancelFailed": "取消请求未被接受，请稍后重试",
   "imgconv.addFiles": "添加文件",
   "imgconv.addFolder": "添加文件夹",
   "imgconv.clear": "清空",
@@ -166,7 +173,7 @@ const zh: Dictionary = {
   "rnaseq.loadConfig": "加载配置",
   "rnaseq.loadResult": "加载结果",
   "rnaseq.saveConfig": "保存配置",
-  // RNA-seq workbench page
+  // RNA-seq analysis page
   "rnaseq.tutorial": "使用教程",
   "rnaseq.tutorialIntro":
     "RNA-seq 分析基于参考脚本 rnaseq_DE_heatmap.R:导入原始 Counts 矩阵,完成实验分组与比较,即可一次性完成差异分析、热图与出版级图形导出。",
@@ -190,8 +197,7 @@ const zh: Dictionary = {
   "rnaseq.errDataRequired": "请先导入 Counts 数据文件",
   "rnaseq.goImportFirst": "请先完成 Counts 数据导入",
   "rnaseq.plotsNeedResult": "绘图需要差异分析结果:先运行 DE,或在「图形输出」加载结果目录",
-  "rnaseq.errComparisonsRequired":
-    "请先完成分组并至少配置一个有效的比较(case ≠ control)",
+  "rnaseq.errComparisonsRequired": "请先完成分组并至少配置一个有效的比较(case ≠ control)",
   "rnaseq.errBatchIncomplete": "批次设置不完整:{list} 尚未归属批次",
   "rnaseq.runDoneToast": "RNA-seq 分析完成",
   "rnaseq.runCancelledToast": "已取消(已生成的文件保留)",
@@ -219,8 +225,7 @@ const zh: Dictionary = {
   "rnaseq.preview": "数据预览",
   "rnaseq.previewCols": "{count} 列",
   "rnaseq.sampleLabels": "样本显示名",
-  "rnaseq.sampleLabelsHint":
-    "留空 = 使用原始列名;用于热图横轴、样本相关性图与 PCA 点标签",
+  "rnaseq.sampleLabelsHint": "留空 = 使用原始列名;用于热图横轴、样本相关性图与 PCA 点标签",
   "rnaseq.sampleLabelAria": "样本 {name} 的显示名",
   "rnaseq.outputSettings": "输出目录与运行名",
   "rnaseq.outputRoot": "输出根目录",
@@ -238,24 +243,24 @@ const zh: Dictionary = {
   "rnaseq.singletonWarning":
     "存在只有 1 个样本的分组:将走无重复路径(edgeR exactTest + 固定 BCV),P 值仅用于探索性排序",
   "rnaseq.groups": "实验分组",
-  "rnaseq.groupsHint": "拖拽样本到分组;或点击样本选中,再点击目标分组加入",
+  "rnaseq.groupsHint": "拖拽样本到分组;或点击样本选中,再点目标分组的“加入”按钮",
   "rnaseq.addGroup": "添加分组",
   "rnaseq.unassigned": "未分组样本",
-  "rnaseq.clickAssign": "先点击样本选中,再点击目标分组卡片加入",
+  "rnaseq.clickAssign": "先点击样本选中,再点目标分组的“加入”按钮",
+  "rnaseq.assignSelectedToGroup": "将选中样本加入分组 {name}",
   "rnaseq.selectedSample": "已选中:{name}",
   "rnaseq.poolEmpty": "导入数据后此处显示样本",
   "rnaseq.allAssigned": "全部样本已分组",
   "rnaseq.noGroups": "还没有分组",
-  "rnaseq.noGroupsHint": "添加分组后,拖拽或点击样本完成分配",
-  "rnaseq.groupDropHint": "拖拽或点击样本加入",
+  "rnaseq.noGroupsHint": "添加分组后,可拖拽样本或选中后使用组内“加入”按钮",
+  "rnaseq.groupDropHint": "可拖拽样本到此处,或选中样本后点击组内“加入”",
   "rnaseq.groupNameAria": "分组名称 {name}",
   "rnaseq.groupReplicated": "有重复",
   "rnaseq.groupSingleton": "单样本(无重复路径)",
   "rnaseq.deleteGroup": "删除分组",
   "rnaseq.removeSample": "移出样本",
   "rnaseq.deleteGroupConfirm": "删除分组「{name}」?",
-  "rnaseq.deleteGroupConfirmRelated":
-    "删除分组「{name}」将同时移除 {count} 个相关比较,确定?",
+  "rnaseq.deleteGroupConfirmRelated": "删除分组「{name}」将同时移除 {count} 个相关比较,确定?",
   "rnaseq.deleteGroupTitle": "删除分组",
   "rnaseq.errGroupExists": "组名已存在",
   "rnaseq.batch": "批次协变量(可选)",
@@ -282,8 +287,7 @@ const zh: Dictionary = {
   "rnaseq.deMethod": "有重复路径的引擎",
   "rnaseq.deMethodDeseq2": "DESeq2(Wald 检验)",
   "rnaseq.deMethodEdger": "edgeR(QL F 检验)",
-  "rnaseq.deMethodHint":
-    "两组都 ≥2 个样本时使用;任一组只有 1 个样本时固定走 edgeR exactTest + BCV",
+  "rnaseq.deMethodHint": "两组都 ≥2 个样本时使用;任一组只有 1 个样本时固定走 edgeR exactTest + BCV",
   "rnaseq.dePadj": "显著性阈值 padj",
   "rnaseq.deLog2fc": "|log2FC| 阈值",
   "rnaseq.deBcv": "BCV(无重复路径)",
@@ -335,8 +339,7 @@ const zh: Dictionary = {
   "rnaseq.figVolcanoHint": "展示 log2FC 与校正后 P 值;需要对应 DE 结果。",
   "rnaseq.figQc": "QC 与描述性图",
   "rnaseq.figQcHint": "选择文库、表达分布、样本距离等质量控制输出。",
-  "rnaseq.volcanoNoResult":
-    "尚未加载 DE 结果:PCA 仍可生成,火山图将在有对应结果时生成。",
+  "rnaseq.volcanoNoResult": "尚未加载 DE 结果:PCA 仍可生成,火山图将在有对应结果时生成。",
   "rnaseq.selectFigureFirst": "请先选择至少一种输出图形。",
   "rnaseq.resultSource": "结果来源",
   "rnaseq.sourceReady": "已就绪",
@@ -460,8 +463,7 @@ const zh: Dictionary = {
   "rnaseq.hasDe": "有 DE 结果",
   "rnaseq.noDe": "无 DE 结果",
   "rnaseq.resultLoaded": "已加载结果并还原配置",
-  "rnaseq.resultLoadedNoParams":
-    "已加载结果目录(未找到 prepared/params.json,保留当前配置)",
+  "rnaseq.resultLoadedNoParams": "已加载结果目录(未找到 prepared/params.json,保留当前配置)",
   "rnaseq.errNotRunDir": "该目录不是引擎运行结果目录(缺少 DE/heatmap/plots)",
   // 配置 IO / R 依赖
   "rnaseq.jsonFilter": "JSON 配置",
@@ -530,10 +532,11 @@ const zh: Dictionary = {
   "help.title": "查看使用教程",
   "help.label": "使用教程",
   "help.center.title": "使用指南",
-  "help.center.intro": "选择一个工具以打开对应工作区。每个工作区顶部的“使用教程”提供该功能的分步说明。",
+  "help.center.intro":
+    "选择一个工具以打开对应工作区。每个工作区顶部的“使用教程”提供该功能的分步说明。",
   "help.center.note": "你也可以通过原生菜单栏访问常用窗口、编辑和帮助命令。",
   "uiShowcase.title": "UI 基础组件展示",
-  "uiShowcase.subtitle": "Mantine 8 全局主题、控件尺寸和交互状态",
+  "uiShowcase.subtitle": "Mynx 全局主题、控件尺寸和交互状态",
   "uiShowcase.settingsTooltip": "基础组件规范",
   "uiShowcase.controls": "控件",
   "uiShowcase.feedback": "反馈",
@@ -579,7 +582,7 @@ const zh: Dictionary = {
   "uiShowcase.failed": "失败",
   "uiShowcase.openModal": "打开 Modal",
   "uiShowcase.modalTitle": "确认操作",
-  "uiShowcase.modalText": "这是 Mantine Modal 的标准尺寸、遮罩和焦点管理示例。",
+  "uiShowcase.modalText": "这是 Mynx Modal 的标准尺寸、遮罩和焦点管理示例。",
   "uiShowcase.cancel": "取消",
   "uiShowcase.confirm": "确认",
   "uiShowcase.tableSample": "样本",
@@ -597,7 +600,7 @@ const zh: Dictionary = {
   "qpcr.disabled": "不启用",
   "qpcr.bestReplicates": "择优重复数（最低标准差组合）",
   "qpcr.outlierRemoval": "离群值剔除（|Δ| > K×SD）",
-  // ---- qPCR workbench ------------------------------------------------------
+  // ---- qPCR page -----------------------------------------------------------
   "qpcr.stepFile": "文件",
   "qpcr.stepTransform": "转换",
   "qpcr.stepCalc": "计算",
@@ -751,6 +754,7 @@ const zh: Dictionary = {
   "charts.generate": "生成",
   "charts.cancelRun": "取消生成",
   "charts.runTitle": "图表生成",
+  "charts.progress": "图表生成进度",
   "charts.runReady": "载入数据并设置字段后生成。",
   "charts.copyLog": "复制诊断信息",
   "charts.logTitle": "运行日志",
@@ -1009,8 +1013,10 @@ const en: Dictionary = {
   "nav.about": "About",
   "nav.settings": "Settings",
   "nav.beta": "Beta",
-  "app.workbench": "Mynx Scientific Workbench",
+  "nav.primary": "Primary navigation",
+  "app.name": "Mynx",
   "app.ready": "Ready",
+  "app.pageLoadFailed": "The page could not load. Please try again.",
   "theme.title": "Theme settings",
   "theme.choose": "Choose a color style",
   "settings.title": "Settings",
@@ -1033,7 +1039,7 @@ const en: Dictionary = {
   "settings.about": "About Mynx",
   "settings.about.description": "Version and updates",
   "settings.showcase": "Component showcase",
-  "settings.showcase.description": "View Mantine 8 base controls",
+  "settings.showcase.description": "View Mynx base controls",
   "home.chooseEngine": "Choose search engine",
   "home.searchPlaceholder": "Search tools, or enter a web query",
   "home.searchAria": "Search tools or ask a question",
@@ -1044,10 +1050,8 @@ const en: Dictionary = {
   "weather.loading": "Getting weather",
   "weather.unavailable": "Weather unavailable",
   "weather.retry": "Check your network and retry",
-  "weather.errorTitle":
-    "Location or weather data request failed. Check your network and retry",
-  "weather.feelsLike":
-    "Feels like {temperature}°C · Humidity {humidity}% · Wind {windSpeed} km/h",
+  "weather.errorTitle": "Location or weather data request failed. Check your network and retry",
+  "weather.feelsLike": "Feels like {temperature}°C · Humidity {humidity}% · Wind {windSpeed} km/h",
   "tool.charts.title": "Scientific plotting",
   "tool.charts.description": "Charts, statistics, and publication layouts",
   "tool.qpcr.title": "qPCR analysis",
@@ -1055,9 +1059,14 @@ const en: Dictionary = {
   "tool.image.title": "Image to PNG",
   "tool.image.description": "Any format to PNG · compress · watermark",
   "imgconv.title": "Image to PNG",
+  "imgconv.progress": "Image conversion progress",
   "imgconv.subtitle": "Batch convert / compress / watermark to PNG",
   "imgconv.files": "Source files",
   "imgconv.dropHint": "Drop image files or folders here, or add them below",
+  "imgconv.collectingFiles": "Reading file list…",
+  "imgconv.filesLockedDuringRun": "Can't add files while conversion is running",
+  "imgconv.cancelling": "Cancelling…",
+  "imgconv.cancelFailed": "The cancel request wasn't accepted. Try again.",
   "imgconv.addFiles": "Add files",
   "imgconv.addFolder": "Add folder",
   "imgconv.clear": "Clear",
@@ -1067,7 +1076,8 @@ const en: Dictionary = {
   "imgconv.compression": "Compression",
   "imgconv.modeLossless": "Lossless optimization",
   "imgconv.modeLossy": "Lossy (indexed color)",
-  "imgconv.compressionHint": "Lossless: pixels unchanged, smaller file. Lossy: quantized palette, much smaller file.",
+  "imgconv.compressionHint":
+    "Lossless: pixels unchanged, smaller file. Lossy: quantized palette, much smaller file.",
   "imgconv.optimizeLevel": "Effort",
   "imgconv.levelFast": "Fast",
   "imgconv.levelBalanced": "Balanced",
@@ -1157,7 +1167,7 @@ const en: Dictionary = {
   "rnaseq.loadConfig": "Load config",
   "rnaseq.loadResult": "Load results",
   "rnaseq.saveConfig": "Save config",
-  // RNA-seq workbench page
+  // RNA-seq analysis page
   "rnaseq.tutorial": "Tutorial",
   "rnaseq.tutorialIntro":
     "RNA-seq analysis ports the reference script rnaseq_DE_heatmap.R: import a raw count matrix, finish grouping and comparisons, then run DE, heatmaps and publication figures in one go.",
@@ -1181,7 +1191,7 @@ const en: Dictionary = {
   "rnaseq.errDataRequired": "Import a counts data file first",
   "rnaseq.goImportFirst": "Import the counts data first",
   "rnaseq.plotsNeedResult":
-    "Plots need a DE result: run DE first, or load a result directory under \"Plot export\"",
+    'Plots need a DE result: run DE first, or load a result directory under "Plot export"',
   "rnaseq.errComparisonsRequired":
     "Finish grouping and add at least one valid comparison (case ≠ control)",
   "rnaseq.errBatchIncomplete": "Batch assignment incomplete: {list}",
@@ -1211,8 +1221,7 @@ const en: Dictionary = {
   "rnaseq.preview": "Data preview",
   "rnaseq.previewCols": "{count} columns",
   "rnaseq.sampleLabels": "Sample display names",
-  "rnaseq.sampleLabelsHint":
-    "Blank = keep column names; used on heatmaps, correlation and PCA",
+  "rnaseq.sampleLabelsHint": "Blank = keep column names; used on heatmaps, correlation and PCA",
   "rnaseq.sampleLabelAria": "Display name for sample {name}",
   "rnaseq.outputSettings": "Output directory & run name",
   "rnaseq.outputRoot": "Output root",
@@ -1223,8 +1232,7 @@ const en: Dictionary = {
   "rnaseq.designSection": "Design",
   "rnaseq.designNotImported": "Import a counts file first",
   "rnaseq.designNotReady": "Finish grouping and add a comparison",
-  "rnaseq.designReady":
-    "Ready: {groups} groups / {samples} samples / {comparisons} comparisons",
+  "rnaseq.designReady": "Ready: {groups} groups / {samples} samples / {comparisons} comparisons",
   "rnaseq.checkData": "Data",
   "rnaseq.checkGroups": "Groups",
   "rnaseq.checkComparisons": "Comparisons",
@@ -1232,24 +1240,26 @@ const en: Dictionary = {
     "A group has 1 sample: the no-replicate path (edgeR exactTest, fixed BCV) will be used; P values are exploratory",
   "rnaseq.groups": "Groups",
   "rnaseq.groupsHint":
-    "Drag samples into a group; or click a sample to select it, then click a target group",
+    'Drag samples into a group; or select a sample, then use the target group’s "Assign" button',
   "rnaseq.addGroup": "Add group",
   "rnaseq.unassigned": "Unassigned samples",
-  "rnaseq.clickAssign": "Click a sample to select it, then click a group card to assign",
+  "rnaseq.clickAssign": "Select a sample, then use the target group’s Assign button",
+  "rnaseq.assignSelectedToGroup": "Assign selected sample to group {name}",
   "rnaseq.selectedSample": "Selected: {name}",
   "rnaseq.poolEmpty": "Samples appear after import",
   "rnaseq.allAssigned": "All samples assigned",
   "rnaseq.noGroups": "No groups yet",
-  "rnaseq.noGroupsHint": "Add groups, then drag or click samples to assign",
-  "rnaseq.groupDropHint": "Drag or click samples to assign",
+  "rnaseq.noGroupsHint":
+    "Add groups, then drag samples or select a sample and use a group’s Assign button",
+  "rnaseq.groupDropHint": "Drag a sample here, or select one and use this group’s Assign button",
   "rnaseq.groupNameAria": "Group name {name}",
   "rnaseq.groupReplicated": "replicated",
   "rnaseq.groupSingleton": "single sample (no-replicate path)",
   "rnaseq.deleteGroup": "Delete group",
   "rnaseq.removeSample": "Remove sample",
-  "rnaseq.deleteGroupConfirm": "Delete group \"{name}\"?",
+  "rnaseq.deleteGroupConfirm": 'Delete group "{name}"?',
   "rnaseq.deleteGroupConfirmRelated":
-    "Deleting group \"{name}\" also removes {count} comparison(s). Continue?",
+    'Deleting group "{name}" also removes {count} comparison(s). Continue?',
   "rnaseq.deleteGroupTitle": "Delete group",
   "rnaseq.errGroupExists": "Group name already exists",
   "rnaseq.batch": "Batch covariate (optional)",
@@ -1263,14 +1273,13 @@ const en: Dictionary = {
   "rnaseq.deleteBatch": "Delete batch",
   "rnaseq.comparisons": "Comparisons",
   "rnaseq.addComparison": "Add comparison",
-  "rnaseq.comparisonsTip":
-    "log2FC = case vs control; the name is used for output files.",
+  "rnaseq.comparisonsTip": "log2FC = case vs control; the name is used for output files.",
   "rnaseq.compName": "Name",
   "rnaseq.compCase": "Case",
   "rnaseq.compControl": "Control",
   "rnaseq.compPath": "Path",
   "rnaseq.compPathAria": "Comparison path",
-  "rnaseq.noComparisons": "No comparisons yet — click \"Add comparison\"",
+  "rnaseq.noComparisons": 'No comparisons yet — click "Add comparison"',
   "rnaseq.removeComparison": "Remove comparison",
   "rnaseq.deParams": "Analysis parameters",
   "rnaseq.deParamsHint": "Thresholds & engine; defaults follow the reference script",
@@ -1346,7 +1355,7 @@ const en: Dictionary = {
   "rnaseq.geneSource": "Gene source",
   "rnaseq.geneSourceVariable": "variable",
   "rnaseq.geneSourceDeg": "DEG union (needs DE)",
-  "rnaseq.topN": "Top N genes (\"all\" = everything)",
+  "rnaseq.topN": 'Top N genes ("all" = everything)',
   "rnaseq.expressedOnly": "Filter low expression first",
   "rnaseq.maxGenes": "max genes",
   "rnaseq.includeComparisons": "Comparisons to include (empty = all)",
@@ -1360,8 +1369,7 @@ const en: Dictionary = {
   "rnaseq.clustersStat": "{clusters} clusters / {genes} genes",
   "rnaseq.addFigure": "Add figure",
   "rnaseq.outputName": "Output name",
-  "rnaseq.outputNameHint":
-    "Used for the file name; use letters, numbers, underscore or hyphen.",
+  "rnaseq.outputNameHint": "Used for the file name; use letters, numbers, underscore or hyphen.",
   "rnaseq.figureTitle": "Title",
   "rnaseq.jobEnabled": "Enabled",
   "rnaseq.removeFigure": "Remove figure",
@@ -1453,8 +1461,7 @@ const en: Dictionary = {
   "rnaseq.openOutput": "Open output folder",
   "rnaseq.deSummaryTitle": "DE summary",
   "rnaseq.history": "Run history",
-  "rnaseq.historyHint":
-    "Newest run first; loading restores that run's configuration.",
+  "rnaseq.historyHint": "Newest run first; loading restores that run's configuration.",
   "rnaseq.historyEmpty": "No runs under the current output directory yet",
   "rnaseq.historyLoad": "Load",
   "rnaseq.hasDe": "DE ready",
@@ -1462,8 +1469,7 @@ const en: Dictionary = {
   "rnaseq.resultLoaded": "Loaded results and restored the configuration",
   "rnaseq.resultLoadedNoParams":
     "Loaded the run directory (no prepared/params.json found; current config kept)",
-  "rnaseq.errNotRunDir":
-    "That directory is not an engine run directory (missing DE/heatmap/plots)",
+  "rnaseq.errNotRunDir": "That directory is not an engine run directory (missing DE/heatmap/plots)",
   // Config IO / R dependencies
   "rnaseq.jsonFilter": "JSON config",
   "rnaseq.configSaved": "Config saved: {path}",
@@ -1532,16 +1538,19 @@ const en: Dictionary = {
   "help.title": "View user guide",
   "help.label": "User guide",
   "help.center.title": "User guide",
-  "help.center.intro": "Choose a tool to open its workspace. The User Guide at the top of each workspace contains its step-by-step instructions.",
-  "help.center.note": "The native menu bar also provides standard window, editing, and help commands.",
+  "help.center.intro":
+    "Choose a tool to open its workspace. The User Guide at the top of each workspace contains its step-by-step instructions.",
+  "help.center.note":
+    "The native menu bar also provides standard window, editing, and help commands.",
   "uiShowcase.title": "UI component showcase",
-  "uiShowcase.subtitle": "Mantine 8 theme, control sizes, and interaction states",
+  "uiShowcase.subtitle": "Mynx theme, control sizes, and interaction states",
   "uiShowcase.settingsTooltip": "Component guidelines",
   "uiShowcase.controls": "Controls",
   "uiShowcase.feedback": "Feedback",
   "uiShowcase.data": "Data",
   "uiShowcase.buttons": "Buttons and menu",
-  "uiShowcase.buttonsDescription": "Primary, secondary, subtle, loading, disabled, and icon actions",
+  "uiShowcase.buttonsDescription":
+    "Primary, secondary, subtle, loading, disabled, and icon actions",
   "uiShowcase.primary": "Primary action",
   "uiShowcase.secondary": "Secondary action",
   "uiShowcase.subtle": "Subtle action",
@@ -1581,7 +1590,8 @@ const en: Dictionary = {
   "uiShowcase.failed": "Failed",
   "uiShowcase.openModal": "Open modal",
   "uiShowcase.modalTitle": "Confirm action",
-  "uiShowcase.modalText": "This is the Mantine Modal example with standard sizing, overlay, and focus management.",
+  "uiShowcase.modalText":
+    "This is the Mynx Modal example with standard sizing, overlay, and focus management.",
   "uiShowcase.cancel": "Cancel",
   "uiShowcase.confirm": "Confirm",
   "uiShowcase.tableSample": "Sample",
@@ -1599,7 +1609,7 @@ const en: Dictionary = {
   "qpcr.disabled": "Disabled",
   "qpcr.bestReplicates": "Best replicates (lowest-SD subset)",
   "qpcr.outlierRemoval": "Outlier removal (|Δ| > K×SD)",
-  // ---- qPCR workbench ------------------------------------------------------
+  // ---- qPCR page -----------------------------------------------------------
   "qpcr.stepFile": "File",
   "qpcr.stepTransform": "Transform",
   "qpcr.stepCalc": "Calculate",
@@ -1619,7 +1629,8 @@ const en: Dictionary = {
   "qpcr.errRefGene": "Select a reference gene",
   "qpcr.errControlRequired": "The control-relative method requires a control group",
   "qpcr.errSelectNumRange": "Best-replicate count must be 0 (off) or an integer of at least 2",
-  "qpcr.errSelectNumTooLarge": "Best-replicate count {selectNum} cannot exceed replicate count {repeatCount}",
+  "qpcr.errSelectNumTooLarge":
+    "Best-replicate count {selectNum} cannot exceed replicate count {repeatCount}",
   "qpcr.errOutlierSd": "Outlier threshold must be greater than 0 (or 0 to disable)",
   "qpcr.errMutualExclusion": "Best-replicate selection and outlier removal cannot both be enabled",
   "qpcr.summarySheets": "Generated sheets",
@@ -1721,7 +1732,8 @@ const en: Dictionary = {
   "qpcr.cellTextBold": "Bold cell text",
   // ---- Chart studio -------------------------------------------------------
   "charts.pageSubtitle": "Import data, generate publication figures from templates, and export",
-  "charts.onDemandHint": "R is prepared on demand; only dependencies required by the current chart are installed.",
+  "charts.onDemandHint":
+    "R is prepared on demand; only dependencies required by the current chart are installed.",
   "charts.templates": "Chart templates",
   "charts.searchPlaceholder": "Search chart names or uses",
   "charts.searchAria": "Search chart templates",
@@ -1739,11 +1751,13 @@ const en: Dictionary = {
   "charts.previewEmpty": "The first 50 imported rows appear here",
   "charts.totalRows": "{count} rows in total",
   "charts.mapping": "Field mapping",
-  "charts.mappingHint": "Choose a column for every data role the template requires; generation is blocked while a required role is empty or unknown.",
+  "charts.mappingHint":
+    "Choose a column for every data role the template requires; generation is blocked while a required role is empty or unknown.",
   "charts.roleRequired": "Required",
   "charts.roleOptional": "Optional",
   "charts.roleColumn": "Column",
-  "charts.autoColumns": "This template uses all numeric columns automatically; no manual mapping needed.",
+  "charts.autoColumns":
+    "This template uses all numeric columns automatically; no manual mapping needed.",
   "charts.fixedValueColumn": "The value column is fixed to “value”.",
   "charts.outputFolder": "Output folder",
   "charts.chooseFolder": "Choose location",
@@ -1753,6 +1767,7 @@ const en: Dictionary = {
   "charts.generate": "Generate",
   "charts.cancelRun": "Cancel generation",
   "charts.runTitle": "Chart generation",
+  "charts.progress": "Chart generation progress",
   "charts.runReady": "Load data and set the fields, then generate.",
   "charts.copyLog": "Copy diagnostics",
   "charts.logTitle": "Run log",
@@ -1768,7 +1783,8 @@ const en: Dictionary = {
   "charts.loadPreset": "Load",
   "charts.result": "Latest result",
   "charts.resultPrev": "Previous available result",
-  "charts.resultPrevNote": "No new chart was created in this run. The previous successful result is retained below.",
+  "charts.resultPrevNote":
+    "No new chart was created in this run. The previous successful result is retained below.",
   "charts.openOutput": "Open result file",
   "charts.openOutputDir": "Open output folder",
   "charts.exportZip": "Export result package (chart + template notes)",
@@ -1781,7 +1797,8 @@ const en: Dictionary = {
   "charts.rCheckAgain": "Check again",
   "charts.installRButton": "Install R",
   "charts.installRTitle": "Install R runtime",
-  "charts.installRBody": "R is required to generate charts. Install it now through the system package manager?",
+  "charts.installRBody":
+    "R is required to generate charts. Install it now through the system package manager?",
   "charts.installRConfirm": "Install now",
   "charts.templatePackage": "Import template package",
   "charts.installMissing": "Allow installation of missing R packages (only for this run)",
@@ -1809,10 +1826,14 @@ const en: Dictionary = {
   "charts.cancelTooLate": "The current task has finished; check the result shortly.",
   "charts.cancelFailed": "Could not send the cancellation request. Retry later.",
   "charts.errorCancelled": "This chart run was cancelled.",
-  "charts.errorMissingPackage": "Missing R package {pkg}. Enable “Allow installation of missing R packages” and retry.",
-  "charts.errorPackageInstallFailed": "R package {pkg} failed to install. Check the network or CRAN mirror and retry.",
-  "charts.errorTemplateIncomplete": "Template resources are incomplete. Reinstall or update the app.",
-  "charts.errorOutputMissing": "R ran but produced no output file. Check the data columns and parameters.",
+  "charts.errorMissingPackage":
+    "Missing R package {pkg}. Enable “Allow installation of missing R packages” and retry.",
+  "charts.errorPackageInstallFailed":
+    "R package {pkg} failed to install. Check the network or CRAN mirror and retry.",
+  "charts.errorTemplateIncomplete":
+    "Template resources are incomplete. Reinstall or update the app.",
+  "charts.errorOutputMissing":
+    "R ran but produced no output file. Check the data columns and parameters.",
   "charts.errNeedData": "Import data or use a built-in example first",
   "charts.errNeedOutput": "Choose an output folder first.",
   "charts.errTemplateUnavailable": "This template is unavailable. Choose another chart template.",
@@ -1837,7 +1858,8 @@ const en: Dictionary = {
   "charts.svgCopyFailed": "Could not copy the SVG. Open the result file directly.",
   "charts.zipExported": "Result package exported",
   "charts.zipExportFailed": "Result package export failed",
-  "charts.templateInstalled": "Template package installed: {id} (appears in the catalog after a restart)",
+  "charts.templateInstalled":
+    "Template package installed: {id} (appears in the catalog after a restart)",
   "charts.templateInstallFailed": "Template package install failed",
   "charts.templateExported": "Template file saved",
   "charts.templateExportFailed": "Template download failed",
@@ -1983,11 +2005,16 @@ const en: Dictionary = {
   "about.github": "GitHub repository",
   "about.website": "Project website",
   "about.stackValue": "Svelte · Tauri · Rust · R",
-  "help.image.body": "Batch-convert images to PNG with lossless/lossy compression and text or image watermarks.",
-  "help.qpcr.body": "Import qPCR data, transform worksheets, calculate relative expression, and generate Excel charts.",
-  "help.rnaseq.body": "Import raw counts for differential analysis and export volcano plots, heatmaps, and more.",
-  "help.charts.body": "Generate scientific charts from templates with statistical annotations, export formats, and presets.",
-  "help.settings.body": "Manage theme, language, window pinning, chart color, and the R environment.",
+  "help.image.body":
+    "Batch-convert images to PNG with lossless/lossy compression and text or image watermarks.",
+  "help.qpcr.body":
+    "Import qPCR data, transform worksheets, calculate relative expression, and generate Excel charts.",
+  "help.rnaseq.body":
+    "Import raw counts for differential analysis and export volcano plots, heatmaps, and more.",
+  "help.charts.body":
+    "Generate scientific charts from templates with statistical annotations, export formats, and presets.",
+  "help.settings.body":
+    "Manage theme, language, window pinning, chart color, and the R environment.",
   "error.io": "Failed to read or write files",
   "error.validation": "Invalid parameters",
   "error.notFound": "Resource not found",
@@ -2003,12 +2030,8 @@ export const dictionaries: Record<Language, Dictionary> = { zh, en };
  * Translate `key` in the active language with `{name}` interpolation.
  * Falls back en → zh → the raw key, mirroring the legacy provider.
  */
-export function t(
-  key: string,
-  values?: Record<string, string | number>,
-): string {
-  const raw =
-    dictionaries[app.language][key] ?? dictionaries.zh[key] ?? key;
+export function t(key: string, values?: Record<string, string | number>): string {
+  const raw = dictionaries[app.language][key] ?? dictionaries.zh[key] ?? key;
   if (!values) return raw;
   return raw.replace(/\{(\w+)\}/g, (_match, name: string) =>
     values[name] !== undefined ? String(values[name]) : `{${name}}`,
@@ -2024,19 +2047,14 @@ export function statusLabel(status: string): string {
  * Localize known validation/runtime messages emitted by computation modules.
  * Ported from the legacy i18n module.
  */
-export function localizeErrorMessage(
-  message: string,
-  language: Language,
-): string {
+export function localizeErrorMessage(message: string, language: Language): string {
   if (language !== "en") return message;
   const exact: Record<string, string> = {
     "未找到 Target/Gene/基因 列": "Target/Gene column was not found",
     "未找到 Sample/Group/样本/分组 列": "Sample/Group column was not found",
     "未找到 Cq/Ct 列": "Cq/Ct column was not found",
-    "重复次数必须是大于等于 1 的整数":
-      "Replicate count must be an integer of at least 1",
-    相对对照方法需要指定对照组:
-      "The control-relative method requires a control group",
+    "重复次数必须是大于等于 1 的整数": "Replicate count must be an integer of at least 1",
+    相对对照方法需要指定对照组: "The control-relative method requires a control group",
     "择优重复数与离群值剔除不能同时启用，请只选一种":
       "Best-replicate selection and outlier removal cannot both be enabled",
     "Transformed Data sheet not found": "Transformed Data sheet not found",

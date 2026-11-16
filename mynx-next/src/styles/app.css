@@ -182,9 +182,7 @@
   }
 
   .mynx-input:focus {
-    outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 25%, transparent);
   }
 
   .mynx-input:disabled {
@@ -198,6 +196,39 @@
     padding: 6px 8px;
     resize: vertical;
     line-height: 1.5;
+  }
+
+  .mynx-progress {
+    display: block;
+    width: 100%;
+    height: 6px;
+    appearance: none;
+    border: 0 solid;
+    border-radius: 9999px;
+    background: var(--color-surface-2);
+  }
+
+  .mynx-progress::-webkit-progress-bar {
+    background: transparent;
+  }
+
+  .mynx-progress::-webkit-progress-value {
+    border-radius: 9999px;
+    background: var(--color-accent);
+    transition: inline-size 150ms linear;
+  }
+
+  .mynx-progress::-moz-progress-bar {
+    border-radius: 9999px;
+    background: var(--color-accent);
+    transition: inline-size 150ms linear;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mynx-progress::-webkit-progress-value,
+    .mynx-progress::-moz-progress-bar {
+      transition: none;
+    }
   }
 
   /* Badges (task states) --------------------------------------------------- */

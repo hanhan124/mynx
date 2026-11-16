@@ -1,8 +1,8 @@
 // clean-installer-artifacts.cjs — 每次打包后清理所有中间产物
 // 保留:
-//   - release-installer/mynx-installer.exe  ← 唯一交付物
-//   - src-tauri/target/release/mynx.exe     ← 主应用 exe(下轮打包的输入)
-//   - installer/src-tauri/resources/mynx.exe ← 嵌入资源(下轮打包的输入)
+//   - release-installer/mynx-installer.exe + build.json + optional .sig
+//   - mynx-next/src-tauri/target/release/mynx-next.exe ← 主应用 exe(下轮打包的输入)
+//   - installer/src-tauri/resources/mynx.exe(.gz) ← payload 及压缩嵌入资源
 // 删除:
 //   - installer/src-tauri/target/release 下除 mynx-installer.exe 外的所有文件
 //   - installer/src-tauri/target/release/{build,deps,examples,incremental,*.pdb,*.d,*.sig}
@@ -14,10 +14,16 @@ const ROOT = path.join(__dirname, "..");
 const RELEASE_DIR = path.join(ROOT, "release-installer");
 const INSTALLER_TARGET = path.join(ROOT, "installer", "src-tauri", "target", "release");
 
-// ── 1. 清理 release-installer/,只保留最新拷贝(由调用者负责先复制进来) ──
+const RELEASE_DELIVERABLES = new Set([
+  "mynx-installer.exe",
+  "mynx-installer.exe.sig",
+  "mynx-installer.exe.build.json",
+]);
+
+// ── 1. 清理 release-installer/,只保留当前产物与校验信息 ──
 if (fs.existsSync(RELEASE_DIR)) {
   for (const f of fs.readdirSync(RELEASE_DIR)) {
-    if (f.toLowerCase() !== "mynx-installer.exe") {
+    if (!RELEASE_DELIVERABLES.has(f.toLowerCase())) {
       fs.rmSync(path.join(RELEASE_DIR, f), { recursive: true, force: true });
       console.log(`  removed release-installer/${f}`);
     }
@@ -40,4 +46,4 @@ if (fs.existsSync(INSTALLER_TARGET)) {
   }
 }
 
-console.log("\n✅ 清理完成,只保留 mynx-installer.exe 作为唯一交付物");
+console.log("\n✅ 清理完成,只保留安装器、签名与来源校验清单");

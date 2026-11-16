@@ -16,7 +16,7 @@ for (const template of inventory.templates ?? []) {
   if (!['draft', 'verified'].includes(template.status)) issues.push(`${template.id}: status 必须为 draft 或 verified`);
   if (template.status === 'verified' && !template.sourceRepoPath) issues.push(`${template.id}: 已验证模板必须指向官方仓库源文件`);
   if (template.status === 'verified') {
-    const dir = resolve('src-tauri/r/chart-templates', template.id);
+    const dir = resolve('mynx-next/src-tauri/r/chart-templates', template.id);
     for (const file of ['manifest.json', 'sample.csv', 'render.R', 'defaults.json', 'README.zh-CN.md']) {
       if (!existsSync(resolve(dir, file))) issues.push(`${template.id}: 缺少已验证资源 ${file}`);
     }

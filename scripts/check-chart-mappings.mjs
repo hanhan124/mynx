@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const root = "src-tauri/r/chart-templates";
+const root = "mynx-next/src-tauri/r/chart-templates";
 const entries = await fs.readdir(root, { withFileTypes: true });
 const forbidden = /data\$(from|to|value|word|freq|group|before|after|longitude|latitude|region|wkt|stage1|stage2|stage3)\b/g;
 const failures = [];

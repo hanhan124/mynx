@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 # Deterministic contract checks for shared runner helpers.
 root <- normalizePath(getwd(), mustWork = TRUE)
-source(file.path(root, "src-tauri", "r", "modules", "config.R"))
-source(file.path(root, "src-tauri", "r", "modules", "io.R"))
+source(file.path(root, "mynx-next", "src-tauri", "r", "modules", "config.R"))
+source(file.path(root, "mynx-next", "src-tauri", "r", "modules", "io.R"))
 
 stopifnot(normalise_engine("auto", TRUE) == "deseq2")
 stopifnot(normalise_engine("auto", FALSE) == "edger_qlf")

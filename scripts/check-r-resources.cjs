@@ -5,9 +5,10 @@ const fs = require("fs");
 const path = require("path");
 
 const root = path.join(__dirname, "..");
-const rRoot = path.join(root, "src-tauri", "r");
+const appRoot = path.join(root, "mynx-next", "src-tauri");
+const rRoot = path.join(appRoot, "r");
 const tauriConfig = JSON.parse(
-  fs.readFileSync(path.join(root, "src-tauri", "tauri.conf.json"), "utf8"),
+  fs.readFileSync(path.join(appRoot, "tauri.conf.json"), "utf8"),
 );
 const generated = fs.readFileSync(
   path.join(root, "installer", "src-tauri", "src", "generated_resources.rs"),

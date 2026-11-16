@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { listen, UnlistenFn } from "@tauri-apps/api/event";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 export type Mode = "install" | "uninstall";
 
@@ -11,7 +11,8 @@ export interface InstallContext {
   default_install_path: string;
   installed_path: string | null;     // 已安装位置(install=升级默认路径,uninstall=卸载目标)
   installed_version: string | null;  // 已安装版本(有值表示本次为升级)
-  payload_size_mb: number;            // 主程序大小(MB),用于提示
+  installed_size_mib: number;         // 主程序、R 资源和卸载程序的合计占用(MiB)
+  temporary_size_mib: number;         // 安装期间临时 payload 占用(MiB)
   is_admin: boolean;
 }
 
@@ -28,6 +29,8 @@ export interface InstallProgress {
   percent: number;
 }
 
+export type InstallProgressEvent = "install-progress" | "uninstall-progress";
+
 export interface InstallResult {
   install_path: string;
   launched: boolean;
@@ -37,8 +40,11 @@ export const api = {
   getContext: () => invoke<InstallContext>("get_install_context"),
   install: (opts: InstallOptions) => invoke<InstallResult>("perform_install", { opts }),
   uninstall: () => invoke<void>("perform_uninstall"),
-  onProgress: async (cb: (p: InstallProgress) => void): Promise<UnlistenFn> => {
-    return await listen<InstallProgress>("install-progress", (e) => cb(e.payload));
+  onProgress: (
+    eventName: InstallProgressEvent,
+    cb: (p: InstallProgress) => void,
+  ): Promise<UnlistenFn> => {
+    return listen<InstallProgress>(eventName, (e) => cb(e.payload));
   },
   launchApp: (path: string) => invoke<void>("launch_app", { path }),
   pickInstallDir: () => invoke<string | null>("pick_install_dir"),

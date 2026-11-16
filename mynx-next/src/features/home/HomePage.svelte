@@ -73,6 +73,12 @@
     navigate(route);
   }
 
+  function warmTool(route: string): void {
+    if (route === "/charts") {
+      void import("../charts/ChartsPage.svelte").catch(() => {});
+    }
+  }
+
   function openProject(path: unknown): void {
     if (typeof path !== "string") return;
     client.openPath(path).catch(() => undefined);
@@ -86,7 +92,7 @@
 
 <section class="mx-auto flex w-full max-w-[860px] flex-col gap-5 p-6">
   <header class="flex flex-col gap-1">
-    <h1 class="text-[18px] font-semibold">{t("app.workbench")}</h1>
+    <h1 class="text-[18px] font-semibold">{t("app.name")}</h1>
     <p class="text-[12px] text-text-secondary">{t("about.tagline")}</p>
   </header>
 
@@ -107,6 +113,8 @@
       <button
         type="button"
         class="mynx-card flex items-start gap-3 p-4 text-left transition-colors hover:border-accent"
+        onpointerenter={() => warmTool(tool.route)}
+        onfocus={() => warmTool(tool.route)}
         onclick={() => openTool(tool.route)}
         aria-label={`${t(tool.titleKey)} — ${t("home.openTool")}`}
       >

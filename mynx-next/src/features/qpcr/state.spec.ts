@@ -47,6 +47,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../../app/tauri.js", () => ({
   call: vi.fn(),
   openPath: vi.fn(),
+  setAlwaysOnTop: vi.fn().mockResolvedValue(undefined),
   settingsLoad: mocks.settingsLoad,
   settingsSave: mocks.settingsSave,
   tasksCancel: mocks.tasksCancel,

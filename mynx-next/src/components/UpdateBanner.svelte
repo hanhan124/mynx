@@ -31,7 +31,10 @@
 </script>
 
 {#if app.update.status === "available"}
-  <div class="mynx-card fixed left-1/2 top-12 z-40 flex -translate-x-1/2 items-center gap-2 border-warning px-3 py-2">
+  <div
+    class="flex w-full min-w-0 shrink-0 flex-wrap items-center justify-center gap-2 border-b border-warning bg-surface px-3 py-2"
+    role="status"
+  >
     <p class="text-[12px]">{t("update.available", { version: app.update.version ?? "" })}</p>
     <button type="button" class="mynx-btn mynx-btn-primary" onclick={install}>
       <IconDownload size={14} stroke={1.6} />
@@ -42,12 +45,18 @@
     </button>
   </div>
 {:else if app.update.status === "downloading"}
-  <div class="mynx-card fixed left-1/2 top-12 z-40 flex -translate-x-1/2 items-center gap-2 px-3 py-2">
+  <div
+    class="flex w-full min-w-0 shrink-0 flex-wrap items-center justify-center gap-2 border-b border-border bg-surface px-3 py-2"
+    role="status"
+  >
     <span class="mynx-badge mynx-badge-running">{t("status.running")}</span>
     <p class="text-[12px]">{t("update.downloading", { version: app.update.version ?? "" })}</p>
   </div>
 {:else if app.update.status === "ready"}
-  <div class="mynx-card fixed left-1/2 top-12 z-40 flex -translate-x-1/2 items-center gap-2 border-success px-3 py-2">
+  <div
+    class="flex w-full min-w-0 shrink-0 flex-wrap items-center justify-center gap-2 border-b border-success bg-surface px-3 py-2"
+    role="status"
+  >
     <p class="text-[12px]">{t("update.complete")}</p>
     <button type="button" class="mynx-btn mynx-btn-primary" onclick={restart}>
       {t("update.restartNow")}
@@ -57,8 +66,11 @@
     </button>
   </div>
 {:else if app.update.status === "failed"}
-  <div class="mynx-card fixed left-1/2 top-12 z-40 flex -translate-x-1/2 items-center gap-2 border-danger px-3 py-2">
-    <p class="mynx-truncate max-w-[420px] text-[12px] text-danger" title={app.update.error ?? ""}>
+  <div
+    class="flex w-full min-w-0 shrink-0 flex-wrap items-center justify-center gap-2 border-b border-danger bg-surface px-3 py-2"
+    role="alert"
+  >
+    <p class="min-w-0 max-w-full break-words text-center text-[12px] text-danger" title={app.update.error ?? ""}>
       {t("update.failed")}
     </p>
     <button type="button" class="mynx-btn" onclick={retry}>

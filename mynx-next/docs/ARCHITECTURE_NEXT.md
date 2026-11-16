@@ -84,6 +84,7 @@ mynx-next/
 | serde_json preserve_order | 组顺序影响热图注释顺序；BTreeMap 会破坏 "0h/6h/12h/24h" 这类时间组序。 |
 | R 进程通过 powershell/bash 包装器启动 | 与 legacy 行为逐行一致（staging/copy/exit-code 语义），且满足会话安全扫描对 Command::new 的字面量要求。 |
 | tauri 运行时栈版本对齐 legacy lock（tao 0.35.3 等） | 最新 tao/tauri-runtime 与 tauri 2.11.5 API 不兼容。 |
+| Tauri JS API/插件按 Rust minor 版本精确锁定 | Tauri 启动器会拒绝跨 minor 的 API/插件组合；`mynx-next/package.json` 与 Cargo.lock 保持 2.11.5 运行栈兼容。 |
 | QpcrPlotRunConfig 的 JSON Schema 用存根 | schemars 1.0 对该类型无限递归（未定位根因）；TS 绑定为权威。 |
 | hash 路由自研（10 行） | 仅 6 条路由 + menu 事件兼容；避免引入 Svelte 4 生态路由器。 |
 | 不再注册 tauri-plugin-store | 新持久化为 SQLite；Rust 直接读旧 config.json 迁移，权限面缩小。 |

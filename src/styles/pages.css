@@ -903,7 +903,7 @@
 .chart-studio__templates-scroll .mantine-ScrollArea-viewport { max-height: calc(100vh - 330px); }
 .chart-studio__search .mantine-TextInput-root { flex: 1; min-width: 0; }
 
-/* 3.1-2 workbench frame. The existing business panels keep their handlers
+/* 3.1-2 analysis layout. The existing business panels keep their handlers
    and fields while the layout gives the data view and inspector independent
    columns and scroll boundaries. */
 .chart-studio__layout {

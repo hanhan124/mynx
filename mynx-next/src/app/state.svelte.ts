@@ -1,7 +1,7 @@
 import type { TaskRecord } from "../lib/contracts/generated/task/TaskRecord.js";
 import type { LogLevel } from "../lib/contracts/generated/task/LogLevel.js";
 import type { ThemeId } from "../lib/contracts/generated/settings/ThemeId.js";
-import type { AppInfo } from "./tauri.js";
+import { setAlwaysOnTop, settingsLoad, settingsSave, type AppInfo } from "./tauri.js";
 import { SvelteMap } from "svelte/reactivity";
 
 /** UI language; legacy localStorage `mynx-language` mirrored. */
@@ -31,10 +31,7 @@ export function normalizeTheme(value: string | null | undefined): ThemeId {
 
 /** System color-scheme preference ("light" → pearl, otherwise graphite). */
 export function getSystemTheme(): ResolvedTheme {
-  if (
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-color-scheme: light)").matches
-  ) {
+  if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: light)").matches) {
     return "pearl";
   }
   return "graphite";
@@ -162,18 +159,25 @@ export function setLanguage(next: Language): void {
 }
 
 export function toggleLanguage(): void {
-  setLanguage(app.language === "zh" ? "en" : "zh");
+  const next = app.language === "zh" ? "en" : "zh";
+  setLanguage(next);
+  void patchSettings({ language: next });
 }
 
-/** Patch persisted settings with a partial document (best effort). */
+let settingsPatchQueue = Promise.resolve();
+
+/** Patch persisted settings in order (best effort). */
 export async function patchSettings(patch: Record<string, unknown>): Promise<void> {
-  try {
-    const { settingsLoad, settingsSave } = await import("./tauri.js");
-    const doc = await settingsLoad();
-    await settingsSave({ ...doc, ...patch } as never);
-  } catch {
-    // Settings persistence is best effort (dev/browser mode has no backend).
-  }
+  const operation = settingsPatchQueue.then(async () => {
+    try {
+      const doc = await settingsLoad();
+      await settingsSave({ ...doc, ...patch } as never);
+    } catch {
+      // Settings persistence is best effort (dev/browser mode has no backend).
+    }
+  });
+  settingsPatchQueue = operation;
+  await operation;
 }
 
 /** Set the theme preference and persist it (command palette / settings). */
@@ -186,9 +190,7 @@ export function setTheme(preference: ThemeId): void {
 export function toggleAlwaysOnTop(): void {
   const next = !app.alwaysOnTop;
   app.alwaysOnTop = next;
-  void import("./tauri.js").then(({ setAlwaysOnTop }) =>
-    setAlwaysOnTop(next).catch(() => (app.alwaysOnTop = !next)),
-  );
+  void setAlwaysOnTop(next).catch(() => (app.alwaysOnTop = !next));
   void patchSettings({ alwaysOnTop: next });
 }
 
@@ -245,15 +247,11 @@ export function upsertTask(record: TaskRecord): void {
   } else {
     app.tasks.push(record);
   }
-  app.tasks.sort(
-    (a, b) => b.createdAtMs - a.createdAtMs || b.id - a.id,
-  );
+  app.tasks.sort((a, b) => b.createdAtMs - a.createdAtMs || b.id - a.id);
 }
 
 export function activeTaskCount(): number {
-  return app.tasks.filter(
-    (task) => task.status === "running" || task.status === "queued",
-  ).length;
+  return app.tasks.filter((task) => task.status === "running" || task.status === "queued").length;
 }
 
 let systemWatcherStarted = false;

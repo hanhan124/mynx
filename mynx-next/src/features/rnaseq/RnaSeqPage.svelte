@@ -43,7 +43,7 @@
   } from "./state.svelte";
 
   /**
-   * RNA-seq workbench: left rail (steps + run controls + config IO + R
+   * RNA-seq analysis page: left rail (steps + run controls + config IO + R
    * packages), per-step content in the center, plus result gallery and run
    * history panels. The engine owns all methodology.
    */

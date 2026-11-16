@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Logo } from "../components/Logo";
-import { api, InstallProgress, InstallResult } from "../lib/ipc";
-import { UnlistenFn } from "@tauri-apps/api/event";
+import { api } from "../lib/ipc";
+import type { InstallResult } from "../lib/ipc";
+import type { UnlistenFn } from "@tauri-apps/api/event";
 
 interface Props {
   path: string;
@@ -15,29 +16,36 @@ export const Installing: React.FC<Props> = ({ path, options, onDone }) => {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
     let unlisten: UnlistenFn | undefined;
 
-    (async () => {
-      const { listen } = await import("@tauri-apps/api/event");
-      unlisten = await listen<InstallProgress>("install-progress", (e) => {
-        setPct(e.payload.percent);
-        setMsg(e.payload.message);
-      });
-
+    void (async () => {
       try {
+        const stopListening = await api.onProgress("install-progress", (progress) => {
+          if (!active) return;
+          setPct(progress.percent);
+          setMsg(progress.message);
+        });
+        if (!active) {
+          stopListening();
+          return;
+        }
+        unlisten = stopListening;
+
         const result = await api.install({
           install_path: path,
           create_desktop_icon: options.desktop,
           create_start_menu: options.startMenu,
           launch_after: options.launchAfter,
         });
-        onDone(result);
-      } catch (e: any) {
-        setErr(String(e));
+        if (active) onDone(result);
+      } catch (error: unknown) {
+        if (active) setErr(error instanceof Error ? error.message : String(error));
       }
     })();
 
     return () => {
+      active = false;
       if (unlisten) unlisten();
     };
   }, [path, options, onDone]);
@@ -45,10 +53,10 @@ export const Installing: React.FC<Props> = ({ path, options, onDone }) => {
   if (err) {
     return (
       <div className="progress">
-        <div style={{ color: "#E81123", fontSize: 18, fontWeight: 600, marginBottom: 12 }}>
+        <div className="progress__error-title">
           安装失败
         </div>
-        <div style={{ color: "var(--text-muted)", fontSize: 13 }}>{err}</div>
+        <div className="progress__error-msg">{err}</div>
         <div style={{ marginTop: 24 }}>
           <button className="btn btn--primary" onClick={() => window.close()}>关闭</button>
         </div>
@@ -59,7 +67,7 @@ export const Installing: React.FC<Props> = ({ path, options, onDone }) => {
   return (
     <div className="progress">
       <div className="progress__icon">
-        <Logo size={80} withShadow={false} />
+        <Logo size={64} />
       </div>
       <div className="progress__title">正在安装 Mynx</div>
       <div className="progress__message">{msg}</div>

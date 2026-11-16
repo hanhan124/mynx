@@ -11,8 +11,12 @@ import type { ChartZipRequest } from "../../lib/contracts/generated/charts/Chart
 import type { ChartPreset } from "../../lib/contracts/generated/settings/ChartPreset.js";
 import type { SettingsDoc } from "../../lib/contracts/generated/settings/SettingsDoc.js";
 import type { TaskRecord } from "../../lib/contracts/generated/task/TaskRecord.js";
-import { SvelteSet } from "svelte/reactivity";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import { pushToast, app } from "../../app/state.svelte";
+import {
+  currentChartNavigationId,
+  recordChartNavigationStage,
+} from "../../lib/chart-navigation-timings.js";
 import {
   rInstallRuntime,
   rStatus,
@@ -190,6 +194,8 @@ export function autoAssignColumns(
 export interface RunValidation {
   key: string;
   values?: Record<string, string | number>;
+  roleKey?: string;
+  field?: MappedField;
 }
 
 /** Validates the draft against the imported data + manifest roles. */
@@ -207,12 +213,19 @@ export function validateRunInputs(
     if (!field) continue;
     const column = draft[field];
     if (role.required && !column) {
-      return { key: "charts.errFillRole", values: { role: role.label } };
+      return {
+        key: "charts.errFillRole",
+        values: { role: role.label },
+        roleKey: role.key,
+        field,
+      };
     }
     if (column && !imported.columns.includes(column)) {
       return {
         key: "charts.errColumnMissing",
         values: { role: role.label, column },
+        roleKey: role.key,
+        field,
       };
     }
   }
@@ -260,10 +273,7 @@ export function mergeImportedPresets(
       updatedAt: Number(record.updatedAt) || Date.now(),
     });
   }
-  const merged = [
-    ...valid,
-    ...existing.filter((old) => !valid.some((item) => item.id === old.id)),
-  ];
+  const merged = [...valid, ...existing.filter((old) => !valid.some((item) => item.id === old.id))];
   return { presets: merged, imported: valid.length };
 }
 
@@ -273,6 +283,10 @@ export function mergeImportedPresets(
 
 const EVENT_LOG_CAP = 100;
 const LOG_TEXT_CAP = 20000;
+const R_STATUS_CACHE_MS = 30_000;
+let rStatusCheckedAt = 0;
+let rStatusRequest: Promise<void> | null = null;
+let dataImportSequence = 0;
 
 export interface ChartState {
   /** Catalog filters. */
@@ -338,26 +352,71 @@ export function selectedTemplate(): ChartTemplate {
  * Persistence (presets in `chartStudioPresets`).
  * ------------------------------------------------------------------------- */
 
-let settingsLoadStarted = false;
+let settingsLoadPromise: Promise<void> | null = null;
+let settingsLoadFinished = false;
+let manifestRequestSequence = 0;
+const manifestRequests = new SvelteMap<string, Promise<ChartTemplateManifest>>();
+let referenceRequestSequence = 0;
+
+function loadTemplateManifest(templateId: string): Promise<ChartTemplateManifest> {
+  const current = manifestRequests.get(templateId);
+  if (current) return current;
+
+  const request = readChartManifest(templateId).finally(() => {
+    if (manifestRequests.get(templateId) === request) manifestRequests.delete(templateId);
+  });
+  manifestRequests.set(templateId, request);
+  return request;
+}
+
+async function manifestForImport(requestSequence: number): Promise<ChartTemplateManifest | null> {
+  while (requestSequence === dataImportSequence) {
+    const templateId = chartState.selectedTemplateId;
+    if (chartState.manifest?.id === templateId) return chartState.manifest;
+    try {
+      const manifest = await loadTemplateManifest(templateId);
+      if (requestSequence !== dataImportSequence) return null;
+      if (chartState.selectedTemplateId !== templateId) continue;
+      chartState.manifest = manifest;
+      return manifest;
+    } catch {
+      if (requestSequence !== dataImportSequence) return null;
+      if (chartState.selectedTemplateId !== templateId) continue;
+      return null;
+    }
+  }
+  return null;
+}
 
 /** Restores presets + default output dir once per session. */
-export function loadChartStudioSettings(): void {
-  if (settingsLoadStarted) return;
-  settingsLoadStarted = true;
-  void (async () => {
-    try {
-      const doc = await settingsLoad();
-      chartState.presets = Array.isArray(doc.chartStudioPresets) ? [...doc.chartStudioPresets] : [];
-    } catch {
-      // Settings unavailable: keep an empty preset list.
-    }
-    try {
-      const home = await homeDir();
-      chartState.cfg.outputDir = await join(home, "Mynx", "charts");
-    } catch {
-      // Path API unavailable (tests / browser preview): keep the empty dir.
-    }
-  })();
+export function loadChartStudioSettings(
+  sampleId: number | null = currentChartNavigationId(),
+): Promise<void> {
+  const source = settingsLoadPromise ? (settingsLoadFinished ? "cached" : "shared") : "loaded";
+  if (!settingsLoadPromise) {
+    settingsLoadPromise = (async () => {
+      try {
+        const doc = await settingsLoad();
+        chartState.presets = Array.isArray(doc.chartStudioPresets)
+          ? [...doc.chartStudioPresets]
+          : [];
+      } catch {
+        // Settings unavailable: keep an empty preset list.
+      }
+      try {
+        const home = await homeDir();
+        const outputDir = await join(home, "Mynx", "charts");
+        if (!chartState.cfg.outputDir.trim()) chartState.cfg.outputDir = outputDir;
+      } catch {
+        // Path API unavailable (tests / browser preview): keep the empty dir.
+      }
+    })().finally(() => {
+      settingsLoadFinished = true;
+    });
+  }
+  return settingsLoadPromise.then(() => {
+    recordChartNavigationStage(sampleId, "settingsReady", source);
+  });
 }
 
 async function persistPresets(next: ChartPreset[]): Promise<void> {
@@ -403,6 +462,31 @@ export async function loadPreset(preset: ChartPreset): Promise<void> {
   chartState.cfg = merged;
   resetRunStatus();
   pushToast("info", t("charts.presetLoaded", { name: preset.name }));
+  const templateId = merged.template;
+  if (chartState.selectedTemplateId !== templateId || chartState.manifest?.id !== templateId) {
+    const requestSequence = ++manifestRequestSequence;
+    chartState.selectedTemplateId = templateId;
+    chartState.manifest = null;
+    chartState.referenceUrl = "";
+    chartState.referenceError = false;
+    try {
+      const manifest = await loadTemplateManifest(templateId);
+      if (
+        requestSequence === manifestRequestSequence &&
+        chartState.selectedTemplateId === templateId
+      ) {
+        chartState.manifest = manifest;
+      }
+    } catch (error) {
+      if (
+        requestSequence === manifestRequestSequence &&
+        chartState.selectedTemplateId === templateId
+      ) {
+        chartState.manifest = null;
+        pushToast("error", `${t("charts.manifestFailed")}: ${detailOf(error)}`);
+      }
+    }
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -419,6 +503,7 @@ export function resetRunStatus(): void {
 export async function selectTemplate(templateId: string): Promise<void> {
   if (chartState.runPhase === "running" || chartState.installingR) return;
   if (!templateById.has(templateId)) return;
+  const requestSequence = ++manifestRequestSequence;
   chartState.selectedTemplateId = templateId;
   chartState.manifest = null;
   chartState.referenceUrl = "";
@@ -439,26 +524,51 @@ export async function selectTemplate(templateId: string): Promise<void> {
     applyAutoAssignment(chartState.imported);
   }
   try {
-    chartState.manifest = await readChartManifest(templateId);
+    const manifest = await loadTemplateManifest(templateId);
+    if (requestSequence !== manifestRequestSequence || chartState.selectedTemplateId !== templateId)
+      return;
+    chartState.manifest = manifest;
   } catch (error) {
+    if (requestSequence !== manifestRequestSequence || chartState.selectedTemplateId !== templateId)
+      return;
     chartState.manifest = null;
     pushToast("error", `${t("charts.manifestFailed")}: ${detailOf(error)}`);
   }
 }
 
 /** Reference image asset URL under `<resource>/r/chart-templates/<id>/`. */
-export async function resolveReferenceUrl(templateId: string): Promise<void> {
+export async function resolveReferenceUrl(
+  templateId: string,
+  sampleId: number | null = currentChartNavigationId(),
+): Promise<void> {
+  const requestSequence = ++referenceRequestSequence;
   chartState.referenceUrl = "";
   chartState.referenceError = false;
+  const manifest = chartState.manifest;
   try {
-    const manifest = chartState.manifest;
     const referencePath = manifest?.referencePath ?? "reference.png";
     const dir = await resourceDir();
     const full = await join(dir, "r", "chart-templates", templateId, referencePath);
+    if (
+      requestSequence !== referenceRequestSequence ||
+      chartState.selectedTemplateId !== templateId
+    )
+      return;
     chartState.referenceUrl = convertFileSrc(full);
+    if (manifest?.id === templateId) {
+      recordChartNavigationStage(sampleId, "referenceReady", "loaded");
+    }
   } catch {
+    if (
+      requestSequence !== referenceRequestSequence ||
+      chartState.selectedTemplateId !== templateId
+    )
+      return;
     chartState.referenceUrl = "";
     chartState.referenceError = true;
+    if (manifest?.id === templateId) {
+      recordChartNavigationStage(sampleId, "referenceReady", "failed");
+    }
   }
 }
 
@@ -476,12 +586,14 @@ function applyAutoAssignment(data: ChartImportedData): void {
   chartState.cfg = { ...chartState.cfg, ...assignment };
 }
 
-/** Imports a dataset and auto-maps columns (also used by the sample loader). */
-export async function importDataFile(path: string): Promise<void> {
-  if (chartState.runPhase === "running" || chartState.installingR) return;
-  chartState.importing = true;
+/** Imports the latest selected dataset and ignores results invalidated by a newer action. */
+async function importDataFileForRequest(path: string, requestSequence: number): Promise<boolean> {
+  if (requestSequence !== dataImportSequence) return false;
   try {
     const data = await importChartData(path, 50);
+    if (requestSequence !== dataImportSequence) return false;
+    await manifestForImport(requestSequence);
+    if (requestSequence !== dataImportSequence) return false;
     chartState.imported = data;
     chartState.cfg = { ...chartState.cfg, filePath: path };
     applyAutoAssignment(data);
@@ -489,16 +601,30 @@ export async function importDataFile(path: string): Promise<void> {
     for (const warning of data.warnings.slice(0, 3)) {
       pushToast("info", warning);
     }
+    return true;
   } catch (error) {
+    if (requestSequence !== dataImportSequence) return false;
     chartState.imported = null;
+    chartState.cfg = { ...chartState.cfg, filePath: "" };
     pushToast("error", `${t("charts.importFailed")}: ${detailOf(error)}`);
+    return false;
   } finally {
-    chartState.importing = false;
+    if (requestSequence === dataImportSequence) chartState.importing = false;
   }
+}
+
+/** Imports a dataset and auto-maps columns (also used by the sample loader). */
+export async function importDataFile(path: string): Promise<void> {
+  if (chartState.runPhase === "running" || chartState.installingR) return;
+  const requestSequence = ++dataImportSequence;
+  chartState.importing = true;
+  await importDataFileForRequest(path, requestSequence);
 }
 
 export function clearData(): void {
   if (chartState.runPhase === "running" || chartState.installingR) return;
+  dataImportSequence += 1;
+  chartState.importing = false;
   chartState.imported = null;
   chartState.cfg = { ...chartState.cfg, filePath: "" };
   resetRunStatus();
@@ -513,14 +639,24 @@ export async function useSampleData(): Promise<void> {
     pushToast("info", t("charts.noSample"));
     return;
   }
+  const requestSequence = ++dataImportSequence;
+  chartState.importing = true;
   try {
     const dir = await tempDir();
+    if (requestSequence !== dataImportSequence) return;
     const filePath = await join(dir, `mynx_${templateId}_sample.csv`);
+    if (requestSequence !== dataImportSequence) return;
     await writeFile(filePath, new TextEncoder().encode(text));
-    await importDataFile(filePath);
-    if (chartState.imported) pushToast("success", t("charts.sampleLoaded"));
+    if (requestSequence !== dataImportSequence) return;
+    if (await importDataFileForRequest(filePath, requestSequence)) {
+      pushToast("success", t("charts.sampleLoaded"));
+    }
   } catch (error) {
-    pushToast("error", `${t("charts.sampleFailed")}: ${detailOf(error)}`);
+    if (requestSequence === dataImportSequence) {
+      pushToast("error", `${t("charts.sampleFailed")}: ${detailOf(error)}`);
+    }
+  } finally {
+    if (requestSequence === dataImportSequence) chartState.importing = false;
   }
 }
 
@@ -575,9 +711,7 @@ function handleRunEvent(event: ChartRunEvent): void {
 }
 
 /** Role-key → config field for one template (page mapping editor). */
-export function roleFieldMapFor(
-  templateId: string,
-): Partial<Record<string, MappedField>> {
+export function roleFieldMapFor(templateId: string): Partial<Record<string, MappedField>> {
   return ROLE_FIELD_MAP[templateId] ?? {};
 }
 
@@ -741,6 +875,7 @@ export async function confirmInstallR(): Promise<void> {
   try {
     await rInstallRuntime();
     const status = await rStatus();
+    rStatusCheckedAt = Date.now();
     chartState.rFound = status.found;
     chartState.installingR = false;
     if (status.found) {
@@ -761,14 +896,44 @@ export function dismissInstallRPrompt(): void {
   chartState.rInstallPrompt = false;
 }
 
-/** Refreshes the R runtime availability flag (and the UI tag). */
-export async function refreshRStatus(): Promise<void> {
-  try {
-    const status = await rStatus();
-    chartState.rFound = status.found;
-  } catch {
-    chartState.rFound = false;
+/** Refreshes R availability once per 30 seconds during repeated page entries. */
+export function refreshRStatus(
+  force = false,
+  sampleId: number | null = currentChartNavigationId(),
+): Promise<void> {
+  if (!force && chartState.rFound !== null && Date.now() - rStatusCheckedAt < R_STATUS_CACHE_MS) {
+    recordChartNavigationStage(
+      sampleId,
+      "rStatusReady",
+      chartState.rFound ? "cached-found" : "cached-missing",
+    );
+    return Promise.resolve();
   }
+  if (rStatusRequest) {
+    return rStatusRequest.then(() => {
+      recordChartNavigationStage(sampleId, "rStatusReady", "shared");
+    });
+  }
+
+  const request = (async () => {
+    try {
+      const status = await rStatus();
+      chartState.rFound = status.found;
+    } catch {
+      chartState.rFound = false;
+    } finally {
+      rStatusCheckedAt = Date.now();
+      rStatusRequest = null;
+    }
+  })();
+  rStatusRequest = request;
+  return request.then(() => {
+    recordChartNavigationStage(
+      sampleId,
+      "rStatusReady",
+      chartState.rFound ? "refreshed-found" : "refreshed-missing",
+    );
+  });
 }
 
 /* ---------------------------------------------------------------------------
@@ -825,7 +990,10 @@ export async function importTemplatePackage(zipPath: string): Promise<void> {
  * Template ZIP export (manifest + render + README + sample, client-side).
  * ------------------------------------------------------------------------- */
 
-export async function exportTemplatePackage(template: ChartTemplate, zipPath: string): Promise<void> {
+export async function exportTemplatePackage(
+  template: ChartTemplate,
+  zipPath: string,
+): Promise<void> {
   try {
     const { default: JSZip } = await import("jszip");
     const dir = await resourceDir();

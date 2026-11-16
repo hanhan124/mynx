@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick, untrack } from "svelte";
   import { convertFileSrc } from "@tauri-apps/api/core";
   import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
   import { getCurrentWebview } from "@tauri-apps/api/webview";
@@ -33,6 +34,11 @@
   import { openPath } from "../../app/tauri.js";
   import { app, pushToast } from "../../app/state.svelte";
   import { t } from "../../app/i18n.svelte";
+  import {
+    currentChartNavigationId,
+    formatChartNavigationDiagnostics,
+    recordChartNavigationStage,
+  } from "../../lib/chart-navigation-timings.js";
   import {
     chartTemplates,
     localizedFamily,
@@ -74,6 +80,8 @@
     setRoleColumn,
     updateConfig,
     useSampleData,
+    validateRunInputs,
+    type RunValidation,
     type RunPhase,
     type RunTone,
   } from "./state.svelte";
@@ -155,6 +163,9 @@
   let presetName = $state("");
   let deleteTarget = $state<{ id: string; name: string } | null>(null);
   let rDialogOpen = $state(false);
+  let runValidation = $state<RunValidation | null>(null);
+  // Keep collapsed sections light on each page mount; restore their controls on first open.
+  let mountedInspectorSections = $state(["layout"]);
 
   const cfg = $derived(chartState.cfg);
   const template = $derived(
@@ -223,28 +234,60 @@
 
   /* Restore presets / output dir, check R, and load the initial manifest. */
   $effect(() => {
-    loadChartStudioSettings();
-    void refreshRStatus();
-    if (!chartState.manifest) void selectTemplate(chartState.selectedTemplateId);
+    if (app.route !== "/charts") return;
+    untrack(() => {
+      const sampleId = currentChartNavigationId();
+      const selectedTemplateId = chartState.selectedTemplateId;
+      void loadChartStudioSettings(sampleId);
+      void refreshRStatus(false, sampleId);
+      if (chartState.manifest?.id === selectedTemplateId) {
+        recordChartNavigationStage(sampleId, "manifestReady", "cached");
+        if (chartState.referenceUrl || chartState.referenceError) {
+          recordChartNavigationStage(
+            sampleId,
+            "referenceReady",
+            chartState.referenceError ? "cached-error" : "cached",
+          );
+        }
+      } else {
+        void selectTemplate(selectedTemplateId).then(() => {
+          recordChartNavigationStage(
+            sampleId,
+            "manifestReady",
+            chartState.manifest?.id === selectedTemplateId ? "loaded" : "unavailable",
+          );
+        });
+      }
+    });
   });
 
   /* Surface a run-time "install R?" prompt through the shared dialog. */
   $effect(() => {
+    if (app.route !== "/charts") return;
     if (chartState.rInstallPrompt) {
       chartState.rInstallPrompt = false;
       rDialogOpen = true;
     }
   });
 
+  /* Do not leave a page-local dialog open after the cached page is hidden. */
+  $effect(() => {
+    if (app.route === "/charts") return;
+    presetDialogOpen = false;
+    deleteTarget = null;
+    rDialogOpen = false;
+  });
+
   /* Reference image follows the selected template + its manifest. */
   $effect(() => {
     void chartState.selectedTemplateId;
     void chartState.manifest;
-    void resolveReferenceUrl(chartState.selectedTemplateId);
+    void resolveReferenceUrl(chartState.selectedTemplateId, currentChartNavigationId());
   });
 
   /* Window-level drag-drop for data files, scoped to this page. */
   $effect(() => {
+    if (app.route !== "/charts") return;
     let unlisten: (() => void) | null = null;
     let disposed = false;
     getCurrentWebview()
@@ -257,7 +300,10 @@
           const dataPath = payload.paths.find((path) =>
             /\.(csv|tsv|txt|xlsx|xls)$/i.test(path),
           );
-          if (dataPath) void importDataFile(dataPath);
+          if (dataPath) {
+            runValidation = null;
+            void importDataFile(dataPath);
+          }
           else pushToast("info", t("charts.dropHint"));
         } else {
           dragOver = false;
@@ -272,6 +318,7 @@
       });
     return () => {
       disposed = true;
+      dragOver = false;
       if (unlisten) unlisten();
     };
   });
@@ -283,7 +330,10 @@
       multiple: false,
       filters: [{ name: "数据文件", extensions: ["csv", "tsv", "txt", "xlsx", "xls"] }],
     });
-    if (typeof picked === "string") await importDataFile(picked);
+    if (typeof picked === "string") {
+      runValidation = null;
+      await importDataFile(picked);
+    }
   }
 
   async function pickOutputDir(): Promise<void> {
@@ -374,7 +424,11 @@
   async function copyLog(): Promise<void> {
     try {
       if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
-      await navigator.clipboard.writeText(chartState.logText);
+      const timingDiagnostics = formatChartNavigationDiagnostics();
+      const diagnosticText = timingDiagnostics
+        ? `${chartState.logText}\n\n--- chart navigation performance ---\n${timingDiagnostics}`
+        : chartState.logText;
+      await navigator.clipboard.writeText(diagnosticText);
       pushToast("success", t("copy.copied"));
     } catch {
       pushToast("error", t("copy.failed"));
@@ -396,6 +450,15 @@
   function sectionVisible(sectionId: string): boolean {
     if (sectionId === "heatmap") return (HEATMAP_KINDS as readonly string[]).includes(template.kind);
     return true;
+  }
+
+  function mountInspectorSection(sectionId: string): void {
+    if (mountedInspectorSections.includes(sectionId)) return;
+    mountedInspectorSections = [...mountedInspectorSections, sectionId];
+  }
+
+  function onInspectorToggle(sectionId: string, event: Event): void {
+    if ((event.currentTarget as HTMLDetailsElement).open) mountInspectorSection(sectionId);
   }
 
   function optionLabel(option: { value: string; labelKey?: string; label?: string }): string {
@@ -442,10 +505,17 @@
     return columns;
   }
 
-  function roleMissing(roleKey: string): boolean {
-    const field = fieldOfRole(roleKey);
-    if (!field) return false;
-    return !cfg[field];
+  function roleInputId(roleKey: string): string {
+    return `charts-role-${encodeURIComponent(roleKey)}`;
+  }
+
+  async function submitGeneration(): Promise<void> {
+    runValidation = validateRunInputs(chartState.cfg, chartState.manifest, chartState.imported);
+    if (runValidation?.roleKey) {
+      await tick();
+      document.getElementById(roleInputId(runValidation.roleKey))?.focus();
+    }
+    await runGeneration();
   }
 </script>
 
@@ -459,12 +529,12 @@
 {/snippet}
 
 <section
-  class="flex h-full min-h-0 flex-col gap-3 overflow-y-auto p-4 {dragOver ? 'ring-2 ring-accent ring-inset' : ''}"
+  class="flex min-h-full flex-col gap-3 p-4 {dragOver ? 'ring-2 ring-accent ring-inset' : ''}"
 >
-  <header class="flex flex-wrap items-baseline gap-3">
+  <header class="flex shrink-0 flex-wrap items-baseline gap-3">
     <h1 class="text-[16px] font-semibold">{t("nav.charts")}</h1>
-    <p class="mynx-truncate text-[12px] text-text-secondary">{t("charts.pageSubtitle")}</p>
-    <div class="ml-auto flex flex-wrap items-center gap-2">
+    <p class="min-w-0 text-[12px] text-text-secondary">{t("charts.pageSubtitle")}</p>
+    <div class="flex w-full min-w-0 flex-wrap items-center gap-2 xl:ml-auto xl:w-auto">
       {#if chartState.rFound === false}
         <button type="button" class="mynx-btn mynx-btn-danger" onclick={askInstallR}>
           <IconDownload size={14} stroke={1.75} aria-hidden="true" />
@@ -501,9 +571,11 @@
     </div>
   </header>
 
-  <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-[250px_minmax(0,1fr)_330px]">
+  <!-- Stacked rows need their content height; flex-1/min-h-0 squeezed them into
+       the remaining viewport and let their contents overlap the following rows. -->
+  <div class="grid shrink-0 grid-cols-1 items-start gap-3 xl:grid-cols-[250px_minmax(0,1fr)_330px]">
     <!-- ── Left: template catalog ─────────────────────────────────────── -->
-    <div class="mynx-card flex min-h-0 flex-col">
+    <div class="mynx-card flex min-w-0 flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
         <span class="text-[12px] font-semibold">{t("charts.templates")}</span>
         <span class="mynx-chip">{visibleTemplates.length}/{chartTemplates.length}</span>
@@ -536,12 +608,11 @@
           </button>
         {/if}
       </div>
-      <div class="flex flex-wrap gap-1 border-b border-border px-3 py-2" role="tablist" aria-label={t("charts.templates")}>
+      <div class="flex flex-wrap gap-1 border-b border-border px-3 py-2" role="group" aria-label={t("charts.templates")}>
         {#each families as family (family)}
           <button
             type="button"
-            role="tab"
-            aria-selected={chartState.family === family}
+            aria-pressed={chartState.family === family}
             class="mynx-btn px-2 py-1 text-[11px] {chartState.family === family
               ? 'border-accent bg-accent/10 text-accent'
               : ''}"
@@ -554,7 +625,7 @@
           </button>
         {/each}
       </div>
-      <div class="min-h-0 flex-1 overflow-y-auto p-2">
+      <div class="max-h-80 overflow-y-auto p-2 xl:max-h-[36rem]">
         {#if visibleTemplates.length === 0}
           <p class="p-3 text-center text-[12px] text-text-secondary">{t("charts.noMatch")}</p>
         {:else}
@@ -571,7 +642,10 @@
                     : 'border border-transparent hover:bg-surface-2'}"
                   aria-pressed={item.id === chartState.selectedTemplateId}
                   disabled={running}
-                  onclick={() => void selectTemplate(item.id)}
+                  onclick={() => {
+                    runValidation = null;
+                    void selectTemplate(item.id);
+                  }}
                 >
                   <span
                     class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-surface-2 text-text-secondary"
@@ -594,8 +668,8 @@
     </div>
 
     <!-- ── Center: data + mapping + run ───────────────────────────────── -->
-    <div class="flex min-h-0 flex-col gap-3">
-      <div class="mynx-card flex flex-col">
+    <div class="flex min-w-0 flex-col gap-3">
+      <div class="mynx-card flex shrink-0 flex-col">
         <div class="flex items-center gap-2 border-b border-border px-3 py-2">
           <IconFileSpreadsheet size={15} stroke={1.75} aria-hidden="true" />
           <span class="text-[12px] font-semibold">{t("charts.dataPanel")}</span>
@@ -626,7 +700,15 @@
               <IconUpload size={14} stroke={1.75} aria-hidden="true" />
               {t("charts.importData")}
             </button>
-            <button type="button" class="mynx-btn" onclick={() => void useSampleData()} disabled={running}>
+            <button
+              type="button"
+              class="mynx-btn"
+              onclick={() => {
+                runValidation = null;
+                void useSampleData();
+              }}
+              disabled={running}
+            >
               <IconSparkles size={14} stroke={1.75} aria-hidden="true" />
               {t("charts.useSample")}
             </button>
@@ -635,7 +717,15 @@
               {t("charts.downloadSample")}
             </button>
             {#if imported}
-              <button type="button" class="mynx-btn mynx-btn-danger" onclick={clearData} disabled={running}>
+              <button
+                type="button"
+                class="mynx-btn mynx-btn-danger"
+                onclick={() => {
+                  runValidation = null;
+                  clearData();
+                }}
+                disabled={running}
+              >
                 {t("charts.clearData")}
               </button>
               <span class="mynx-chip">{t("charts.totalRows", { count: imported.totalRows })}</span>
@@ -685,16 +775,21 @@
                 {#each mappedRoles as role (role.key)}
                   {@const field = fieldOfRole(role.key)}
                   {@const value = field ? cfg[field] : ""}
+                  {@const roleError = runValidation?.roleKey === role.key ? runValidation : null}
                   <label class="flex min-w-0 flex-col gap-1">
                     {@render fieldLabel(
                       `${role.label}${field === "x" ? " (X)" : field === "y" ? " (Y)" : field === "group" ? " (Group)" : " (Size)"}`,
                       role.required,
                     )}
                     <select
-                      class="mynx-input {roleMissing(role.key) && role.required ? '!border-danger' : ''}"
+                      id={roleInputId(role.key)}
+                      class="mynx-input {roleError ? '!border-danger' : ''}"
                       value={value}
                       disabled={running}
+                      aria-invalid={roleError ? "true" : undefined}
+                      aria-describedby={roleError ? `${roleInputId(role.key)}-error` : undefined}
                       onchange={(event) => {
+                        runValidation = null;
                         if (field) setRoleColumn(field, event.currentTarget.value);
                       }}
                     >
@@ -703,6 +798,14 @@
                         <option value={column}>{column}</option>
                       {/each}
                     </select>
+                    {#if roleError}
+                      <span
+                        id={`${roleInputId(role.key)}-error`}
+                        class="text-[11px] text-danger"
+                      >
+                        {t(roleError.key, roleError.values)}
+                      </span>
+                    {/if}
                     {#if role.description}
                       <span class="mynx-truncate text-[11px] text-text-secondary" title={role.description}>
                         {role.description}
@@ -759,19 +862,13 @@
           </span>
         </div>
         <div class="flex flex-col gap-2 p-3">
-          {#if chartState.runPhase === "running" || chartState.installingR}
-            <div
-              class="h-1.5 overflow-hidden rounded-full bg-surface-2"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={latestProgress !== null ? Math.round(latestProgress) : undefined}
-            >
-              <div
-                class="h-full rounded-full bg-accent transition-[width] duration-150"
-                style={`width: ${latestProgress !== null ? Math.round(latestProgress) : 15}%`}
-              ></div>
-            </div>
+          {#if (chartState.runPhase === "running" || chartState.installingR) && latestProgress !== null}
+            <progress
+              class="mynx-progress"
+              value={Math.round(latestProgress)}
+              max={100}
+              aria-label={t("charts.progress")}
+            ></progress>
           {/if}
           <p class="text-[12px] text-text-secondary">
             {chartState.runPhase === "idle" && !chartState.lastResult ? t("charts.runReady") : runStatusText}
@@ -780,7 +877,7 @@
             <button
               type="button"
               class="mynx-btn mynx-btn-primary min-w-0 flex-1"
-              onclick={() => void runGeneration()}
+              onclick={submitGeneration}
               disabled={running || chartState.importing}
             >
               <IconPlayerPlayFilled size={15} stroke={1.75} aria-hidden="true" />
@@ -826,6 +923,7 @@
                   alt="{templateCopy.name} {t('charts.result')}"
                   class="max-h-64 w-full rounded-md border border-border object-contain"
                   loading="lazy"
+                  decoding="async"
                 />
               {/if}
               <CopyableText text={chartState.lastResult.outputPath} />
@@ -868,12 +966,12 @@
     </div>
 
     <!-- ── Right: inspector ───────────────────────────────────────────── -->
-    <div class="mynx-card flex min-h-0 flex-col">
+    <div class="mynx-card flex min-w-0 flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
         <span class="text-[12px] font-semibold">{templateCopy.name}</span>
         <span class="mynx-chip mynx-truncate">{localizedFamily(template.family, app.language)}</span>
       </div>
-      <div class="min-h-0 flex-1 overflow-y-auto p-3">
+      <div class="min-w-0 p-3">
         {#if chartState.referenceUrl || chartState.referenceError}
           <div class="mb-3 flex flex-col gap-1">
             <span class="text-[12px] font-medium">{t("charts.reference")}</span>
@@ -883,6 +981,7 @@
                 alt="{templateCopy.name} {t('charts.reference')}"
                 class="w-full rounded-md border border-border object-contain"
                 loading="lazy"
+                decoding="async"
                 onerror={() => {
                   chartState.referenceUrl = "";
                   chartState.referenceError = true;
@@ -903,98 +1002,107 @@
         {/if}
 
         {#each INSPECTOR_SECTIONS.filter((section) => sectionVisible(section.id)) as section (section.id)}
-          <details open={section.id === "layout"} class="mb-2 rounded-md border border-border">
-            <summary class="cursor-pointer select-none px-2.5 py-1.5 text-[12px] font-semibold">
+          <details
+            open={section.id === "layout"}
+            class="mb-2 rounded-md border border-border"
+            ontoggle={(event) => onInspectorToggle(section.id, event)}
+          >
+            <summary
+              class="cursor-pointer select-none px-2.5 py-1.5 text-[12px] font-semibold"
+              onclick={() => mountInspectorSection(section.id)}
+            >
               {t(section.titleKey)}
             </summary>
-            <div class="flex flex-col gap-2 border-t border-border p-2.5">
-              {#each section.fields as field (field.key)}
-                {@const label = t(field.labelKey)}
-                {#if field.kind === "text"}
-                  <label class="flex flex-col gap-1">
-                    <span class="text-[12px] font-medium">{label}</span>
-                    <input
-                      type="text"
-                      class="mynx-input"
-                      value={String(cfg[field.key] ?? "")}
-                      maxlength={field.maxLength}
-                      disabled={running}
-                      oninput={(event) => onTextInput(field.key, event.currentTarget.value)}
-                    />
-                  </label>
-                {:else if field.kind === "number"}
-                  <label class="flex flex-col gap-1">
-                    <span class="text-[12px] font-medium">{label}</span>
-                    <input
-                      type="number"
-                      class="mynx-input"
-                      value={numberValue(field.key)}
-                      min={field.min}
-                      max={field.max}
-                      step={field.step}
-                      disabled={running}
-                      onchange={(event) =>
-                        onNumberInput(field.key, event.currentTarget.value, field.min ?? 0, field.max ?? 100)}
-                    />
-                  </label>
-                {:else if field.kind === "select"}
-                  <label class="flex flex-col gap-1">
-                    <span class="text-[12px] font-medium">{label}</span>
-                    <select
-                      class="mynx-input"
-                      value={String(cfg[field.key] ?? "")}
-                      disabled={running || (field.key === "legendPosition" && !cfg.showLegend)}
-                      onchange={(event) => {
-                        const value = event.currentTarget.value;
-                        if (field.key === "publicationPreset") {
-                          onPresetSelect(value);
-                        } else if (field.key === "legendPosition") {
-                          updateConfig({ legendPosition: value as ChartConfigDraft["legendPosition"] });
-                        } else {
-                          onTextInput(field.key, value);
-                        }
-                      }}
-                    >
-                      {#each field.options ?? [] as option (option.value)}
-                        <option value={option.value}>{optionLabel(option)}</option>
-                      {/each}
-                    </select>
-                  </label>
-                {:else if field.kind === "switch"}
-                  <div class="flex items-center justify-between gap-2">
-                    <span class="text-[12px] font-medium">{label}</span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={cfg[field.key] === true}
-                      aria-label={label}
-                      disabled={running}
-                      class="relative h-5 w-9 shrink-0 rounded-full border transition-colors {cfg[field.key] === true
-                        ? 'border-accent bg-accent'
-                        : 'border-border bg-surface-2'} {running ? 'opacity-50' : ''}"
-                      onclick={() => onSwitch(field.key, !cfg[field.key])}
-                    >
-                      <span
-                        class="absolute left-0.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white transition-transform {cfg[field.key] === true
-                          ? 'translate-x-4'
-                          : ''}"
-                      ></span>
-                    </button>
-                  </div>
-                {:else if field.kind === "color"}
-                  <label class="flex flex-col gap-1">
-                    <span class="text-[12px] font-medium">{label}</span>
-                    <input
-                      type="color"
-                      class="mynx-input h-9 p-1"
-                      value={String(cfg[field.key] ?? "#0A84FF")}
-                      disabled={running}
-                      oninput={(event) => onTextInput(field.key, event.currentTarget.value)}
-                    />
-                  </label>
-                {/if}
-              {/each}
-            </div>
+            {#if mountedInspectorSections.includes(section.id)}
+              <div class="flex flex-col gap-2 border-t border-border p-2.5">
+                {#each section.fields as field (field.key)}
+                  {@const label = t(field.labelKey)}
+                  {#if field.kind === "text"}
+                    <label class="flex flex-col gap-1">
+                      <span class="text-[12px] font-medium">{label}</span>
+                      <input
+                        type="text"
+                        class="mynx-input"
+                        value={String(cfg[field.key] ?? "")}
+                        maxlength={field.maxLength}
+                        disabled={running}
+                        oninput={(event) => onTextInput(field.key, event.currentTarget.value)}
+                      />
+                    </label>
+                  {:else if field.kind === "number"}
+                    <label class="flex flex-col gap-1">
+                      <span class="text-[12px] font-medium">{label}</span>
+                      <input
+                        type="number"
+                        class="mynx-input"
+                        value={numberValue(field.key)}
+                        min={field.min}
+                        max={field.max}
+                        step={field.step}
+                        disabled={running}
+                        onchange={(event) =>
+                          onNumberInput(field.key, event.currentTarget.value, field.min ?? 0, field.max ?? 100)}
+                      />
+                    </label>
+                  {:else if field.kind === "select"}
+                    <label class="flex flex-col gap-1">
+                      <span class="text-[12px] font-medium">{label}</span>
+                      <select
+                        class="mynx-input"
+                        value={String(cfg[field.key] ?? "")}
+                        disabled={running || (field.key === "legendPosition" && !cfg.showLegend)}
+                        onchange={(event) => {
+                          const value = event.currentTarget.value;
+                          if (field.key === "publicationPreset") {
+                            onPresetSelect(value);
+                          } else if (field.key === "legendPosition") {
+                            updateConfig({ legendPosition: value as ChartConfigDraft["legendPosition"] });
+                          } else {
+                            onTextInput(field.key, value);
+                          }
+                        }}
+                      >
+                        {#each field.options ?? [] as option (option.value)}
+                          <option value={option.value}>{optionLabel(option)}</option>
+                        {/each}
+                      </select>
+                    </label>
+                  {:else if field.kind === "switch"}
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-[12px] font-medium">{label}</span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={cfg[field.key] === true}
+                        aria-label={label}
+                        disabled={running}
+                        class="relative h-5 w-9 shrink-0 rounded-full border transition-colors {cfg[field.key] === true
+                          ? 'border-accent bg-accent'
+                          : 'border-border bg-surface-2'} {running ? 'opacity-50' : ''}"
+                        onclick={() => onSwitch(field.key, !cfg[field.key])}
+                      >
+                        <span
+                          class="absolute left-0.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white transition-transform {cfg[field.key] === true
+                            ? 'translate-x-4'
+                            : ''}"
+                        ></span>
+                      </button>
+                    </div>
+                  {:else if field.kind === "color"}
+                    <label class="flex flex-col gap-1">
+                      <span class="text-[12px] font-medium">{label}</span>
+                      <input
+                        type="color"
+                        class="mynx-input h-9 p-1"
+                        value={String(cfg[field.key] ?? "#0A84FF")}
+                        disabled={running}
+                        oninput={(event) => onTextInput(field.key, event.currentTarget.value)}
+                      />
+                    </label>
+                  {/if}
+                {/each}
+              </div>
+            {/if}
           </details>
         {/each}
 
@@ -1012,8 +1120,8 @@
   </div>
 
   <!-- ── Bottom: run event log ────────────────────────────────────────── -->
-  <div class="mynx-card flex max-h-[30%] min-h-[120px] shrink-0 flex-col">
-    <div class="flex items-center gap-2 border-b border-border px-3 py-2">
+  <div class="mynx-card flex min-h-[120px] shrink-0 flex-col">
+    <div class="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-2">
       <IconInfoCircle size={15} stroke={1.75} aria-hidden="true" />
       <span class="text-[12px] font-semibold">{t("charts.logTitle")}</span>
       <span class="mynx-chip">{runStatusText}</span>
@@ -1028,7 +1136,7 @@
         {t("charts.copyLog")}
       </button>
     </div>
-    <div class="min-h-0 flex-1 overflow-y-auto p-3" role="log" aria-live="polite">
+    <div class="max-h-64 overflow-y-auto p-3" role="log" aria-live="polite">
       {#if chartState.events.length === 0}
         <p class="text-[12px] text-text-secondary">{t("charts.logInitial")}</p>
       {:else}
@@ -1065,7 +1173,10 @@
             <button
               type="button"
               class="mynx-btn border-0 bg-transparent px-2"
-              onclick={() => loadPreset(preset)}
+              onclick={() => {
+                runValidation = null;
+                void loadPreset(preset);
+              }}
               disabled={running}
             >
               <IconUpload size={13} stroke={1.75} aria-hidden="true" />

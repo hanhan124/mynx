@@ -1,6 +1,6 @@
 [package]
 name = "mynx"
-version = "2.3.9"
+version = "3.0.0"
 description = "qPCR Tools & Image Converter"
 license = "Apache-2.0"
 authors = ["Mynx Team"]

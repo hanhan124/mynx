@@ -32,9 +32,24 @@ const mocks = vi.hoisted(() => ({
   fetchImageThumbnail: vi.fn(),
 }));
 
+function deferred<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason?: unknown) => void;
+} {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
+
 vi.mock("../../app/tauri.js", () => ({
   call: vi.fn(),
   openPath: vi.fn(),
+  setAlwaysOnTop: vi.fn().mockResolvedValue(undefined),
   settingsLoad: mocks.settingsLoad,
   settingsSave: mocks.settingsSave,
 }));
@@ -65,7 +80,10 @@ function resetState(): void {
   imageState.settings = { ...DEFAULT_SETTINGS, watermark: { ...DEFAULT_SETTINGS.watermark } };
   imageState.results = [];
   imageState.summary = null;
+  imageState.collectingFiles = false;
   imageState.running = false;
+  imageState.cancelling = false;
+  imageState.cancelRequested = false;
   imageState.progress = null;
   imageState.progressText = "";
   imageState.jobId = null;
@@ -144,10 +162,7 @@ describe("mergeSettings (legacy parity)", () => {
 
 describe("buildConvertOptions (command payload)", () => {
   it("maps lossless settings with watermark off", () => {
-    const options = buildConvertOptions(
-      { ...DEFAULT_SETTINGS, customDir: "" },
-      ["C:/a.png"],
-    );
+    const options = buildConvertOptions({ ...DEFAULT_SETTINGS, customDir: "" }, ["C:/a.png"]);
     expect(options).toEqual({
       files: ["C:/a.png"],
       mode: "lossless",
@@ -280,7 +295,7 @@ describe("settings persistence (imageConverterOptions)", () => {
 describe("file intake", () => {
   it("appends files and dedupes by path", () => {
     appendFiles(["C:/pics/a.png", "C:/pics/b.jpg"]);
-    appendFiles(["C:/pics/a.png", "C:/pics/c.tif"]);
+    appendFiles(["C:/pics/a.png", "C:/pics/c.tif", "C:/pics/c.tif"]);
     expect(imageState.files.map((item) => item.path)).toEqual([
       "C:/pics/a.png",
       "C:/pics/b.jpg",
@@ -300,6 +315,50 @@ describe("file intake", () => {
     await addPaths(["C:/empty-dir"]);
     expect(lastToast()?.level).toBe("info");
     expect(lastToast()?.message).toBe("未找到支持的图片文件");
+  });
+
+  it("blocks conversion until pending file collection has finished", async () => {
+    const pending = deferred<string[]>();
+    mocks.collectImageFiles.mockReturnValue(pending.promise);
+    mocks.startImageConvert.mockResolvedValue(42);
+    mocks.settingsLoad.mockResolvedValue(makeDoc());
+    mocks.settingsSave.mockResolvedValue(undefined);
+    appendFiles(["C:/existing.png"]);
+
+    const adding = addPaths(["C:/folder"]);
+    expect(imageState.collectingFiles).toBe(true);
+    await runConversion();
+    expect(mocks.startImageConvert).not.toHaveBeenCalled();
+
+    pending.resolve(["C:/folder/new.png"]);
+    await adding;
+    expect(imageState.files.map((item) => item.path)).toEqual([
+      "C:/existing.png",
+      "C:/folder/new.png",
+    ]);
+    expect(imageState.collectingFiles).toBe(false);
+
+    await runConversion();
+    expect(mocks.startImageConvert).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not add files from a folder scan completed after clear", async () => {
+    const pending = deferred<string[]>();
+    mocks.collectImageFiles.mockReturnValue(pending.promise);
+    const adding = addPaths(["C:/slow-folder"]);
+    clearAll();
+    pending.resolve(["C:/slow-folder/old.png"]);
+    await adding;
+
+    expect(imageState.files).toHaveLength(0);
+    expect(imageState.collectingFiles).toBe(false);
+  });
+
+  it("rejects new file intake during conversion", async () => {
+    imageState.running = true;
+    await addPaths(["C:/new.png"]);
+    expect(mocks.collectImageFiles).not.toHaveBeenCalled();
+    expect(lastToast()?.message).toBe("转换进行中，暂时不能添加文件");
   });
 
   it("toasts collect failures without touching the list", async () => {
@@ -350,6 +409,40 @@ describe("conversion run and events", () => {
     expect(imageState.jobId).toBe(42);
     expect(imageState.summary).toBeNull();
     expect(imageState.progress).toBe(0);
+  });
+
+  it("sends a cancel requested before the backend returns the job id", async () => {
+    const pendingJobId = deferred<number>();
+    mocks.settingsLoad.mockResolvedValue(makeDoc());
+    mocks.settingsSave.mockResolvedValue(undefined);
+    mocks.startImageConvert.mockReturnValue(pendingJobId.promise);
+    mocks.cancelImageConvert.mockResolvedValue(true);
+    appendFiles(["C:/a.png"]);
+
+    const conversion = runConversion();
+    expect(imageState.running).toBe(true);
+    expect(imageState.jobId).toBeNull();
+    cancelConversion();
+    expect(imageState.cancelling).toBe(true);
+    expect(mocks.cancelImageConvert).not.toHaveBeenCalled();
+
+    pendingJobId.resolve(42);
+    await conversion;
+    expect(imageState.jobId).toBe(42);
+    expect(mocks.cancelImageConvert).toHaveBeenCalledWith(42);
+    expect(imageState.cancelling).toBe(true);
+
+    handleConvertEvent({
+      kind: "finished",
+      status: "cancelled",
+      ok: 0,
+      failed: 0,
+      totalInput: 1,
+      totalOutput: 0,
+      watermarkApplied: true,
+    });
+    expect(imageState.cancelling).toBe(false);
+    expect(imageState.running).toBe(false);
   });
 
   it("tracks per-item progress and shows the summary on finish", () => {
@@ -446,14 +539,17 @@ describe("conversion run and events", () => {
     expect(lastToast()?.message).toBe("失败: boom");
   });
 
-  it("cancels the running job through the cancel command", () => {
+  it("ignores cancellation while idle and sends it for the active job", async () => {
     mocks.cancelImageConvert.mockResolvedValue(true);
     cancelConversion();
     expect(mocks.cancelImageConvert).not.toHaveBeenCalled();
 
+    imageState.running = true;
     imageState.jobId = 42;
     cancelConversion();
     expect(mocks.cancelImageConvert).toHaveBeenCalledWith(42);
+    expect(imageState.cancelling).toBe(true);
+    await flush();
   });
 });
 

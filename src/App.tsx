@@ -88,7 +88,7 @@ function Layout() {
                 {title}
               </Text>
               <Text className="mynx-app-header-context" size="xs" c="dimmed">
-                {t("app.workbench")}
+                {t("app.name")}
               </Text>
             </Group>
             <Text size="xs" c="dimmed" className="mynx-app-header-status">

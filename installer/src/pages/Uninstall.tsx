@@ -17,7 +17,7 @@ export const Uninstall: React.FC<Props> = ({ onConfirm, onCancel }) => {
   return (
     <>
       <div className="hero">
-        <Logo size={72} />
+        <Logo size={48} className="hero__logo" />
         <div className="hero__title">卸载 Mynx</div>
         <div className="hero__subtitle">从您的电脑移除此应用程序</div>
       </div>

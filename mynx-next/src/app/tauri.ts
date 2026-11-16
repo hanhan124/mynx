@@ -10,6 +10,9 @@ import type { LegacySettings } from "../lib/contracts/generated/settings/LegacyS
 import type { RScriptStatus } from "../lib/contracts/generated/r/RScriptStatus.js";
 import type { RDependencyStatus } from "../lib/contracts/generated/r/RDependencyStatus.js";
 
+/** Public Mynx site opened by the shell navigation and About dialog. */
+export const MYNX_WEBSITE_URL = "https://fanguanghan.dpdns.org/";
+
 /**
  * Structured error surface. Rust commands serialize `Result<T, MynxError>`,
  * so a failed invoke rejects with `{ v, code, message }`.
@@ -45,8 +48,8 @@ export async function call<T>(command: string, args?: Record<string, unknown>): 
 }
 
 /* ---------------------------------------------------------------------------
- * Shell command surface (Rust side may still be landing; these names are the
- * frontend contract).
+ * App-wide typed Tauri command surface. Feature-specific clients stay beside
+ * their Svelte state modules and use this shared invoke/error boundary.
  * ------------------------------------------------------------------------- */
 
 export interface AppInfo {

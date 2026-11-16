@@ -2,6 +2,7 @@
   import { app } from "../app/state.svelte";
   import { t } from "../app/i18n.svelte";
   import * as client from "../app/tauri.js";
+  import { MYNX_WEBSITE_URL } from "../app/tauri.js";
   import { checkForUpdates } from "../app/updater.svelte";
   import Modal from "./Modal.svelte";
 
@@ -35,7 +36,7 @@
   }
 
   function openWebsite(): void {
-    void client.openExternal("https://hanhan124.github.io/mynx/").catch(() => {});
+    void client.openExternal(MYNX_WEBSITE_URL).catch(() => {});
   }
 </script>
 

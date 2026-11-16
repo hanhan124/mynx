@@ -40,7 +40,7 @@ export const Welcome: React.FC<Props> = ({ onNext, onCancel }) => {
     <>
       {/* === 顶部图标 + 标题(居中) === */}
       <div className="hero">
-        <Logo size={64} />
+        <Logo size={48} className="hero__logo" />
         <div className="hero__title">Mynx</div>
         <div className="hero__subtitle">
           {ctx?.installed_version ? (
@@ -72,7 +72,7 @@ export const Welcome: React.FC<Props> = ({ onNext, onCancel }) => {
             </button>
           </div>
           <div className="field__hint">
-            磁盘空间需求:约 {ctx?.payload_size_mb ?? 17} MB · 此操作需要管理员权限
+            安装后占用约 {ctx ? `${ctx.installed_size_mib.toFixed(1)} MiB` : "…"} · 安装期间临时空间约 {ctx ? `${ctx.temporary_size_mib.toFixed(1)} MiB` : "…"} · 需要管理员权限
           </div>
         </div>
 

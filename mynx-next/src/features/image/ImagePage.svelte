@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { tick, untrack } from "svelte";
   import { getCurrentWebview } from "@tauri-apps/api/webview";
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
+  import { createVirtualizer, defaultRangeExtractor } from "@tanstack/svelte-virtual";
   import IconAdjustments from "@tabler/icons-svelte/icons/adjustments";
   import IconFolder from "@tabler/icons-svelte/icons/folder";
   import IconFolderOpen from "@tabler/icons-svelte/icons/folder-open";
@@ -72,6 +74,9 @@
     { id: "light", key: "imgconv.bgLight" },
   ] as const;
   const SCALE_STEPS = ["0.1", "0.15", "0.25", "0.4", "0.6"];
+  const FILE_ROW_HEIGHT = 64;
+  const FILE_LIST_VIRTUALIZE_THRESHOLD = 200;
+  const FILE_LIST_OVERSCAN = 8;
   const OUTPUT_MODES = [
     { id: "subfolder", key: "imgconv.outSubfolder" },
     { id: "alongside", key: "imgconv.outAlongside" },
@@ -79,6 +84,23 @@
   ] as const;
 
   let dragOver = $state(false);
+  let fileListEl: HTMLDivElement | null = $state(null);
+  let focusedFileIndex = $state<number | null>(null);
+
+  const fileListVirtualizer = createVirtualizer<HTMLDivElement, HTMLLIElement>({
+    count: 0,
+    getScrollElement: () => fileListEl,
+    estimateSize: () => FILE_ROW_HEIGHT,
+    overscan: FILE_LIST_OVERSCAN,
+    rangeExtractor: (range) => {
+      const indexes = defaultRangeExtractor(range);
+      if (focusedFileIndex !== null && !indexes.includes(focusedFileIndex)) {
+        indexes.push(focusedFileIndex);
+        indexes.sort((a, b) => a - b);
+      }
+      return indexes;
+    },
+  });
 
   const files = $derived(imageState.files);
   const running = $derived(imageState.running);
@@ -105,9 +127,89 @@
     return `+${-saved}%`;
   }
 
+  function fileRemoveButton(index: number): HTMLButtonElement | null {
+    return fileListEl?.querySelector<HTMLButtonElement>(
+      `[data-image-remove-index="${index}"]`,
+    ) ?? null;
+  }
+
+  async function handleFileRemoveKeydown(event: KeyboardEvent, index: number): Promise<void> {
+    if (event.key !== "Tab" || files.length <= FILE_LIST_VIRTUALIZE_THRESHOLD) return;
+
+    const targetIndex = index + (event.shiftKey ? -1 : 1);
+    if (targetIndex < 0 || targetIndex >= files.length || fileRemoveButton(targetIndex)) return;
+
+    event.preventDefault();
+    $fileListVirtualizer.scrollToIndex(targetIndex, { align: event.shiftKey ? "end" : "auto" });
+    await tick();
+    fileRemoveButton(targetIndex)?.focus({ preventScroll: true });
+  }
+
+  async function handleFileToolbarKeydown(event: KeyboardEvent): Promise<void> {
+    if (
+      event.key !== "Tab" ||
+      !event.shiftKey ||
+      files.length <= FILE_LIST_VIRTUALIZE_THRESHOLD
+    ) {
+      return;
+    }
+
+    const lastIndex = files.length - 1;
+    if (fileRemoveButton(lastIndex)) return;
+
+    event.preventDefault();
+    $fileListVirtualizer.scrollToIndex(lastIndex, { align: "end" });
+    await tick();
+    fileRemoveButton(lastIndex)?.focus({ preventScroll: true });
+  }
+
+  async function removeFileAt(index: number, path: string): Promise<void> {
+    removeItem(path);
+    const nextIndex = Math.min(index, imageState.files.length - 1);
+    focusedFileIndex = nextIndex >= 0 ? nextIndex : null;
+    await tick();
+
+    if (nextIndex < 0) {
+      fileListEl?.closest(".mynx-card")
+        ?.querySelector<HTMLButtonElement>("[data-image-add-files]")
+        ?.focus({ preventScroll: true });
+      return;
+    }
+
+    if (files.length > FILE_LIST_VIRTUALIZE_THRESHOLD) {
+      $fileListVirtualizer.scrollToIndex(nextIndex, { align: "auto" });
+      await tick();
+    }
+    fileRemoveButton(nextIndex)?.focus({ preventScroll: true });
+  }
+
+  async function clearFilesAndFocus(): Promise<void> {
+    clearAll();
+    focusedFileIndex = null;
+    await tick();
+    fileListEl?.closest(".mynx-card")
+      ?.querySelector<HTMLButtonElement>("[data-image-add-files]")
+      ?.focus({ preventScroll: true });
+  }
+
   /* Restore persisted options once. */
   $effect(() => {
     loadImageSettings();
+  });
+
+  /* Keep a bounded DOM for large folders while preserving the active row. */
+  $effect(() => {
+    const count = files.length;
+    const scrollElement = fileListEl;
+    const overscan = count <= FILE_LIST_VIRTUALIZE_THRESHOLD ? count : FILE_LIST_OVERSCAN;
+    void focusedFileIndex;
+    untrack(() => {
+      $fileListVirtualizer.setOptions({
+        count,
+        getScrollElement: () => scrollElement,
+        overscan,
+      });
+    });
   });
 
   /* Thumbnails: rescan whenever the file list changes; the pump is idempotent. */
@@ -221,7 +323,7 @@
         {/if}
       </div>
 
-      <div class="min-h-0 flex-1 overflow-y-auto p-3">
+      <div bind:this={fileListEl} class="min-h-0 flex-1 overflow-y-auto p-3">
         {#if files.length === 0}
           <div
             class="flex h-full min-h-[120px] items-center justify-center rounded-md border border-dashed border-border p-4 text-center text-[12px] text-text-secondary"
@@ -229,45 +331,77 @@
             {t("imgconv.dropHint")}
           </div>
         {:else}
-          <ul class="flex flex-col gap-1">
-            {#each files as item (item.path)}
-              <li class="flex items-center gap-2 rounded-md p-1.5 hover:bg-surface-2">
-                <span
-                  class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-surface-2"
+          <ul
+            class="relative w-full"
+            aria-label={t("imgconv.files")}
+            style:height={`${$fileListVirtualizer.getTotalSize()}px`}
+          >
+            {#each $fileListVirtualizer.getVirtualItems() as virtualRow (files[virtualRow.index]?.path)}
+              {@const item = files[virtualRow.index]}
+              {#if item}
+                <li
+                  class="absolute left-0 top-0 flex h-16 w-full items-center gap-2 rounded-md p-1.5 hover:bg-surface-2"
+                  data-index={virtualRow.index}
+                  aria-posinset={virtualRow.index + 1}
+                  aria-setsize={files.length}
+                  style:transform={`translateY(${virtualRow.start}px)`}
                 >
-                  {#if item.thumb}
-                    <img src={item.thumb} alt="" aria-hidden="true" class="h-full w-full object-cover" />
-                  {:else}
-                    <IconPhoto size={18} stroke={1.6} class="text-text-secondary" aria-hidden="true" />
-                  {/if}
-                </span>
-                <span class="min-w-0 flex-1">
-                  <span class="mynx-truncate block text-[12px] font-medium" title={item.path}>
-                    {item.name}
+                  <span
+                    class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-surface-2"
+                  >
+                    {#if item.thumb}
+                      <img src={item.thumb} alt="" aria-hidden="true" class="h-full w-full object-cover" />
+                    {:else}
+                      <IconPhoto size={18} stroke={1.6} class="text-text-secondary" aria-hidden="true" />
+                    {/if}
                   </span>
-                  <span class="mynx-truncate block text-[11px] text-text-secondary">
-                    {[item.dims, item.size !== null ? formatBytes(item.size) : null]
-                      .filter(Boolean)
-                      .join(" · ") || item.path}
+                  <span class="min-w-0 flex-1">
+                    <span class="mynx-truncate block text-[12px] font-medium" title={item.path}>
+                      {item.name}
+                    </span>
+                    <span class="mynx-truncate block text-[11px] text-text-secondary">
+                      {[item.dims, item.size !== null ? formatBytes(item.size) : null]
+                        .filter(Boolean)
+                        .join(" · ") || item.path}
+                    </span>
                   </span>
-                </span>
-                <button
-                  type="button"
-                  class="mynx-btn shrink-0 px-2"
-                  onclick={() => removeItem(item.path)}
-                  aria-label={t("imgconv.removeFile")}
-                  title={t("imgconv.removeFile")}
-                >
-                  <IconX size={12} stroke={1.75} aria-hidden="true" />
-                </button>
-              </li>
+                  <button
+                    type="button"
+                    class="mynx-btn shrink-0 px-2"
+                    data-image-remove-index={virtualRow.index}
+                    disabled={running}
+                    onfocus={() => (focusedFileIndex = virtualRow.index)}
+                    onblur={(event) => {
+                      if (
+                        !(event.relatedTarget instanceof Node) ||
+                        !fileListEl?.contains(event.relatedTarget)
+                      ) {
+                        focusedFileIndex = null;
+                      }
+                    }}
+                    onkeydown={(event) => void handleFileRemoveKeydown(event, virtualRow.index)}
+                    onclick={() => void removeFileAt(virtualRow.index, item.path)}
+                    aria-label={`${t("imgconv.removeFile")}: ${item.name}`}
+                    title={t("imgconv.removeFile")}
+                  >
+                    <IconX size={12} stroke={1.75} aria-hidden="true" />
+                  </button>
+                </li>
+              {/if}
             {/each}
           </ul>
         {/if}
       </div>
 
       <div class="flex items-center gap-2 border-t border-border px-3 py-2">
-        <button type="button" class="mynx-btn" onclick={() => void pickFiles()} disabled={running}>
+        <button
+          type="button"
+          class="mynx-btn"
+          data-image-add-files
+          onkeydown={(event) => void handleFileToolbarKeydown(event)}
+          onclick={() => void pickFiles()}
+          disabled={running}
+        >
           <IconPhotoPlus size={14} stroke={1.75} aria-hidden="true" />
           {t("imgconv.addFiles")}
         </button>
@@ -279,7 +413,7 @@
           <button
             type="button"
             class="mynx-btn mynx-btn-danger"
-            onclick={clearAll}
+            onclick={() => void clearFilesAndFocus()}
             disabled={running}
           >
             <IconTrash size={14} stroke={1.75} aria-hidden="true" />
@@ -629,6 +763,11 @@
       </div>
 
       <div class="flex flex-col gap-2 border-t border-border px-3 py-2">
+        {#if imageState.collectingFiles}
+          <p class="text-[11px] text-text-secondary" role="status">
+            {t("imgconv.collectingFiles")}
+          </p>
+        {/if}
         {#if running}
           <div class="flex flex-col gap-1">
             <div class="flex items-center justify-between gap-2 text-[11px] text-text-secondary">
@@ -637,18 +776,14 @@
                 <span class="shrink-0">{imageState.progress}%</span>
               {/if}
             </div>
-            <div
-              class="h-1.5 overflow-hidden rounded-full bg-surface-2"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={imageState.progress ?? 0}
-            >
-              <div
-                class="h-full rounded-full bg-accent transition-[width] duration-150"
-                style={`width: ${imageState.progress ?? 0}%`}
-              ></div>
-            </div>
+            {#if imageState.progress !== null}
+              <progress
+                class="mynx-progress"
+                value={imageState.progress}
+                max={100}
+                aria-label={t("imgconv.progress")}
+              ></progress>
+            {/if}
           </div>
         {/if}
         <div class="flex items-center gap-2">
@@ -656,20 +791,29 @@
             type="button"
             class="mynx-btn mynx-btn-primary min-w-0 flex-1"
             onclick={() => void runConversion()}
-            disabled={running || files.length === 0}
+            disabled={running || imageState.collectingFiles || files.length === 0}
           >
             <span class="mynx-truncate">
-              {running
-                ? t("imgconv.converting")
-                : files.length > 0
-                  ? t("imgconv.convert")
-                  : t("imgconv.chooseFirst")}
+              {#if running}
+                {t("imgconv.converting")}
+              {:else if imageState.collectingFiles}
+                {t("imgconv.collectingFiles")}
+              {:else if files.length > 0}
+                {t("imgconv.convert")}
+              {:else}
+                {t("imgconv.chooseFirst")}
+              {/if}
             </span>
           </button>
           {#if running}
-            <button type="button" class="mynx-btn mynx-btn-danger shrink-0" onclick={cancelConversion}>
+            <button
+              type="button"
+              class="mynx-btn mynx-btn-danger shrink-0"
+              onclick={cancelConversion}
+              disabled={imageState.cancelling}
+            >
               <IconPlayerStop size={14} stroke={1.75} aria-hidden="true" />
-              {t("common.cancel")}
+              {imageState.cancelling ? t("imgconv.cancelling") : t("common.cancel")}
             </button>
           {/if}
         </div>

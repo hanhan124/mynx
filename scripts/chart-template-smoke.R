@@ -1,8 +1,8 @@
 suppressPackageStartupMessages(library(jsonlite))
 args <- commandArgs(trailingOnly = TRUE)
 root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
-runner <- file.path(root, "src-tauri/r/chart_runner.R")
-templates_root <- file.path(root, "src-tauri/r/chart-templates")
+runner <- file.path(root, "mynx-next/src-tauri/r/chart_runner.R")
+templates_root <- file.path(root, "mynx-next/src-tauri/r/chart-templates")
 out <- if (length(args) && nzchar(args[[1]])) normalizePath(args[[1]], winslash = "/", mustWork = FALSE) else file.path(tempdir(), "mynx_verified_chart_smoke")
 requested_ids <- if (length(args) > 1 && nzchar(args[[2]])) strsplit(args[[2]], ",", fixed = TRUE)[[1]] else NULL
 dir.create(out, recursive = TRUE, showWarnings = FALSE)

@@ -89,7 +89,7 @@
     rnaseq.selectedSample = "";
   }
 
-  /** Click-to-assign: clicking a group card moves the selected sample. */
+  /** Click-to-assign: the group's explicit action moves the selected sample. */
   function pickGroup(name: string): void {
     if (!selected) return;
     assignSample(selected, name);
@@ -236,8 +236,7 @@
               : 'border-border'}"
             style={`border-left: 3px solid ${groupColor(index)}`}
             data-group-name={name}
-            role="button"
-            tabindex="0"
+            role="group"
             aria-label={t("rnaseq.groupNameAria", { name })}
             ondragover={(event) => {
               event.preventDefault();
@@ -245,10 +244,6 @@
             }}
             ondragleave={() => (dragOver = null)}
             ondrop={(event) => dropOnGroup(event, name)}
-            onclick={() => pickGroup(name)}
-            onkeydown={(event) => {
-              if (event.key === "Enter" || event.key === " ") pickGroup(name);
-            }}
           >
             <div class="flex items-center gap-2">
               <input
@@ -256,7 +251,6 @@
                 class="mynx-input h-7 min-w-0 flex-1"
                 value={name}
                 aria-label={t("rnaseq.groupNameAria", { name })}
-                onclick={(event) => event.stopPropagation()}
                 oninput={(event) => renameGroup(name, event.currentTarget.value)}
               />
               <span
@@ -267,6 +261,16 @@
               >
                 n={samples.length}
               </span>
+              <button
+                type="button"
+                class="mynx-btn !h-7 !w-7 !p-0"
+                aria-label={t("rnaseq.assignSelectedToGroup", { name })}
+                title={t("rnaseq.assignSelectedToGroup", { name })}
+                disabled={!selected || running}
+                onclick={() => pickGroup(name)}
+              >
+                <IconPlus size={13} stroke={1.75} aria-hidden="true" />
+              </button>
               <button
                 type="button"
                 class="mynx-btn mynx-btn-danger !h-7 !w-7 !p-0"
@@ -295,10 +299,7 @@
                       aria-label={sample}
                       class="cursor-grab"
                       ondragstart={(event) => chipDragStart(event, sample)}
-                      onclick={(event) => {
-                        event.stopPropagation();
-                        selectSample(sample);
-                      }}
+                      onclick={() => selectSample(sample)}
                     >
                       {sample}
                     </button>
@@ -306,10 +307,7 @@
                       type="button"
                       class="text-danger"
                       aria-label={t("rnaseq.removeSample")}
-                      onclick={(event) => {
-                        event.stopPropagation();
-                        unassignSample(sample);
-                      }}
+                      onclick={() => unassignSample(sample)}
                     >
                       <IconX size={10} stroke={2} aria-hidden="true" />
                     </button>

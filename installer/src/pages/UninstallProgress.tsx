@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Logo } from "../components/Logo";
-import { api, InstallProgress } from "../lib/ipc";
-import { UnlistenFn } from "@tauri-apps/api/event";
+import { api } from "../lib/ipc";
+import type { UnlistenFn } from "@tauri-apps/api/event";
 
 interface Props {
   onDone: () => void;
@@ -13,24 +13,31 @@ export const UninstallProgress: React.FC<Props> = ({ onDone }) => {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
     let unlisten: UnlistenFn | undefined;
 
-    (async () => {
-      const { listen } = await import("@tauri-apps/api/event");
-      unlisten = await listen<InstallProgress>("uninstall-progress", (e) => {
-        setPct(e.payload.percent);
-        setMsg(e.payload.message);
-      });
-
+    void (async () => {
       try {
+        const stopListening = await api.onProgress("uninstall-progress", (progress) => {
+          if (!active) return;
+          setPct(progress.percent);
+          setMsg(progress.message);
+        });
+        if (!active) {
+          stopListening();
+          return;
+        }
+        unlisten = stopListening;
+
         await api.uninstall();
-        onDone();
-      } catch (e: any) {
-        setErr(String(e));
+        if (active) onDone();
+      } catch (error: unknown) {
+        if (active) setErr(error instanceof Error ? error.message : String(error));
       }
     })();
 
     return () => {
+      active = false;
       if (unlisten) unlisten();
     };
   }, [onDone]);
@@ -52,7 +59,7 @@ export const UninstallProgress: React.FC<Props> = ({ onDone }) => {
   return (
     <div className="progress">
       <div className="progress__icon">
-        <Logo size={72} withShadow={false} />
+        <Logo size={72} />
       </div>
       <div className="progress__title">正在卸载 Mynx</div>
       <div className="progress__message">{msg}</div>

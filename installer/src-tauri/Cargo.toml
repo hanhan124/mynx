@@ -1,11 +1,15 @@
 [package]
 name = "mynx-installer"
-version = "2.3.9"
+version = "3.0.0"
 description = "Mynx 安装向导(Tauri 自建安装器)"
 license = "Apache-2.0"
 authors = ["Han"]
 edition = "2021"
 rust-version = "1.77"
+
+[features]
+default = []
+uninstaller = []
 
 [lib]
 name = "mynx_installer_lib"
@@ -19,6 +23,7 @@ tauri = { version = "=2.11.5", features = [] }
 tauri-plugin-dialog = "=2.7.3"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+flate2 = "1"
 
 # Windows-only: 用于检测 WebView2、管理员权限、快捷方式、注册表
 [target."cfg(windows)".dependencies]

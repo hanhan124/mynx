@@ -1,6 +1,6 @@
 # Mynx 更新日志
 
-## [Unreleased] — 3.0.0 重构（mynx-next）
+## [3.0.0] - 2026-11-16 — 3.0.0 重构（mynx-next）
 
 ### 架构重写（桌面框架保持 Tauri 2）
 - 前端从 React 18 + Mantine 8 + React Router 完全迁移到 **Svelte 5**（runes 状态）+ **Tailwind CSS 4** + Bits UI + Tabler（Svelte 版）+ TanStack Table/Virtual；新工作台式布局（标题栏 + 导航轨 + 主工作区 + 底部任务抽屉），旧 UI 全部退役（legacy 保留为参照，`npm run legacy:*`）。
