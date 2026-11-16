@@ -14,8 +14,8 @@
     "windows": [
       {
         "title": "Mynx",
-        "width": 960,
-        "height": 540,
+        "width": 1280,
+        "height": 800,
         "minWidth": 420,
         "minHeight": 500,
         "resizable": true,

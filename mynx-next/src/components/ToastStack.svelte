@@ -23,8 +23,9 @@
   };
 </script>
 
+<!-- Toast 置于右下、任务抽屉折叠位之上：避免覆盖各功能页头部的导入/参数/模板按钮。 -->
 <div
-  class="pointer-events-none fixed right-3 top-12 z-50 flex w-80 flex-col gap-2"
+  class="pointer-events-none fixed bottom-14 right-3 z-50 flex w-80 flex-col-reverse gap-2"
   role="region"
   aria-label={t("toast.dismiss")}
 >
