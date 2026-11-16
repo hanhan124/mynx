@@ -4,33 +4,63 @@
   import { routeTitleKey } from "../lib/router.svelte";
   import Modal from "./Modal.svelte";
 
+  type ManualKey = "home" | "image" | "qpcr" | "rnaseq" | "charts" | "settings";
+
   const toolName = $derived(t(routeTitleKey(app.route)));
 
-  const body = $derived.by(() => {
+  const key = $derived.by((): ManualKey => {
     switch (app.route) {
-      case "/":
-        return { title: t("help.center.title"), lines: [t("help.center.intro"), t("help.center.note")] };
       case "/image":
-        return { title: t("nav.image"), lines: [t("help.image.body")] };
+        return "image";
       case "/qpcr":
-        return { title: t("nav.qpcr"), lines: [t("help.qpcr.body")] };
+        return "qpcr";
       case "/rnaseq":
-        return { title: t("nav.rnaseq"), lines: [t("help.rnaseq.body")] };
+        return "rnaseq";
       case "/charts":
-        return { title: t("nav.charts"), lines: [t("help.charts.body")] };
+        return "charts";
       case "/settings":
-        return { title: t("nav.settings"), lines: [t("help.settings.body")] };
+        return "settings";
       default:
-        return { title: t("help.center.title"), lines: [t("help.center.intro")] };
+        return "home";
     }
   });
+
+  const intro = $derived(t(`help.${key}.body`));
+  const steps = $derived(t(`help.${key}.steps`).split("\n").filter((s) => s.trim()));
+  const buttons = $derived(
+    t(`help.${key}.buttons`)
+      .split("·")
+      .map((s) => s.trim())
+      .filter(Boolean),
+  );
 </script>
 
-<Modal bind:open={app.helpOpen} title={t("help.label")} width={480}>
-  <div class="flex flex-col gap-2">
-    <p class="text-[13px] font-medium">{toolName} · {body.title}</p>
-    {#each body.lines as line (line)}
-      <p class="text-[12px] leading-relaxed text-text-secondary">{line}</p>
-    {/each}
+<Modal bind:open={app.helpOpen} title={t("help.label")} width={560}>
+  <div class="flex flex-col gap-3">
+    <p class="text-[13px] font-medium">{toolName} · {t("help.center.title")}</p>
+    <p class="text-[12px] leading-relaxed text-text-secondary">{intro}</p>
+
+    <div>
+      <h3 class="mb-1.5 text-[12px] font-semibold text-text">{t("help.manual.steps")}</h3>
+      <ol class="flex flex-col gap-1.5">
+        {#each steps as step, i (i)}
+          <li class="flex gap-2 text-[12px] leading-relaxed text-text-secondary">
+            <span
+              class="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded border border-border text-[11px] font-semibold text-text"
+            >{i + 1}</span>
+            <span>{step}</span>
+          </li>
+        {/each}
+      </ol>
+    </div>
+
+    <div>
+      <h3 class="mb-1.5 text-[12px] font-semibold text-text">{t("help.manual.buttons")}</h3>
+      <ul class="flex flex-col gap-1">
+        {#each buttons as button (button)}
+          <li class="text-[12px] leading-relaxed text-text-secondary">· {button}</li>
+        {/each}
+      </ul>
+    </div>
   </div>
 </Modal>

@@ -6,7 +6,7 @@ import type { UnlistenFn } from "@tauri-apps/api/event";
 
 interface Props {
   path: string;
-  options: { desktop: boolean; startMenu: boolean; launchAfter: boolean };
+  options: { desktop: boolean; startMenu: boolean };
   onDone: (r: InstallResult) => void;
 }
 
@@ -36,7 +36,6 @@ export const Installing: React.FC<Props> = ({ path, options, onDone }) => {
           install_path: path,
           create_desktop_icon: options.desktop,
           create_start_menu: options.startMenu,
-          launch_after: options.launchAfter,
         });
         if (active) onDone(result);
       } catch (error: unknown) {

@@ -14,7 +14,7 @@ type UninstallStep = "confirm" | "removing" | "done";
 
 interface InstallChoice {
   path: string;
-  options: { desktop: boolean; startMenu: boolean; launchAfter: boolean };
+  options: { desktop: boolean; startMenu: boolean };
 }
 
 export default function App() {

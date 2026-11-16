@@ -2,6 +2,10 @@
 
 ## [3.0.0] - 2026-11-16 — 3.0.0 重构（mynx-next）
 
+### 修复与体验（3.0.0 收尾）
+- 修复安装器「安装后自动启动导致稍后启动按钮失效」：向导安装不再由后端自动运行应用，统一由「完成」页的「立即启动 / 稍后启动」决定；移除 Welcome 页升级场景的默认勾选与无用复选框及 `launch_after`/`launched` 契约字段。updater 静默升级的自动启动行为保持不变。
+- 帮助中心扩展为 6 个功能（主页 / 图片转 PNG / qPCR / RNA-seq / 科研绘图 / 设置）的分步操作手册与按钮说明，中英文双语。
+
 ### 架构重写（桌面框架保持 Tauri 2）
 - 前端从 React 18 + Mantine 8 + React Router 完全迁移到 **Svelte 5**（runes 状态）+ **Tailwind CSS 4** + Bits UI + Tabler（Svelte 版）+ TanStack Table/Virtual；新工作台式布局（标题栏 + 导航轨 + 主工作区 + 底部任务抽屉），旧 UI 全部退役（legacy 保留为参照，`npm run legacy:*`）。
 - 业务逻辑全面下沉到 **Rust workspace**（mynx-contracts / jobs / core / image / qpcr / rnaseq / charts）：qPCR 转换与计算、counts 导入规范化、Excel 原生图表 XML 注入、图片转换管线、R 进程编排（Rscript 发现 / 依赖检测 / ASCII 暂存 / 进程树终止）全部在 Rust；契约类型单一来源在 Rust（ts-rs 生成 TS 绑定 + JSON Schema 导出到 `mynx-next/contracts/`）。

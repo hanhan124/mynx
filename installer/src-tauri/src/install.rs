@@ -79,8 +79,6 @@ pub struct InstallOptions {
     pub install_path: String,
     pub create_desktop_icon: bool,
     pub create_start_menu: bool,
-    #[serde(default)]
-    pub launch_after: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -93,7 +91,6 @@ pub struct InstallProgress {
 #[derive(Debug, Clone, Serialize)]
 pub struct InstallResult {
     pub install_path: String,
-    pub launched: bool,
 }
 
 const UNINSTALL_KEY: &str = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Mynx";
@@ -688,10 +685,13 @@ fn copy_payload(
     Ok(dst_dir.join("mynx.exe"))
 }
 
-/// 安装核心(与 UI 无关,静默升级复用同一逻辑)
+/// 安装核心(与 UI 无关,静默升级复用同一逻辑)。
+/// `auto_launch` 只用于无 UI 的静默升级:向导安装必须由「完成」页的按钮显式启动,
+/// 否则应用会在用户看到「稍后启动」之前就运行,使该按钮失去意义。
 fn do_install(
     opts: &InstallOptions,
     emit: &dyn Fn(&str, &str, u8),
+    auto_launch: bool,
 ) -> Result<InstallResult, String> {
     let install_dir = validate_install_path(&opts.install_path)?;
 
@@ -762,22 +762,21 @@ fn do_install(
 
     emit("done", "安装完成", 100);
 
-    let launched = if opts.launch_after {
+    // 只有无 UI 的静默升级才自动启动。向导安装交由「完成」页的
+    // 「立即启动」按钮调用 launch_app,保证「稍后启动」真实有效。
+    if auto_launch {
         let _ = Command::new(&exe_str)
             .creation_flags(CREATE_NO_WINDOW)
             .spawn();
-        true
-    } else {
-        false
-    };
+    }
 
     Ok(InstallResult {
         install_path: exe_str,
-        launched,
     })
 }
 
-/// UI 模式安装:进度事件推送到安装器窗口
+/// UI 模式安装:进度事件推送到安装器窗口。
+/// 永不自动启动应用——是否运行由「完成」页的按钮决定。
 #[cfg(not(feature = "uninstaller"))]
 pub fn perform_install(app: &AppHandle, opts: InstallOptions) -> Result<InstallResult, String> {
     do_install(&opts, &|stage, msg, pct| {
@@ -789,7 +788,7 @@ pub fn perform_install(app: &AppHandle, opts: InstallOptions) -> Result<InstallR
                 percent: pct,
             },
         );
-    })
+    }, false)
 }
 
 // ────────────────────────────────────────────────────────────
@@ -836,9 +835,9 @@ pub fn silent_update() -> Result<(), String> {
             install_path: dir,
             create_desktop_icon: desktop,
             create_start_menu: start_menu,
-            launch_after: true,
         },
         &|_, _, _| {},
+        true, // 静默升级无 UI,装完需自动启动新版(updater 既有行为,保持不变)
     )?;
     Ok(())
 }
@@ -1106,6 +1105,33 @@ mod tests {
             temporary_space_required_bytes(),
             estimated_installed_size_bytes() + MYNX_PAYLOAD_UNCOMPRESSED_SIZE
         );
+    }
+
+    /// 向导安装不得由后端自动启动应用。契约上不再有 launch_after / launched,
+    /// 避免旧前端误传字段后又在后端触发 spawn,使「稍后启动」按钮失效。
+    #[test]
+    fn install_contract_has_no_auto_launch_flag() {
+        let opts: InstallOptions = serde_json::from_str(
+            r#"{"install_path":"C:\\Mynx","create_desktop_icon":true,"create_start_menu":true}"#,
+        )
+        .expect("wizard install options deserialize");
+        assert_eq!(opts.install_path, r"C:\Mynx");
+        assert!(opts.create_desktop_icon);
+        assert!(opts.create_start_menu);
+
+        // 即使旧前端误传 launch_after,契约也不识别它(serde 默认忽略未知键),
+        // 后端因此没有自动启动的依据。
+        let legacy: InstallOptions = serde_json::from_str(
+            r#"{"install_path":"C:\\Mynx","create_desktop_icon":true,"create_start_menu":true,"launch_after":true}"#,
+        )
+        .expect("legacy field is ignored");
+        assert_eq!(legacy.install_path, r"C:\Mynx");
+
+        let result = InstallResult {
+            install_path: r"C:\Mynx\mynx.exe".to_string(),
+        };
+        let json = serde_json::to_value(&result).expect("serialize install result");
+        assert!(json.get("launched").is_none(), "result must not expose launched flag");
     }
 
     #[cfg(not(feature = "uninstaller"))]

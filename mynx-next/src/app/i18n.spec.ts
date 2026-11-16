@@ -55,6 +55,31 @@ describe("t interpolation", () => {
   });
 });
 
+describe("help center manuals", () => {
+  const tools = ["home", "image", "qpcr", "rnaseq", "charts", "settings"] as const;
+
+  for (const lang of ["zh", "en"] as const) {
+    it(`has a complete step-by-step manual for every tool in ${lang}`, () => {
+      const dict = dictionaries[lang];
+      for (const tool of tools) {
+        const intro = dict[`help.${tool}.body`];
+        const steps = dict[`help.${tool}.steps`];
+        const buttons = dict[`help.${tool}.buttons`];
+        expect(intro?.trim(), `${lang}/${tool} body`).toBeTruthy();
+        expect(steps?.split("\n").filter((s) => s.trim()).length, `${lang}/${tool} steps`).toBeGreaterThanOrEqual(3);
+        expect(buttons?.split("·").map((s) => s.trim()).filter(Boolean).length, `${lang}/${tool} buttons`).toBeGreaterThanOrEqual(3);
+      }
+    });
+  }
+
+  it("renders manual section headings in both languages", () => {
+    for (const dict of [dictionaries.zh, dictionaries.en]) {
+      expect(dict["help.manual.steps"]?.trim()).toBeTruthy();
+      expect(dict["help.manual.buttons"]?.trim()).toBeTruthy();
+    }
+  });
+});
+
 describe("localizeErrorMessage", () => {
   it("maps known zh compute errors to en", () => {
     expect(

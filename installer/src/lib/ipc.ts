@@ -20,7 +20,6 @@ export interface InstallOptions {
   install_path: string;
   create_desktop_icon: boolean;
   create_start_menu: boolean;
-  launch_after: boolean;
 }
 
 export interface InstallProgress {
@@ -33,7 +32,6 @@ export type InstallProgressEvent = "install-progress" | "uninstall-progress";
 
 export interface InstallResult {
   install_path: string;
-  launched: boolean;
 }
 
 export const api = {

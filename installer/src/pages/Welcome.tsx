@@ -5,7 +5,7 @@ import { api, InstallContext } from "../lib/ipc";
 interface Props {
   onNext: (data: {
     path: string;
-    options: { desktop: boolean; startMenu: boolean; launchAfter: boolean };
+    options: { desktop: boolean; startMenu: boolean };
   }) => void;
   onCancel: () => void;
 }
@@ -15,17 +15,12 @@ export const Welcome: React.FC<Props> = ({ onNext, onCancel }) => {
   const [path, setPath] = useState("");
   const [desktop, setDesktop] = useState(true);
   const [startMenu, setStartMenu] = useState(true);
-  const [launchAfter, setLaunchAfter] = useState(false);
 
   useEffect(() => {
     api.getContext().then((c) => {
       setCtx(c);
       // 已有安装 → 沿用原路径(升级),否则默认 Program Files
       setPath(c.installed_path || c.default_install_path);
-      if (c.installed_version) {
-        // 升级场景:旧应用已被关闭,装完默认直接启动新版
-        setLaunchAfter(true);
-      }
     });
   }, []);
 
@@ -103,17 +98,6 @@ export const Welcome: React.FC<Props> = ({ onNext, onCancel }) => {
                 <span className="option__hint">开始菜单里会出现 Mynx 文件夹(含卸载入口)</span>
               </span>
             </label>
-            <label className="option">
-              <input
-                type="checkbox"
-                checked={launchAfter}
-                onChange={(e) => setLaunchAfter(e.target.checked)}
-              />
-              <span className="option__box" />
-              <span className="option__text">
-                安装完成后启动 Mynx
-              </span>
-            </label>
           </div>
         </div>
       </div>
@@ -129,7 +113,7 @@ export const Welcome: React.FC<Props> = ({ onNext, onCancel }) => {
           onClick={() =>
             onNext({
               path: path.trim(),
-              options: { desktop, startMenu, launchAfter },
+              options: { desktop, startMenu },
             })
           }
         >
