@@ -18,6 +18,9 @@
   import IconFolderOpen from "@tabler/icons-svelte/icons/folder-open";
   import IconSearch from "@tabler/icons-svelte/icons/search";
   import IconHelp from "@tabler/icons-svelte/icons/help";
+  import IconExternalLink from "@tabler/icons-svelte/icons/external-link";
+  import { isSearchEngine, SEARCH_ENGINES, searchUrl, type SearchEngine } from "./search.js";
+  import { patchSettings } from "../../app/state.svelte";
 
   interface ToolCard {
     route: string;
@@ -38,6 +41,17 @@
   let recentProjects = $state<Record<string, unknown>[] | null>(null);
   let recentOutputs = $state<Record<string, unknown>[] | null>(null);
   let toolQuery = $state("");
+  let searchEngine = $state<SearchEngine>("bing");
+  let searchEngineTouched = false;
+
+  client
+    .settingsLoad()
+    .then((settings) => {
+      if (!searchEngineTouched && isSearchEngine(settings.searchEngine)) {
+        searchEngine = settings.searchEngine;
+      }
+    })
+    .catch(() => {});
 
   const visibleTools = $derived.by(() => {
     const q = toolQuery.trim().toLowerCase();
@@ -72,6 +86,22 @@
 
   function openTool(route: string): void {
     navigate(route);
+  }
+
+  function chooseSearchEngine(event: Event): void {
+    const value = (event.currentTarget as HTMLSelectElement).value;
+    if (!isSearchEngine(value)) return;
+    searchEngineTouched = true;
+    searchEngine = value;
+    void patchSettings({ searchEngine: value });
+  }
+
+  function searchWeb(): void {
+    const query = toolQuery.trim();
+    if (!query) return;
+    void client.openExternal(searchUrl(searchEngine, query)).catch(() => {
+      pushToast("error", t("home.searchFailed"));
+    });
   }
 
   function warmTool(route: string): void {
@@ -117,18 +147,44 @@
         <h2 class="text-[16px] font-semibold">{t("home.toolsHeading")}</h2>
         <p class="mt-1 text-[12px] text-text-secondary">{t("home.toolsHint")}</p>
       </div>
-      <div class="flex min-w-0 items-center gap-3 md:w-[min(100%,360px)]">
+      <div class="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center md:w-[min(100%,680px)]">
         <span class="mynx-chip shrink-0">{t("home.toolsCount", { count: tools.length })}</span>
-        <label class="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-surface px-3 focus-within:border-accent">
-          <IconSearch size={16} stroke={1.7} class="shrink-0 text-text-secondary" />
-          <input
-            type="text"
-            class="w-full bg-transparent text-[13px] outline-none"
-            placeholder={t("home.searchTools")}
-            bind:value={toolQuery}
-            aria-label={t("home.searchTools")}
-          />
-        </label>
+        <search class="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row" aria-label={t("home.searchTools")}>
+          <label class="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-surface px-3 focus-within:border-accent">
+            <IconSearch size={16} stroke={1.7} class="shrink-0 text-text-secondary" />
+            <input
+              type="search"
+              class="w-full bg-transparent text-[13px] outline-none"
+              placeholder={t("home.searchTools")}
+              bind:value={toolQuery}
+              aria-label={t("home.searchTools")}
+              autocorrect="off"
+              autocapitalize="none"
+              spellcheck={false}
+            />
+          </label>
+          <div class="flex min-w-0 gap-2">
+            <select
+              class="min-h-10 min-w-0 flex-1 cursor-pointer rounded-lg border border-border bg-surface px-2 text-[12px] text-text-secondary focus-visible:border-accent focus-visible:outline-2 focus-visible:outline-accent sm:max-w-[132px]"
+              value={searchEngine}
+              onchange={chooseSearchEngine}
+              aria-label={t("home.searchEngine")}
+            >
+              {#each SEARCH_ENGINES as engine (engine.id)}
+                <option value={engine.id}>{engine.label}</option>
+              {/each}
+            </select>
+            <button
+              type="button"
+              class="mynx-btn min-h-10 min-w-0 flex-1 gap-1.5 px-3 text-[12px] sm:flex-none"
+              onclick={searchWeb}
+              disabled={!toolQuery.trim()}
+            >
+              <IconExternalLink size={15} stroke={1.7} aria-hidden="true" />
+              <span>{t("home.webSearch")}</span>
+            </button>
+          </div>
+        </search>
       </div>
     </div>
 

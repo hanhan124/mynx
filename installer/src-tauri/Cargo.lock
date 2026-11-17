@@ -1835,7 +1835,7 @@ dependencies = [
 
 [[package]]
 name = "mynx-installer"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "dirs 5.0.1",
  "flate2",

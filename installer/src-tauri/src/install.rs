@@ -798,7 +798,11 @@ pub fn perform_install(app: &AppHandle, opts: InstallOptions) -> Result<InstallR
 /// 是否为更新启动:tauri updater 在 Windows 上以 NSIS 兼容参数启动
 /// (默认 passive 模式,形如 `/P /UPDATE /ARGS …`),这里识别其中任意一个。
 pub fn is_update_launch() -> bool {
-    std::env::args().skip(1).any(|a| {
+    is_update_launch_args(std::env::args().skip(1))
+}
+
+fn is_update_launch_args(args: impl IntoIterator<Item = String>) -> bool {
+    args.into_iter().any(|a| {
         let a = a.trim().to_lowercase();
         a == "/update" || a == "--update" || a == "/p"
     })
@@ -1024,6 +1028,17 @@ fn schedule_uninstall_cleanup(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn recognizes_tauri_updater_passive_launch_arguments() {
+        assert!(is_update_launch_args(
+            ["/P", "/UPDATE", "/ARGS", "--user-arg"]
+                .into_iter()
+                .map(str::to_owned)
+        ));
+        assert!(is_update_launch_args(["--update".to_owned()]));
+        assert!(!is_update_launch_args(["--uninstall".to_owned()]));
+    }
 
     fn test_directory(label: &str) -> PathBuf {
         let token = std::time::SystemTime::now()

@@ -15,7 +15,6 @@ pub mod r;
 pub mod rnaseq;
 pub mod settings;
 pub mod task;
-pub mod weather;
 
 /// Wire protocol version stamped into events, logs and persisted documents.
 pub const WIRE_VERSION: u32 = 1;

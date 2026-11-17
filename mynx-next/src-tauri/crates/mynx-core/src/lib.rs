@@ -1,6 +1,5 @@
 //! Mynx core services: SQLite-backed settings & task history, external R
-//! runtime management, and the home-page weather lookup.
+//! runtime management, and shared application services.
 
 pub mod r;
 pub mod settings;
-pub mod weather;

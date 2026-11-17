@@ -4,7 +4,7 @@
 //   3. installer/Cargo.toml       (installer Rust)
 //   4. installer/package.json     (installer npm)
 //   5. installer/src-tauri/tauri.conf.json  (installer Tauri)
-//   6. package-lock.json / Cargo.lock（主应用与安装器）
+//   6. npm / Cargo lockfiles（主应用与安装器）
 const fs = require("fs");
 const path = require("path");
 
@@ -69,6 +69,10 @@ const targets = [
   // sync makes `npm ci` reproducible on Windows and macOS release runners.
   {
     file: path.join(root, "package-lock.json"),
+    type: "lockfile",
+  },
+  {
+    file: path.join(root, "mynx-next", "package-lock.json"),
     type: "lockfile",
   },
   {

@@ -65,7 +65,6 @@ pub fn run() {
             commands::charts::charts_install_template_package,
             commands::charts::charts_run,
             commands::charts::charts_cancel,
-            commands::weather::weather_by_ip,
         ])
         .setup(|app| {
             let handle = app.handle();
