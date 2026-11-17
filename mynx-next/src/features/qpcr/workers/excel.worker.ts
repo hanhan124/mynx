@@ -45,14 +45,18 @@ export interface ApplyPatchResult {
   bytes: ArrayBuffer;
   sheetNames: string[];
 }
+export interface TemplateResult {
+  bytes: ArrayBuffer;
+}
 
 export type WorkerRequest =
   | { id: number; op: "load"; payload: LoadPayload }
   | { id: number; op: "extract"; payload: ExtractPayload }
-  | { id: number; op: "applyPatch"; payload: ApplyPatchPayload };
+  | { id: number; op: "applyPatch"; payload: ApplyPatchPayload }
+  | { id: number; op: "createTemplate" };
 
 export type WorkerResponse =
-  | { id: number; ok: true; result: LoadResult | ExtractResult | ApplyPatchResult }
+  | { id: number; ok: true; result: LoadResult | ExtractResult | ApplyPatchResult | TemplateResult }
   | { id: number; ok: false; error: string };
 
 function toBuffer(bytes: ArrayBuffer): ExcelJS.Buffer {
@@ -163,7 +167,31 @@ function applyPatch(workbook: ExcelJS.Workbook, patch: WorkbookPatch): void {
 
 async function handle(
   request: WorkerRequest,
-): Promise<LoadResult | ExtractResult | ApplyPatchResult> {
+): Promise<LoadResult | ExtractResult | ApplyPatchResult | TemplateResult> {
+  if (request.op === "createTemplate") {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "Mynx";
+    workbook.subject = "qPCR raw input template";
+    const sheet = workbook.addWorksheet("Raw Data", {
+      views: [{ state: "frozen", ySplit: 1 }],
+    });
+    sheet.addRow(["Target", "Sample", "Cq"]);
+    sheet.addRows([
+      ["ReferenceGene", "Control", 20.3],
+      ["ReferenceGene", "Control", 20.5],
+      ["TargetGene", "Control", 25.1],
+      ["TargetGene", "Control", 25.3],
+      ["ReferenceGene", "Treatment", 20.1],
+      ["ReferenceGene", "Treatment", 20.2],
+      ["TargetGene", "Treatment", 22.4],
+      ["TargetGene", "Treatment", 22.6],
+    ]);
+    sheet.columns = [{ width: 24 }, { width: 20 }, { width: 14 }];
+    sheet.getRow(1).font = { bold: true };
+    sheet.autoFilter = { from: "A1", to: "C9" };
+    const written = await workbook.xlsx.writeBuffer();
+    return { bytes: toArrayBuffer(written) };
+  }
   if (request.op === "load") {
     const workbook = await loadWorkbook(request.payload.bytes);
     return { sheetNames: sheetNamesOf(workbook) };

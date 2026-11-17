@@ -2,14 +2,18 @@
 :root,
 :root[data-theme="pearl"] {
   color-scheme: light;
-  --color-bg: #f5f6f8;
+  --color-bg: #e9eef4;
   --color-surface: #ffffff;
-  --color-surface-2: #eef0f3;
-  --color-border: #d9dde3;
-  --color-text: #1a2233;
-  --color-text-secondary: #5a6376;
-  --color-accent: #2f6fed;
-  --color-accent-hover: #2758c7;
+  --color-surface-2: #e1e8f0;
+  --color-border: #c5d0dd;
+  --color-text: #172a40;
+  --color-text-secondary: #506278;
+  --color-accent: #256fd1;
+  --color-accent-hover: #1b5db5;
+  --color-nav-bg: #d6e0eb;
+  --color-nav-border: #becbd9;
+  --color-nav-text: #334a63;
+  --color-nav-active: #f8fafc;
   --color-success: #157f3d;
   --color-warning: #b45309;
   --color-danger: #b91c1c;
@@ -20,14 +24,18 @@
 
 :root[data-theme="graphite"] {
   color-scheme: dark;
-  --color-bg: #16181d;
-  --color-surface: #1f2229;
-  --color-surface-2: #262a33;
-  --color-border: #333947;
-  --color-text: #e8eaf0;
-  --color-text-secondary: #9aa2b1;
-  --color-accent: #5c8dff;
-  --color-accent-hover: #7ba3ff;
+  --color-bg: #151c26;
+  --color-surface: #1c2735;
+  --color-surface-2: #253345;
+  --color-border: #35465b;
+  --color-text: #edf3fa;
+  --color-text-secondary: #adbdcf;
+  --color-accent: #7eaff7;
+  --color-accent-hover: #a1c5ff;
+  --color-nav-bg: #222f40;
+  --color-nav-border: #374b62;
+  --color-nav-text: #d5e1ee;
+  --color-nav-active: #344b66;
   --color-success: #3fb96f;
   --color-warning: #d97706;
   --color-danger: #ef5350;
@@ -36,14 +44,18 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="pearl"]) {
     color-scheme: dark;
-    --color-bg: #16181d;
-    --color-surface: #1f2229;
-    --color-surface-2: #262a33;
-    --color-border: #333947;
-    --color-text: #e8eaf0;
-    --color-text-secondary: #9aa2b1;
-    --color-accent: #5c8dff;
-    --color-accent-hover: #7ba3ff;
+    --color-bg: #151c26;
+    --color-surface: #1c2735;
+    --color-surface-2: #253345;
+    --color-border: #35465b;
+    --color-text: #edf3fa;
+    --color-text-secondary: #adbdcf;
+    --color-accent: #7eaff7;
+    --color-accent-hover: #a1c5ff;
+    --color-nav-bg: #222f40;
+    --color-nav-border: #374b62;
+    --color-nav-text: #d5e1ee;
+    --color-nav-active: #344b66;
     --color-success: #3fb96f;
     --color-warning: #d97706;
     --color-danger: #ef5350;

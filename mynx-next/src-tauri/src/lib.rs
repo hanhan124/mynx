@@ -45,6 +45,7 @@ pub fn run() {
             commands::image::image_convert_cancel,
             commands::image::image_thumbnail,
             commands::qpcr::qpcr_transform,
+            commands::qpcr::qpcr_audit,
             commands::qpcr::qpcr_calculate,
             commands::qpcr::qpcr_plot_run,
             commands::qpcr::qpcr_inject_charts,
@@ -74,12 +75,10 @@ pub fn run() {
                 .path()
                 .app_config_dir()
                 .map_err(|e| format!("config dir: {e}"))?;
-            std::fs::create_dir_all(&config_dir)
-                .map_err(|e| format!("config dir create: {e}"))?;
-            let store = mynx_core::settings::SettingsStore::open(
-                config_dir.join("settings.sqlite3"),
-            )
-            .map_err(|e| format!("settings store: {e}"))?;
+            std::fs::create_dir_all(&config_dir).map_err(|e| format!("config dir create: {e}"))?;
+            let store =
+                mynx_core::settings::SettingsStore::open(config_dir.join("settings.sqlite3"))
+                    .map_err(|e| format!("settings store: {e}"))?;
 
             // Migrate the legacy config.json (tauri-plugin-store file) once;
             // keys are identical so this is lossless.
@@ -102,8 +101,7 @@ pub fn run() {
                     if record.status.is_terminal() {
                         bridge_state.settings.record_task(&record);
                     }
-                    let _ = bridge_handle
-                        .emit_to("main", "mynx://task-changed", &record);
+                    let _ = bridge_handle.emit_to("main", "mynx://task-changed", &record);
                 }
             });
 
@@ -118,8 +116,7 @@ pub fn run() {
                 if let Some(window) = app.get_webview_window("main") {
                     if let Ok(is_on_top) = window.is_always_on_top() {
                         let _ = window.set_always_on_top(!is_on_top);
-                        let _ =
-                            app.emit_to("main", "mynx://always-on-top", !is_on_top);
+                        let _ = app.emit_to("main", "mynx://always-on-top", !is_on_top);
                     }
                 }
             }
@@ -230,10 +227,7 @@ fn build_menu(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error
 /// Read the legacy `config.json` store file (written by tauri-plugin-store in
 /// the previous app) and merge its values into SQLite. The legacy store lives
 /// in the same app identifier directory, so the file is shared.
-fn migrate_legacy_store(
-    store: &mynx_core::settings::SettingsStore,
-    config_dir: &std::path::Path,
-) {
+fn migrate_legacy_store(store: &mynx_core::settings::SettingsStore, config_dir: &std::path::Path) {
     let legacy_path = config_dir.join("config.json");
     let Ok(raw) = std::fs::read_to_string(&legacy_path) else {
         return;

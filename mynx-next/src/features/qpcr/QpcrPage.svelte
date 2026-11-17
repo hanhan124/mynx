@@ -1,8 +1,11 @@
 <script lang="ts">
+  import { convertFileSrc } from "@tauri-apps/api/core";
   import { getCurrentWebview } from "@tauri-apps/api/webview";
-  import { open as openDialog } from "@tauri-apps/plugin-dialog";
+  import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
   import IconCalculator from "@tabler/icons-svelte/icons/calculator";
   import IconChartBar from "@tabler/icons-svelte/icons/chart-bar";
+  import IconChevronDown from "@tabler/icons-svelte/icons/chevron-down";
+  import IconChevronUp from "@tabler/icons-svelte/icons/chevron-up";
   import IconDna from "@tabler/icons-svelte/icons/dna";
   import IconFileSpreadsheet from "@tabler/icons-svelte/icons/file-spreadsheet";
   import IconFlask from "@tabler/icons-svelte/icons/flask";
@@ -15,9 +18,15 @@
   import IconTerminal from "@tabler/icons-svelte/icons/terminal-2";
   import IconTrash from "@tabler/icons-svelte/icons/trash";
   import { t } from "../../app/i18n.svelte";
+  import { app, pushToast } from "../../app/state.svelte";
   import { openPath } from "../../app/tauri.js";
   import CopyableText from "../../components/CopyableText.svelte";
+  import QpcrWorksheetPreview from "./QpcrWorksheetPreview.svelte";
+  import type { SheetSnapshot } from "../../lib/contracts/generated/qpcr/SheetSnapshot.js";
   import { safeNumber } from "./plot-config.js";
+  import { listDir, qpcrAudit, workerExtractSheet, writeFileBytes } from "./client.js";
+  import type { QpcrAuditResult } from "../../lib/contracts/generated/qpcr/QpcrAuditResult.js";
+  import { qpcrAnalysisTemplate } from "./analysis-template.js";
   import {
     activePlotDraft,
     calcValidationFailure,
@@ -38,6 +47,7 @@
     selectSheet,
     selectedControlGroup,
     selectedRefGene,
+    joinPath,
     updatePlotDraft,
     type PhaseState,
   } from "./state.svelte";
@@ -52,6 +62,8 @@
   const STAT_TESTS = ["auto", "t.test", "wilcox.test", "anova", "kruskal.test"];
   const P_ADJUST = ["holm", "bonferroni", "BH", "none"];
   const ZLIMS = [1, 2, 3, 4];
+  const PREVIEW_ROW_LIMIT = 6;
+  const PLOT_PREVIEW_LIMIT = 4;
   const LABEL_STYLES = [
     { value: "p.signif", key: "qpcr.labelStyleSignif" },
     { value: "p", key: "qpcr.labelStyleP" },
@@ -99,6 +111,18 @@
 
   let step = $state(1);
   let dragOver = $state(false);
+  let previewGeneName = $state("");
+  let showAllResultGroups = $state(false);
+  let showAllPlotPreviews = $state(false);
+  let sourceSheetPreview = $state<SheetSnapshot | null>(null);
+  let sourcePreviewStatus = $state<"idle" | "loading" | "ready" | "error">("idle");
+  let sourceAudit = $state<QpcrAuditResult | null>(null);
+  let sourceAuditFailed = $state(false);
+  let transformedAudit = $state<QpcrAuditResult | null>(null);
+  let transformedSheetPreview = $state<SheetSnapshot | null>(null);
+  let transformedPreviewStatus = $state<"idle" | "loading" | "ready" | "error">("idle");
+  let plotPreviewFiles = $state<string[]>([]);
+  let plotPreviewStatus = $state<"idle" | "loading" | "ready" | "error">("idle");
 
   const hasFile = $derived(qpcr.workbookBytes !== null);
   const transformed = $derived(hasTransformedData());
@@ -107,6 +131,24 @@
   const plotGenes = $derived(plotGeneOptions());
   const plotGroups = $derived(plotGroupOptions());
   const plotRunning = $derived(qpcr.plotPhase === "running");
+  const resultPreviewSeries = $derived(
+    qpcr.chartSeries.find((series) => series.geneName === previewGeneName) ??
+      qpcr.chartSeries[0] ??
+      null,
+  );
+  const resultPreviewScale = $derived(
+    Math.max(1, ...(resultPreviewSeries?.points.map((point) => point.avg + point.stdev) ?? [])),
+  );
+  const visibleResultPreviewPoints = $derived(
+    resultPreviewSeries
+      ? showAllResultGroups
+        ? resultPreviewSeries.points
+        : resultPreviewSeries.points.slice(0, PREVIEW_ROW_LIMIT)
+      : [],
+  );
+  const visiblePlotPreviewFiles = $derived(
+    showAllPlotPreviews ? plotPreviewFiles : plotPreviewFiles.slice(0, PLOT_PREVIEW_LIMIT),
+  );
   const canPlot = $derived(
     hasFile && !!qpcr.plotOutputDir && !!qpcr.plotSheetName && !plotRunning,
   );
@@ -120,6 +162,111 @@
   /* Restore chart color from the settings doc once. */
   $effect(() => {
     loadChartColor();
+  });
+
+  /* Read compact source/transformed worksheet snapshots in the Excel worker. */
+  $effect(() => {
+    const bytes = qpcr.workbookBytes;
+    const sheetName = qpcr.selectedSheet;
+    if (!bytes || !sheetName) {
+      sourceSheetPreview = null;
+      sourceAudit = null;
+      sourceAuditFailed = false;
+      sourcePreviewStatus = "idle";
+      return;
+    }
+    let current = true;
+    sourcePreviewStatus = "loading";
+    void workerExtractSheet(bytes, sheetName)
+      .then(async ({ snapshot }) => {
+        if (!current) return;
+        sourceSheetPreview = snapshot;
+        sourceAuditFailed = false;
+        sourceAudit = await qpcrAudit(snapshot).catch(() => {
+          sourceAuditFailed = true;
+          return null;
+        });
+        sourcePreviewStatus = "ready";
+      })
+      .catch(() => {
+        if (!current) return;
+        sourceSheetPreview = null;
+        sourceAudit = null;
+        sourceAuditFailed = false;
+        sourcePreviewStatus = "error";
+      });
+    return () => {
+      current = false;
+    };
+  });
+
+  /* Match files logged by this run against its output folder to avoid stale previews. */
+  $effect(() => {
+    const result = qpcr.plotPhase === "success" ? qpcr.plotResult : null;
+    const outputDir = result?.outputDir;
+    if (!outputDir) {
+      plotPreviewFiles = [];
+      plotPreviewStatus = "idle";
+      showAllPlotPreviews = false;
+      return;
+    }
+    const loggedNames = new Set(
+      qpcr.plotLogs.flatMap((line) => {
+        const match = line.message.match(/\[save\]\s+([^\r\n]+)$/i);
+        const fileName = match?.[1]?.trim();
+        return fileName && isPreviewablePlotFile(fileName) ? [fileName] : [];
+      }),
+    );
+    if (loggedNames.size === 0) {
+      plotPreviewFiles = [];
+      plotPreviewStatus = "ready";
+      return;
+    }
+    let current = true;
+    plotPreviewStatus = "loading";
+    void listDir(outputDir)
+      .then((entries) => {
+        if (!current) return;
+        plotPreviewFiles = entries
+          .filter((entry) => !entry.isDir && loggedNames.has(entry.name))
+          .map((entry) => joinPath(outputDir, entry.name));
+        plotPreviewStatus = "ready";
+      })
+      .catch(() => {
+        if (!current) return;
+        plotPreviewFiles = [];
+        plotPreviewStatus = "error";
+      });
+    return () => {
+      current = false;
+    };
+  });
+
+  $effect(() => {
+    const bytes = qpcr.workbookBytes;
+    const hasTransformedSheet = transformed;
+    if (!bytes || !hasTransformedSheet) {
+      transformedSheetPreview = null;
+      transformedPreviewStatus = "idle";
+      return;
+    }
+    let current = true;
+    transformedPreviewStatus = "loading";
+    void workerExtractSheet(bytes, "Transformed Data")
+      .then(async ({ snapshot }) => {
+        if (!current) return;
+        transformedSheetPreview = snapshot;
+        transformedAudit = await qpcrAudit(snapshot, true).catch(() => null);
+        transformedPreviewStatus = "ready";
+      })
+      .catch(() => {
+        if (!current) return;
+        transformedSheetPreview = null;
+        transformedPreviewStatus = "error";
+      });
+    return () => {
+      current = false;
+    };
   });
 
   /* Window-level drag-drop scoped to this page. */
@@ -181,6 +328,50 @@
   function fileLabelOf(path: string): string {
     return path.split(/[\\/]/).pop() ?? path;
   }
+
+  function formatPreviewNumber(value: number): string {
+    return Number.isFinite(value) ? Number(value.toPrecision(4)).toString() : "—";
+  }
+
+  function isPreviewablePlotFile(path: string): boolean {
+    return /\.(png|svg|jpe?g|webp)$/i.test(path);
+  }
+
+  function plotPreviewSrc(path: string): string {
+    return convertFileSrc(path);
+  }
+
+  async function exportAnalysisRecord(): Promise<void> {
+    let record = qpcrAnalysisTemplate(app.language);
+    const audit = transformedAudit;
+    const zh = app.language === "zh";
+    const methodLabel = zh ? "分析方法（2^-ΔCt / 2^-ΔΔCt）" : "Analysis method (2^-ΔCt / 2^-ΔΔCt)";
+    const values: Array<[string, string]> = [
+      [zh ? "原始数据文件/工作表" : "Raw data file / worksheet", `${qpcr.filePath} / ${qpcr.selectedSheet}`],
+      [zh ? "参考基因" : "Reference gene", selectedRefGene()],
+      [methodLabel, qpcr.calcMethod === "control-relative" ? "2^-ΔΔCt" : "2^-ΔCt"],
+      [zh ? "对照组" : "Control group", selectedControlGroup()],
+      [
+        zh ? "重复数/最佳重复设置" : "Replicate / best-replicate setting",
+        `${qpcr.repeatCount} / ${qpcr.selectNum || (zh ? "关闭" : "off")}`,
+      ],
+      [zh ? "离群值设置" : "Outlier setting", qpcr.outlierSd ? String(qpcr.outlierSd) : (zh ? "关闭" : "off")],
+      [zh ? "转换表中的黄色填补单元格数" : "Yellow imputed cells in transformed data", String(audit?.imputedCells ?? "")],
+      [zh ? "运行日期与输出文件" : "Run date and output files", `${new Date().toISOString()} · ${qpcr.calcMessage}`],
+    ];
+    for (const [label, value] of values) {
+      const delimiter = zh ? "：" : ":";
+      record = record.replace(`- ${label}${delimiter}`, `- ${label}${delimiter} ${value}`);
+    }
+    const path = await saveDialog({
+      defaultPath: `${qpcr.fileName.replace(/\.[^.]+$/, "")}-qpcr-analysis.md`,
+      filters: [{ name: "Markdown", extensions: ["md"] }],
+    });
+    if (!path) return;
+    const encoded = new TextEncoder().encode(record);
+    await writeFileBytes(path, encoded.buffer);
+    pushToast("success", t("qpcr.recordExported"));
+  }
 </script>
 
 {#snippet phaseBadge(phase: PhaseState)}
@@ -210,8 +401,8 @@
   class="flex h-full min-h-0 flex-col gap-3 p-4 {dragOver ? 'ring-2 ring-accent ring-inset' : ''}"
 >
   <header class="flex items-baseline gap-3">
-    <h1 class="text-[16px] font-semibold">{t("qpcr.title")}</h1>
-    <p class="mynx-truncate text-[12px] text-text-secondary">{t("qpcr.subtitle")}</p>
+    <h1 class="mynx-page-title">{t("qpcr.title")}</h1>
+    <p class="mynx-truncate text-[13px] text-text-secondary">{t("qpcr.subtitle")}</p>
   </header>
 
   <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[210px_minmax(0,1fr)]">
@@ -359,6 +550,22 @@
             {/if}
           </div>
         </div>
+        {#if sourcePreviewStatus === "loading"}
+          <p class="mynx-card text-[12px] text-text-secondary" role="status">
+            {t("qpcr.previewLoading")}
+          </p>
+        {:else if sourcePreviewStatus === "error"}
+          <p class="mynx-card text-[12px] text-text-secondary" role="status">
+            {t("qpcr.previewFailed")}
+          </p>
+        {:else if sourceSheetPreview}
+          <QpcrWorksheetPreview
+            snapshot={sourceSheetPreview}
+            caption={t("qpcr.previewData")}
+            audit={sourceAudit}
+            auditFailed={sourceAuditFailed}
+          />
+        {/if}
       {:else if step === 2}
         <!-- Step 2: transform -->
         <div class="mynx-card flex flex-col">
@@ -441,8 +648,35 @@
             {/if}
           </div>
         </div>
+        {#if transformedPreviewStatus === "loading"}
+          <p class="mynx-card text-[12px] text-text-secondary" role="status">
+            {t("qpcr.previewLoading")}
+          </p>
+        {:else if transformedPreviewStatus === "error"}
+          <p class="mynx-card text-[12px] text-text-secondary" role="status">
+            {t("qpcr.previewFailed")}
+          </p>
+        {:else if transformedSheetPreview}
+          <QpcrWorksheetPreview
+            snapshot={transformedSheetPreview}
+            caption={t("qpcr.previewTransformed")}
+            audit={transformedAudit}
+            auditType="transformed"
+          />
+        {/if}
       {:else if step === 3}
         <!-- Step 3: calculate -->
+        {#if !transformed}
+          <div class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2">
+            <p class="flex items-center gap-1.5 text-[12px] text-text-secondary">
+              <IconInfoCircle size={14} stroke={1.75} aria-hidden="true" />
+              {t("qpcr.existingTransformMissing")}
+            </p>
+            <button type="button" class="mynx-link text-[12px]" onclick={() => (step = 2)}>
+              {t("qpcr.goTransformStep")}
+            </button>
+          </div>
+        {/if}
         <div class="mynx-card flex flex-col">
           <div class="flex items-center gap-2 border-b border-border px-3 py-2">
             <IconCalculator size={15} stroke={1.75} aria-hidden="true" />
@@ -457,7 +691,9 @@
               </span>
             {/if}
           </div>
-          <div class="flex flex-col gap-3 p-3">
+          <div class="qpcr-calc-container min-w-0">
+            <div class="qpcr-calc-grid min-w-0 gap-3 p-3">
+            <div class="flex min-w-0 flex-col gap-3">
             <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("qpcr.method")}>
               {#each CALC_METHODS as method (method)}
                 <label
@@ -598,6 +834,9 @@
               >
                 {qpcr.calcMessage}
               </p>
+              <button type="button" class="mynx-btn mynx-btn-secondary self-start" onclick={() => void exportAnalysisRecord()}>
+                {t("qpcr.exportRecord")}
+              </button>
             {:else if qpcr.calcPhase === "error" && qpcr.calcMessage}
               <p
                 class="rounded-md border border-danger/40 bg-danger/10 p-2 text-[12px] text-danger"
@@ -630,6 +869,98 @@
                 </div>
               </div>
             {/if}
+            </div>
+            {#if resultPreviewSeries}
+              <section class="qpcr-result-preview mynx-card flex min-w-0 flex-col">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
+                  <div class="flex min-w-0 items-center gap-2">
+                    <IconChartBar size={14} stroke={1.75} aria-hidden="true" />
+                    <h2 class="text-[12px] font-semibold">{t("qpcr.previewResult")}</h2>
+                  </div>
+                  {#if qpcr.chartSeries.length > 1}
+                    <label class="flex min-w-0 items-center gap-2">
+                      <span class="text-[11px] text-text-secondary">{t("qpcr.previewGene")}</span>
+                      <select
+                        class="mynx-input max-w-48"
+                        value={resultPreviewSeries.geneName}
+                        onchange={(event) => (previewGeneName = event.currentTarget.value)}
+                        aria-label={t("qpcr.previewGene")}
+                      >
+                        {#each qpcr.chartSeries as series (series.geneName)}
+                          <option value={series.geneName}>{series.geneName}</option>
+                        {/each}
+                      </select>
+                    </label>
+                  {:else}
+                    <span class="mynx-chip max-w-48">
+                      <span class="mynx-truncate">{resultPreviewSeries.geneName}</span>
+                    </span>
+                  {/if}
+                  {#if resultPreviewSeries.points.length > PREVIEW_ROW_LIMIT}
+                    <button
+                      type="button"
+                      class="mynx-link inline-flex items-center gap-1 text-[11px]"
+                      aria-expanded={showAllResultGroups}
+                      onclick={() => (showAllResultGroups = !showAllResultGroups)}
+                    >
+                      {#if showAllResultGroups}
+                        <IconChevronUp size={13} stroke={1.75} aria-hidden="true" />
+                        {t("qpcr.previewCollapseGroups", { count: PREVIEW_ROW_LIMIT })}
+                      {:else}
+                        <IconChevronDown size={13} stroke={1.75} aria-hidden="true" />
+                        {t("qpcr.previewAllGroups", { count: resultPreviewSeries.points.length })}
+                      {/if}
+                    </button>
+                  {/if}
+                </div>
+                <div class="flex flex-col gap-3 p-3">
+                  <p class="text-[11px] text-text-secondary">{t("qpcr.previewResultHint")}</p>
+                  <div class="flex flex-col gap-2" role="img" aria-label={t("qpcr.previewResult")}>
+                    {#each visibleResultPreviewPoints as point (point.name)}
+                      <div class="grid min-w-0 grid-cols-[minmax(4.5rem,0.8fr)_minmax(3rem,2fr)_minmax(5rem,1fr)] items-center gap-2">
+                        <span class="mynx-truncate text-[11px]" title={point.name}>{point.name}</span>
+                        <span class="h-2.5 overflow-hidden rounded-sm bg-surface-2">
+                          <span
+                            class="block h-full rounded-sm"
+                            style={"width: " + Math.max(0, Math.min(100, (point.avg / resultPreviewScale) * 100)) + "%; background-color: " + qpcr.chartColor}
+                            aria-hidden="true"
+                          ></span>
+                        </span>
+                        <span class="mynx-mono text-right text-[10px] text-text-secondary">
+                          {formatPreviewNumber(point.avg)} ± {formatPreviewNumber(point.stdev)}
+                        </span>
+                      </div>
+                    {/each}
+                  </div>
+                  <!-- Intentional keyboard target for horizontal result-table scrolling. -->
+                  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+                  <div class="max-w-full overflow-auto rounded-md border border-border" tabindex="0" role="region" aria-label={t("qpcr.previewResultTableAria")}>
+                    <table class="w-full min-w-[360px] border-separate border-spacing-0 text-left text-[11px]">
+                      <caption class="sr-only">{t("qpcr.previewResult")}: {resultPreviewSeries.geneName}</caption>
+                      <thead class="bg-surface-2 text-text-secondary">
+                        <tr>
+                          <th scope="col" class="border-b border-r border-border px-2 py-1.5 font-medium">{t("qpcr.previewGroup")}</th>
+                          <th scope="col" class="border-b border-r border-border px-2 py-1.5 text-right font-medium">{t("qpcr.previewMean")}</th>
+                          <th scope="col" class="border-b border-border px-2 py-1.5 text-right font-medium">{t("qpcr.previewSd")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {#each visibleResultPreviewPoints as point (point.name)}
+                          <tr>
+                            <th scope="row" class="max-w-48 border-b border-r border-border px-2 py-1.5 font-normal">
+                              <span class="mynx-truncate block" title={point.name}>{point.name}</span>
+                            </th>
+                            <td class="border-b border-r border-border px-2 py-1.5 text-right mynx-mono">{formatPreviewNumber(point.avg)}</td>
+                            <td class="border-b border-border px-2 py-1.5 text-right mynx-mono">{formatPreviewNumber(point.stdev)}</td>
+                          </tr>
+                        {/each}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            {/if}
+            </div>
           </div>
         </div>
       {:else}
@@ -1404,6 +1735,58 @@
                 {/if}
               </div>
             {/if}
+            {#if plotPreviewStatus === "loading"}
+              <p class="mynx-card text-[12px] text-text-secondary" role="status">
+                {t("qpcr.previewLoading")}
+              </p>
+            {:else if plotPreviewStatus === "error"}
+              <p class="mynx-card text-[12px] text-text-secondary" role="status">
+                {t("qpcr.previewFailed")}
+              </p>
+            {:else if plotPreviewFiles.length > 0}
+              <section class="mynx-card flex flex-col">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
+                  <div class="flex min-w-0 items-center gap-2">
+                    <IconChartBar size={14} stroke={1.75} aria-hidden="true" />
+                    <h2 class="text-[12px] font-semibold">{t("qpcr.plotPreview")}</h2>
+                    <span class="mynx-chip text-[10px]">{plotPreviewFiles.length}</span>
+                  </div>
+                  {#if plotPreviewFiles.length > PLOT_PREVIEW_LIMIT}
+                    <button
+                      type="button"
+                      class="mynx-link text-[11px]"
+                      onclick={() => (showAllPlotPreviews = !showAllPlotPreviews)}
+                      aria-expanded={showAllPlotPreviews}
+                    >
+                      {showAllPlotPreviews
+                        ? t("qpcr.previewLess")
+                        : t("qpcr.previewMore", { count: plotPreviewFiles.length - PLOT_PREVIEW_LIMIT })}
+                    </button>
+                  {/if}
+                </div>
+                <div class="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2">
+                  {#each visiblePlotPreviewFiles as file (file)}
+                    <figure class="min-w-0 overflow-hidden rounded-md border border-border bg-surface-2">
+                      <div class="flex aspect-[4/3] items-center justify-center p-2">
+                        <img
+                          src={plotPreviewSrc(file)}
+                          alt={t("qpcr.plotPreviewAlt", { file: fileLabelOf(file) })}
+                          class="block max-h-full max-w-full object-contain"
+                          loading="lazy"
+                        />
+                      </div>
+                      <figcaption class="border-t border-border px-2 py-1.5 text-[11px]">
+                        <span class="mynx-truncate block" title={file}>{fileLabelOf(file)}</span>
+                      </figcaption>
+                    </figure>
+                  {/each}
+                </div>
+              </section>
+            {:else if qpcr.plotPhase === "success" && plotPreviewStatus === "ready"}
+              <p class="mynx-card text-[12px] text-text-secondary" role="status">
+                {t("qpcr.previewUnavailable")}
+              </p>
+            {/if}
             {#if qpcr.plotLogs.length > 0}
               <div class="flex flex-col gap-1">
                 <div class="flex items-center gap-2">
@@ -1438,3 +1821,24 @@
     </div>
   </div>
 </section>
+
+<style>
+  .qpcr-calc-container {
+    container: qpcr-calc / inline-size;
+  }
+
+  .qpcr-calc-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @container qpcr-calc (min-width: 900px) {
+    .qpcr-calc-grid {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    }
+
+    .qpcr-result-preview {
+      align-self: start;
+    }
+  }
+</style>

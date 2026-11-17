@@ -16,7 +16,7 @@
   import IconTerminal from "@tabler/icons-svelte/icons/terminal-2";
   import { t } from "../../app/i18n.svelte";
   import { SvelteMap } from "svelte/reactivity";
-  import { pushToast } from "../../app/state.svelte";
+import { app, pushToast } from "../../app/state.svelte";
   import { openPath } from "../../app/tauri.js";
   import type { ResultFileItem } from "../../lib/contracts/generated/rnaseq/ResultFileItem.js";
   import CopyableText from "../../components/CopyableText.svelte";
@@ -242,12 +242,12 @@
 
 <section class="flex h-full min-h-0 flex-col gap-3 p-4">
   <header class="flex items-baseline gap-3">
-    <h1 class="text-[16px] font-semibold">{t("rnaseq.title")}</h1>
-    <p class="mynx-truncate text-[12px] text-text-secondary">{t("rnaseq.subtitle")}</p>
+    <h1 class="mynx-page-title">{t("rnaseq.title")}</h1>
+    <p class="mynx-truncate text-[13px] text-text-secondary">{t("rnaseq.subtitle")}</p>
     <button
       type="button"
       class="mynx-btn mynx-btn-primary ml-auto shrink-0"
-      onclick={() => (rnaseq.tutorialOpen = true)}
+      onclick={() => (app.helpOpen = true)}
     >
       <IconHelp size={14} stroke={1.75} aria-hidden="true" />
       {t("rnaseq.tutorial")}
@@ -665,16 +665,5 @@
         {t("rnaseq.openResults")}
       </button>
     {/if}
-  </div>
-</Modal>
-
-<!-- tutorial modal -->
-<Modal bind:open={rnaseq.tutorialOpen} title={t("rnaseq.tutorial")} width={560}>
-  <div class="flex flex-col gap-2 text-[12px]">
-    <p>{t("rnaseq.tutorialIntro")}</p>
-    <p>{t("rnaseq.tutorialStep1")}</p>
-    <p>{t("rnaseq.tutorialStep2")}</p>
-    <p>{t("rnaseq.tutorialStep3")}</p>
-    <p>{t("rnaseq.tutorialResults")}</p>
   </div>
 </Modal>

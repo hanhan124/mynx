@@ -63,19 +63,28 @@ describe("help center manuals", () => {
       const dict = dictionaries[lang];
       for (const tool of tools) {
         const intro = dict[`help.${tool}.body`];
+        const flow = dict[`help.${tool}.flow`];
         const steps = dict[`help.${tool}.steps`];
         const buttons = dict[`help.${tool}.buttons`];
         expect(intro?.trim(), `${lang}/${tool} body`).toBeTruthy();
+        expect(flow?.split("\n").filter((s) => s.trim()).length, `${lang}/${tool} flow`).toBeGreaterThanOrEqual(3);
         expect(steps?.split("\n").filter((s) => s.trim()).length, `${lang}/${tool} steps`).toBeGreaterThanOrEqual(3);
-        expect(buttons?.split("·").map((s) => s.trim()).filter(Boolean).length, `${lang}/${tool} buttons`).toBeGreaterThanOrEqual(3);
+        expect(buttons?.split("\n").filter((s) => s.trim()).length, `${lang}/${tool} controls`).toBeGreaterThanOrEqual(3);
       }
     });
   }
 
   it("renders manual section headings in both languages", () => {
     for (const dict of [dictionaries.zh, dictionaries.en]) {
+      expect(dict["help.manual.principle"]?.trim()).toBeTruthy();
+      expect(dict["help.manual.prepare"]?.trim()).toBeTruthy();
+      expect(dict["help.manual.flow"]?.trim()).toBeTruthy();
       expect(dict["help.manual.steps"]?.trim()).toBeTruthy();
       expect(dict["help.manual.buttons"]?.trim()).toBeTruthy();
+      expect(dict["help.manual.controlName"]?.trim()).toBeTruthy();
+      expect(dict["help.manual.controlPurpose"]?.trim()).toBeTruthy();
+      expect(dict["help.manual.results"]?.trim()).toBeTruthy();
+      expect(dict["help.manual.troubleshooting"]?.trim()).toBeTruthy();
     }
   });
 });

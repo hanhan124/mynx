@@ -44,7 +44,7 @@
 </script>
 
 <nav
-  class="flex w-14 shrink-0 flex-col items-stretch border-r border-border bg-surface py-2"
+  class="mynx-navrail flex w-14 shrink-0 flex-col items-stretch gap-1 border-r px-1.5 py-2"
   aria-label={t("nav.primary")}
 >
   {#each items as item (item.route)}
@@ -53,9 +53,9 @@
     {@const Icon = item.icon}
     <button
       type="button"
-      class="relative flex h-11 items-center justify-center {active
-        ? 'bg-accent/10 text-accent'
-        : 'text-text-secondary hover:bg-surface-2 hover:text-text'}"
+      class="mynx-nav-button relative mx-auto flex h-11 w-11 items-center justify-center rounded-lg border border-transparent transition-colors {active
+        ? 'mynx-nav-button-active'
+        : ''}"
       onpointerenter={() => warmRoute(item.route)}
       onfocus={() => warmRoute(item.route)}
       onclick={() => navigate(item.route)}
@@ -65,7 +65,7 @@
     >
       {#if active}
         <span
-          class="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full bg-accent"
+          class="mynx-nav-active-mark absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full"
           aria-hidden="true"
         ></span>
       {/if}
@@ -85,7 +85,7 @@
 
   <button
     type="button"
-    class="flex h-11 items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text"
+    class="mynx-nav-button mx-auto flex h-11 w-11 items-center justify-center rounded-lg border border-transparent transition-colors"
     onclick={openWebsite}
     aria-label={websiteLabel}
     title={`${websiteLabel}: ${MYNX_WEBSITE_URL}`}
@@ -95,9 +95,9 @@
 
   <button
     type="button"
-    class="relative flex h-11 items-center justify-center {settingsActive
-      ? 'bg-accent/10 text-accent'
-      : 'text-text-secondary hover:bg-surface-2 hover:text-text'}"
+    class="mynx-nav-button relative mx-auto flex h-11 w-11 items-center justify-center rounded-lg border border-transparent transition-colors {settingsActive
+      ? 'mynx-nav-button-active'
+      : ''}"
     onclick={() => navigate("/settings")}
     aria-label={settingsLabel}
     aria-current={settingsActive ? "page" : undefined}
@@ -105,7 +105,7 @@
   >
     {#if settingsActive}
       <span
-        class="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full bg-accent"
+        class="mynx-nav-active-mark absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full"
         aria-hidden="true"
       ></span>
     {/if}

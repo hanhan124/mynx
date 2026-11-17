@@ -9,8 +9,8 @@
 为准，发布流程以 `mynx-next/docs/RELEASE_NEXT.md` 为准。
 
 旧应用（仓库根目录 `src/` + `src-tauri/`）保留为 legacy reference；
-旧 React/Mantine 规则（DESIGN.md / UI_AUDIT.md / UI_MIGRATION.md /
-MYNX_UI_SPEC.md）只对 legacy 树有效，不再约束新应用。
+旧 React/Mantine 规则整理在 `legacy-docs/`（DESIGN.md / UI_AUDIT.md /
+UI_MIGRATION.md / MYNX_UI_SPEC.md），只对 legacy 树有效，不再约束新应用。
 
 ## 技术栈
 

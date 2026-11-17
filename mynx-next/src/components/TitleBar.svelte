@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { UnlistenFn } from "@tauri-apps/api/event";
+  import IconHelp from "@tabler/icons-svelte/icons/help";
   import IconListCheck from "@tabler/icons-svelte/icons/list-check";
   import IconPinned from "@tabler/icons-svelte/icons/pinned";
   import IconPin from "@tabler/icons-svelte/icons/pin";
@@ -72,6 +73,15 @@
     <div class="flex items-center px-1.5 max-[520px]:px-1">
       <CommandPalette />
     </div>
+    <button
+      type="button"
+      class="flex w-[46px] max-[520px]:w-11 items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text"
+      onclick={() => (app.helpOpen = true)}
+      aria-label={t("help.title")}
+      title={t("help.title")}
+    >
+      <IconHelp size={16} stroke={1.6} />
+    </button>
     <button
       type="button"
       class="relative flex w-[46px] max-[520px]:w-11 items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text"

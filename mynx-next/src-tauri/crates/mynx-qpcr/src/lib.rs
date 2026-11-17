@@ -13,12 +13,14 @@
 //! input sheet snapshots and the expected results; `tests/golden.rs` replays
 //! the same snapshots through this crate and compares.
 
-pub mod charts;
+mod audit;
 mod calculate;
+pub mod charts;
 mod jsval;
 mod sheet;
 mod transform;
 
+pub use audit::audit;
 pub use calculate::calculate;
 pub use charts::inject_charts;
 pub use transform::transform;

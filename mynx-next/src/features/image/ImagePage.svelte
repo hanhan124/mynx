@@ -308,8 +308,8 @@
   class="flex h-full min-h-0 flex-col gap-3 p-4 {dragOver ? 'ring-2 ring-accent ring-inset' : ''}"
 >
   <header class="flex items-baseline gap-3">
-    <h1 class="text-[16px] font-semibold">{t("imgconv.title")}</h1>
-    <p class="mynx-truncate text-[12px] text-text-secondary">{t("imgconv.subtitle")}</p>
+    <h1 class="mynx-page-title">{t("imgconv.title")}</h1>
+    <p class="mynx-truncate text-[13px] text-text-secondary">{t("imgconv.subtitle")}</p>
   </header>
 
   <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-2">

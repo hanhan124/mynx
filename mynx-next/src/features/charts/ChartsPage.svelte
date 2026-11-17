@@ -532,8 +532,8 @@
   class="flex min-h-full flex-col gap-3 p-4 {dragOver ? 'ring-2 ring-accent ring-inset' : ''}"
 >
   <header class="flex shrink-0 flex-wrap items-baseline gap-3">
-    <h1 class="text-[16px] font-semibold">{t("nav.charts")}</h1>
-    <p class="min-w-0 text-[12px] text-text-secondary">{t("charts.pageSubtitle")}</p>
+    <h1 class="mynx-page-title">{t("nav.charts")}</h1>
+    <p class="min-w-0 text-[13px] text-text-secondary">{t("charts.pageSubtitle")}</p>
     <div class="flex w-full min-w-0 flex-wrap items-center gap-2 xl:ml-auto xl:w-auto">
       {#if chartState.rFound === false}
         <button type="button" class="mynx-btn mynx-btn-danger" onclick={askInstallR}>

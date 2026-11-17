@@ -159,6 +159,37 @@ pub struct TransformResult {
     pub groups: Vec<String>,
 }
 
+/// Read-only input quality summary. This never changes the source worksheet.
+#[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
+#[ts(export, export_to = "qpcr/")]
+#[serde(rename_all = "camelCase")]
+pub struct QpcrAuditRequest {
+    pub v: u32,
+    pub source: SheetSnapshot,
+    pub transformed: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
+#[ts(export, export_to = "qpcr/")]
+#[serde(rename_all = "camelCase")]
+pub struct QpcrAuditResult {
+    pub v: u32,
+    pub sheet_name: String,
+    pub data_rows: u32,
+    pub accepted_rows: u32,
+    pub skipped_rows: u32,
+    pub missing_ct_rows: u32,
+    pub invalid_ct_rows: u32,
+    pub sample_count: u32,
+    pub gene_count: u32,
+    pub incomplete_cells: u32,
+    pub imputed_cells: u32,
+    pub issue_rows: Vec<u32>,
+    pub target_header: Option<String>,
+    pub sample_header: Option<String>,
+    pub ct_header: Option<String>,
+}
+
 // ── Calculate ───────────────────────────────────────────────────────────────
 
 /// Calculation method (legacy "mode").
@@ -173,7 +204,6 @@ pub enum CalcMethod {
     /// Standard ΔΔCt: divide by the control group's mean expression.
     ControlRelative,
 }
-
 
 impl Default for CalcOptions {
     fn default() -> Self {

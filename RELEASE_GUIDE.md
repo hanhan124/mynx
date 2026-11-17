@@ -26,13 +26,16 @@
 | `node_modules/`、`installer/node_modules/` | npm 依赖，可由 lock 文件恢复 |
 | `dist/`、`installer/dist/` | 前端构建产物 |
 | `mynx-next/src-tauri/target/`、`installer/src-tauri/target/`、`target/` | Rust/Tauri 构建产物 |
-| `mynx-next/src-tauri/gen/`、`.cargo/` | Tauri/Rust 本地生成文件 |
+| `.svelte-kit/`、`.vite/`、`coverage/`、`playwright-report/`、`test-results/` | 前端、测试生成产物或缓存 |
+| `mynx-next/src-tauri/gen/`、`installer/src-tauri/gen/`、`.cargo/` | Tauri/Rust 本地生成文件 |
 | `release-installer/` | 本地安装器输出 |
 | `installer/src-tauri/resources/mynx.exe`、`mynx-payload.json` | 从新应用构建产物生成，禁止手工替换 |
-| `*.key`、`*.key.pub`、`.env`、`.env.local` | 签名密钥和环境变量，禁止公开 |
+| `.env.*`（`.env.example`、`.env.*.example` 除外）、`*.key`、`*.p12`、`*.pfx`、`*.jks`、`*.keystore`、私有 `*-private.pem` | 环境变量和签名凭据，禁止公开 |
+| `mynx-installer.exe`、`*.exe.sig`、`*.dmg`、`*.app.tar.gz`、`latest.json` | GitHub Release 页面上传的产物，不属于源码 |
 | `docs/` | 内部文档和计划 |
-| `.claude/`、`.workbuddy/`、`.zcode/`、`.mimosa/` | 本地工具数据 |
+| `.claude/`、`.codex/`、`.workbuddy/`、`.zcode/`、`.mimosa/` | 本地工具数据 |
 | `.visual-output*/`、`tmp-icons/`、`tmp-tools/` | 临时检查和生成文件 |
+| `*.log`、`*.tmp`、`*.bak`、`.DS_Store`、`Thumbs.db` | 日志、临时文件和操作系统元数据 |
 | 已废弃的 `scripts/build-portable.cjs`、`scripts/build-singlefile.cjs` | 不再使用的便携版构建脚本 |
 
 检查忽略规则：

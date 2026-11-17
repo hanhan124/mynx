@@ -6,6 +6,7 @@ import type { CalcResult } from "../../lib/contracts/generated/qpcr/CalcResult.j
 import type { ChartInjectionRequest } from "../../lib/contracts/generated/qpcr/ChartInjectionRequest.js";
 import type { QpcrPlotRunConfig } from "../../lib/contracts/generated/qpcr/QpcrPlotRunConfig.js";
 import type { QpcrPlotRunResult } from "../../lib/contracts/generated/qpcr/QpcrPlotRunResult.js";
+import type { QpcrAuditResult } from "../../lib/contracts/generated/qpcr/QpcrAuditResult.js";
 import type { SheetSnapshot } from "../../lib/contracts/generated/qpcr/SheetSnapshot.js";
 import type { TransformResult } from "../../lib/contracts/generated/qpcr/TransformResult.js";
 import type { WorkbookPatch } from "../../lib/contracts/generated/qpcr/WorkbookPatch.js";
@@ -14,6 +15,7 @@ import type {
   ApplyPatchResult,
   ExtractResult,
   LoadResult,
+  TemplateResult,
   WorkerRequest,
   WorkerResponse,
 } from "./workers/excel.worker.js";
@@ -109,6 +111,11 @@ export function workerApplyPatch(
   return workerCall<ApplyPatchResult>("applyPatch", { bytes, patch });
 }
 
+/** Creates a minimal example workbook in the Excel worker. */
+export function workerCreateImportTemplate(): Promise<TemplateResult> {
+  return workerCall<TemplateResult>("createTemplate", undefined);
+}
+
 /* ---------------------------------------------------------------------------
  * File bytes (plugin-fs; dialog-picked paths are auto-granted)
  * ------------------------------------------------------------------------- */
@@ -143,6 +150,10 @@ export async function listDir(path: string): Promise<DirItem[]> {
 
 export function qpcrTransform(source: SheetSnapshot): Promise<TransformResult> {
   return call("qpcr_transform", { request: { v: QPCR_WIRE_VERSION, source } });
+}
+
+export function qpcrAudit(source: SheetSnapshot, transformed = false): Promise<QpcrAuditResult> {
+  return call("qpcr_audit", { request: { v: QPCR_WIRE_VERSION, source, transformed } });
 }
 
 export function qpcrCalculate(request: CalcRequest): Promise<CalcResult> {

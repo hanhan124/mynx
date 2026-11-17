@@ -92,8 +92,8 @@
 
 <section class="mx-auto flex w-full max-w-[720px] flex-col gap-5 p-6">
   <header class="flex flex-col gap-1">
-    <h1 class="text-[16px] font-semibold">{t("settings.title")}</h1>
-    <p class="text-[12px] text-text-secondary">{t("settings.subtitle")}</p>
+    <h1 class="mynx-page-title">{t("settings.title")}</h1>
+    <p class="text-[13px] text-text-secondary">{t("settings.subtitle")}</p>
   </header>
 
   <fieldset class="mynx-card flex flex-col gap-3 p-4" disabled={saving}>

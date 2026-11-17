@@ -3,7 +3,7 @@
   import { t } from "../app/i18n.svelte";
   import { pushToast } from "../app/state.svelte";
 
-  let { text, label }: { text: string; label?: string } = $props();
+  let { text, label, copyLabel }: { text: string; label?: string; copyLabel?: string } = $props();
 
   const display = $derived(label ?? text);
 
@@ -43,8 +43,8 @@
   <button
     class="mynx-link shrink-0"
     onclick={() => void copy()}
-    aria-label={t("common.copy")}
-    title={t("common.copy")}
+    aria-label={copyLabel ?? t("common.copy")}
+    title={copyLabel ?? t("common.copy")}
     type="button"
   >
     <IconCopy size={14} stroke={1.6} />

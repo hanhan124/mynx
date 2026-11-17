@@ -8,14 +8,18 @@
  * resolved theme ("pearl" | "graphite"), never "system".
  */
 @theme {
-  --color-bg: #f5f6f8;
+  --color-bg: #e9eef4;
   --color-surface: #ffffff;
-  --color-surface-2: #eef0f3;
-  --color-border: #d9dde3;
-  --color-text: #1a2233;
-  --color-text-secondary: #5a6376;
-  --color-accent: #2f6fed;
-  --color-accent-hover: #2758c7;
+  --color-surface-2: #e1e8f0;
+  --color-border: #c5d0dd;
+  --color-text: #172a40;
+  --color-text-secondary: #506278;
+  --color-accent: #256fd1;
+  --color-accent-hover: #1b5db5;
+  --color-nav-bg: #d6e0eb;
+  --color-nav-border: #becbd9;
+  --color-nav-text: #334a63;
+  --color-nav-active: #f8fafc;
   --color-success: #157f3d;
   --color-warning: #b45309;
   --color-danger: #b91c1c;
@@ -25,17 +29,31 @@
 }
 
 [data-theme="graphite"] {
-  --color-bg: #16181d;
-  --color-surface: #1f2229;
-  --color-surface-2: #262a33;
-  --color-border: #333947;
-  --color-text: #e8eaf0;
-  --color-text-secondary: #9aa2b1;
-  --color-accent: #5c8dff;
-  --color-accent-hover: #7ba3ff;
+  --color-bg: #151c26;
+  --color-surface: #1c2735;
+  --color-surface-2: #253345;
+  --color-border: #35465b;
+  --color-text: #edf3fa;
+  --color-text-secondary: #adbdcf;
+  --color-accent: #7eaff7;
+  --color-accent-hover: #a1c5ff;
+  --color-nav-bg: #222f40;
+  --color-nav-border: #374b62;
+  --color-nav-text: #d5e1ee;
+  --color-nav-active: #344b66;
   --color-success: #3fb96f;
   --color-warning: #d97706;
   --color-danger: #ef5350;
+}
+
+html[data-theme="pearl"] {
+  color-scheme: light;
+  accent-color: var(--color-accent);
+}
+
+html[data-theme="graphite"] {
+  color-scheme: dark;
+  accent-color: var(--color-accent);
 }
 
 @layer base {
@@ -100,6 +118,40 @@
 }
 
 @layer components {
+  /* Page hierarchy -------------------------------------------------------- */
+
+  .mynx-page-title {
+    font-size: 20px;
+    line-height: 1.25;
+    font-weight: 650;
+    letter-spacing: -0.025em;
+  }
+
+  .mynx-navrail {
+    background: var(--color-nav-bg);
+    border-color: var(--color-nav-border);
+    color: var(--color-nav-text);
+  }
+
+  .mynx-nav-button {
+    color: var(--color-nav-text);
+  }
+
+  .mynx-nav-button:hover {
+    background: color-mix(in srgb, var(--color-accent) 8%, var(--color-nav-bg));
+    color: var(--color-text);
+  }
+
+  .mynx-nav-button-active {
+    background: var(--color-nav-active);
+    border-color: color-mix(in srgb, var(--color-accent) 25%, var(--color-nav-bg));
+    color: var(--color-accent);
+  }
+
+  .mynx-nav-active-mark {
+    background: var(--color-accent);
+  }
+
   /* Buttons ---------------------------------------------------------------- */
 
   .mynx-btn {
@@ -281,6 +333,21 @@
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 8px;
+  }
+
+  button.mynx-card {
+    transition:
+      background-color 140ms ease,
+      border-color 140ms ease;
+  }
+
+  button.mynx-card:hover:not(:disabled) {
+    background-color: var(--color-surface-2);
+    border-color: var(--color-accent);
+  }
+
+  button.mynx-card:active:not(:disabled) {
+    background-color: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
   }
 
   .mynx-divider {

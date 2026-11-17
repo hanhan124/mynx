@@ -29,7 +29,7 @@
           style="width: min({width}px, calc(100vw - 32px))"
         >
           <div class="flex items-start justify-between gap-2 px-4 pt-4">
-            <Dialog.Title class="text-[14px] font-semibold text-text">{title}</Dialog.Title>
+            <Dialog.Title class="text-[15px] font-semibold text-text">{title}</Dialog.Title>
             <Dialog.Close
               class="mynx-btn !h-7 !w-7 !p-0"
               aria-label={t("common.close")}
@@ -39,7 +39,7 @@
             </Dialog.Close>
           </div>
           {#if description}
-            <Dialog.Description class="px-4 pt-1 text-[12px] text-text-secondary">
+            <Dialog.Description class="px-4 pt-1 text-[13px] text-text-secondary">
               {description}
             </Dialog.Description>
           {:else}
