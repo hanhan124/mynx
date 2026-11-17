@@ -82,6 +82,9 @@ installer/src-tauri/gen/
 # versioned (architecture/protocol/compatibility deliverables)
 /docs/
 
+# Legacy desktop QA report contains workstation paths and test-session details.
+legacy-docs/UI_ACCEPTANCE_REPORT.md
+
 # Workbuddy (local AI agent context)
 .workbuddy/
 .workbuddy-ai/
