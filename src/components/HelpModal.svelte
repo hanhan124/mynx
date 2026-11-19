@@ -3,7 +3,6 @@
   import IconChartHistogram from "@tabler/icons-svelte/icons/chart-histogram";
   import IconDna2 from "@tabler/icons-svelte/icons/dna-2";
   import IconHome from "@tabler/icons-svelte/icons/home";
-  import IconInfoCircle from "@tabler/icons-svelte/icons/info-circle";
   import IconPhoto from "@tabler/icons-svelte/icons/photo";
   import IconSettingsCog from "@tabler/icons-svelte/icons/settings-cog";
   import IconDownload from "@tabler/icons-svelte/icons/download";
@@ -114,13 +113,8 @@
       <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface-2 text-accent">
         <PageIcon size={18} stroke={1.7} aria-hidden="true" />
       </span>
-      <h2 class="min-w-0 text-[15px] font-semibold">{toolName} · {t("help.center.title")}</h2>
+      <h2 class="min-w-0 text-[15px] font-semibold">{toolName}</h2>
     </div>
-
-    <aside class="flex items-start gap-2 rounded-md border border-accent/30 bg-accent/5 p-3">
-      <IconInfoCircle size={17} stroke={1.8} class="mt-0.5 shrink-0 text-accent" aria-hidden="true" />
-      <p class="text-[13px] leading-relaxed text-text-secondary">{t("help.manual.readHint")}</p>
-    </aside>
 
     <section class="flex flex-col gap-1.5">
       <h3 class="text-[13px] font-semibold text-text">{t("help.manual.flow")}</h3>

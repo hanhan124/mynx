@@ -46,7 +46,6 @@
       <img src="/mynx.svg" alt="" class="h-10 w-10" />
       <div class="min-w-0">
         <p class="text-[14px] font-semibold">Mynx</p>
-        <p class="text-[12px] text-text-secondary">{t("about.tagline")}</p>
       </div>
     </div>
 

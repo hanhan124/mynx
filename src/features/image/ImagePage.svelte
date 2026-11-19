@@ -309,7 +309,6 @@
 >
   <header class="flex items-baseline gap-3">
     <h1 class="mynx-page-title">{t("imgconv.title")}</h1>
-    <p class="mynx-truncate text-[13px] text-text-secondary">{t("imgconv.subtitle")}</p>
   </header>
 
   <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-2">

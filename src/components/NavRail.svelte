@@ -44,7 +44,7 @@
 </script>
 
 <nav
-  class="mynx-navrail flex w-[208px] shrink-0 flex-col items-stretch gap-1 border-r px-2.5 py-3 max-[1100px]:w-14 max-[1100px]:px-1.5 max-[1100px]:py-2"
+  class="mynx-navrail flex w-[208px] shrink-0 flex-col items-stretch gap-1 px-2.5 py-3 max-[1100px]:w-14 max-[1100px]:px-1.5 max-[1100px]:py-2"
   aria-label={t("nav.primary")}
 >
   {#each items as item (item.route)}
@@ -69,7 +69,7 @@
           aria-hidden="true"
         ></span>
       {/if}
-      <Icon size={20} stroke={1.6} />
+      <Icon size={20} stroke={1.9} />
       <span class="mynx-nav-label min-w-0 flex-1 truncate text-left text-[13px] max-[1100px]:hidden">{label}</span>
       {#if active}
         <IconCheck size={12} stroke={2.2} class="absolute right-1 bottom-1 text-accent max-[1100px]:block min-[1101px]:hidden" aria-hidden="true" />
@@ -86,7 +86,7 @@
     aria-label={websiteLabel}
     title={`${websiteLabel}: ${MYNX_WEBSITE_URL}`}
   >
-    <IconExternalLink size={20} stroke={1.6} />
+    <IconExternalLink size={20} stroke={1.9} />
     <span class="mynx-nav-label min-w-0 flex-1 truncate text-left text-[13px] max-[1100px]:hidden">{websiteLabel}</span>
   </button>
 
@@ -106,7 +106,7 @@
         aria-hidden="true"
       ></span>
     {/if}
-    <IconSettingsCog size={20} stroke={1.6} />
+    <IconSettingsCog size={20} stroke={1.9} />
     <span class="mynx-nav-label min-w-0 flex-1 truncate text-left text-[13px] max-[1100px]:hidden">{settingsLabel}</span>
     {#if settingsActive}
       <IconCheck size={12} stroke={2.2} class="absolute right-1 bottom-1 text-accent max-[1100px]:block min-[1101px]:hidden" aria-hidden="true" />

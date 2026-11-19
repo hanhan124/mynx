@@ -1,6 +1,7 @@
 import type { TaskRecord } from "../lib/contracts/generated/task/TaskRecord.js";
 import type { LogLevel } from "../lib/contracts/generated/task/LogLevel.js";
 import type { ThemeId } from "../lib/contracts/generated/settings/ThemeId.js";
+import { applyUiStyle, initialUiStyle, type UiStyle } from "./ui-style.svelte";
 import { setAlwaysOnTop, settingsLoad, settingsSave, type AppInfo } from "./tauri.js";
 import { SvelteMap } from "svelte/reactivity";
 
@@ -77,6 +78,8 @@ export interface AppState {
   theme: ThemeId;
   /** Concrete theme applied to `document.documentElement[data-theme]`. */
   resolvedTheme: ResolvedTheme;
+  /** Visual style theme (see `ui-style.svelte.ts`), applied as `data-ui-style`. */
+  uiStyle: UiStyle;
   language: Language;
   /** Task-center records, newest first. */
   tasks: TaskRecord[];
@@ -131,6 +134,7 @@ export const app = $state<AppState>({
   route: "/",
   theme: initialTheme,
   resolvedTheme: resolveTheme(initialTheme),
+  uiStyle: initialUiStyle,
   language: initialLanguage(),
   tasks: [],
   taskDrawerOpen: false,
@@ -150,9 +154,16 @@ export const app = $state<AppState>({
   },
 });
 
-// Apply the persisted theme/language before first paint.
+// Apply the persisted theme/language/style before first paint.
 setDocumentTheme(app.resolvedTheme);
+applyUiStyle(app.uiStyle);
 setDocumentLang(app.language);
+
+/** Set the visual style theme (persisted via the `mynx-ui-style` mirror). */
+export function setUiStyle(style: UiStyle): void {
+  app.uiStyle = style;
+  applyUiStyle(style);
+}
 
 /** Set the theme preference, resolve it, persist the mirror and update `data-theme`. */
 export function applyTheme(preference: ThemeId): void {

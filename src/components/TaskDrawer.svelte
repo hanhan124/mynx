@@ -91,7 +91,6 @@
     {#if app.tasks.length === 0}
       <EmptyState
         title={t("task.empty")}
-        hint={t("task.emptyHint")}
         icon={IconFolderOpen}
       />
     {:else}

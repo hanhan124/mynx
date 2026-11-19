@@ -37,8 +37,14 @@ export const weather = $state<WeatherState>({
 let initialized = false;
 let preferencesTouched = false;
 let requestVersion = 0;
+let lastRequestedLanguage: typeof app.language | null = null;
 export async function loadWeatherSettings(): Promise<void> {
-  if (initialized) return;
+  if (initialized) {
+    if (weather.enabled && lastRequestedLanguage !== app.language) {
+      await locateCurrentWeather();
+    }
+    return;
+  }
   initialized = true;
   try {
     const settings = await client.settingsLoad();
@@ -70,12 +76,14 @@ export async function refreshWeather(): Promise<void> {
 export async function locateCurrentWeather(): Promise<void> {
   if (!weather.enabled) return;
   const version = ++requestVersion;
+  const language = app.language;
+  lastRequestedLanguage = language;
   weather.loading = true;
   weather.city = null;
   weather.current = null;
   try {
-    const language = app.language === "zh" ? "zh-CN" : "en";
-    const response = await fetch(`https://ipwho.is/?lang=${language}`, {
+    const locale = language === "zh" ? "zh-CN" : "en";
+    const response = await fetch(`https://ipwho.is/?lang=${locale}`, {
       signal: AbortSignal.timeout(12_000),
     });
     if (!response.ok) throw new Error(`IP location request failed (${response.status})`);

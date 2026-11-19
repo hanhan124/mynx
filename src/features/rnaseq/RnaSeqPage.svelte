@@ -243,7 +243,6 @@ import { app, pushToast } from "../../app/state.svelte";
 <section class="flex h-full min-h-0 flex-col gap-3 p-4">
   <header class="flex items-baseline gap-3">
     <h1 class="mynx-page-title">{t("rnaseq.title")}</h1>
-    <p class="mynx-truncate text-[13px] text-text-secondary">{t("rnaseq.subtitle")}</p>
     <button
       type="button"
       class="mynx-btn mynx-btn-primary ml-auto shrink-0"

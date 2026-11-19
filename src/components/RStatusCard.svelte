@@ -39,7 +39,7 @@
 
 <section class="mynx-card p-4" aria-label={title}>
   <div class="flex items-center gap-2">
-    <h2 class="flex-1 text-[13px] font-semibold">{title}</h2>
+    <h2 class="flex-1 text-[14px] font-bold tracking-tight">{title}</h2>
     <button
       type="button"
       class="mynx-btn !h-7 !w-7 !p-0"

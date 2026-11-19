@@ -2,12 +2,41 @@
 
 /*
  * Mynx visual system tokens (Svelte 5 + Tailwind 4).
- * Flat surfaces, 1px borders, no gradients, no glass, no decorative shadows.
- * Pearl (light) values are the :root defaults; graphite (dark) overrides live
- * under [data-theme="graphite"]. The theme attribute is always a concrete
- * resolved theme ("pearl" | "graphite"), never "system".
+ *
+ * Two orthogonal dimensions:
+ * - Light/dark MODE: the generated `ThemeId` contract ("pearl" |
+ *   "graphite" | "system"), applied as `document.documentElement[data-theme]`
+ *   with a concrete resolved value ("pearl" | "graphite"), never "system".
+ * - Visual STYLE: one of "liquid-glass" | "minimal-linear" |
+ *   "swiss-editorial" | "memphis-pop" (see `src/app/ui-style.svelte.ts`),
+ *   applied as `document.documentElement[data-ui-style]`.
+ *   Default style is "liquid-glass".
+ *
+ * The @theme block below holds the legacy Pearl values (branding:check
+ * locks them against the installer). Every style x mode combination lives
+ * in the [data-ui-style] override blocks further down; they must come
+ * after the legacy [data-theme="graphite"] fallback block so
+ * equal-specificity rules win. The state module always sets
+ * `data-ui-style` before first paint (default "liquid-glass"), so the
+ * @theme defaults are only a pre-paint fallback.
+ * Style overrides deliberately use gradients / glass / shadows where the
+ * style calls for them (liquid glass, Memphis offset shadows); the old
+ * flat-only rule in docs/UI_SPEC.md is superseded for these themes by the
+ * user's explicit 2026-11-19 request — minimal-linear and swiss-editorial
+ * keep the flat look.
+ *
+ * Persistence note: the style is stored in the `mynx-ui-style`
+ * localStorage mirror (same pattern as the theme/language mirrors). It is
+ * NOT in the SQLite SettingsDoc yet — that needs a Rust-side field
+ * (`ui_style`) + regenerated ts-rs bindings, and there is no cargo
+ * toolchain in this environment; see the TODO in ui-style.svelte.ts.
  */
 @theme {
+  /* Legacy Pearl values (default style, light mode). These MUST stay in
+   * sync with installer/src/styles/global.css — `npm run branding:check`
+   * locks them. The four visual styles override these tokens in the
+   * [data-ui-style] blocks below; liquid-glass is the default style, so
+   * its light values live in `html[data-ui-style="liquid-glass"]`. */
   --color-bg: #e9eef4;
   --color-surface: #ffffff;
   --color-surface-2: #e1e8f0;
@@ -28,6 +57,30 @@
   --font-mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
 }
 
+/* Style-shape variables (plain :root so they are always emitted). */
+:root {
+  --color-on-accent: #ffffff;
+  --mynx-accent-2: #15957e;
+  --mynx-radius-card: 18px;
+  --mynx-radius-btn: 12px;
+  --mynx-radius-input: 12px;
+  --mynx-border-width: 1px;
+  --mynx-shadow-card:
+    0 12px 28px -20px rgba(23, 54, 84, 0.22), 0 2px 6px -4px rgba(23, 54, 84, 0.08);
+  --mynx-shadow-pop:
+    0 18px 36px -22px rgba(23, 54, 84, 0.28), 0 3px 8px -5px rgba(23, 54, 84, 0.11);
+  --mynx-page-bg:
+    radial-gradient(760px 440px at 8% -12%, rgba(186, 204, 220, 0.38), transparent 68%),
+    radial-gradient(720px 440px at 92% 100%, rgba(198, 214, 205, 0.27), transparent 70%),
+    #f3f5f6;
+  --mynx-card-backdrop: blur(14px) saturate(1.08);
+  --mynx-nav-backdrop: blur(16px) saturate(1.08);
+  --mynx-glass-highlight:
+    inset 0 1px 0 rgba(255, 255, 255, 0.58), inset 0 -1px 0 rgba(255, 255, 255, 0.12);
+  --mynx-title-tracking: -0.025em;
+}
+
+/* Legacy fallback: no data-ui-style set (pre-theme installs). */
 [data-theme="graphite"] {
   --color-bg: #151c26;
   --color-surface: #1c2735;
@@ -37,6 +90,7 @@
   --color-text-secondary: #adbdcf;
   --color-accent: #7eaff7;
   --color-accent-hover: #a1c5ff;
+  --color-on-accent: #151c26;
   --color-nav-bg: #222f40;
   --color-nav-border: #374b62;
   --color-nav-text: #d5e1ee;
@@ -44,6 +98,220 @@
   --color-success: #3fb96f;
   --color-warning: #d97706;
   --color-danger: #ef5350;
+}
+
+/* --- Liquid glass, light (default style) --------------------------------- */
+html[data-ui-style="liquid-glass"] {
+  --color-bg: #edf2f3;
+  --color-surface: rgba(255, 255, 255, 0.78);
+  --color-surface-2: rgba(255, 255, 255, 0.55);
+  --color-border: rgba(20, 50, 80, 0.16);
+  --color-text: #14273a;
+  --color-text-secondary: #2e4a63;
+  --color-accent: #1c62ad;
+  --color-accent-hover: #175a9c;
+  --color-nav-bg: #f5f8fb;
+  --color-nav-border: rgba(20, 50, 80, 0.14);
+  --color-nav-text: #2e4a63;
+  --color-nav-active: #e7f0fa;
+  --color-success: #0e7a5f;
+  --color-warning: #96690a;
+  --color-danger: #c0452f;
+  /* Restrained blue-gray and sage glows keep the default canvas calm while
+   * retaining enough contrast for translucent surfaces to read clearly. */
+  --mynx-page-bg:
+    radial-gradient(760px 440px at 8% -12%, rgba(186, 204, 220, 0.38), transparent 68%),
+    radial-gradient(720px 440px at 92% 100%, rgba(198, 214, 205, 0.27), transparent 70%),
+    #f3f5f6;
+}
+
+/* --- Liquid glass, dark -------------------------------------------------- */
+html[data-ui-style="liquid-glass"][data-theme="graphite"] {
+  --color-bg: #0b1219;
+  --color-surface: rgba(21, 34, 48, 0.52);
+  --color-surface-2: rgba(21, 34, 48, 0.34);
+  --color-border: rgba(190, 220, 250, 0.14);
+  --color-text: #e9f2f9;
+  --color-text-secondary: #c3d4e2;
+  --color-accent: #5ea8ec;
+  --color-accent-hover: #7ab8f0;
+  --color-on-accent: #0b1219;
+  --color-nav-bg: #152535;
+  --color-nav-border: rgba(190, 220, 250, 0.12);
+  --color-nav-text: #c3d4e2;
+  --color-nav-active: #20374b;
+  --color-success: #3cc2a6;
+  --color-warning: #e0aa45;
+  --color-danger: #ef8570;
+  --mynx-accent-2: #3cc2a6;
+  --mynx-shadow-card: 0 12px 30px -22px rgba(0, 0, 0, 0.44), 0 2px 6px -5px rgba(0, 0, 0, 0.22);
+  --mynx-shadow-pop: 0 18px 38px -24px rgba(0, 0, 0, 0.52), 0 3px 8px -5px rgba(0, 0, 0, 0.28);
+  --mynx-page-bg:
+    radial-gradient(720px 420px at 10% -10%, rgba(42, 60, 78, 0.43), transparent 68%),
+    radial-gradient(680px 440px at 92% 100%, rgba(41, 61, 54, 0.3), transparent 70%),
+    #10171d;
+}
+
+/* --- Minimal linear, light ---------------------------------------------- */
+html[data-ui-style="minimal-linear"] {
+  --color-bg: #fbfaf7;
+  --color-surface: #ffffff;
+  --color-surface-2: #fdfcfa;
+  --color-border: #e7e2d8;
+  --color-text: #23231f;
+  --color-text-secondary: #5b594f;
+  --color-accent: #5c6e58;
+  --color-accent-hover: #4c5c48;
+  --color-on-accent: #ffffff;
+  --color-nav-bg: #f4f0e8;
+  --color-nav-border: #d9d3c5;
+  --color-nav-text: #5b594f;
+  --color-nav-active: #e9eee6;
+  --color-success: #5c6e58;
+  --color-warning: #7e6a3e;
+  --color-danger: #96584c;
+  --mynx-accent-2: #6e7f6a;
+  --mynx-radius-card: 10px;
+  --mynx-radius-btn: 6px;
+  --mynx-radius-input: 6px;
+  --mynx-border-width: 1px;
+  --mynx-shadow-card: none;
+  --mynx-shadow-pop: 0 8px 24px -12px rgba(35, 35, 31, 0.18);
+  --mynx-page-bg: #fbfaf7;
+  --mynx-card-backdrop: none;
+  --mynx-nav-backdrop: none;
+  --mynx-glass-highlight: none;
+  --mynx-title-tracking: -0.02em;
+}
+
+/* --- Minimal linear, dark ----------------------------------------------- */
+html[data-ui-style="minimal-linear"][data-theme="graphite"] {
+  --color-bg: #161613;
+  --color-surface: #1f1f1c;
+  --color-surface-2: #1b1b18;
+  --color-border: #2e2d28;
+  --color-text: #ece9e0;
+  --color-text-secondary: #b9b5a8;
+  --color-accent: #9db894;
+  --color-accent-hover: #aecba6;
+  --color-on-accent: #161613;
+  --color-nav-bg: #1c1b17;
+  --color-nav-border: #3d3c35;
+  --color-nav-text: #b9b5a8;
+  --color-nav-active: #2a2a24;
+  --color-success: #9db894;
+  --color-warning: #c9ae82;
+  --color-danger: #c98f83;
+  --mynx-page-bg: #161613;
+  --mynx-shadow-pop: 0 8px 24px -12px rgba(0, 0, 0, 0.55);
+}
+
+/* --- Swiss editorial, light --------------------------------------------- */
+html[data-ui-style="swiss-editorial"] {
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f0ea;
+  --color-border: #e4e2da;
+  --color-text: #161613;
+  --color-text-secondary: #55534c;
+  --color-accent: #c2452d;
+  --color-accent-hover: #a93a24;
+  --color-on-accent: #ffffff;
+  --color-nav-bg: #fafaf7;
+  --color-nav-border: #e4e2da;
+  --color-nav-text: #55534c;
+  --color-nav-active: #f8eeeb;
+  --color-success: #5b7a5e;
+  --color-warning: #8a6d1f;
+  --color-danger: #c2452d;
+  --mynx-accent-2: #c2452d;
+  --mynx-radius-card: 0px;
+  --mynx-radius-btn: 0px;
+  --mynx-radius-input: 0px;
+  --mynx-border-width: 1px;
+  --mynx-shadow-card: none;
+  --mynx-shadow-pop: none;
+  --mynx-page-bg: #ffffff;
+  --mynx-card-backdrop: none;
+  --mynx-nav-backdrop: none;
+  --mynx-glass-highlight: none;
+  --mynx-title-tracking: -0.01em;
+}
+
+/* --- Swiss editorial, dark ---------------------------------------------- */
+html[data-ui-style="swiss-editorial"][data-theme="graphite"] {
+  --color-bg: #131311;
+  --color-surface: #1b1b18;
+  --color-surface-2: #23231f;
+  --color-border: #2e2d27;
+  --color-text: #f0efe7;
+  --color-text-secondary: #b9b6aa;
+  --color-accent: #de6b52;
+  --color-accent-hover: #e8836c;
+  --color-on-accent: #131311;
+  --color-nav-bg: #171714;
+  --color-nav-border: #45433a;
+  --color-nav-text: #b9b6aa;
+  --color-nav-active: #32241f;
+  --color-success: #93b497;
+  --color-warning: #c9ae82;
+  --color-danger: #e8836c;
+  --mynx-page-bg: #131311;
+}
+
+/* --- Memphis pop, light -------------------------------------------------- */
+html[data-ui-style="memphis-pop"] {
+  --color-bg: #f4ecdb;
+  --color-surface: #ffffff;
+  --color-surface-2: #fbf7ec;
+  --color-border: #e9dfc8;
+  --color-text: #2e2a23;
+  --color-text-secondary: #5a4f3f;
+  --color-accent: #8a5a12;
+  --color-accent-hover: #744d0f;
+  --color-on-accent: #ffffff;
+  --color-nav-bg: #efe6cf;
+  --color-nav-border: #e9dfc8;
+  --color-nav-text: #5a4f3f;
+  --color-nav-active: #f4e7c8;
+  --color-success: #3f6b47;
+  --color-warning: #8a5a12;
+  --color-danger: #9c3d4e;
+  --mynx-accent-2: #e9a13b;
+  --mynx-radius-card: 14px;
+  --mynx-radius-btn: 10px;
+  --mynx-radius-input: 10px;
+  --mynx-border-width: 2px;
+  --mynx-shadow-card: 5px 5px 0 rgba(46, 42, 35, 0.1);
+  --mynx-shadow-pop: 6px 6px 0 rgba(46, 42, 35, 0.14);
+  --mynx-page-bg: #f4ecdb;
+  --mynx-card-backdrop: none;
+  --mynx-nav-backdrop: none;
+  --mynx-glass-highlight: none;
+  --mynx-title-tracking: -0.02em;
+}
+
+/* --- Memphis pop, dark --------------------------------------------------- */
+html[data-ui-style="memphis-pop"][data-theme="graphite"] {
+  --color-bg: #26211a;
+  --color-surface: #332c22;
+  --color-surface-2: #3a3226;
+  --color-border: #4a4132;
+  --color-text: #f2e9d5;
+  --color-text-secondary: #c9bba0;
+  --color-accent: #f0b95c;
+  --color-accent-hover: #f6cf5f;
+  --color-on-accent: #26211a;
+  --color-nav-bg: #2e2820;
+  --color-nav-border: #4a4132;
+  --color-nav-text: #c9bba0;
+  --color-nav-active: #433725;
+  --color-success: #a9ddbd;
+  --color-warning: #f6cf5f;
+  --color-danger: #f3aebe;
+  --mynx-page-bg: #26211a;
+  --mynx-shadow-card: 5px 5px 0 rgba(0, 0, 0, 0.35);
+  --mynx-shadow-pop: 6px 6px 0 rgba(0, 0, 0, 0.4);
 }
 
 html[data-theme="pearl"] {
@@ -62,8 +330,12 @@ html[data-theme="graphite"] {
     height: 100%;
   }
 
+  html {
+    background: var(--mynx-page-bg);
+  }
+
   body {
-    background: var(--color-bg);
+    background: var(--mynx-page-bg);
     color: var(--color-text);
     font-family: var(--font-sans);
     font-size: 13px;
@@ -73,7 +345,7 @@ html[data-theme="graphite"] {
 
   ::selection {
     background: var(--color-accent);
-    color: #ffffff;
+    color: var(--color-on-accent);
   }
 
   :focus-visible {
@@ -118,23 +390,37 @@ html[data-theme="graphite"] {
 }
 
 @layer components {
+  /* App shell -------------------------------------------------------------- */
+
+  .mynx-app-shell {
+    background: var(--mynx-page-bg);
+  }
+
+  .mynx-titlebar {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   /* Page hierarchy -------------------------------------------------------- */
 
   .mynx-page-title {
     font-size: 20px;
     line-height: 1.25;
     font-weight: 650;
-    letter-spacing: -0.025em;
+    letter-spacing: var(--mynx-title-tracking);
   }
 
   .mynx-navrail {
-    background: var(--color-nav-bg);
-    border-color: var(--color-nav-border);
+    background: transparent;
     color: var(--color-nav-text);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .mynx-nav-button {
     color: var(--color-nav-text);
+    font-weight: 550;
   }
 
   .mynx-nav-button:hover {
@@ -144,8 +430,14 @@ html[data-theme="graphite"] {
 
   .mynx-nav-button-active {
     background: var(--color-nav-active);
-    border-color: color-mix(in srgb, var(--color-accent) 25%, var(--color-nav-bg));
-    color: var(--color-accent);
+    border-color: color-mix(in srgb, var(--color-accent) 24%, var(--color-nav-bg));
+    color: var(--color-text);
+    font-weight: 650;
+  }
+
+  .mynx-nav-button-active .mynx-nav-label {
+    color: var(--color-text);
+    font-weight: 650;
   }
 
   .mynx-nav-active-mark {
@@ -161,8 +453,8 @@ html[data-theme="graphite"] {
     gap: 6px;
     min-height: 28px;
     padding: 0 12px;
-    border-radius: 6px;
-    border: 1px solid var(--color-border);
+    border-radius: var(--mynx-radius-btn);
+    border: var(--mynx-border-width) solid var(--color-border);
     background: var(--color-surface);
     color: var(--color-text);
     font-family: inherit;
@@ -200,7 +492,7 @@ html[data-theme="graphite"] {
   .mynx-btn-primary {
     background: var(--color-accent);
     border-color: var(--color-accent);
-    color: #ffffff;
+    color: var(--color-on-accent);
   }
 
   .mynx-btn-primary:hover:not(:disabled) {
@@ -217,7 +509,22 @@ html[data-theme="graphite"] {
   .mynx-btn-danger:hover:not(:disabled) {
     background: var(--color-danger);
     border-color: var(--color-danger);
-    color: #ffffff;
+    color: var(--color-on-accent);
+  }
+
+  .mynx-btn-ghost {
+    background: transparent;
+    border-color: transparent;
+  }
+
+  .mynx-btn-ghost:hover:not(:disabled) {
+    background: var(--color-surface-2);
+    border-color: transparent;
+  }
+
+  /* Text sitting on an accent background (badge counts, icon tiles). */
+  .mynx-on-accent {
+    color: var(--color-on-accent);
   }
 
   /* Inputs ----------------------------------------------------------------- */
@@ -225,8 +532,8 @@ html[data-theme="graphite"] {
   .mynx-input {
     min-height: 30px;
     padding: 0 8px;
-    border-radius: 6px;
-    border: 1px solid var(--color-border);
+    border-radius: var(--mynx-radius-input);
+    border: var(--mynx-border-width) solid var(--color-border);
     background: var(--color-surface);
     color: var(--color-text);
     font-family: inherit;
@@ -348,8 +655,67 @@ html[data-theme="graphite"] {
 
   .mynx-card {
     background: var(--color-surface);
+    border: var(--mynx-border-width) solid var(--color-border);
+    border-radius: var(--mynx-radius-card);
+    box-shadow: var(--mynx-glass-highlight), var(--mynx-shadow-card);
+    backdrop-filter: var(--mynx-card-backdrop);
+    -webkit-backdrop-filter: var(--mynx-card-backdrop);
+  }
+
+  /* Distinct gradient icon tiles for the four home tools. Each tool keeps
+   * its own accent (teal / blue / violet / amber) so the cards are
+   * distinguishable at a glance; the gradients stay mid-saturation so the
+   * pale palette is not broken. Flat themes override these below. */
+  .mynx-tool-tile {
+    display: flex;
+    height: 44px;
+    width: 44px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    color: #ffffff;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      0 8px 16px -8px rgba(20, 50, 80, 0.45);
+  }
+
+  .mynx-tool-tile--image {
+    background: linear-gradient(135deg, #4f8278, #639187);
+  }
+
+  .mynx-tool-tile--qpcr {
+    background: linear-gradient(135deg, #516f91, #6984a1);
+  }
+
+  .mynx-tool-tile--rnaseq {
+    background: linear-gradient(135deg, #756d91, #877da0);
+  }
+
+  .mynx-tool-tile--charts {
+    background: linear-gradient(135deg, #977150, #aa855e);
+  }
+
+  html[data-ui-style="minimal-linear"] .mynx-tool-tile {
+    background: var(--color-surface-2);
     border: 1px solid var(--color-border);
     border-radius: 8px;
+    color: var(--color-accent);
+    box-shadow: none;
+  }
+
+  html[data-ui-style="swiss-editorial"] .mynx-tool-tile {
+    background: var(--color-surface);
+    border: 1px solid var(--color-text);
+    border-radius: 0;
+    color: var(--color-accent);
+    box-shadow: none;
+  }
+
+  html[data-ui-style="memphis-pop"] .mynx-tool-tile {
+    border: 2px solid #2e2a23;
+    border-radius: 12px;
+    box-shadow: 3px 3px 0 rgba(46, 42, 35, 0.14);
   }
 
   button.mynx-card {

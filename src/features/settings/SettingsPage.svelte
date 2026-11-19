@@ -10,8 +10,10 @@
     applyTheme,
     pushToast,
     setLanguage,
+    setUiStyle,
     type Language,
   } from "../../app/state.svelte";
+  import { type UiStyle } from "../../app/ui-style.svelte";
   import * as client from "../../app/tauri.js";
   import { MYNX_GITHUB_URL, MYNX_WEBSITE_URL } from "../../app/tauri.js";
   import RStatusCard from "../../components/RStatusCard.svelte";
@@ -42,6 +44,39 @@
     { id: "system", nameKey: "theme.system.name", descKey: "theme.system.description" },
     { id: "graphite", nameKey: "theme.graphite.name", descKey: "theme.graphite.description" },
     { id: "pearl", nameKey: "theme.pearl.name", descKey: "theme.pearl.description" },
+  ];
+
+  /** Preview swatches (page / card / accent) per visual style. */
+  const UI_STYLE_OPTIONS: Array<{
+    id: UiStyle;
+    nameKey: string;
+    descKey: string;
+    swatches: [string, string, string];
+  }> = [
+    {
+      id: "liquid-glass",
+      nameKey: "uiStyle.liquid-glass.name",
+      descKey: "uiStyle.liquid-glass.description",
+      swatches: ["#f3f5f6", "#ffffff", "#1c62ad"],
+    },
+    {
+      id: "minimal-linear",
+      nameKey: "uiStyle.minimal-linear.name",
+      descKey: "uiStyle.minimal-linear.description",
+      swatches: ["#fbfaf7", "#f4f0e8", "#6e7f6a"],
+    },
+    {
+      id: "swiss-editorial",
+      nameKey: "uiStyle.swiss-editorial.name",
+      descKey: "uiStyle.swiss-editorial.description",
+      swatches: ["#ffffff", "#f1f0ea", "#c2452d"],
+    },
+    {
+      id: "memphis-pop",
+      nameKey: "uiStyle.memphis-pop.name",
+      descKey: "uiStyle.memphis-pop.description",
+      swatches: ["#f4ecdb", "#ffffff", "#e9a13b"],
+    },
   ];
 
   const LANGUAGE_OPTIONS: Array<{ id: Language; labelKey: string }> = [
@@ -90,6 +125,10 @@
     if (doc) void persist({ ...doc, theme });
   }
 
+  function pickUiStyle(style: UiStyle): void {
+    setUiStyle(style);
+  }
+
   function pickLanguage(language: Language): void {
     setLanguage(language);
     if (doc) void persist({ ...doc, language });
@@ -122,12 +161,10 @@
 <section class="mx-auto flex w-full max-w-[720px] flex-col gap-5 p-6">
   <header class="flex flex-col gap-1">
     <h1 class="mynx-page-title">{t("settings.title")}</h1>
-    <p class="text-[13px] text-text-secondary">{t("settings.subtitle")}</p>
   </header>
 
   <fieldset class="mynx-card flex flex-col gap-3 p-4" disabled={saving}>
     <legend class="px-1 text-[13px] font-semibold">{t("settings.appearance")}</legend>
-    <p class="text-[12px] text-text-secondary">{t("settings.appearance.description")}</p>
 
     <div class="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t("theme.title")}>
       {#each THEME_OPTIONS as option (option.id)}
@@ -144,6 +181,37 @@
           <span class="text-[11px] text-text-secondary">{t(option.descKey)}</span>
         </label>
       {/each}
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <span class="text-[12px] font-medium">{t("uiStyle.title")}</span>
+      <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("uiStyle.title")}>
+        {#each UI_STYLE_OPTIONS as option (option.id)}
+          {@const selected = app.uiStyle === option.id}
+          <label class="mynx-card flex cursor-pointer flex-col gap-1.5 p-3 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent {cardClass(selected)}">
+            <input
+              type="radio"
+              name="mynx-ui-style"
+              class="sr-only"
+              checked={selected}
+              onchange={() => pickUiStyle(option.id)}
+            />
+            <span class="flex items-center gap-1" aria-hidden="true">
+              {#each option.swatches as swatch (swatch)}
+                <span
+                  class="h-4 w-4 rounded-full border border-border"
+                  style="background: {swatch}"
+                ></span>
+              {/each}
+              {#if selected}
+                <IconCheck size={15} stroke={2} class="ml-auto shrink-0 text-accent" aria-hidden="true" />
+              {/if}
+            </span>
+            <span class="text-[12px] font-medium">{t(option.nameKey)}</span>
+            <span class="text-[11px] text-text-secondary">{t(option.descKey)}</span>
+          </label>
+        {/each}
+      </div>
     </div>
 
     <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("settings.language")}>
@@ -168,9 +236,6 @@
     <div class="flex items-center gap-2">
       <span class="flex-1">
         <span class="block text-[12px] font-medium">{t("settings.chartColor")}</span>
-        <span class="block text-[11px] text-text-secondary">
-          {t("settings.chartColor.description")}
-        </span>
       </span>
       <input
         type="color"
@@ -187,9 +252,6 @@
     <div class="flex items-center gap-2">
       <span class="flex-1">
         <span class="block text-[12px] font-medium">{t("settings.alwaysOnTop")}</span>
-        <span class="block text-[11px] text-text-secondary">
-          {t("settings.alwaysOnTop.description")}
-        </span>
       </span>
       <button
         type="button"

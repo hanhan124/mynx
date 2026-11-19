@@ -10,7 +10,6 @@
   import { pushToast } from "../../app/state.svelte";
   import { navigate } from "../../lib/router.svelte";
   import * as client from "../../app/tauri.js";
-  import RStatusCard from "../../components/RStatusCard.svelte";
   import StateBadge from "../../components/StateBadge.svelte";
   import EmptyState from "../../components/EmptyState.svelte";
   import IconAlertTriangle from "@tabler/icons-svelte/icons/alert-triangle";
@@ -26,14 +25,14 @@
     route: string;
     icon: IconComponent;
     titleKey: string;
-    descKey: string;
+    tile: string;
   }
 
   const tools: ToolCard[] = [
-    { route: "/image", icon: IconPhoto, titleKey: "tool.image.title", descKey: "tool.image.description" },
-    { route: "/qpcr", icon: IconChartBar, titleKey: "tool.qpcr.title", descKey: "tool.qpcr.description" },
-    { route: "/rnaseq", icon: IconDna2, titleKey: "tool.rnaseq.title", descKey: "tool.rnaseq.description" },
-    { route: "/charts", icon: IconChartHistogram, titleKey: "tool.charts.title", descKey: "tool.charts.description" },
+    { route: "/image", icon: IconPhoto, titleKey: "tool.image.title", tile: "mynx-tool-tile--image" },
+    { route: "/qpcr", icon: IconChartBar, titleKey: "tool.qpcr.title", tile: "mynx-tool-tile--qpcr" },
+    { route: "/rnaseq", icon: IconDna2, titleKey: "tool.rnaseq.title", tile: "mynx-tool-tile--rnaseq" },
+    { route: "/charts", icon: IconChartHistogram, titleKey: "tool.charts.title", tile: "mynx-tool-tile--charts" },
   ];
 
   let recentTasks = $state<TaskRecord[] | null>(null);
@@ -59,7 +58,6 @@
     return tools.filter(
       (tool) =>
         t(tool.titleKey).toLowerCase().includes(q) ||
-        t(tool.descKey).toLowerCase().includes(q) ||
         tool.route.includes(q),
     );
   });
@@ -137,11 +135,11 @@
   }
 </script>
 
-<section class="mx-auto flex w-full max-w-[1280px] flex-col gap-7 p-4 sm:gap-8 sm:p-6">
+<section class="mx-auto flex w-full max-w-[1280px] flex-col gap-5 p-4 sm:gap-6 sm:p-6">
   <header class="flex flex-wrap items-end justify-between gap-4">
     <div class="flex min-w-0 flex-col gap-1.5">
-      <h1 class="text-[28px] leading-tight font-semibold sm:text-[32px]">{t("app.name")}</h1>
-      <p class="text-[13px] text-text-secondary">{t("about.tagline")}</p>
+      <h1 class="text-[30px] leading-tight font-extrabold tracking-tight sm:text-[36px]">{t("app.name")}</h1>
+      <WeatherWidget />
     </div>
     <search class="flex min-w-0 flex-1 items-center gap-2 md:max-w-[620px]" aria-label={t("home.searchTools")}>
       <label class="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-surface px-3 focus-within:border-accent">
@@ -174,40 +172,48 @@
     </search>
   </header>
 
-  <WeatherWidget />
+  <!-- Compact stats strip from real loaded data (counts only, never invented
+       entries): tools + recent tasks / projects / outputs. -->
+  <div class="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label={t("home.recentActivity")}>
+    {#each [
+      { label: t("home.tools"), value: String(tools.length) },
+      { label: t("home.recentTasks"), value: recentTasks === null ? "—" : String(recentTasks.length) },
+      { label: t("home.projects"), value: recentProjects === null ? "—" : String(recentProjects.length) },
+      { label: t("home.recentOutputs"), value: recentOutputs === null ? "—" : String(recentOutputs.length) },
+    ] as stat (stat.label)}
+      <div class="mynx-card flex items-baseline gap-2 px-4 py-3">
+        <span class="text-[22px] leading-none font-extrabold tabular-nums">{stat.value}</span>
+        <span class="min-w-0 truncate text-[12px] font-medium text-text-secondary">{stat.label}</span>
+      </div>
+    {/each}
+  </div>
 
   <section class="flex flex-col gap-3" aria-label={t("home.toolsHeading")}>
     <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
       <div class="min-w-0">
-        <h2 class="text-[16px] font-semibold">{t("home.toolsHeading")}</h2>
-        <p class="mt-1 text-[12px] text-text-secondary">{t("home.toolsHint")}</p>
+        <h2 class="text-[17px] font-bold">{t("home.toolsHeading")}</h2>
       </div>
     </div>
 
     {#if visibleTools.length === 0}
-      <EmptyState title={t("home.noMatch", { query: toolQuery })} hint={t("home.toolsHint")} icon={IconSearch} />
+      <EmptyState title={t("home.noMatch", { query: toolQuery })} icon={IconSearch} />
     {:else}
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {#each visibleTools as tool (tool.route)}
           {@const ToolIcon = tool.icon}
           <button
             type="button"
-            class="mynx-card group flex min-h-[96px] items-center gap-3 p-3 text-left transition-colors hover:border-accent/60 focus-visible:border-accent sm:gap-4 sm:p-4"
+            class="mynx-card group flex min-h-[72px] items-center gap-3 p-3 text-left transition-colors hover:border-accent/60 focus-visible:border-accent sm:gap-3.5 sm:p-3.5"
             onpointerenter={() => warmTool(tool.route)}
             onfocus={() => warmTool(tool.route)}
             onclick={() => openTool(tool.route)}
             aria-label={`${t(tool.titleKey)} — ${t("home.openTool")}`}
           >
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2 text-accent transition-colors group-hover:border-accent/40 group-hover:bg-accent/10 sm:h-11 sm:w-11">
-              <ToolIcon size={20} stroke={1.7} />
+            <span class="mynx-tool-tile {tool.tile}">
+              <ToolIcon size={21} stroke={2} />
             </span>
-            <span class="min-w-0 flex-1">
-              <span class="block text-[14px] font-semibold">{t(tool.titleKey)}</span>
-              <span class="mt-1 block text-[12px] leading-relaxed text-text-secondary">
-                {t(tool.descKey)}
-              </span>
-            </span>
-            <IconChevronRight size={17} stroke={1.7} class="shrink-0 text-text-secondary transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
+            <span class="mynx-truncate min-w-0 flex-1 text-[14px] font-bold">{t(tool.titleKey)}</span>
+            <IconChevronRight size={17} stroke={2} class="shrink-0 text-text-secondary transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
           </button>
         {/each}
       </div>
@@ -241,8 +247,6 @@
       </ul>
     </section>
   {/if}
-
-  <RStatusCard />
 
   <section class="mynx-card min-w-0 overflow-hidden" aria-label={t("home.recentActivity")}>
     <header class="flex items-center gap-2.5 border-b border-border px-4 py-3 sm:px-5">
@@ -348,4 +352,5 @@
       </section>
     </div>
   </section>
+
 </section>

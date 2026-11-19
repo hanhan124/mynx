@@ -533,7 +533,6 @@
 >
   <header class="flex shrink-0 flex-wrap items-baseline gap-3">
     <h1 class="mynx-page-title">{t("nav.charts")}</h1>
-    <p class="min-w-0 text-[13px] text-text-secondary">{t("charts.pageSubtitle")}</p>
     <div class="flex w-full min-w-0 flex-wrap items-center gap-2 xl:ml-auto xl:w-auto">
       {#if chartState.rFound === false}
         <button type="button" class="mynx-btn mynx-btn-danger" onclick={askInstallR}>
@@ -681,7 +680,7 @@
               : 'border-border'}"
           >
             <span
-              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent text-white"
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent mynx-on-accent"
               aria-hidden="true"
             >
               <IconFileSpreadsheet size={17} stroke={1.75} />

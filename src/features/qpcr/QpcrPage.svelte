@@ -645,7 +645,6 @@
 >
   <header class="flex items-baseline gap-3">
     <h1 class="mynx-page-title">{t("qpcr.title")}</h1>
-    <p class="mynx-truncate text-[13px] text-text-secondary">{t("qpcr.subtitle")}</p>
   </header>
 
   <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[210px_minmax(0,1fr)]">
@@ -664,7 +663,7 @@
           <span
             class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-[11px] {step ===
             item
-              ? 'border-accent bg-accent text-white'
+              ? 'border-accent bg-accent mynx-on-accent'
               : 'border-border bg-surface-2 text-text-secondary'}"
           >
             {item}

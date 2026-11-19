@@ -61,7 +61,7 @@
 </script>
 
 <header
-  class="flex h-10 shrink-0 select-none items-stretch border-b border-border bg-surface"
+  class="mynx-titlebar flex h-10 shrink-0 select-none items-stretch text-text"
 >
   <div
     class="flex min-w-0 flex-1 items-center gap-2 px-3"
@@ -103,7 +103,7 @@
       <IconListCheck size={16} stroke={1.6} />
       {#if runningCount > 0}
         <span
-          class="absolute right-[5px] top-[4px] min-w-[14px] rounded-full bg-accent px-[3px] text-center text-[10px] leading-[14px] text-white"
+          class="absolute right-[5px] top-[4px] min-w-[14px] rounded-full bg-accent px-[3px] text-center text-[10px] leading-[14px] mynx-on-accent"
         >
           {runningCount}
         </span>

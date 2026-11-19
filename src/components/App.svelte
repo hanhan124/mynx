@@ -100,12 +100,12 @@
   });
 </script>
 
-<div class="flex h-screen min-h-0 flex-col bg-bg text-text">
+<div class="mynx-app-shell flex h-screen min-h-0 flex-col text-text">
   <TitleBar />
   <UpdateBanner />
   <div class="flex min-h-0 flex-1">
     <NavRail />
-    <main class="min-w-0 flex-1 overflow-y-auto bg-bg">
+    <main class="min-w-0 flex-1 overflow-y-auto">
       {#if chartsPage}
         {@const CachedChartsPage = chartsPage}
         <div
