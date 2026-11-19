@@ -32,9 +32,12 @@ npm run tauri -- build --no-bundle
 Windows 安装器是独立子项目。完整构建顺序如下：
 
 ```text
-npm ci
+npm ci --legacy-peer-deps
 npm run installer:build
 ```
+
+主应用依赖包含 Tailwind 的可选 WASI bundle；安装时应使用 `--legacy-peer-deps`，让 npm
+按现有 lockfile 安装，不重新解析 bundle 内的 peer dependencies。
 
 `installer:build` 会构建主程序、独立卸载器、同步并校验 payload、构建安装器，最后
 生成发布清单。主应用构建产物位于 `src-tauri/target/`，R 运行资源位于
