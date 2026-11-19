@@ -159,7 +159,6 @@
     "shell:allow-kill",
     "shell:allow-open",
 
-    "store:default",
     "updater:default",
     "os:default",
     "process:allow-restart"

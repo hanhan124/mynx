@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 
 const root = path.join(__dirname, "..");
-const appRoot = path.join(root, "mynx-next", "src-tauri");
+const appRoot = path.join(root, "src-tauri");
 const rRoot = path.join(appRoot, "r");
 const tauriConfig = JSON.parse(
   fs.readFileSync(path.join(appRoot, "tauri.conf.json"), "utf8"),

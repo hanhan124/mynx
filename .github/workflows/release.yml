@@ -69,9 +69,8 @@ jobs:
 
           const versions = [
             ['package.json', version],
-            ['mynx-next/package.json', readJson('mynx-next/package.json').version],
-            ['mynx-next/src-tauri/tauri.conf.json', readJson('mynx-next/src-tauri/tauri.conf.json').version],
-            ['mynx-next/src-tauri/Cargo.toml', readCargoVersion('mynx-next/src-tauri/Cargo.toml')],
+            ['src-tauri/tauri.conf.json', readJson('src-tauri/tauri.conf.json').version],
+            ['src-tauri/Cargo.toml', readCargoVersion('src-tauri/Cargo.toml')],
             ['installer/package.json', readJson('installer/package.json').version],
             ['installer/src-tauri/tauri.conf.json', readJson('installer/src-tauri/tauri.conf.json').version],
             ['installer/src-tauri/Cargo.toml', readCargoVersion('installer/src-tauri/Cargo.toml')],
@@ -121,7 +120,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: |
             package-lock.json
-            mynx-next/package-lock.json
             installer/package-lock.json
 
       - name: Setup Rust
@@ -137,14 +135,11 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: |
-            mynx-next/src-tauri
+            src-tauri
             installer/src-tauri
 
       - name: Install npm dependencies
         run: npm ci
-
-      - name: Install new app dependencies
-        run: npm ci --prefix mynx-next
 
       - name: Verify version and shared contracts
         run: |
@@ -176,12 +171,12 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          npm run tauri --prefix mynx-next -- build --no-bundle
+          npm run tauri -- build --no-bundle
           if ($LASTEXITCODE -ne 0) { throw "main app build failed" }
-          if (-not (Test-Path "mynx-next/src-tauri/target/release/mynx-next.exe")) {
+          if (-not (Test-Path "src-tauri/target/release/mynx-next.exe")) {
             throw "mynx-next.exe not produced"
           }
-          Write-Host "OK: mynx-next.exe ($([math]::Round((Get-Item 'mynx-next/src-tauri/target/release/mynx-next.exe').Length/1MB,1)) MB)"
+          Write-Host "OK: mynx-next.exe ($([math]::Round((Get-Item 'src-tauri/target/release/mynx-next.exe').Length/1MB,1)) MB)"
 
       - name: Build uninstall-only executable (Windows)
         if: runner.os == 'Windows'
@@ -256,14 +251,14 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: '11.0'
         run: |
           set -euo pipefail
-          npm run tauri --prefix mynx-next -- build --target aarch64-apple-darwin --bundles app,dmg
+          npm run tauri -- build --target aarch64-apple-darwin --bundles app,dmg
 
-          app_count=$(find mynx-next/src-tauri/target/aarch64-apple-darwin -name '*.app' -type d | wc -l | tr -d ' ')
+          app_count=$(find src-tauri/target/aarch64-apple-darwin -name '*.app' -type d | wc -l | tr -d ' ')
           if [ "$app_count" -lt 1 ]; then
             echo "macOS .app bundle not produced" >&2
             exit 1
           fi
-          find mynx-next/src-tauri/target/aarch64-apple-darwin -name '*.app' -type d -print
+          find src-tauri/target/aarch64-apple-darwin -name '*.app' -type d -print
 
       - name: Inject fix script into DMG
         if: runner.os == 'macOS'
@@ -275,7 +270,7 @@ jobs:
           chmod +x scripts/fix-damaged.command
 
           # Locate the Tauri-produced DMG (read-only UDZO format).
-          DMG_DIR="mynx-next/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
+          DMG_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
           ORIG_DMG=$(find "$DMG_DIR" -name '*.dmg' -type f | head -1)
           if [ -z "$ORIG_DMG" ]; then
             echo "::error::Original DMG not found for fix script injection" >&2
@@ -374,38 +369,38 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          dmg_count=$(find mynx-next/src-tauri/target -name '*.dmg' -type f | wc -l | tr -d ' ')
-          tgz_count=$(find mynx-next/src-tauri/target -name '*.app.tar.gz' -type f | wc -l | tr -d ' ')
-          sig_count=$(find mynx-next/src-tauri/target -name '*.app.tar.gz.sig' -type f | wc -l | tr -d ' ')
+          dmg_count=$(find src-tauri/target -name '*.dmg' -type f | wc -l | tr -d ' ')
+          tgz_count=$(find src-tauri/target -name '*.app.tar.gz' -type f | wc -l | tr -d ' ')
+          sig_count=$(find src-tauri/target -name '*.app.tar.gz.sig' -type f | wc -l | tr -d ' ')
 
           if [ "$dmg_count" -ne 1 ]; then
             echo "Expected exactly 1 macOS DMG, found $dmg_count" >&2
-            find mynx-next/src-tauri/target -name '*.dmg' -type f -print
+            find src-tauri/target -name '*.dmg' -type f -print
             exit 1
           fi
           if [ "$tgz_count" -ne 1 ]; then
             echo "Expected exactly 1 macOS updater .app.tar.gz, found $tgz_count" >&2
-            find mynx-next/src-tauri/target -name '*.app.tar.gz' -type f -print
+            find src-tauri/target -name '*.app.tar.gz' -type f -print
             exit 1
           fi
           if [ "$sig_count" -ne 1 ]; then
             echo "Expected exactly 1 macOS updater .app.tar.gz.sig, found $sig_count" >&2
-            find mynx-next/src-tauri/target -name '*.app.tar.gz.sig' -type f -print
+            find src-tauri/target -name '*.app.tar.gz.sig' -type f -print
             exit 1
           fi
 
-          sig_path=$(find mynx-next/src-tauri/target -name '*.app.tar.gz.sig' -type f | head -1)
+          sig_path=$(find src-tauri/target -name '*.app.tar.gz.sig' -type f | head -1)
           if [ ! -s "$sig_path" ]; then
             echo "macOS updater signature is empty: $sig_path" >&2
             exit 1
           fi
 
           printf 'macOS DMG:\n'
-          find mynx-next/src-tauri/target -name '*.dmg' -type f -print
+          find src-tauri/target -name '*.dmg' -type f -print
           printf 'macOS updater:\n'
-          find mynx-next/src-tauri/target -name '*.app.tar.gz' -type f -print
+          find src-tauri/target -name '*.app.tar.gz' -type f -print
           printf 'macOS signature:\n'
-          find mynx-next/src-tauri/target -name '*.app.tar.gz.sig' -type f -print
+          find src-tauri/target -name '*.app.tar.gz.sig' -type f -print
 
       - name: Upload macOS artifacts
         if: runner.os == 'macOS'
@@ -413,9 +408,9 @@ jobs:
         with:
           name: macos-assets
           path: |
-            mynx-next/src-tauri/target/**/*.dmg
-            mynx-next/src-tauri/target/**/*.app.tar.gz
-            mynx-next/src-tauri/target/**/*.app.tar.gz.sig
+            src-tauri/target/**/*.dmg
+            src-tauri/target/**/*.app.tar.gz
+            src-tauri/target/**/*.app.tar.gz.sig
           if-no-files-found: error
 
   # ════════════════════════════════════════════════════════════════════════

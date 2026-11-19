@@ -1,7 +1,4 @@
-dist
 src-tauri
+dist
 node_modules
-*.css
-*.svg
-*.png
-*.ico
+src/lib/contracts/generated

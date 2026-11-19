@@ -1,11 +1,11 @@
 {
-  "$schema": "https://raw.githubusercontent.com/nickelpack/tauri/v2/core/tauri-config-schema/schema.json",
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
   "productName": "Mynx",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "identifier": "com.fanguanghan.mynx",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:1421",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
@@ -14,8 +14,8 @@
     "windows": [
       {
         "title": "Mynx",
-        "width": 960,
-        "height": 540,
+        "width": 1280,
+        "height": 800,
         "minWidth": 420,
         "minHeight": 500,
         "resizable": true,
@@ -35,7 +35,7 @@
           "$RESOURCE/**"
         ]
       },
-      "csp": "default-src 'self'; img-src 'self' data: asset: http://asset.localhost https:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; connect-src 'self' ipc: http://ipc.localhost https://github.com https://api.github.com https://release-assets.githubusercontent.com https://objects.githubusercontent.com https://api.open-meteo.com https://api.bigdatacloud.net https://ipwho.is https://ipapi.co http://ip-api.com"
+      "csp": "default-src 'self'; img-src 'self' data: asset: http://asset.localhost blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; connect-src 'self' ipc: http://ipc.localhost https://github.com https://api.github.com https://release-assets.githubusercontent.com https://objects.githubusercontent.com https://api.open-meteo.com https://ipwho.is"
     }
   },
   "bundle": {
@@ -43,9 +43,7 @@
     "targets": [],
     "license": "Apache-2.0",
     "resources": {
-      "r/": "r/",
-      "../LICENSE": "LICENSE",
-      "../THIRD-PARTY-NOTICES.md": "THIRD-PARTY-NOTICES.md"
+      "r/": "r/"
     },
     "createUpdaterArtifacts": true,
     "icon": [

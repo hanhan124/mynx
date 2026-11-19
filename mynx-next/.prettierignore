@@ -1,4 +1,0 @@
-src-tauri
-dist
-node_modules
-src/lib/contracts/generated

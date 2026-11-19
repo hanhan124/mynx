@@ -1,1 +1,0 @@
-render_chart <- function(data, cfg, manifest) { chart_validate_columns(data, list(x = cfg$x, y = cfg$y), c("x", "y")); chart_open_device(cfg$outputPath, cfg$format); treemap::treemap(data, index = cfg$x, vSize = cfg$y, title = cfg$title %||% "矩形树图", palette = "Blues"); grDevices::dev.off(); cfg$outputPath }

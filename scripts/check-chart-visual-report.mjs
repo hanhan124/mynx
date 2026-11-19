@@ -6,7 +6,7 @@ if (!fs.existsSync(reportPath)) {
   process.exit(1);
 }
 const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
-const templateRoot = "mynx-next/src-tauri/r/chart-templates";
+const templateRoot = "src-tauri/r/chart-templates";
 const expected = fs.readdirSync(templateRoot, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .map((entry) => {

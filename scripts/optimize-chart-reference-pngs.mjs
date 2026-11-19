@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { deflateSync, inflateSync } from "node:zlib";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const templateRoot = path.join(root, "mynx-next", "src-tauri", "r", "chart-templates");
+const templateRoot = path.join(root, "src-tauri", "r", "chart-templates");
 const checkOnly = process.argv.includes("--check");
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 

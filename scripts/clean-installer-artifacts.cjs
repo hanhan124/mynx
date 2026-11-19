@@ -1,7 +1,7 @@
 // clean-installer-artifacts.cjs — 每次打包后清理所有中间产物
 // 保留:
 //   - release-installer/mynx-installer.exe + build.json + optional .sig
-//   - mynx-next/src-tauri/target/release/mynx-next.exe ← 主应用 exe(下轮打包的输入)
+//   - src-tauri/target/release/mynx-next.exe ← 主应用 exe(下轮打包的输入)
 //   - installer/src-tauri/resources/mynx.exe(.gz) ← payload 及压缩嵌入资源
 // 删除:
 //   - installer/src-tauri/target/release 下除 mynx-installer.exe 外的所有文件

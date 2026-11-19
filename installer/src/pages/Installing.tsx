@@ -68,9 +68,9 @@ export const Installing: React.FC<Props> = ({ path, options, onDone }) => {
       <div className="progress__icon">
         <Logo size={64} />
       </div>
-      <div className="progress__title">正在安装 Mynx</div>
+      <div className="progress__title" id="install-progress-title">正在安装 Mynx</div>
       <div className="progress__message">{msg}</div>
-      <div className="progress__bar">
+      <div className="progress__bar" role="progressbar" aria-labelledby="install-progress-title" aria-valuenow={pct}>
         <div className="progress__bar-fill" style={{ width: `${pct}%` }} />
       </div>
       <div className="progress__percent">{pct}%</div>

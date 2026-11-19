@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 const inventory = JSON.parse(
   await fs.readFile("docs/chart-gallery-inventory.json", "utf8"),
 );
-const catalog = await fs.readFile("src/lib/charts/catalog.ts", "utf8");
+const catalog = await fs.readFile("src/features/charts/catalog.ts", "utf8");
 const officialCatalog = catalog.split("const legacyChartTemplates", 1)[0];
 const catalogUrls = [...officialCatalog.matchAll(/galleryUrl:\s*"([^"]+)"/g)].map(
   (match) => match[1],

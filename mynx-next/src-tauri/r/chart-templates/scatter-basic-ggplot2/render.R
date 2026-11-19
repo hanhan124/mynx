@@ -1,1 +1,0 @@
-render_chart <- function(data, cfg, manifest) { p <- ggplot2::ggplot(data, ggplot2::aes_string(x = cfg$x, y = cfg$y)) + ggplot2::geom_point(color = cfg$color %||% "#69b3a2", size = 3) + ggplot2::theme_minimal() + ggplot2::labs(title = cfg$title %||% "Basic scatterplot"); chart_open_device(cfg$outputPath, cfg$format); print(p); grDevices::dev.off(); cfg$outputPath }

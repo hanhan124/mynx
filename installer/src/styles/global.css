@@ -1,4 +1,4 @@
-/* Keep these tokens aligned with mynx-next/src/styles/app.css. */
+/* Keep these tokens aligned with src/styles/app.css. */
 :root,
 :root[data-theme="pearl"] {
   color-scheme: light;

@@ -1,0 +1,426 @@
+@import "tailwindcss";
+
+/*
+ * Mynx visual system tokens (Svelte 5 + Tailwind 4).
+ * Flat surfaces, 1px borders, no gradients, no glass, no decorative shadows.
+ * Pearl (light) values are the :root defaults; graphite (dark) overrides live
+ * under [data-theme="graphite"]. The theme attribute is always a concrete
+ * resolved theme ("pearl" | "graphite"), never "system".
+ */
+@theme {
+  --color-bg: #e9eef4;
+  --color-surface: #ffffff;
+  --color-surface-2: #e1e8f0;
+  --color-border: #c5d0dd;
+  --color-text: #172a40;
+  --color-text-secondary: #506278;
+  --color-accent: #256fd1;
+  --color-accent-hover: #1b5db5;
+  --color-nav-bg: #d6e0eb;
+  --color-nav-border: #becbd9;
+  --color-nav-text: #334a63;
+  --color-nav-active: #f8fafc;
+  --color-success: #157f3d;
+  --color-warning: #b45309;
+  --color-danger: #b91c1c;
+
+  --font-sans: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+}
+
+[data-theme="graphite"] {
+  --color-bg: #151c26;
+  --color-surface: #1c2735;
+  --color-surface-2: #253345;
+  --color-border: #35465b;
+  --color-text: #edf3fa;
+  --color-text-secondary: #adbdcf;
+  --color-accent: #7eaff7;
+  --color-accent-hover: #a1c5ff;
+  --color-nav-bg: #222f40;
+  --color-nav-border: #374b62;
+  --color-nav-text: #d5e1ee;
+  --color-nav-active: #344b66;
+  --color-success: #3fb96f;
+  --color-warning: #d97706;
+  --color-danger: #ef5350;
+}
+
+html[data-theme="pearl"] {
+  color-scheme: light;
+  accent-color: var(--color-accent);
+}
+
+html[data-theme="graphite"] {
+  color-scheme: dark;
+  accent-color: var(--color-accent);
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: #ffffff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+
+  /* Thin scrollbars (WebView2/Chromium + Firefox). */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-secondary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Page hierarchy -------------------------------------------------------- */
+
+  .mynx-page-title {
+    font-size: 20px;
+    line-height: 1.25;
+    font-weight: 650;
+    letter-spacing: -0.025em;
+  }
+
+  .mynx-navrail {
+    background: var(--color-nav-bg);
+    border-color: var(--color-nav-border);
+    color: var(--color-nav-text);
+  }
+
+  .mynx-nav-button {
+    color: var(--color-nav-text);
+  }
+
+  .mynx-nav-button:hover {
+    background: color-mix(in srgb, var(--color-accent) 8%, var(--color-nav-bg));
+    color: var(--color-text);
+  }
+
+  .mynx-nav-button-active {
+    background: var(--color-nav-active);
+    border-color: color-mix(in srgb, var(--color-accent) 25%, var(--color-nav-bg));
+    color: var(--color-accent);
+  }
+
+  .mynx-nav-active-mark {
+    background: var(--color-accent);
+  }
+
+  /* Buttons ---------------------------------------------------------------- */
+
+  .mynx-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 28px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease;
+  }
+
+  @media (pointer: coarse) {
+    .mynx-btn {
+      min-height: 44px;
+    }
+  }
+
+  .mynx-btn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+    border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  }
+
+  .mynx-btn:active:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
+  }
+
+  .mynx-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .mynx-btn-primary {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #ffffff;
+  }
+
+  .mynx-btn-primary:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+
+  .mynx-btn-danger {
+    background: var(--color-surface);
+    border-color: color-mix(in srgb, var(--color-danger) 55%, var(--color-border));
+    color: var(--color-danger);
+  }
+
+  .mynx-btn-danger:hover:not(:disabled) {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    color: #ffffff;
+  }
+
+  /* Inputs ----------------------------------------------------------------- */
+
+  .mynx-input {
+    min-height: 30px;
+    padding: 0 8px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 13px;
+    width: 100%;
+    min-width: 0;
+    transition: border-color 160ms ease;
+  }
+
+  @media (pointer: coarse) {
+    .mynx-input {
+      min-height: 44px;
+    }
+  }
+
+  .mynx-input::placeholder {
+    color: var(--color-text-secondary);
+  }
+
+  .mynx-input:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+  }
+
+  .mynx-input:focus {
+    border-color: var(--color-accent);
+  }
+
+  .mynx-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  textarea.mynx-input {
+    height: auto;
+    min-height: 64px;
+    padding: 6px 8px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  .mynx-progress {
+    display: block;
+    width: 100%;
+    height: 6px;
+    appearance: none;
+    border: 0 solid;
+    border-radius: 9999px;
+    background: var(--color-surface-2);
+  }
+
+  .mynx-progress::-webkit-progress-bar {
+    background: transparent;
+  }
+
+  .mynx-progress::-webkit-progress-value {
+    border-radius: 9999px;
+    background: var(--color-accent);
+    transition: inline-size 150ms linear;
+  }
+
+  .mynx-progress::-moz-progress-bar {
+    border-radius: 9999px;
+    background: var(--color-accent);
+    transition: inline-size 150ms linear;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mynx-progress::-webkit-progress-value,
+    .mynx-progress::-moz-progress-bar {
+      transition: none;
+    }
+  }
+
+  /* Badges (task states) --------------------------------------------------- */
+
+  .mynx-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    font-size: 11px;
+    line-height: 16px;
+    white-space: nowrap;
+  }
+
+  .mynx-badge-queued {
+    background: var(--color-surface-2);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+  }
+
+  .mynx-badge-running {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+    color: var(--color-accent);
+  }
+
+  .mynx-badge-success {
+    background: color-mix(in srgb, var(--color-success) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
+    color: var(--color-success);
+  }
+
+  .mynx-badge-error {
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    border-color: color-mix(in srgb, var(--color-danger) 40%, transparent);
+    color: var(--color-danger);
+  }
+
+  .mynx-badge-cancelled {
+    background: var(--color-surface-2);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+  }
+
+  /* Surfaces --------------------------------------------------------------- */
+
+  .mynx-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+  }
+
+  button.mynx-card {
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease;
+  }
+
+  button.mynx-card:hover:not(:disabled) {
+    background-color: var(--color-surface-2);
+    border-color: var(--color-accent);
+  }
+
+  button.mynx-card:active:not(:disabled) {
+    background-color: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+  }
+
+  .mynx-divider {
+    height: 1px;
+    border: none;
+    background: var(--color-border);
+  }
+
+  /* Text ------------------------------------------------------------------- */
+
+  .mynx-mono {
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .mynx-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .mynx-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-2);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    line-height: 16px;
+    white-space: nowrap;
+  }
+
+  .mynx-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--color-accent);
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+  }
+
+  .mynx-link:hover {
+    text-decoration: underline;
+  }
+
+  .mynx-link:disabled {
+    color: var(--color-text-secondary);
+    cursor: not-allowed;
+    text-decoration: none;
+  }
+}

@@ -2,20 +2,18 @@
 
 ## 设计权威
 
-新应用位于 `mynx-next/`，架构权威是 `mynx-next/docs/ARCHITECTURE_NEXT.md`，
-任务协议是 `mynx-next/docs/TASK_PROTOCOL.md`，兼容矩阵是
-`mynx-next/docs/COMPATIBILITY_MATRIX.md`，UI 令牌是
-`mynx-next/docs/UI_SPEC_NEXT.md`，功能保护范围以根目录 `FUNCTION_BASELINE.md`
-为准，发布流程以 `mynx-next/docs/RELEASE_NEXT.md` 为准。
+主应用位于仓库根目录，架构权威是 `docs/ARCHITECTURE.md`，任务协议是
+`docs/TASK_PROTOCOL.md`，兼容矩阵是 `docs/COMPATIBILITY_MATRIX.md`，UI 令牌是
+`docs/UI_SPEC.md`，功能保护范围以根目录 `FUNCTION_BASELINE.md` 为准，发布流程以
+`docs/RELEASE.md` 为准。
 
-旧应用（仓库根目录 `src/` + `src-tauri/`）保留为 legacy reference；
-旧 React/Mantine 规则整理在 `legacy-docs/`（DESIGN.md / UI_AUDIT.md /
-UI_MIGRATION.md / MYNX_UI_SPEC.md），只对 legacy 树有效，不再约束新应用。
+旧 React/Mantine 应用已从主源码树移除；历史设计与迁移记录位于 `legacy-docs/`，
+只供查阅，不约束当前 Svelte 应用。
 
 ## 技术栈
 
-- Tauri 2（=2.11.5，运行时栈版本与 legacy lock 对齐）；Rust workspace 位于
-  `mynx-next/src-tauri`（contracts/jobs/core/image/qpcr/rnaseq/charts）
+- Tauri 2（=2.11.5）；Rust workspace 位于
+  `src-tauri`（contracts/jobs/core/image/qpcr/rnaseq/charts）
 - 前端 Svelte 5（runes 状态）+ TypeScript + Vite 6 + Tailwind CSS 4
 - 无头组件用 Bits UI；图标只用 `@tabler/icons-svelte`（深路径导入）；
   不引入 Lucide、Heroicons 或第二套图标系统
@@ -28,10 +26,10 @@ UI_MIGRATION.md / MYNX_UI_SPEC.md），只对 legacy 树有效，不再约束新
   （Svelte 组件）+ state（`.svelte.ts` runes 模块）
 - Rust 分层：commands（薄适配）→ contracts → jobs → feature crates →
   platform adapters；契约类型定义在 `mynx-contracts`，TS 绑定由 ts-rs 生成
-  到 `mynx-next/src/lib/contracts/generated/`（勿手改；用
-  `TS_RS_EXPORT_DIR=…/mynx-next/src/lib/contracts/generated cargo test -p
+  到 `src/lib/contracts/generated/`（勿手改；用
+  `TS_RS_EXPORT_DIR=…/src/lib/contracts/generated cargo test -p
   mynx-contracts --lib` 重新生成），JSON Schema 由 export_schemas 测试导出到
-  `mynx-next/contracts/`
+  `contracts/`
 - 不在 Rust 与 TypeScript 中复制维护业务类型；前端 contract 类型一律 import
   生成文件
 - 长任务全部注册 `JobManager`（idle/running/success/error/cancelled 状态机、
@@ -47,7 +45,7 @@ UI_MIGRATION.md / MYNX_UI_SPEC.md），只对 legacy 树有效，不再约束新
 - 所有运行任务显示 idle、running、success、error、cancelled 状态
 - 取消必须调用真实取消 API（tasks_cancel / 任务取消钩子），不能卸载组件模拟
 - 长文本、路径、基因名允许省略、换行或复制（.mynx-truncate / CopyableText）
-- 视觉风格遵循 UI_SPEC_NEXT：平面、1px 边框、无渐变/玻璃拟态/装饰阴影
+- 视觉风格遵循 `docs/UI_SPEC.md`：平面、1px 边框、无渐变/玻璃拟态/装饰阴影
 
 ## 核心功能边界
 
@@ -73,14 +71,14 @@ UI 改造不能改变以下内容（详细矩阵见 COMPATIBILITY_MATRIX.md）�
 
 ## 验证要求
 
-提交前按改动范围执行（根级命令已指向 mynx-next）：
+提交前按改动范围执行：
 
 ```text
 npm run build
 npm run typecheck   # svelte-check
 npm run lint
 npm test            # vitest
-npm run test:rust   # cargo test --locked（mynx-next workspace）
+npm run test:rust   # cargo test --locked（src-tauri workspace）
 npm run test:r:engine
 ```
 
@@ -101,7 +99,7 @@ check:release。页面改动至少检查浅色、深色、跟随系统、中文�
 
 ## 审查清单
 
-- 是否只用 Svelte 5 + Mantine-free API（Mantine 禁止出现在 mynx-next）
+- 是否只用 Svelte 5 + Mantine-free API（Mantine 禁止出现在主应用）
 - 是否保留 Tabler Icons（Svelte 版深路径导入）
 - 是否保留路由、配置 key、数据格式和用户文件兼容
 - 是否保留 R/Rust 调用、日志、取消和历史加载

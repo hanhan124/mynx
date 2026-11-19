@@ -78,22 +78,20 @@ sudo codesign --force --deep --sign - /Applications/Mynx.app
 
 环境:Node.js ≥ 22,Rust ≥ 1.77(stable);Windows 构建需 Visual Studio Build Tools(C++ 工作负载),macOS 构建需 Xcode Command Line Tools。
 
-> 2026-11 起主应用迁移至 `mynx-next/`(Tauri 2 + Svelte 5 + Rust workspace)。
-> 根级命令已指向新应用;legacy React/Mantine 应用保留为参照
-> (`npm run legacy:dev` / `legacy:build` 等),发布切换步骤见
-> `mynx-next/docs/RELEASE_NEXT.md`。
+> 主应用使用 Tauri 2 + Svelte 5 + Rust workspace，源码直接位于仓库根目录。
+> 旧 React/Mantine 主应用已移除；Windows 安装器仍作为独立子项目维护。
 
 ```bash
 npm install && cd installer && npm install && cd ..
 
-npm run tauri dev          # 主应用开发模式(mynx-next)
-npm run installer:dev      # 安装器开发模式(legacy 安装器,切换见 RELEASE_NEXT)
+npm run tauri dev          # 主应用开发模式
+npm run installer:dev      # Windows 安装器开发模式
 
 npm run build              # 前端构建(Svelte 5 + Vite)
 npm run typecheck          # svelte-check
 npm run lint               # ESLint(Svelte 5)
 npm test                   # vitest
-npm run test:rust          # cargo test --workspace --locked(mynx-next)
+npm run test:rust          # cargo test --workspace --locked
 npm run test:r:engine      # RNA-seq 引擎契约冒烟测试(需本机 R)
 npm run charts:check       # 图表模板契约检查
 npm run check:release      # 测试套件 + cargo test + 安装器 payload 同步
@@ -104,14 +102,11 @@ npm run version:check && npm run resources:check
 
 ```text
 mynx/
-├── mynx-next/          # 新主应用:Tauri 2 + Svelte 5 + Rust workspace
-│   ├── src/            #   前端(app 壳 / features / 生成的契约类型)
-│   ├── src-tauri/      #   应用 crate + mynx-* 业务 crates + R 引擎(r/)
-│   ├── contracts/      #   JSON Schema(task-event/error/project/result)
-│   └── docs/           #   ARCHITECTURE_NEXT / TASK_PROTOCOL / …
-├── src/                # legacy React 主应用(参照)
-├── src-tauri/          # legacy Rust 后端(参照)
-├── installer/          # Windows 安装器(切换步骤见 RELEASE_NEXT)
+├── src/                # Svelte 5 前端(app 壳 / features / 生成的契约类型)
+├── src-tauri/          # 应用 crate + mynx-* 业务 crates + R 引擎(r/)
+├── contracts/          # JSON Schema(task-event/error/project/result)
+├── docs/               # 架构、任务协议、兼容矩阵、UI 与发布规范
+├── installer/          # Windows 安装器独立子项目
 ├── scripts/            # 版本同步、资源校验与冒烟测试脚本
 ├── tests/r/            # R 引擎数值回归基准
 └── .github/workflows/  # GitHub Actions

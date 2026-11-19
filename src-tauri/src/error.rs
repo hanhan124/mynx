@@ -1,21 +1,9 @@
-use thiserror::Error;
+//! Command-layer error adapter. Services return `MynxError` directly; this
+//! alias exists only for command-adapter readability and re-exposes the
+//! contract error as the command return type.
 
-#[derive(Debug, Error)]
-pub enum CommandError {
-    #[error("Failed to resolve executable path: {0}")]
-    ExePath(String),
-    #[error("Filesystem error: {0}")]
-    Io(String),
-    #[error("Failed to run Tauri application: {0}")]
-    Builder(String),
-    #[error("Network request failed: {0}")]
-    Network(String),
-    #[error("Image error: {0}")]
-    Image(String),
-}
+use mynx_contracts::task::MynxError;
 
-impl serde::Serialize for CommandError {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(self.to_string().as_ref())
-    }
-}
+/// Commands return `Result<T, CommandError>`; `CommandError` serializes as
+/// the structured contract error `{ v, code, message }`.
+pub type CommandError = MynxError;

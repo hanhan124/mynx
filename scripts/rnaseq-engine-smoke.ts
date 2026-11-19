@@ -121,7 +121,7 @@ function runEngine(steps: string[]): { code: number; stdout: string; runDir: str
   const runDir = params.output_dir ?? "";
   const paramsPath = join(work, `params_${params.run_name}.json`);
   writeFileSync(paramsPath, JSON.stringify(params, null, 2), "utf8");
-  const r = spawnSync(rscript, [join("mynx-next", "src-tauri", "r", "rnaseq_engine.R"), paramsPath], {
+  const r = spawnSync(rscript, [join("src-tauri", "r", "rnaseq_engine.R"), paramsPath], {
     cwd: process.cwd(),
     encoding: "utf8",
     timeout: 10 * 60 * 1000,

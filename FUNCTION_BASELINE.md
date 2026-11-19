@@ -6,20 +6,19 @@
 （Mantine 迁移、Svelte 5 + Rust 重建）只能改变展示、布局和非核心交互，
 不得改变本文件中的契约。
 
-基线生成时间为 2026-11-13。当前源码版本为 2.3.9。2026-11-15 起新应用位于
-`mynx-next/`（Svelte 5 + Rust workspace，架构见
-`mynx-next/docs/ARCHITECTURE_NEXT.md`）；根级验证命令已指向新应用，
-legacy 入口保留为 `npm run legacy:*`。
+基线生成时间为 2026-11-13。主应用当前版本为 3.0.1，源码位于仓库根目录
+（Svelte 5 + Rust workspace，架构见 `docs/ARCHITECTURE.md`）。根级命令直接
+运行主应用。
 
 ## 当前自动检查
 
 | 命令 | 覆盖内容 | 当前结果 |
 | --- | --- | --- |
-| `npm run build` | Svelte 5 + Vite production build（mynx-next） | 通过 |
+| `npm run build` | Svelte 5 + Vite production build | 通过 |
 | `npm run typecheck` | svelte-check | 通过，0 errors |
-| `npm run lint` | ESLint（mynx-next） | 通过 |
+| `npm run lint` | ESLint（Svelte 5） | 通过 |
 | `npm test` | vitest（前端契约、状态机、渲染 patch、golden 与竞态断言） | 通过，13 个文件/211 项（2026-11-16） |
-| `npm run test:rust` | cargo test --locked（mynx-next workspace：contracts/jobs/core/image/qpcr/rnaseq/charts） | 通过（2026-11-16） |
+| `npm run test:rust` | cargo test --locked（workspace：contracts/jobs/core/image/qpcr/rnaseq/charts） | 通过（2026-11-16） |
 | `npm run test:r:engine` | RNA-seq R engine full DE/heatmap/plots 和 DE-only | 通过（2026-11-16） |
 | `npm run resources:check` | 主应用与 Windows 安装器 R 资源同步检查 | 通过，351/351（2026-11-16） |
 | `npm run charts:check` | 图表 schema、模板、链接、参考图和字段映射检查 | 通过（2026-11-16） |

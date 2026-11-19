@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
-const templateRoot = path.join(root, "mynx-next", "src-tauri", "r", "chart-templates");
+const templateRoot = path.join(root, "src-tauri", "r", "chart-templates");
 const missing = [];
 const entries = await fs.readdir(templateRoot, { withFileTypes: true });
 const verified = [];

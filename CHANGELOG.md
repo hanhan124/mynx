@@ -1,5 +1,10 @@
 # Mynx 更新日志
 
+## [3.0.2] - 2026-11-19 — 发布构建验证
+
+### 发布
+- 同步主应用、安装器与锁文件版本，并重新验证 Tauri 和 Windows 安装器构建。
+
 ## [3.0.1] - 2026-11-18 — 搜索与隐私改进
 
 ### 首页与隐私
@@ -11,7 +16,7 @@
 - 覆盖 Tauri updater 的 Windows `/P /UPDATE` 静默升级启动参数，保留原安装目录并在升级后启动新版。
 - 更新器继续在启动后自动检查 GitHub 最新发布；此版本用于验证 3.0.0 用户可检测并安装 3.0.1。
 
-## [3.0.0] - 2026-11-17 — 3.0.0 重构（mynx-next）
+## [3.0.0] - 2026-11-17 — 3.0.0 重构（Svelte 5 + Rust workspace）
 
 ### 修复与体验（3.0.0 收尾）
 - 窗口默认尺寸由 960×540 调整为 1280×800：默认打开即触发双列 / 三列布局，各功能页完整显示；最小化尺寸保持 420×500，最大化行为不变。
@@ -24,10 +29,10 @@
 
 ### 架构重写（桌面框架保持 Tauri 2）
 - 前端从 React 18 + Mantine 8 + React Router 完全迁移到 **Svelte 5**（runes 状态）+ **Tailwind CSS 4** + Bits UI + Tabler（Svelte 版）+ TanStack Table/Virtual；新工作台式布局（标题栏 + 导航轨 + 主工作区 + 底部任务抽屉），旧 UI 全部退役（legacy 保留为参照，`npm run legacy:*`）。
-- 业务逻辑全面下沉到 **Rust workspace**（mynx-contracts / jobs / core / image / qpcr / rnaseq / charts）：qPCR 转换与计算、counts 导入规范化、Excel 原生图表 XML 注入、图片转换管线、R 进程编排（Rscript 发现 / 依赖检测 / ASCII 暂存 / 进程树终止）全部在 Rust；契约类型单一来源在 Rust（ts-rs 生成 TS 绑定 + JSON Schema 导出到 `mynx-next/contracts/`）。
+- 业务逻辑全面下沉到 **Rust workspace**（mynx-contracts / jobs / core / image / qpcr / rnaseq / charts）：qPCR 转换与计算、counts 导入规范化、Excel 原生图表 XML 注入、图片转换管线、R 进程编排（Rscript 发现 / 依赖检测 / ASCII 暂存 / 进程树终止）全部在 Rust；契约类型单一来源在 Rust（ts-rs 生成 TS 绑定到 `src/lib/contracts/generated/`，JSON Schema 导出到 `contracts/`）。
 - 任务运行时 `JobManager`：idle/running/success/error/cancelled 状态机、协作取消 + R 进程树硬杀、任务中心实时事件（`mynx://task-changed`）。
 - 持久化迁移到 SQLite（设置沿用 legacy config key：theme / alwaysOnTop / chartColor / chartStudioPresets / imageConverterOptions，启动时从旧 config.json 无损迁移）；任务历史与最近输出目录入库；localStorage 不再承载核心业务。
-- 新应用根目录 `mynx-next/`；根级 dev/build/test/lint/test:rust 命令切换到新应用，legacy 入口保留（`npm run legacy:*`）。
+- 新应用已合并到仓库根目录；根级 dev/build/test/lint/test:rust 命令直接运行 Svelte + Rust workspace。
 
 ### 功能保留
 - qPCR：transform / calculate / 择优重复 / 离群值剔除 / control-relative 与 legacy Excel 输出逐格 golden 对比；原生 Excel 图表 XML 与 legacy 逐字节一致；R 绘图（qpcr_plot_runner.R）参数契约不变。

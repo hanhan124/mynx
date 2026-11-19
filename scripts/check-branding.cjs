@@ -35,11 +35,11 @@ function assetHash(relativePath) {
 }
 
 const canonical = svgPaths(read("public/icon.svg"), "public/icon.svg");
-const appMark = svgPaths(read("mynx-next/public/mynx.svg"), "mynx-next/public/mynx.svg");
+const appMark = svgPaths(read("public/mynx.svg"), "public/mynx.svg");
 const installerMark = installerPaths(read("installer/src/components/Logo.tsx"));
 
 for (const [name, mark] of [
-  ["mynx-next/public/mynx.svg", appMark],
+  ["public/mynx.svg", appMark],
   ["installer/src/components/Logo.tsx", installerMark],
 ]) {
   if (JSON.stringify(mark) !== JSON.stringify(canonical)) {
@@ -72,7 +72,7 @@ function assertTokenParity(name, appTokens, installerTokens, tokenNames) {
   }
 }
 
-const appCss = read("mynx-next/src/styles/app.css");
+const appCss = read("src/styles/app.css");
 const installerCss = read("installer/src/styles/global.css");
 const appLight = cssTokens(block(appCss, /@theme\s*\{([^}]*)\}/, "app @theme"));
 const installerLight = cssTokens(
@@ -100,7 +100,7 @@ assertTokenParity("Pearl theme", appLight, installerLight, [
 ]);
 assertTokenParity("Graphite theme", appDark, installerDark, colorTokens);
 
-const titleBar = read("mynx-next/src/components/TitleBar.svelte");
+const titleBar = read("src/components/TitleBar.svelte");
 if (!/class="[^"]*\bh-10\b/.test(titleBar) || !/class="[^"]*w-\[46px\]/.test(titleBar)) {
   throw new Error("The app title bar must retain its 40px height and 46px window controls");
 }
@@ -111,13 +111,13 @@ if (
   throw new Error("The installer title bar must match the app's 40px height and 46px window controls");
 }
 
-const appConfig = JSON.parse(read("mynx-next/src-tauri/tauri.conf.json"));
+const appConfig = JSON.parse(read("src-tauri/tauri.conf.json"));
 const installerConfig = JSON.parse(read("installer/src-tauri/tauri.conf.json"));
 for (const relativeIcon of ["icons/32x32.png", "icons/128x128.png", "icons/icon.ico"]) {
   if (!appConfig.bundle.icon.includes(relativeIcon) || !installerConfig.bundle.icon.includes(relativeIcon)) {
     throw new Error(`${relativeIcon} must be configured in both desktop bundles`);
   }
-  const appPath = `mynx-next/src-tauri/${relativeIcon}`;
+  const appPath = `src-tauri/${relativeIcon}`;
   const installerPath = `installer/src-tauri/${relativeIcon}`;
   if (assetHash(appPath) !== assetHash(installerPath)) {
     throw new Error(`${appPath} and ${installerPath} differ`);

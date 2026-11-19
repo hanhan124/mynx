@@ -1,6 +1,10 @@
-//! Tauri command adapters. Window-specific orchestration stays here; reusable
-//! URL and network behavior lives in `services`.
+//! Tauri command adapters. Each module wires a feature service into the
+//! typed command surface the Svelte client consumes.
 
-pub(crate) mod app;
-pub(crate) mod image_convert;
-pub(crate) mod weather;
+pub mod app;
+pub mod charts;
+pub mod image;
+pub mod qpcr;
+pub mod r_runtime;
+pub mod rnaseq;
+pub mod settings;

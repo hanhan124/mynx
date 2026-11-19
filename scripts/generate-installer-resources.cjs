@@ -1,11 +1,11 @@
 // Generate installer include_bytes! declarations from the compressed main
-// payload manifest and mynx-next/src-tauri/r. Do not hand-maintain the output.
+// payload manifest and src-tauri/r. Do not hand-maintain the output.
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
 const root = path.join(__dirname, "..");
-const sourceRoot = path.join(root, "mynx-next", "src-tauri", "r");
+const sourceRoot = path.join(root, "src-tauri", "r");
 const output = path.join(root, "installer", "src-tauri", "src", "generated_resources.rs");
 const payloadManifestPath = path.join(root, "installer", "src-tauri", "resources", "mynx-payload.json");
 const payload = JSON.parse(fs.readFileSync(payloadManifestPath, "utf8"));

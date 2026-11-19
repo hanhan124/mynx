@@ -1,38 +1,80 @@
-use std::path::PathBuf;
+//! App-level commands: info, update-artifact cleanup and output-dir opening.
 
 use crate::error::CommandError;
+use mynx_contracts::settings::AppInfo;
+use mynx_contracts::WIRE_VERSION;
+use tauri::Manager;
 
-fn io_err(error: std::io::Error) -> CommandError {
-    CommandError::Io(error.to_string())
+/// Version / executable info for the about dialog.
+#[tauri::command]
+pub async fn app_info() -> Result<AppInfo, CommandError> {
+    Ok(AppInfo {
+        v: WIRE_VERSION,
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        exe_path: std::env::current_exe()
+            .map(|p| p.to_string_lossy().into_owned())
+            .unwrap_or_default(),
+        is_portable: false,
+    })
 }
 
-/// Returns the path to the current executable.
+/// Delete the `.bak` file a previous updater run may have left next to the
+/// executable (Windows: `Mynx.exe.bak`).
 #[tauri::command]
-pub(crate) async fn app_exe_path() -> Result<String, CommandError> {
-    std::env::current_exe()
-        .map(|path| path.to_string_lossy().to_string())
-        .map_err(|error| CommandError::ExePath(error.to_string()))
-}
-
-/// Checks if the app is running from a portable location.
-#[tauri::command]
-pub(crate) async fn is_portable() -> Result<bool, CommandError> {
-    Ok(false)
-}
-
-/// Removes a leftover backup executable from a previous update.
-#[tauri::command]
-pub(crate) async fn cleanup_update_bak() -> Result<(), CommandError> {
-    let current: PathBuf =
-        std::env::current_exe().map_err(|error| CommandError::ExePath(error.to_string()))?;
-
-    #[cfg(windows)]
-    let backup_path = current.with_extension("exe.bak");
-    #[cfg(not(windows))]
-    let backup_path = current.with_extension("bak");
-
-    if backup_path.exists() {
-        tokio::fs::remove_file(&backup_path).await.map_err(io_err)?;
+pub async fn cleanup_update_bak() -> Result<(), CommandError> {
+    let exe = std::env::current_exe().map_err(|e| CommandError::io(e.to_string()))?;
+    let mut bak = exe.clone().into_os_string();
+    bak.push(".bak");
+    if tokio::fs::try_exists(&bak)
+        .await
+        .map_err(|e| CommandError::io(e.to_string()))?
+    {
+        tokio::fs::remove_file(&bak)
+            .await
+            .map_err(|e| CommandError::io(e.to_string()))?;
     }
     Ok(())
+}
+
+/// Open a file or directory with the system default handler (Explorer /
+/// Finder). Used for output directories and result files.
+#[tauri::command]
+pub async fn open_path(path: String) -> Result<bool, CommandError> {
+    if cfg!(target_os = "windows") {
+        let _ = std::process::Command::new("explorer")
+            .arg(&path)
+            .spawn();
+        Ok(true)
+    } else if cfg!(target_os = "macos") {
+        let _ = std::process::Command::new("open")
+            .arg(&path)
+            .spawn();
+        Ok(true)
+    } else {
+        let _ = std::process::Command::new("xdg-open")
+            .arg(&path)
+            .spawn();
+        Ok(true)
+    }
+}
+
+/// Resolve a resource path (`resourceDir()/r/...`) for the R scripts.
+#[tauri::command]
+pub async fn resource_r_path(
+    app: tauri::AppHandle,
+    script: String,
+) -> Result<String, CommandError> {
+    let dir = app
+        .path()
+        .resource_dir()
+        .map_err(|e| CommandError::io(e.to_string()))?;
+    Ok(dir.join("r").join(script).to_string_lossy().into_owned())
+}
+
+/// Current window always-on-top state.
+#[tauri::command]
+pub async fn is_always_on_top(window: tauri::WebviewWindow) -> Result<bool, CommandError> {
+    window
+        .is_always_on_top()
+        .map_err(|e| CommandError::io(e.to_string()))
 }

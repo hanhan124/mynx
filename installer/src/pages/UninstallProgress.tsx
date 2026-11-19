@@ -61,9 +61,9 @@ export const UninstallProgress: React.FC<Props> = ({ onDone }) => {
       <div className="progress__icon">
         <Logo size={72} />
       </div>
-      <div className="progress__title">正在卸载 Mynx</div>
+      <div className="progress__title" id="uninstall-progress-title">正在卸载 Mynx</div>
       <div className="progress__message">{msg}</div>
-      <div className="progress__bar">
+      <div className="progress__bar" role="progressbar" aria-labelledby="uninstall-progress-title" aria-valuenow={pct}>
         <div className="progress__bar-fill" style={{ width: `${pct}%` }} />
       </div>
       <div className="progress__percent">{pct}%</div>

@@ -1,10 +1,8 @@
 // sync-version.cjs — 从根 package.json 同步版本号到所有相关文件
-//   1. src-tauri/Cargo.toml       (主应用 Rust)
-//   2. src-tauri/tauri.conf.json  (主应用 Tauri)
-//   3. installer/Cargo.toml       (installer Rust)
-//   4. installer/package.json     (installer npm)
-//   5. installer/src-tauri/tauri.conf.json  (installer Tauri)
-//   6. npm / Cargo lockfiles（主应用与安装器）
+//   1. package.json              (主应用 npm)
+//   2. src-tauri/Cargo.toml      (主应用 Rust)
+//   3. src-tauri/tauri.conf.json (主应用 Tauri)
+//   4. installer/ 配置与锁文件
 const fs = require("fs");
 const path = require("path");
 
@@ -14,37 +12,23 @@ const ver = pkg.version;
 const checkOnly = process.argv.includes("--check");
 
 const targets = [
-  // 主应用: tauri.conf.json
+  // 主应用
   {
     file: path.join(root, "src-tauri", "tauri.conf.json"),
     type: "json",
     path: ["version"],
   },
-  // 主应用: Cargo.toml
   {
     file: path.join(root, "src-tauri", "Cargo.toml"),
     type: "toml-pkg",
   },
-  // 新应用 (mynx-next): tauri.conf.json
   {
-    file: path.join(root, "mynx-next", "src-tauri", "tauri.conf.json"),
+    file: path.join(root, "package.json"),
     type: "json",
     path: ["version"],
   },
-  // 新应用 (mynx-next): Cargo.toml
   {
-    file: path.join(root, "mynx-next", "src-tauri", "Cargo.toml"),
-    type: "toml-pkg",
-  },
-  // 新应用 (mynx-next): package.json
-  {
-    file: path.join(root, "mynx-next", "package.json"),
-    type: "json",
-    path: ["version"],
-  },
-  // 新应用 (mynx-next): Cargo.lock（工作区根包）
-  {
-    file: path.join(root, "mynx-next", "src-tauri", "Cargo.lock"),
+    file: path.join(root, "src-tauri", "Cargo.lock"),
     type: "toml-lock-pkg",
     packageName: "mynx-next",
   },
@@ -65,24 +49,14 @@ const targets = [
     type: "json",
     path: ["version"],
   },
-  // Both lockfiles also retain the workspace package version. Keeping them in
-  // sync makes `npm ci` reproducible on Windows and macOS release runners.
+  // npm lockfiles also retain the workspace package version.
   {
     file: path.join(root, "package-lock.json"),
     type: "lockfile",
   },
   {
-    file: path.join(root, "mynx-next", "package-lock.json"),
-    type: "lockfile",
-  },
-  {
     file: path.join(root, "installer", "package-lock.json"),
     type: "lockfile",
-  },
-  {
-    file: path.join(root, "src-tauri", "Cargo.lock"),
-    type: "toml-lock-pkg",
-    packageName: "mynx",
   },
   {
     file: path.join(root, "installer", "src-tauri", "Cargo.lock"),

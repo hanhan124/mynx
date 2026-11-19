@@ -1,4 +1,4 @@
-// sync-installer-payload.cjs — 把 mynx-next 编译产物复制到 installer/ 的 resources 目录
+// sync-installer-payload.cjs — 把主程序编译产物复制到 installer/ 的 resources 目录
 // (Tauri 自建安装器通过 include_bytes! 在编译期嵌入这些文件)
 //   1. mynx.exe        原始主程序(校验与安装后还原的输入)
 //   2. mynx.exe.gz     安装器内嵌的 gzip 主程序
@@ -9,7 +9,7 @@ const crypto = require("crypto");
 const zlib = require("zlib");
 
 const ROOT = path.join(__dirname, "..");
-const APP_ROOT = path.join(ROOT, "mynx-next", "src-tauri");
+const APP_ROOT = path.join(ROOT, "src-tauri");
 const TARGET_ROOT = path.join(APP_ROOT, "target");
 const defaultSource = path.join(TARGET_ROOT, "release", "mynx-next.exe");
 const SRC = process.env.MYNX_RELEASE_EXE
@@ -30,12 +30,12 @@ const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"))
 const tauriConfig = JSON.parse(fs.readFileSync(path.join(APP_ROOT, "tauri.conf.json"), "utf8"));
 
 if (pkg.version !== tauriConfig.version) {
-  throw new Error(`版本不一致：package.json=${pkg.version}, mynx-next Tauri=${tauriConfig.version}`);
+  throw new Error(`版本不一致：package.json=${pkg.version}, Tauri=${tauriConfig.version}`);
 }
 
 if (!fs.existsSync(SRC)) {
   console.error(`❌ 找不到 ${SRC}`);
-  console.error("   请先跑: npm run tauri build -- --no-bundle（构建 mynx-next）");
+  console.error("   请先跑: npm run tauri -- build --no-bundle（构建主程序）");
   process.exit(1);
 }
 if (!fs.existsSync(R_SRC)) {
@@ -61,7 +61,7 @@ fs.copyFileSync(SRC, DST);
 const sizeMB = (fs.statSync(DST).size / 1024 / 1024).toFixed(1);
 const sourceHash = crypto.createHash("sha256").update(fs.readFileSync(SRC)).digest("hex");
 const payloadHash = crypto.createHash("sha256").update(fs.readFileSync(DST)).digest("hex");
-if (sourceHash !== payloadHash) throw new Error("安装器 payload 与 mynx-next 构建产物 SHA-256 不一致");
+if (sourceHash !== payloadHash) throw new Error("安装器 payload 与主程序构建产物 SHA-256 不一致");
 const compressedPayload = zlib.gzipSync(fs.readFileSync(DST), {
   level: zlib.constants.Z_BEST_COMPRESSION,
   mtime: 0,
@@ -126,4 +126,4 @@ console.log(`✅ 已复制 ${files.length} 个 R 脚本 → installer/src-tauri/
 // manifest. This catches missing resources and preserves the original EXE size
 // for installer space estimates while embedding the compressed payload.
 require("./generate-installer-resources.cjs");
-console.log("✅ 已从 mynx-next 源目录生成 R_RESOURCES 清单");
+console.log("✅ 已从主程序源目录生成 R_RESOURCES 清单");
