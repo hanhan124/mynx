@@ -1308,6 +1308,16 @@
         "minimum": 0,
         "default": 0
       },
+      "panelWidths": {
+        "description": "User-adjusted widths for the main work-area columns.",
+        "type": "object",
+        "additionalProperties": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "default": {}
+      },
       "imageConverterOptions": {
         "description": "legacy key `imageConverterOptions` (opaque tool options blob)",
         "type": [

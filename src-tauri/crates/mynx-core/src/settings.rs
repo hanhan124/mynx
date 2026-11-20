@@ -127,6 +127,10 @@ impl SettingsStore {
                 .get_raw("homeHeaderHeight")
                 .and_then(|v| serde_json::from_str(&v).ok())
                 .unwrap_or(0),
+            panel_widths: self
+                .get_value("panelWidths")
+                .and_then(|v| serde_json::from_value(v).ok())
+                .unwrap_or_default(),
             image_converter_options: self.get_value("imageConverterOptions"),
             chart_studio_presets: self
                 .get_value("chartStudioPresets")
@@ -151,6 +155,7 @@ impl SettingsStore {
             "homeHeaderHeight",
             &serde_json::to_string(&doc.home_header_height).unwrap(),
         );
+        self.set_raw("panelWidths", &serde_json::to_string(&doc.panel_widths).unwrap());
         if let Some(opts) = &doc.image_converter_options {
             self.set_raw("imageConverterOptions", &serde_json::to_string(opts).unwrap());
         }

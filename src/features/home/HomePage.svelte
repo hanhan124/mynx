@@ -283,17 +283,17 @@
           {@const ToolIcon = tool.icon}
           <button
             type="button"
-            class="mynx-card mynx-home-tool group cursor-pointer flex min-h-[56px] items-center gap-2.5 p-2.5 text-left transition-colors hover:border-accent/60 focus-visible:border-accent sm:min-h-[64px] sm:gap-3 sm:p-3 lg:min-h-[68px]"
+            class="mynx-card mynx-home-tool group cursor-pointer flex min-h-[56px] items-center gap-2.5 p-2.5 text-left sm:min-h-[64px] sm:gap-3 sm:p-3 lg:min-h-[68px]"
             onpointerenter={() => warmTool(tool.route)}
             onfocus={() => warmTool(tool.route)}
             onclick={() => openTool(tool.route)}
             aria-label={`${t(tool.titleKey)} — ${t("home.openTool")}`}
           >
             <span class="mynx-tool-tile {tool.tile}" aria-hidden="true">
-              <ToolIcon size={25} stroke={1.9} />
+              <ToolIcon size={20} stroke={1.85} />
             </span>
             <span class="mynx-truncate min-w-0 flex-1 text-[14px] font-bold">{t(tool.titleKey)}</span>
-            <IconChevronRight size={15} stroke={2} class="shrink-0 text-text-secondary transition-transform group-hover:translate-x-0.5 group-hover:text-accent" aria-hidden="true" />
+            <IconChevronRight size={15} stroke={2} class="shrink-0 text-text-secondary group-hover:text-accent" aria-hidden="true" />
           </button>
         {/each}
       </div>

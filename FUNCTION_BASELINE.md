@@ -67,6 +67,7 @@ control-relative + 错误文案）；Excel 原生图表 XML 与 legacy 输出逐
 - 原文件保存回用户选择的路径
 - 现有受保护工作表保留
 - 生成 `Summary_All_Genes`
+- 用户应用自定义组名后生成或更新 `Group Mapping`，记录原始组名与当前自定义组名；未自定义时不新增该表
 - 按目标基因生成基因工作表
 - 可生成 `Summary_Best_Replicates`
 - 可生成 `Summary_Outlier_Removed`

@@ -15,7 +15,7 @@
       {
         "title": "Mynx",
         "width": 1120,
-        "height": 720,
+        "height": 630,
         "minWidth": 420,
         "minHeight": 500,
         "resizable": true,

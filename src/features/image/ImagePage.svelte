@@ -14,6 +14,8 @@
   import IconTrash from "@tabler/icons-svelte/icons/trash";
   import IconX from "@tabler/icons-svelte/icons/x";
   import { t } from "../../app/i18n.svelte";
+  import { panelWidths, savePanelWidths, setPanelWidth } from "../../app/panel-widths.svelte";
+  import ColumnResizeHandle from "../../components/ColumnResizeHandle.svelte";
   import { openPath } from "../../app/tauri.js";
   import CopyableText from "../../components/CopyableText.svelte";
   import {
@@ -311,7 +313,7 @@
     <h1 class="mynx-page-title">{t("imgconv.title")}</h1>
   </header>
 
-  <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-2">
+  <div class="mynx-resizable-two min-h-0 flex-1" style={`--mynx-first-column: ${panelWidths.imageFiles}px`}>
     <!-- ── Source files ─────────────────────────────────────────────────── -->
     <div class="mynx-card flex min-h-0 flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
@@ -428,6 +430,15 @@
         {/if}
       </div>
     </div>
+
+    <ColumnResizeHandle
+      label={t("layout.resizeColumn")}
+      value={panelWidths.imageFiles}
+      min={220}
+      max={620}
+      onresize={(width) => setPanelWidth("imageFiles", width)}
+      oncommit={savePanelWidths}
+    />
 
     <!-- ── Options ──────────────────────────────────────────────────────── -->
     <div class="mynx-card flex min-h-0 flex-col">

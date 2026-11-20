@@ -10,6 +10,7 @@ import {
   watchSystemTheme,
 } from "./state.svelte";
 import { buildLegacySettings, readLegacyMirrors } from "./migrations.js";
+import { loadPanelWidths } from "./panel-widths.svelte.js";
 import * as client from "./tauri.js";
 
 let bootstrapped = false;
@@ -35,6 +36,7 @@ export async function bootstrap(): Promise<void> {
 
   try {
     const doc = await client.settingsLoad();
+    loadPanelWidths(doc.panelWidths);
     applyTheme(normalizeTheme(doc.theme));
     setLanguage(doc.language === "en" ? "en" : "zh");
     app.alwaysOnTop = doc.alwaysOnTop;

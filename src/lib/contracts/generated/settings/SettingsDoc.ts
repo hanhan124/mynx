@@ -34,6 +34,10 @@ searchEngine: string,
  */
 homeHeaderHeight: number, 
 /**
+ * User-adjusted widths for the main work-area columns.
+ */
+panelWidths: Record<string, number>, 
+/**
  * legacy key `imageConverterOptions` (opaque tool options blob)
  */
 imageConverterOptions: JsonValue | null, 

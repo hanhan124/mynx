@@ -20,12 +20,10 @@
 </script>
 
 <Dialog.Root bind:open>
-  {#if open}
     <Dialog.Portal>
-      <div class="fixed inset-0 z-40">
-        <Dialog.Overlay class="fixed inset-0 bg-black/40" />
+        <Dialog.Overlay class="mynx-modal-scrim fixed inset-0 z-40 bg-black/40" />
         <Dialog.Content
-          class="mynx-card fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden"
+          class="mynx-card mynx-modal-panel fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden"
           style="width: min({width}px, calc(100vw - 32px))"
         >
           <div class="flex items-start justify-between gap-2 px-4 pt-4">
@@ -49,7 +47,5 @@
             {@render children?.()}
           </div>
         </Dialog.Content>
-      </div>
     </Dialog.Portal>
-  {/if}
 </Dialog.Root>

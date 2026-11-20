@@ -23,6 +23,7 @@ import {
 
 /** Solid ARGB fill the calculation pipeline treats as the imputation flag. */
 const YELLOW_FILL_ARGB = "FFFFFF00";
+const GROUP_MAPPING_SHEET = "Group Mapping";
 
 export interface LoadPayload {
   bytes: ArrayBuffer;
@@ -212,6 +213,30 @@ async function handle(
     const workbook = await loadWorkbook(request.payload.bytes);
     const sheet = workbook.getWorksheet(request.payload.sheetName);
     if (!sheet) throw new Error(`worksheet not found: ${request.payload.sheetName}`);
+    const mapping = workbook.getWorksheet(GROUP_MAPPING_SHEET)
+      ?? workbook.addWorksheet(GROUP_MAPPING_SHEET);
+    if (mapping.rowCount === 0) {
+      mapping.addRow(["Original group", "Current custom name"]);
+      mapping.getRow(1).font = { bold: true };
+      mapping.columns = [{ width: 28 }, { width: 32 }];
+      mapping.views = [{ state: "frozen", ySplit: 1 }];
+      mapping.autoFilter = { from: "A1", to: "B1" };
+    }
+
+    const mappedCurrentNames = new Set<string>();
+    for (let row = 2; row <= mapping.rowCount; row += 1) {
+      const original = mapping.getCell(row, 1).value;
+      const current = mapping.getCell(row, 2).value;
+      if (typeof original !== "string" || typeof current !== "string") continue;
+      const next = request.payload.renames[current.trim()];
+      if (next !== undefined) mapping.getCell(row, 2).value = next;
+      mappedCurrentNames.add(current.trim());
+    }
+    for (const [current, next] of Object.entries(request.payload.renames)) {
+      if (!mappedCurrentNames.has(current)) mapping.addRow([current, next]);
+    }
+    mapping.autoFilter = { from: "A1", to: `B${mapping.rowCount}` };
+
     for (let row = 2; row <= sheet.rowCount; row += 1) {
       const cell = sheet.getRow(row).getCell(2);
       if (typeof cell.value !== "string" && typeof cell.value !== "number") continue;

@@ -35,7 +35,7 @@
     {@const level = LEVELS[toast.level]}
     {@const LevelIcon = level.icon}
     <div
-      class="pointer-events-auto mynx-card flex items-start gap-2 border-l-2 p-2.5 {level.border}"
+      class="mynx-toast pointer-events-auto mynx-card flex items-start gap-2 border-l-2 p-2.5 {level.border}"
       role="status"
     >
       <LevelIcon size={16} stroke={1.6} class="shrink-0 {level.text}" />

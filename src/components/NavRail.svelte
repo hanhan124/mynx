@@ -12,6 +12,7 @@
   import { t } from "../app/i18n.svelte";
   import { navigate } from "../lib/router.svelte";
   import * as client from "../app/tauri.js";
+  import { getNavRailWidth } from "../app/panel-widths.svelte";
 
   interface NavItem {
     route: string;
@@ -30,6 +31,8 @@
   const settingsActive = $derived(app.route === "/settings");
   const settingsLabel = $derived(t("nav.settings"));
   let maximized = $state(false);
+  const railWidth = $derived(getNavRailWidth(maximized));
+  const expanded = $derived(railWidth >= 168);
   let unlisten: UnlistenFn | null = null;
 
   onMount(() => {
@@ -59,9 +62,10 @@
 </script>
 
 <nav
-  class="mynx-navrail flex shrink-0 flex-col gap-1.5 px-1.5 py-2 {maximized
-    ? 'w-[208px] items-stretch'
-    : 'w-[72px] items-center'}"
+  class="mynx-navrail flex shrink-0 flex-col gap-1.5 px-1.5 py-2 {expanded
+    ? 'items-stretch'
+    : 'items-center'}"
+  style={`width: ${railWidth}px`}
   aria-label={t("nav.primary")}
 >
   {#each items as item (item.route)}
@@ -70,7 +74,7 @@
     {@const Icon = item.icon}
     <button
       type="button"
-      class="mynx-nav-button cursor-pointer relative flex h-11 items-center rounded-xl border border-transparent {maximized
+      class="mynx-nav-button cursor-pointer relative flex h-11 items-center rounded-xl border border-transparent {expanded
         ? 'w-full justify-start gap-3 px-3'
         : 'w-11 justify-center'} {active
         ? 'mynx-nav-button-active'
@@ -86,7 +90,7 @@
         <span class="mynx-nav-active-mark absolute left-0 top-2 bottom-2 w-[3px] rounded-full" aria-hidden="true"></span>
       {/if}
       <span class="shrink-0" aria-hidden="true"><Icon size={18} stroke={1.9} /></span>
-      {#if maximized}
+      {#if expanded}
         <span class="mynx-nav-label min-w-0 flex-1 truncate text-left text-[13px]">{label}</span>
       {/if}
     </button>
@@ -97,7 +101,7 @@
   <div class="mynx-nav-utilities mt-2 flex w-full flex-col items-center gap-1 border-t border-nav-border pt-3">
     <button
       type="button"
-      class="mynx-nav-button cursor-pointer relative flex h-11 items-center rounded-xl border border-transparent {maximized
+      class="mynx-nav-button cursor-pointer relative flex h-11 items-center rounded-xl border border-transparent {expanded
         ? 'w-full justify-start gap-3 px-3'
         : 'w-11 justify-center'} {settingsActive
         ? 'mynx-nav-button-active'
@@ -111,7 +115,7 @@
         <span class="mynx-nav-active-mark absolute left-0 top-2 bottom-2 w-[3px] rounded-full" aria-hidden="true"></span>
       {/if}
       <IconSettingsCog size={18} stroke={1.9} aria-hidden="true" />
-      {#if maximized}
+      {#if expanded}
         <span class="mynx-nav-label min-w-0 flex-1 truncate text-left text-[13px]">{settingsLabel}</span>
       {/if}
     </button>

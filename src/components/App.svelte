@@ -9,8 +9,11 @@
     recordChartNavigationStage,
   } from "../lib/chart-navigation-timings.js";
   import { t } from "../app/i18n.svelte";
+  import * as client from "../app/tauri.js";
   import TitleBar from "./TitleBar.svelte";
   import NavRail from "./NavRail.svelte";
+  import ColumnResizeHandle from "./ColumnResizeHandle.svelte";
+  import { getNavRailWidth, savePanelWidths, setPanelWidth } from "../app/panel-widths.svelte";
   import TaskDrawer from "./TaskDrawer.svelte";
   import ToastStack from "./ToastStack.svelte";
   import HelpModal from "./HelpModal.svelte";
@@ -31,6 +34,23 @@
   let loadedRoute = $state<string | null>(null);
   let pageLoadFailed = $state(false);
   let retrySequence = $state(0);
+  let windowMaximized = $state(false);
+  const sidebarWidth = $derived(getNavRailWidth(windowMaximized));
+
+  onMount(() => {
+    let unlisten: (() => void) | null = null;
+    void (async () => {
+      try {
+        windowMaximized = await client.isMaximized();
+      } catch {
+        /* headless/test environment */
+      }
+      unlisten = await client.onWindowResized(() => {
+        void client.isMaximized().then((value) => (windowMaximized = value)).catch(() => {});
+      });
+    })();
+    return () => unlisten?.();
+  });
 
   $effect(() => {
     const route = app.route;
@@ -100,12 +120,24 @@
   });
 </script>
 
-<div class="mynx-app-shell flex h-screen min-h-0 flex-col text-text {app.route === '/' ? 'mynx-app-shell--home' : ''}">
+<div
+  class="mynx-app-shell flex h-screen min-h-0 flex-col text-text {app.route === '/' ? 'mynx-app-shell--home' : ''}"
+  style={`--mynx-nav-rail-width: ${sidebarWidth}px`}
+>
   <TitleBar />
   <UpdateBanner />
   <div class="flex min-h-0 flex-1">
     <NavRail />
-    <main class="min-w-0 flex-1 overflow-y-auto">
+    <ColumnResizeHandle
+      label={t("layout.resizeSidebar")}
+      value={sidebarWidth}
+      min={64}
+      max={280}
+      alwaysVisible
+      onresize={(width) => setPanelWidth("navRail", width)}
+      oncommit={savePanelWidths}
+    />
+    <main class="mynx-workspace min-w-0 flex-1 overflow-y-auto">
       {#if chartsPage}
         {@const CachedChartsPage = chartsPage}
         <div

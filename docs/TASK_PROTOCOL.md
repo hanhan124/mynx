@@ -64,6 +64,8 @@ ok, failed, totalInput, totalOutput, watermarkApplied }`。
 qPCR Excel 流程：前端 ExcelJS 兼容 worker 提取 SheetSnapshot（值 + 黄色填补
 标记）→ Rust 计算返回 WorkbookPatch → worker 哑渲染写回并保存。数学与输出
 结构 100% 来自 Rust（golden fixture 对比锁定行为）。
+自定义组名由 worker 写回 `Transformed Data`；同时创建或更新 `Group Mapping`
+工作表记录原始组名与当前自定义组名，不改变计算读取的 `Transformed Data` 列结构。
 
 ### RNA-seq
 | 命令 | 说明 |

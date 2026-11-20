@@ -20,8 +20,8 @@
  * `data-ui-style` before first paint (default "minimal-linear"), so the
  * @theme defaults are only a pre-paint fallback.
  * Theme variants change color and shape. The home launcher uses a quiet,
- * animated gradient behind the shell; controls and cards remain flat.
- * Do not add glass blur or decorative shadows.
+ * animated gradient behind the shell. The default macOS-inspired style uses
+ * translucency only on title/navigation bars; cards stay opaque for clarity.
  *
  * Persistence note: the style is stored in the `mynx-ui-style`
  * localStorage mirror (same pattern as the theme/language mirrors). It is
@@ -69,6 +69,11 @@
   --mynx-nav-backdrop: none;
   --mynx-glass-highlight: none;
   --mynx-title-tracking: -0.025em;
+  --mynx-motion-quick: 120ms;
+  --mynx-motion-control: 180ms;
+  --mynx-motion-panel: 280ms;
+  --mynx-ease-settle: cubic-bezier(0.2, 0.75, 0.25, 1);
+  --mynx-ease-exit: cubic-bezier(0.4, 0, 1, 1);
 }
 
 /* Legacy fallback: no data-ui-style set (pre-theme installs). */
@@ -145,55 +150,57 @@ html[data-ui-style="liquid-glass"][data-theme="graphite"] {
 
 /* --- Minimal linear, light (macOS-inspired default) -------------------- */
 html[data-ui-style="minimal-linear"] {
-  --color-bg: #f1f2f4;
+  --color-bg: #f5f5f7;
   --color-surface: #ffffff;
-  --color-surface-2: #e9edf2;
-  --color-border: #dedfe2;
-  --color-text: #242629;
-  --color-text-secondary: #676b70;
-  --color-accent: #1683ff;
-  --color-accent-hover: #0874ec;
+  --color-surface-2: #f2f2f7;
+  --color-border: #d6d6dc;
+  --color-text: #1d1d1f;
+  --color-text-secondary: #6e6e73;
+  --color-accent: #0069d6;
+  --color-accent-hover: #005cbd;
   --color-on-accent: #ffffff;
-  --color-nav-bg: #f1f2f4;
-  --color-nav-border: #f1f2f4;
-  --color-nav-text: #52565b;
-  --color-nav-active: #dce9f8;
-  --color-success: #258b55;
-  --color-warning: #ad7016;
-  --color-danger: #c94242;
-  --mynx-accent-2: #7259d6;
+  --color-nav-bg: #f5f5f7;
+  --color-nav-border: #f5f5f7;
+  --color-nav-text: #48484a;
+  --color-nav-active: #e7f1ff;
+  --color-success: #248a3d;
+  --color-warning: #a85d00;
+  --color-danger: #d70015;
+  --mynx-accent-2: #8b72e8;
   --mynx-radius-card: 20px;
   --mynx-radius-btn: 10px;
   --mynx-radius-input: 14px;
   --mynx-border-width: 1px;
   --mynx-shadow-card: none;
   --mynx-shadow-pop: none;
-  --mynx-page-bg: #f1f2f4;
+  --mynx-page-bg: #f5f5f7;
   --mynx-card-backdrop: none;
-  --mynx-nav-backdrop: none;
+  --mynx-nav-backdrop: saturate(160%) blur(18px);
   --mynx-glass-highlight: none;
   --mynx-title-tracking: -0.02em;
 }
 
 /* --- Minimal linear, dark ----------------------------------------------- */
 html[data-ui-style="minimal-linear"][data-theme="graphite"] {
-  --color-bg: #161613;
-  --color-surface: #1f1f1c;
-  --color-surface-2: #1b1b18;
-  --color-border: #2e2d28;
-  --color-text: #ece9e0;
-  --color-text-secondary: #b9b5a8;
-  --color-accent: #78b6ff;
-  --color-accent-hover: #9ac8ff;
-  --color-on-accent: #161613;
-  --color-nav-bg: #1c1b17;
-  --color-nav-border: #3d3c35;
-  --color-nav-text: #b9b5a8;
-  --color-nav-active: #253a50;
-  --color-success: #9db894;
-  --color-warning: #c9ae82;
-  --color-danger: #c98f83;
-  --mynx-page-bg: #171b20;
+  --color-bg: #1c1c1e;
+  --color-surface: #2c2c2e;
+  --color-surface-2: #3a3a3c;
+  --color-border: #48484a;
+  --color-text: #f5f5f7;
+  --color-text-secondary: #aeaeb2;
+  --color-accent: #69afff;
+  --color-accent-hover: #89c0ff;
+  --color-on-accent: #101722;
+  --color-nav-bg: #1c1c1e;
+  --color-nav-border: #38383a;
+  --color-nav-text: #d1d1d6;
+  --color-nav-active: #263a50;
+  --color-success: #30d158;
+  --color-warning: #ff9f0a;
+  --color-danger: #ff453a;
+  --mynx-accent-2: #bf5af2;
+  --mynx-page-bg: #1c1c1e;
+  --mynx-nav-backdrop: saturate(160%) blur(18px);
   --mynx-shadow-card: none;
   --mynx-shadow-pop: none;
 }
@@ -369,16 +376,6 @@ html[data-theme="graphite"] {
     background: var(--color-text-secondary);
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      transition-duration: 0.01ms !important;
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      scroll-behavior: auto !important;
-    }
-  }
 }
 
 @layer components {
@@ -407,17 +404,15 @@ html[data-theme="graphite"] {
 
   .mynx-app-shell--home::before {
     background:
-      radial-gradient(ellipse 46% 42% at 18% 20%, color-mix(in oklab, var(--color-accent) 19%, transparent), transparent 76%),
-      radial-gradient(ellipse 48% 42% at 78% 18%, color-mix(in oklab, var(--color-success) 19%, transparent), transparent 76%),
-      radial-gradient(ellipse 48% 44% at 82% 76%, color-mix(in oklab, var(--mynx-accent-2) 17%, transparent), transparent 78%),
-      radial-gradient(ellipse 48% 44% at 16% 82%, color-mix(in oklab, var(--color-warning) 17%, transparent), transparent 78%);
+      radial-gradient(ellipse 48% 44% at 18% 18%, color-mix(in oklab, var(--color-accent) 14%, transparent), transparent 76%),
+      radial-gradient(ellipse 50% 46% at 82% 24%, color-mix(in oklab, var(--mynx-accent-2) 12%, transparent), transparent 78%),
+      radial-gradient(ellipse 52% 44% at 68% 84%, color-mix(in oklab, var(--color-accent) 8%, transparent), transparent 80%);
     animation: mynx-home-gradient-flow 16s ease-in-out infinite alternate;
   }
 
   .mynx-app-shell--home::after {
     background:
-      radial-gradient(ellipse 43% 38% at 52% 12%, color-mix(in oklab, var(--mynx-accent-2) 12%, transparent), transparent 80%),
-      radial-gradient(ellipse 44% 38% at 54% 88%, color-mix(in oklab, var(--color-danger) 13%, transparent), transparent 80%);
+      radial-gradient(ellipse 48% 40% at 54% 10%, color-mix(in oklab, var(--mynx-accent-2) 7%, transparent), transparent 82%);
     animation: mynx-home-gradient-flow-reverse 22s ease-in-out infinite alternate;
   }
 
@@ -445,10 +440,10 @@ html[data-theme="graphite"] {
   }
 
   .mynx-titlebar {
-    background: var(--mynx-page-bg);
+    background: color-mix(in srgb, var(--mynx-page-bg) 76%, transparent);
     border-bottom: 0;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    backdrop-filter: var(--mynx-nav-backdrop);
+    -webkit-backdrop-filter: var(--mynx-nav-backdrop);
   }
 
   /* Page hierarchy -------------------------------------------------------- */
@@ -461,11 +456,28 @@ html[data-theme="graphite"] {
   }
 
   .mynx-navrail {
-    background: var(--mynx-page-bg);
+    background: color-mix(in srgb, var(--mynx-page-bg) 76%, transparent);
     border-right: 0;
     color: var(--color-nav-text);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    backdrop-filter: var(--mynx-nav-backdrop);
+    -webkit-backdrop-filter: var(--mynx-nav-backdrop);
+  }
+
+  .mynx-task-drawer {
+    inset-inline-start: calc(var(--mynx-nav-rail-width, 208px) + 28px + 1rem);
+    inset-inline-end: 1rem;
+    block-size: min(17.5rem, 42dvh);
+    min-block-size: min(9rem, 30dvh);
+    overflow: clip;
+    box-shadow: 0 -2px 6px rgb(0 0 0 / 6%), 0 -12px 28px rgb(0 0 0 / 12%);
+  }
+
+  .mynx-task-drawer-open {
+    box-shadow: 0 -2px 6px rgb(0 0 0 / 9%), 0 -12px 30px rgb(0 0 0 / 18%);
+  }
+
+  .mynx-task-drawer-closed {
+    box-shadow: none;
   }
 
   .mynx-nav-button {
@@ -712,7 +724,7 @@ html[data-theme="graphite"] {
     -webkit-backdrop-filter: var(--mynx-card-backdrop);
   }
 
-  /* Flat, solid icon tiles distinguish the four home tools. */
+  /* Muted system hues give each tool a clear identity without loud color blocks. */
   .mynx-tool-tile {
     display: flex;
     height: 44px;
@@ -720,51 +732,47 @@ html[data-theme="graphite"] {
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
+    border: 1px solid color-mix(in srgb, var(--tool-color) 22%, var(--color-surface));
     border-radius: 12px;
-    color: #ffffff;
-    border: 0;
-  }
-
-  .mynx-tool-tile--image {
-    background: #2dc45b;
-  }
-
-  .mynx-tool-tile--qpcr {
-    background: #087fff;
-  }
-
-  .mynx-tool-tile--rnaseq {
-    background: #ad4cdd;
+    background: color-mix(in srgb, var(--tool-color) 15%, var(--color-surface));
+    color: var(--tool-color);
+    box-shadow: none;
+    transition:
+      background-color 220ms ease,
+      border-color 220ms ease,
+      transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .mynx-tool-tile--charts {
-    background: #ff9a08;
+    --tool-color: #843bbe;
   }
 
-  html[data-ui-style="minimal-linear"] .mynx-tool-tile {
-    border: none;
-    border-radius: 16px;
-    box-shadow: none;
+  .mynx-tool-tile--qpcr {
+    --tool-color: #096acb;
   }
 
-  html[data-ui-style="minimal-linear"] .mynx-tool-tile--image {
-    background: #2dc45b;
-    color: #fff;
+  .mynx-tool-tile--image {
+    --tool-color: #227745;
   }
 
-  html[data-ui-style="minimal-linear"] .mynx-tool-tile--qpcr {
-    background: #087fff;
-    color: #fff;
+  .mynx-tool-tile--rnaseq {
+    --tool-color: #9d5908;
   }
 
-  html[data-ui-style="minimal-linear"] .mynx-tool-tile--rnaseq {
-    background: #ad4cdd;
-    color: #fff;
+  html[data-theme="graphite"] .mynx-tool-tile--charts {
+    --tool-color: #d59afa;
   }
 
-  html[data-ui-style="minimal-linear"] .mynx-tool-tile--charts {
-    background: #ff9a08;
-    color: #fff;
+  html[data-theme="graphite"] .mynx-tool-tile--qpcr {
+    --tool-color: #79b6ff;
+  }
+
+  html[data-theme="graphite"] .mynx-tool-tile--image {
+    --tool-color: #30d158;
+  }
+
+  html[data-theme="graphite"] .mynx-tool-tile--rnaseq {
+    --tool-color: #ff9f0a;
   }
 
   .mynx-home-search {
@@ -1085,6 +1093,90 @@ html[data-theme="graphite"] {
     outline: none;
   }
 
+  .mynx-resizable-two {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 1024px) {
+    .mynx-resizable-two {
+      grid-template-columns: minmax(180px, var(--mynx-first-column, 240px)) 28px minmax(0, 1fr);
+      gap: 0;
+    }
+
+    .mynx-resizable-two > .mynx-column-resizer {
+      display: block;
+    }
+  }
+
+  .mynx-resizable-three {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 1280px) {
+    .mynx-resizable-three {
+      grid-template-columns:
+        minmax(220px, var(--mynx-first-column, 280px)) 28px
+        minmax(320px, 1fr) 28px
+        minmax(240px, var(--mynx-third-column, 340px));
+      gap: 0;
+    }
+
+    .mynx-resizable-three > .mynx-column-resizer {
+      display: block;
+    }
+  }
+
+  .mynx-column-resizer {
+    display: none;
+    position: relative;
+    min-inline-size: 24px;
+    cursor: col-resize;
+    touch-action: pan-y;
+    user-select: none;
+    outline: none;
+  }
+
+  .mynx-column-resizer--always {
+    display: block;
+    flex: 0 0 28px;
+  }
+
+  .mynx-column-resizer::before {
+    position: absolute;
+    inset-block: 0.5rem;
+    inset-inline-start: 50%;
+    width: 1px;
+    background: color-mix(in srgb, var(--color-border) 75%, transparent);
+    content: "";
+    transform: translateX(-50%);
+    transition: background-color 120ms ease;
+  }
+
+  .mynx-column-resizer:hover::before,
+  .mynx-column-resizer:focus-visible::before {
+    background: var(--color-accent);
+  }
+
+  .mynx-column-resizer:focus-visible {
+    border-radius: 4px;
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+
+  @media (forced-colors: active) {
+    .mynx-column-resizer::before {
+      background: CanvasText;
+    }
+
+    .mynx-column-resizer:focus-visible {
+      outline-color: Highlight;
+    }
+  }
+
   .mynx-home > header {
     flex: 0 0 var(--mynx-home-header-height, 192px);
     min-height: 128px;
@@ -1127,24 +1219,11 @@ html[data-theme="graphite"] {
     box-shadow: none;
   }
 
-  html[data-ui-style="swiss-editorial"] .mynx-tool-tile {
-    background: var(--color-surface);
-    border: 1px solid var(--color-text);
-    border-radius: 0;
-    color: var(--color-accent);
-    box-shadow: none;
-  }
-
-  html[data-ui-style="memphis-pop"] .mynx-tool-tile {
-    border: 2px solid #2e2a23;
-    border-radius: 12px;
-    box-shadow: none;
-  }
-
   button.mynx-card {
     transition:
       background-color 160ms ease,
-      border-color 160ms ease;
+      border-color 160ms ease,
+      transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   button.mynx-card:hover:not(:disabled) {
@@ -1154,6 +1233,31 @@ html[data-theme="graphite"] {
 
   button.mynx-card:active:not(:disabled) {
     background-color: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+  }
+
+  button.mynx-home-tool:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  button.mynx-home-tool:hover:not(:disabled) .mynx-tool-tile {
+    transform: scale(1.06);
+  }
+
+  button.mynx-home-tool:active:not(:disabled) {
+    transform: scale(0.99);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button.mynx-card,
+    .mynx-tool-tile {
+      transition-duration: 0.01ms;
+    }
+
+    button.mynx-home-tool:hover:not(:disabled),
+    button.mynx-home-tool:active:not(:disabled),
+    button.mynx-home-tool:hover:not(:disabled) .mynx-tool-tile {
+      transform: none;
+    }
   }
 
   .mynx-divider {
@@ -1211,5 +1315,141 @@ html[data-theme="graphite"] {
     color: var(--color-text-secondary);
     cursor: not-allowed;
     text-decoration: none;
+  }
+
+  /* Shared control states apply to the shell and every workspace. */
+  .mynx-btn,
+  .mynx-nav-button,
+  .mynx-titlebar button,
+  .mynx-input,
+  button:is([aria-current="step"], [aria-pressed], [role="option"], [role="switch"]),
+  .mynx-step-button,
+  .mynx-workspace summary {
+    transition:
+      background-color var(--mynx-motion-control) ease,
+      border-color var(--mynx-motion-control) ease,
+      color var(--mynx-motion-control) ease;
+  }
+
+  html[data-ui-style="minimal-linear"] :is(.mynx-input, .mynx-home-search) {
+    background-color: var(--color-surface);
+    caret-color: var(--color-accent);
+  }
+
+  html[data-ui-style="minimal-linear"] .mynx-btn-primary:active:not(:disabled) {
+    background-color: var(--color-accent-hover);
+  }
+
+  html[data-ui-style="minimal-linear"] .mynx-nav-button[aria-current="page"] > span[aria-hidden] > svg {
+    color: var(--color-accent);
+  }
+
+  html[data-ui-style="minimal-linear"] .mynx-modal-panel {
+    background-color: var(--color-surface);
+    border-radius: var(--mynx-radius-card);
+  }
+
+  html[data-ui-style="minimal-linear"] .mynx-workspace :is(thead th, summary:hover) {
+    background-color: var(--color-surface-2);
+  }
+
+  html[data-ui-style="minimal-linear"] .mynx-workspace :is(input[type="checkbox"], input[type="radio"], input[type="range"]) {
+    accent-color: var(--color-accent);
+  }
+
+  .mynx-modal-panel[data-state="closed"],
+  .mynx-modal-scrim[data-state="closed"] {
+    pointer-events: none;
+  }
+
+  @keyframes mynx-fade-in {
+    from { opacity: 0; }
+  }
+
+  @keyframes mynx-fade-out {
+    to { opacity: 0; }
+  }
+
+  @keyframes mynx-panel-in {
+    from { opacity: 0; scale: 0.98; }
+  }
+
+  @keyframes mynx-panel-out {
+    to { opacity: 0; scale: 0.985; }
+  }
+
+  @keyframes mynx-toast-in {
+    from { opacity: 0; translate: 0 6px; }
+  }
+
+  @keyframes mynx-selection-in {
+    from { opacity: 0; scale: 1 0.65; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .mynx-workspace > :is(section, div.h-full):not(.hidden) {
+      animation: mynx-fade-in var(--mynx-motion-control) var(--mynx-ease-settle);
+    }
+
+    .mynx-task-drawer {
+      transition: translate var(--mynx-motion-panel) var(--mynx-ease-settle);
+    }
+
+    .mynx-task-drawer-closed {
+      transition-timing-function: var(--mynx-ease-exit);
+      transition-duration: var(--mynx-motion-control);
+    }
+
+    .mynx-modal-panel[data-state="open"] {
+      animation: mynx-panel-in var(--mynx-motion-panel) var(--mynx-ease-settle);
+    }
+
+    .mynx-modal-panel[data-state="closed"] {
+      animation: mynx-panel-out var(--mynx-motion-control) var(--mynx-ease-exit) both;
+    }
+
+    .mynx-modal-scrim[data-state="open"] {
+      animation: mynx-fade-in var(--mynx-motion-control) ease-out;
+    }
+
+    .mynx-modal-scrim[data-state="closed"] {
+      animation: mynx-fade-out var(--mynx-motion-control) ease-in both;
+    }
+
+    .mynx-toast {
+      animation: mynx-toast-in var(--mynx-motion-panel) var(--mynx-ease-settle);
+    }
+
+    .mynx-nav-active-mark {
+      animation: mynx-selection-in var(--mynx-motion-control) var(--mynx-ease-settle);
+    }
+
+    :is(.mynx-btn, .mynx-titlebar button, .mynx-nav-button) > svg {
+      transition: scale var(--mynx-motion-control) var(--mynx-ease-settle);
+    }
+
+    :is(.mynx-btn, .mynx-titlebar button, .mynx-nav-button):active:not(:disabled) > svg {
+      scale: 0.9;
+      transition-duration: var(--mynx-motion-quick);
+    }
+
+    [role="switch"] .transition-transform {
+      transition-duration: var(--mynx-motion-control);
+      transition-timing-function: var(--mynx-ease-settle);
+    }
+
+    .mynx-home-tool > svg {
+      transition: translate var(--mynx-motion-control) var(--mynx-ease-settle);
+    }
+
+    .mynx-home-tool:hover > svg {
+      translate: 2px 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [role="switch"] .transition-transform.transition-transform {
+      transition: none;
+    }
   }
 }

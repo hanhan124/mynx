@@ -4,6 +4,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
+use std::collections::BTreeMap;
 
 /// Theme identifiers. `graphite` is the dark surface, `pearl` the light one;
 /// the legacy `dark`/`light` values normalize onto these.
@@ -36,6 +37,9 @@ pub struct SettingsDoc {
     pub search_engine: String,
     /// legacy localStorage `mynx-home-header-height`
     pub home_header_height: u32,
+    /// User-adjusted widths for the main work-area columns.
+    #[ts(type = "Record<string, number>")]
+    pub panel_widths: BTreeMap<String, u32>,
     /// legacy key `imageConverterOptions` (opaque tool options blob)
     #[schemars(schema_with = "crate::json_any_schema")]
     pub image_converter_options: Option<serde_json::Value>,
@@ -84,6 +88,7 @@ impl Default for SettingsDoc {
             language: "zh".into(),
             search_engine: String::new(),
             home_header_height: 0,
+            panel_widths: BTreeMap::new(),
             image_converter_options: None,
             chart_studio_presets: Vec::new(),
             weather_enabled: true,

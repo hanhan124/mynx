@@ -34,6 +34,8 @@
   import { openPath } from "../../app/tauri.js";
   import { app, pushToast } from "../../app/state.svelte";
   import { t } from "../../app/i18n.svelte";
+  import { panelWidths, savePanelWidths, setPanelWidth } from "../../app/panel-widths.svelte";
+  import ColumnResizeHandle from "../../components/ColumnResizeHandle.svelte";
   import {
     currentChartNavigationId,
     formatChartNavigationDiagnostics,
@@ -572,7 +574,10 @@
 
   <!-- Stacked rows need their content height; flex-1/min-h-0 squeezed them into
        the remaining viewport and let their contents overlap the following rows. -->
-  <div class="grid shrink-0 grid-cols-1 items-start gap-3 xl:grid-cols-[250px_minmax(0,1fr)_330px]">
+  <div
+    class="mynx-resizable-three shrink-0 items-start"
+    style={`--mynx-first-column: ${panelWidths.chartsCatalog}px; --mynx-third-column: ${panelWidths.chartsInspector}px`}
+  >
     <!-- ── Left: template catalog ─────────────────────────────────────── -->
     <div class="mynx-card flex min-w-0 flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
@@ -665,6 +670,15 @@
         {/if}
       </div>
     </div>
+
+    <ColumnResizeHandle
+      label={t("layout.resizeColumn")}
+      value={panelWidths.chartsCatalog}
+      min={220}
+      max={520}
+      onresize={(width) => setPanelWidth("chartsCatalog", width)}
+      oncommit={savePanelWidths}
+    />
 
     <!-- ── Center: data + mapping + run ───────────────────────────────── -->
     <div class="flex min-w-0 flex-col gap-3">
@@ -963,6 +977,16 @@
         </div>
       </div>
     </div>
+
+    <ColumnResizeHandle
+      label={t("layout.resizeColumn")}
+      value={panelWidths.chartsInspector}
+      min={240}
+      max={600}
+      invert
+      onresize={(width) => setPanelWidth("chartsInspector", width)}
+      oncommit={savePanelWidths}
+    />
 
     <!-- ── Right: inspector ───────────────────────────────────────────── -->
     <div class="mynx-card flex min-w-0 flex-col">

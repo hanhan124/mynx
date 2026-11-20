@@ -7,8 +7,8 @@
  * styles below are a second, independent dimension applied as
  * `document.documentElement[data-ui-style]`:
  *
- * - `minimal-linear` (default) — macOS-inspired neutral workspace, blue
- *   selection, soft flowing color wash, and restrained card shadows.
+ * - `minimal-linear` (default) — macOS 27-inspired cool neutrals, system-blue
+ *   selection, a soft blue-violet color wash, and translucent title/navigation bars.
  * - `liquid-glass` — pure-white glass, subtle blue-gray / sage glows,
  *   restrained backdrop blur, one low-saturation lake-blue accent.
  * - `swiss-editorial` — pure white + ink black + one low-saturation

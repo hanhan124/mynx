@@ -122,9 +122,9 @@
 
 <Dialog.Root bind:open>
   <Dialog.Portal>
-    <Dialog.Overlay class="fixed inset-0 z-40 bg-black/40" />
+    <Dialog.Overlay class="mynx-modal-scrim fixed inset-0 z-40 bg-black/40" />
     <Dialog.Content
-      class="fixed left-1/2 top-[12%] z-50 w-[min(520px,92vw)] -translate-x-1/2 rounded-lg border border-border bg-surface p-0 outline-none"
+      class="mynx-modal-panel fixed left-1/2 top-[12%] z-50 w-[min(520px,92vw)] -translate-x-1/2 rounded-lg border border-border bg-surface p-0 outline-none"
     >
       <Dialog.Title class="sr-only">{t("palette.open")}</Dialog.Title>
       <div class="flex items-center gap-2 border-b border-border px-3 py-2 focus-within:border-b-accent">

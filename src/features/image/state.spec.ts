@@ -69,6 +69,7 @@ function makeDoc(overrides: Partial<SettingsDoc> = {}): SettingsDoc {
     language: "zh",
     searchEngine: "",
     homeHeaderHeight: 0,
+    panelWidths: {},
     imageConverterOptions: null,
     chartStudioPresets: [],
     weatherEnabled: false,

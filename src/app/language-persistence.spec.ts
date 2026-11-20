@@ -23,6 +23,7 @@ function makeSettings(language: "zh" | "en"): SettingsDoc {
     language,
     searchEngine: "google",
     homeHeaderHeight: 180,
+    panelWidths: {},
     imageConverterOptions: {},
     chartStudioPresets: [],
     weatherEnabled: false,

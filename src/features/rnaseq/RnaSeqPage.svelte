@@ -15,6 +15,8 @@
   import IconRefresh from "@tabler/icons-svelte/icons/refresh";
   import IconTerminal from "@tabler/icons-svelte/icons/terminal-2";
   import { t } from "../../app/i18n.svelte";
+  import { panelWidths, savePanelWidths, setPanelWidth } from "../../app/panel-widths.svelte";
+  import ColumnResizeHandle from "../../components/ColumnResizeHandle.svelte";
   import { SvelteMap } from "svelte/reactivity";
 import { app, pushToast } from "../../app/state.svelte";
   import { openPath } from "../../app/tauri.js";
@@ -259,13 +261,13 @@ import { app, pushToast } from "../../app/state.svelte";
       {t("common.loading")}
     </div>
   {:else}
-    <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[236px_minmax(0,1fr)]">
+    <div class="mynx-resizable-two min-h-0 flex-1" style={`--mynx-first-column: ${panelWidths.rnaseqSidebar}px`}>
       <!-- ── Rail ─────────────────────────────────────────────────────────── -->
       <aside class="mynx-card flex flex-col gap-1 overflow-y-auto p-2">
         {#each RAIL as item (item.id)}
           <button
             type="button"
-            class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-left transition-colors {rnaseq.step ===
+            class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-left mynx-step-button {rnaseq.step ===
             item.id
               ? 'border-accent bg-accent/10'
               : 'border-transparent hover:bg-surface-2'}"
@@ -290,7 +292,7 @@ import { app, pushToast } from "../../app/state.svelte";
 
         <button
           type="button"
-          class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-left transition-colors {rnaseq.step ===
+          class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-left mynx-step-button {rnaseq.step ===
           'results'
             ? 'border-accent bg-accent/10'
             : 'border-transparent hover:bg-surface-2'}"
@@ -307,7 +309,7 @@ import { app, pushToast } from "../../app/state.svelte";
         </button>
         <button
           type="button"
-          class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-left transition-colors {rnaseq.step ===
+          class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-left mynx-step-button {rnaseq.step ===
           'history'
             ? 'border-accent bg-accent/10'
             : 'border-transparent hover:bg-surface-2'}"
@@ -408,6 +410,15 @@ import { app, pushToast } from "../../app/state.svelte";
           {/if}
         </div>
       </aside>
+
+      <ColumnResizeHandle
+        label={t("layout.resizeColumn")}
+        value={panelWidths.rnaseqSidebar}
+        min={180}
+        max={480}
+        onresize={(width) => setPanelWidth("rnaseqSidebar", width)}
+        oncommit={savePanelWidths}
+      />
 
       <!-- ── Center content ─────────────────────────────────────────────── -->
       <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">

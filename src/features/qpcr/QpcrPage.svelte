@@ -18,6 +18,8 @@
   import IconTerminal from "@tabler/icons-svelte/icons/terminal-2";
   import IconTrash from "@tabler/icons-svelte/icons/trash";
   import { t } from "../../app/i18n.svelte";
+  import { panelWidths, savePanelWidths, setPanelWidth } from "../../app/panel-widths.svelte";
+  import ColumnResizeHandle from "../../components/ColumnResizeHandle.svelte";
   import { app, pushToast } from "../../app/state.svelte";
   import { openPath } from "../../app/tauri.js";
   import CopyableText from "../../components/CopyableText.svelte";
@@ -241,6 +243,13 @@
     groupSelectionAdditive = false;
     groupSelectionBase = [];
     groupSelectionMoved = false;
+  }
+
+  function applyBatchGroupName(): void {
+    if (groupRenameBusy || selectedRenameGroups.length === 0 || !batchGroupName.trim()) return;
+    applyGroupRenameToSelected(selectedRenameGroups, batchGroupName);
+    clearGroupSelection();
+    batchGroupName = "";
   }
 
   function handleGroupSelectionKeydown(index: number, event: KeyboardEvent): void {
@@ -532,16 +541,18 @@
           disabled={groupRenameBusy}
           placeholder={t("qpcr.batchGroupPlaceholder")}
           aria-label={t("qpcr.batchGroupPlaceholder")}
+          onkeydown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              applyBatchGroupName();
+            }
+          }}
         />
         <button
           type="button"
           class="mynx-btn mynx-btn-secondary"
           disabled={groupRenameBusy || selectedRenameGroups.length === 0 || !batchGroupName.trim()}
-          onclick={() => {
-            applyGroupRenameToSelected(selectedRenameGroups, batchGroupName);
-            clearGroupSelection();
-            batchGroupName = "";
-          }}
+          onclick={applyBatchGroupName}
         >{t("qpcr.applyBatchRename", { count: selectedRenameGroups.length })}</button>
         <button
           type="button"
@@ -647,13 +658,13 @@
     <h1 class="mynx-page-title">{t("qpcr.title")}</h1>
   </header>
 
-  <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[210px_minmax(0,1fr)]">
+  <div class="mynx-resizable-two min-h-0 flex-1" style={`--mynx-first-column: ${panelWidths.qpcrSidebar}px`}>
     <!-- ── Steps rail ─────────────────────────────────────────────────────── -->
     <aside class="mynx-card flex flex-col gap-1 p-2">
       {#each [1, 2, 3, 4] as item (item)}
         <button
           type="button"
-          class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-left transition-colors {step ===
+          class="flex items-center gap-2 rounded-md border px-2 py-1.5 text-left mynx-step-button {step ===
           item
             ? 'border-accent bg-accent/10'
             : 'border-transparent hover:bg-surface-2'}"
@@ -715,6 +726,15 @@
         {/if}
       </div>
     </aside>
+
+    <ColumnResizeHandle
+      label={t("layout.resizeColumn")}
+      value={panelWidths.qpcrSidebar}
+      min={180}
+      max={480}
+      onresize={(width) => setPanelWidth("qpcrSidebar", width)}
+      oncommit={savePanelWidths}
+    />
 
     <!-- ── Step content ───────────────────────────────────────────────────── -->
     <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">

@@ -59,9 +59,9 @@
 <aside
   id="mynx-task-drawer"
   inert={!app.taskDrawerOpen}
-  class="fixed right-0 bottom-0 left-[208px] z-30 flex h-[280px] flex-col border-t border-border bg-surface transition-transform duration-200 max-[1100px]:left-14 {app.taskDrawerOpen
-    ? 'translate-y-0'
-    : 'pointer-events-none translate-y-full'}"
+  class="mynx-task-drawer fixed bottom-0 z-30 flex flex-col border-t border-border bg-surface {app.taskDrawerOpen
+    ? 'mynx-task-drawer-open translate-y-0'
+    : 'mynx-task-drawer-closed pointer-events-none translate-y-full'}"
   aria-label={t("task.center")}
   aria-hidden={!app.taskDrawerOpen}
 >
