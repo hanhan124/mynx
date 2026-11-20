@@ -63,7 +63,7 @@
       id: "minimal-linear",
       nameKey: "uiStyle.minimal-linear.name",
       descKey: "uiStyle.minimal-linear.description",
-      swatches: ["#fbfaf7", "#f4f0e8", "#6e7f6a"],
+      swatches: ["#f5f6f8", "#ffffff", "#3478d4"],
     },
     {
       id: "swiss-editorial",
@@ -153,7 +153,7 @@
 
   function cardClass(selected: boolean): string {
     return selected
-      ? "border-accent bg-accent/10"
+      ? "border-accent bg-selected"
       : "border-border bg-surface hover:border-text-secondary";
   }
 </script>

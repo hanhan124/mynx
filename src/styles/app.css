@@ -63,6 +63,14 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
     "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --font-mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+
+  /* Radius gradient bridging: page-level rounded-* utilities follow the
+   * per-style --mynx-radius-* tokens (control < panel < popover < modal).
+   * Static small radius stays for hairline chips and tiny thumbnails. */
+  --radius-sm: 4px;
+  --radius-md: var(--mynx-radius-control);
+  --radius-lg: var(--mynx-radius-panel);
+  --radius-xl: var(--mynx-radius-popover);
 }
 
 /* Style-shape variables (plain :root so they are always emitted). */

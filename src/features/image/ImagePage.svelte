@@ -847,7 +847,7 @@
       <div class="min-h-0 flex-1 overflow-auto">
         <table class="w-full border-collapse text-[12px]">
           <thead>
-            <tr class="sticky top-0 bg-surface text-left text-[11px] text-text-secondary">
+            <tr class="sticky top-0 bg-surface-2 text-left text-[11px] text-text-secondary">
               <th class="px-2 py-1.5 font-medium">#</th>
               <th class="px-2 py-1.5 font-medium">{t("imgconv.colFile")}</th>
               <th class="px-2 py-1.5 font-medium">{t("imgconv.colOriginal")}</th>

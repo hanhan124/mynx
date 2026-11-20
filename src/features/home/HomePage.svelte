@@ -270,7 +270,7 @@
   ></div>
 
   <section class="mt-4 flex flex-col gap-3 sm:mt-5" aria-label={t("home.toolsHeading")}>
-    <h2 class="flex items-baseline gap-1 text-[16px] font-bold tracking-tight">
+    <h2 class="mynx-section-title flex items-baseline gap-1">
       <span class="mynx-home-tool-count text-[20px] leading-none tabular-nums">{tools.length}</span>
       <span class="text-[12px] font-semibold text-text-secondary">{t("home.tools")}</span>
     </h2>
@@ -292,7 +292,7 @@
             <span class="mynx-tool-tile {tool.tile}" aria-hidden="true">
               <ToolIcon size={20} stroke={1.85} />
             </span>
-            <span class="mynx-truncate min-w-0 flex-1 text-[14px] font-bold">{t(tool.titleKey)}</span>
+            <span class="mynx-truncate min-w-0 flex-1 text-[14px] font-semibold">{t(tool.titleKey)}</span>
             <IconChevronRight size={15} stroke={2} class="shrink-0 text-text-secondary group-hover:text-accent" aria-hidden="true" />
           </button>
         {/each}
