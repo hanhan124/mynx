@@ -99,12 +99,9 @@
   --mynx-ease-settle: cubic-bezier(0.2, 0.75, 0.25, 1);
   --mynx-ease-exit: cubic-bezier(0.4, 0, 1, 1);
   --mynx-scrim: rgb(8 12 18 / 44%);
+  --mynx-shadow-drawer: 0 -1px 2px rgb(16 24 34 / 0.08), 0 -8px 24px rgb(16 24 34 / 0.16);
 }
 
-/* Dark mode needs a heavier scrim to keep dialogs separated from content. */
-html[data-theme="graphite"] {
-  --mynx-scrim: rgb(0 0 0 / 56%);
-}
 
 /* Legacy fallback: no data-ui-style set (pre-theme installs). */
 [data-theme="graphite"] {
@@ -134,6 +131,8 @@ html[data-theme="graphite"] {
   --color-chart-canvas: #1c2735;
   --color-chart-grid: #2c3a4a;
   --color-chart-axis: #adbdcf;
+  --mynx-scrim: rgb(0 0 0 / 56%);
+  --mynx-shadow-drawer: 0 -1px 2px rgb(0 0 0 / 0.32), 0 -8px 24px rgb(0 0 0 / 0.44);
 }
 
 /* --- Liquid glass, light (optional style) ------------------------------ */
@@ -659,11 +658,11 @@ html[data-theme="graphite"] {
     block-size: min(17.5rem, 42dvh);
     min-block-size: min(9rem, 30dvh);
     overflow: clip;
-    box-shadow: 0 -2px 6px rgb(0 0 0 / 6%), 0 -12px 28px rgb(0 0 0 / 12%);
+    box-shadow: none;
   }
 
   .mynx-task-drawer-open {
-    box-shadow: 0 -2px 6px rgb(0 0 0 / 9%), 0 -12px 30px rgb(0 0 0 / 18%);
+    box-shadow: var(--mynx-shadow-drawer);
   }
 
   .mynx-task-drawer-closed {
@@ -1359,7 +1358,7 @@ html[data-theme="graphite"] {
     inset-block: 0.5rem;
     inset-inline-start: 50%;
     width: 1px;
-    background: color-mix(in srgb, var(--color-border) 75%, transparent);
+    background: var(--color-separator);
     content: "";
     transform: translateX(-50%);
     transition: background-color 120ms ease;
@@ -1396,7 +1395,7 @@ html[data-theme="graphite"] {
     inset-inline: 0;
     inset-block-start: 50%;
     height: 1px;
-    background: color-mix(in srgb, var(--color-border) 70%, transparent);
+    background: var(--color-separator);
     content: "";
     transform: translateY(-50%);
     transition: background-color 120ms ease;

@@ -550,13 +550,13 @@
         />
         <button
           type="button"
-          class="mynx-btn mynx-btn-secondary"
+          class="mynx-btn"
           disabled={groupRenameBusy || selectedRenameGroups.length === 0 || !batchGroupName.trim()}
           onclick={applyBatchGroupName}
         >{t("qpcr.applyBatchRename", { count: selectedRenameGroups.length })}</button>
         <button
           type="button"
-          class="mynx-btn mynx-btn-secondary"
+          class="mynx-btn"
           disabled={groupRenameBusy || selectedRenameGroups.length === 0}
           onclick={clearGroupSelection}
         >{t("qpcr.clearGroupSelection")}</button>
@@ -1106,7 +1106,7 @@
               >
                 {qpcr.calcMessage}
               </p>
-              <button type="button" class="mynx-btn mynx-btn-secondary self-start" onclick={() => void exportAnalysisRecord()}>
+              <button type="button" class="mynx-btn self-start" onclick={() => void exportAnalysisRecord()}>
                 {t("qpcr.exportRecord")}
               </button>
             {:else if qpcr.calcPhase === "error" && qpcr.calcMessage}
