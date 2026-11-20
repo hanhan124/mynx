@@ -101,14 +101,14 @@ assertTokenParity("Pearl theme", appLight, installerLight, [
 assertTokenParity("Graphite theme", appDark, installerDark, colorTokens);
 
 const titleBar = read("src/components/TitleBar.svelte");
-if (!/class="[^"]*\bh-10\b/.test(titleBar) || !/class="[^"]*w-\[46px\]/.test(titleBar)) {
-  throw new Error("The app title bar must retain its 40px height and 46px window controls");
+if (!/class="[^"]*\bh-12\b/.test(titleBar) || !/class="[^"]*w-\[46px\]/.test(titleBar)) {
+  throw new Error("The app title bar must retain its 48px height and 46px window controls");
 }
 if (
-  !/\.titlebar\s*\{[^}]*\bheight:\s*40px;/.test(installerCss) ||
+  !/\.titlebar\s*\{[^}]*\bheight:\s*48px;/.test(installerCss) ||
   !/\.window-control\s*\{[^}]*\bwidth:\s*46px;/.test(installerCss)
 ) {
-  throw new Error("The installer title bar must match the app's 40px height and 46px window controls");
+  throw new Error("The installer title bar must match the app's 48px height and 46px window controls");
 }
 
 const appConfig = JSON.parse(read("src-tauri/tauri.conf.json"));

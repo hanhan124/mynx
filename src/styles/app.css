@@ -40,6 +40,7 @@
   --color-border: #c5d0dd;
   --color-text: #172a40;
   --color-text-secondary: #506278;
+  --color-text-tertiary: #9aa5b4;
   --color-accent: #256fd1;
   --color-accent-hover: #1b5db5;
   --color-nav-bg: #d6e0eb;
@@ -49,8 +50,18 @@
   --color-success: #157f3d;
   --color-warning: #b45309;
   --color-danger: #b91c1c;
+  --color-hover: #eef3f9;
+  --color-selected: #e1edfb;
+  --color-active: #d5e6fa;
+  --color-separator: #dfe5ec;
+  --color-elevated: #ffffff;
+  --color-focus-ring: #256fd1;
+  --color-chart-canvas: #ffffff;
+  --color-chart-grid: #e3e9f0;
+  --color-chart-axis: #506278;
 
-  --font-sans: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --font-mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
 }
 
@@ -58,9 +69,14 @@
 :root {
   --color-on-accent: #ffffff;
   --mynx-accent-2: #15957e;
-  --mynx-radius-card: 18px;
-  --mynx-radius-btn: 12px;
-  --mynx-radius-input: 12px;
+  --mynx-radius-card: 16px;
+  --mynx-radius-btn: 8px;
+  --mynx-radius-input: 8px;
+  /* Radius gradient: compact controls < panels < popovers/modals < cards. */
+  --mynx-radius-control: 8px;
+  --mynx-radius-panel: 12px;
+  --mynx-radius-popover: 12px;
+  --mynx-radius-modal: 16px;
   --mynx-border-width: 1px;
   --mynx-shadow-card: none;
   --mynx-shadow-pop: none;
@@ -84,6 +100,7 @@
   --color-border: #35465b;
   --color-text: #edf3fa;
   --color-text-secondary: #adbdcf;
+  --color-text-tertiary: #7e8ea0;
   --color-accent: #7eaff7;
   --color-accent-hover: #a1c5ff;
   --color-on-accent: #151c26;
@@ -94,6 +111,15 @@
   --color-success: #3fb96f;
   --color-warning: #d97706;
   --color-danger: #ef5350;
+  --color-hover: #2a3848;
+  --color-selected: #2e4560;
+  --color-active: #3a5471;
+  --color-separator: #2c3a4a;
+  --color-elevated: #223041;
+  --color-focus-ring: #7eaff7;
+  --color-chart-canvas: #1c2735;
+  --color-chart-grid: #2c3a4a;
+  --color-chart-axis: #adbdcf;
 }
 
 /* --- Liquid glass, light (optional style) ------------------------------ */
@@ -104,6 +130,7 @@ html[data-ui-style="liquid-glass"] {
   --color-border: rgba(20, 50, 80, 0.16);
   --color-text: #14273a;
   --color-text-secondary: #2e4a63;
+  --color-text-tertiary: #7c93a8;
   --color-accent: #1c62ad;
   --color-accent-hover: #175a9c;
   --color-nav-bg: #edf2f3;
@@ -113,6 +140,21 @@ html[data-ui-style="liquid-glass"] {
   --color-success: #0e7a5f;
   --color-warning: #96690a;
   --color-danger: #c0452f;
+  --color-hover: #e7eef3;
+  --color-selected: #ddecfa;
+  --color-active: #d1e5f6;
+  --color-separator: rgba(20, 50, 80, 0.1);
+  --color-elevated: #ffffff;
+  --color-focus-ring: #1c62ad;
+  --color-chart-canvas: #ffffff;
+  --color-chart-grid: rgba(20, 50, 80, 0.12);
+  --color-chart-axis: #2e4a63;
+  --mynx-radius-btn: 10px;
+  --mynx-radius-input: 10px;
+  --mynx-radius-control: 10px;
+  --mynx-radius-panel: 18px;
+  --mynx-radius-popover: 16px;
+  --mynx-radius-modal: 18px;
   --mynx-page-bg: #edf2f3;
   --mynx-shadow-card: none;
   --mynx-shadow-pop: none;
@@ -129,6 +171,7 @@ html[data-ui-style="liquid-glass"][data-theme="graphite"] {
   --color-border: rgba(190, 220, 250, 0.14);
   --color-text: #e9f2f9;
   --color-text-secondary: #c3d4e2;
+  --color-text-tertiary: #8fa2b5;
   --color-accent: #5ea8ec;
   --color-accent-hover: #7ab8f0;
   --color-on-accent: #0b1219;
@@ -139,6 +182,15 @@ html[data-ui-style="liquid-glass"][data-theme="graphite"] {
   --color-success: #3cc2a6;
   --color-warning: #e0aa45;
   --color-danger: #ef8570;
+  --color-hover: #1e2c3a;
+  --color-selected: #24405a;
+  --color-active: #2b4d6c;
+  --color-separator: rgba(190, 220, 250, 0.09);
+  --color-elevated: #1a2836;
+  --color-focus-ring: #5ea8ec;
+  --color-chart-canvas: #152230;
+  --color-chart-grid: rgba(190, 220, 250, 0.1);
+  --color-chart-axis: #c3d4e2;
   --mynx-accent-2: #3cc2a6;
   --mynx-page-bg: #10171d;
   --mynx-shadow-card: none;
@@ -150,30 +202,44 @@ html[data-ui-style="liquid-glass"][data-theme="graphite"] {
 
 /* --- Minimal linear, light (macOS-inspired default) -------------------- */
 html[data-ui-style="minimal-linear"] {
-  --color-bg: #f5f5f7;
+  --color-bg: #f5f6f8;
   --color-surface: #ffffff;
-  --color-surface-2: #f2f2f7;
-  --color-border: #d6d6dc;
-  --color-text: #1d1d1f;
-  --color-text-secondary: #6e6e73;
-  --color-accent: #0069d6;
-  --color-accent-hover: #005cbd;
+  --color-surface-2: #f8f9fb;
+  --color-border: #d6dbe3;
+  --color-text: #20242b;
+  --color-text-secondary: #697383;
+  --color-text-tertiary: #929ba8;
+  --color-accent: #3478d4;
+  --color-accent-hover: #2b69bc;
   --color-on-accent: #ffffff;
-  --color-nav-bg: #f5f5f7;
-  --color-nav-border: #f5f5f7;
-  --color-nav-text: #48484a;
-  --color-nav-active: #e7f1ff;
-  --color-success: #248a3d;
-  --color-warning: #a85d00;
-  --color-danger: #d70015;
+  --color-nav-bg: #eff1f4;
+  --color-nav-border: #e3e7ed;
+  --color-nav-text: #5d6775;
+  --color-nav-active: #e8f0fc;
+  --color-success: #278568;
+  --color-warning: #b7822d;
+  --color-danger: #c7545a;
+  --color-hover: #f0f3f7;
+  --color-selected: #e8f0fc;
+  --color-active: #dfeafc;
+  --color-separator: #e3e7ed;
+  --color-elevated: #ffffff;
+  --color-focus-ring: #3478d4;
+  --color-chart-canvas: #ffffff;
+  --color-chart-grid: #e3e7ed;
+  --color-chart-axis: #697383;
   --mynx-accent-2: #8b72e8;
-  --mynx-radius-card: 20px;
-  --mynx-radius-btn: 10px;
-  --mynx-radius-input: 14px;
+  --mynx-radius-card: 16px;
+  --mynx-radius-btn: 8px;
+  --mynx-radius-input: 8px;
+  --mynx-radius-control: 8px;
+  --mynx-radius-panel: 12px;
+  --mynx-radius-popover: 12px;
+  --mynx-radius-modal: 16px;
   --mynx-border-width: 1px;
   --mynx-shadow-card: none;
   --mynx-shadow-pop: none;
-  --mynx-page-bg: #f5f5f7;
+  --mynx-page-bg: #f5f6f8;
   --mynx-card-backdrop: none;
   --mynx-nav-backdrop: saturate(160%) blur(18px);
   --mynx-glass-highlight: none;
@@ -182,24 +248,34 @@ html[data-ui-style="minimal-linear"] {
 
 /* --- Minimal linear, dark ----------------------------------------------- */
 html[data-ui-style="minimal-linear"][data-theme="graphite"] {
-  --color-bg: #1c1c1e;
-  --color-surface: #2c2c2e;
-  --color-surface-2: #3a3a3c;
-  --color-border: #48484a;
-  --color-text: #f5f5f7;
-  --color-text-secondary: #aeaeb2;
-  --color-accent: #69afff;
-  --color-accent-hover: #89c0ff;
-  --color-on-accent: #101722;
-  --color-nav-bg: #1c1c1e;
-  --color-nav-border: #38383a;
-  --color-nav-text: #d1d1d6;
-  --color-nav-active: #263a50;
-  --color-success: #30d158;
-  --color-warning: #ff9f0a;
-  --color-danger: #ff453a;
-  --mynx-accent-2: #bf5af2;
-  --mynx-page-bg: #1c1c1e;
+  --color-bg: #1d222a;
+  --color-surface: #262c35;
+  --color-surface-2: #2e3540;
+  --color-border: #3c434f;
+  --color-text: #e9ecf0;
+  --color-text-secondary: #a7b0bc;
+  --color-text-tertiary: #78828f;
+  --color-accent: #6aa5e8;
+  --color-accent-hover: #86b9f0;
+  --color-on-accent: #101822;
+  --color-nav-bg: #1d222a;
+  --color-nav-border: #333a44;
+  --color-nav-text: #b6bfca;
+  --color-nav-active: #2c3e56;
+  --color-success: #4fae7e;
+  --color-warning: #d0a052;
+  --color-danger: #e0787e;
+  --color-hover: #2e3540;
+  --color-selected: #2c3e56;
+  --color-active: #35496b;
+  --color-separator: #333a44;
+  --color-elevated: #2a313b;
+  --color-focus-ring: #6aa5e8;
+  --color-chart-canvas: #262c35;
+  --color-chart-grid: #333a44;
+  --color-chart-axis: #a7b0bc;
+  --mynx-accent-2: #a08ae6;
+  --mynx-page-bg: #1d222a;
   --mynx-nav-backdrop: saturate(160%) blur(18px);
   --mynx-shadow-card: none;
   --mynx-shadow-pop: none;
@@ -213,6 +289,7 @@ html[data-ui-style="swiss-editorial"] {
   --color-border: #e4e2da;
   --color-text: #161613;
   --color-text-secondary: #55534c;
+  --color-text-tertiary: #8b887e;
   --color-accent: #c2452d;
   --color-accent-hover: #a93a24;
   --color-on-accent: #ffffff;
@@ -223,10 +300,23 @@ html[data-ui-style="swiss-editorial"] {
   --color-success: #5b7a5e;
   --color-warning: #8a6d1f;
   --color-danger: #c2452d;
+  --color-hover: #f6f5f0;
+  --color-selected: #f7ebe7;
+  --color-active: #f0ddd6;
+  --color-separator: #eceae2;
+  --color-elevated: #ffffff;
+  --color-focus-ring: #c2452d;
+  --color-chart-canvas: #ffffff;
+  --color-chart-grid: #e4e2da;
+  --color-chart-axis: #55534c;
   --mynx-accent-2: #c2452d;
   --mynx-radius-card: 0px;
   --mynx-radius-btn: 0px;
   --mynx-radius-input: 0px;
+  --mynx-radius-control: 0px;
+  --mynx-radius-panel: 0px;
+  --mynx-radius-popover: 0px;
+  --mynx-radius-modal: 0px;
   --mynx-border-width: 1px;
   --mynx-shadow-card: none;
   --mynx-shadow-pop: none;
@@ -245,6 +335,7 @@ html[data-ui-style="swiss-editorial"][data-theme="graphite"] {
   --color-border: #2e2d27;
   --color-text: #f0efe7;
   --color-text-secondary: #b9b6aa;
+  --color-text-tertiary: #8f8c80;
   --color-accent: #de6b52;
   --color-accent-hover: #e8836c;
   --color-on-accent: #131311;
@@ -255,6 +346,15 @@ html[data-ui-style="swiss-editorial"][data-theme="graphite"] {
   --color-success: #93b497;
   --color-warning: #c9ae82;
   --color-danger: #e8836c;
+  --color-hover: #23231f;
+  --color-selected: #3a2a24;
+  --color-active: #473028;
+  --color-separator: #2a2923;
+  --color-elevated: #202019;
+  --color-focus-ring: #de6b52;
+  --color-chart-canvas: #1b1b18;
+  --color-chart-grid: #2e2d27;
+  --color-chart-axis: #b9b6aa;
   --mynx-page-bg: #131311;
 }
 
@@ -266,6 +366,7 @@ html[data-ui-style="memphis-pop"] {
   --color-border: #e9dfc8;
   --color-text: #2e2a23;
   --color-text-secondary: #5a4f3f;
+  --color-text-tertiary: #8b7d63;
   --color-accent: #8a5a12;
   --color-accent-hover: #744d0f;
   --color-on-accent: #ffffff;
@@ -276,10 +377,23 @@ html[data-ui-style="memphis-pop"] {
   --color-success: #3f6b47;
   --color-warning: #8a5a12;
   --color-danger: #9c3d4e;
+  --color-hover: #f1e9d4;
+  --color-selected: #f2e3bd;
+  --color-active: #ecd9a6;
+  --color-separator: #e9dfc8;
+  --color-elevated: #ffffff;
+  --color-focus-ring: #8a5a12;
+  --color-chart-canvas: #ffffff;
+  --color-chart-grid: #e9dfc8;
+  --color-chart-axis: #5a4f3f;
   --mynx-accent-2: #e9a13b;
   --mynx-radius-card: 14px;
   --mynx-radius-btn: 10px;
   --mynx-radius-input: 10px;
+  --mynx-radius-control: 10px;
+  --mynx-radius-panel: 12px;
+  --mynx-radius-popover: 12px;
+  --mynx-radius-modal: 14px;
   --mynx-border-width: 2px;
   --mynx-shadow-card: none;
   --mynx-shadow-pop: none;
@@ -298,6 +412,7 @@ html[data-ui-style="memphis-pop"][data-theme="graphite"] {
   --color-border: #4a4132;
   --color-text: #f2e9d5;
   --color-text-secondary: #c9bba0;
+  --color-text-tertiary: #a3967c;
   --color-accent: #f0b95c;
   --color-accent-hover: #f6cf5f;
   --color-on-accent: #26211a;
@@ -308,6 +423,15 @@ html[data-ui-style="memphis-pop"][data-theme="graphite"] {
   --color-success: #a9ddbd;
   --color-warning: #f6cf5f;
   --color-danger: #f3aebe;
+  --color-hover: #3a3327;
+  --color-selected: #4a3c22;
+  --color-active: #574827;
+  --color-separator: #4a4132;
+  --color-elevated: #3b3427;
+  --color-focus-ring: #f0b95c;
+  --color-chart-canvas: #332c22;
+  --color-chart-grid: #4a4132;
+  --color-chart-axis: #c9bba0;
   --mynx-page-bg: #26211a;
   --mynx-shadow-card: none;
   --mynx-shadow-pop: none;
@@ -348,7 +472,7 @@ html[data-theme="graphite"] {
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-focus-ring);
     outline-offset: 1px;
   }
 
@@ -455,6 +579,29 @@ html[data-theme="graphite"] {
     letter-spacing: var(--mynx-title-tracking);
   }
 
+  /* Typography scale: section headings, notes, and numeric alignment.
+     Data tables and parameter values always use tabular numerals. */
+  .mynx-section-title {
+    font-size: 15px;
+    line-height: 1.4;
+    font-weight: 600;
+    letter-spacing: var(--mynx-title-tracking);
+  }
+
+  .mynx-note {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--color-text-secondary);
+  }
+
+  .mynx-num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mynx-workspace :is(td, th) {
+    font-variant-numeric: tabular-nums;
+  }
+
   .mynx-navrail {
     background: color-mix(in srgb, var(--mynx-page-bg) 76%, transparent);
     border-right: 0;
@@ -515,7 +662,7 @@ html[data-theme="graphite"] {
     gap: 6px;
     min-height: 28px;
     padding: 0 12px;
-    border-radius: var(--mynx-radius-btn);
+    border-radius: var(--mynx-radius-control);
     border: var(--mynx-border-width) solid var(--color-border);
     background: var(--color-surface);
     color: var(--color-text);
@@ -594,7 +741,7 @@ html[data-theme="graphite"] {
   .mynx-input {
     min-height: 30px;
     padding: 0 8px;
-    border-radius: var(--mynx-radius-input);
+    border-radius: var(--mynx-radius-control);
     border: var(--mynx-border-width) solid var(--color-border);
     background: var(--color-surface);
     color: var(--color-text);

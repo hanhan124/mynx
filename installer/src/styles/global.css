@@ -17,8 +17,19 @@
   --color-success: #157f3d;
   --color-warning: #b45309;
   --color-danger: #b91c1c;
+  --color-text-tertiary: #9aa5b4;
+  --color-hover: #eef3f9;
+  --color-selected: #e1edfb;
+  --color-active: #d5e6fa;
+  --color-separator: #dfe5ec;
+  --color-elevated: #ffffff;
+  --color-focus-ring: #256fd1;
+  --color-chart-canvas: #ffffff;
+  --color-chart-grid: #e3e9f0;
+  --color-chart-axis: #506278;
 
-  --font-sans: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --font-mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
 }
 
@@ -39,6 +50,16 @@
   --color-success: #3fb96f;
   --color-warning: #d97706;
   --color-danger: #ef5350;
+  --color-text-tertiary: #7e8ea0;
+  --color-hover: #2a3848;
+  --color-selected: #2e4560;
+  --color-active: #3a5471;
+  --color-separator: #2c3a4a;
+  --color-elevated: #223041;
+  --color-focus-ring: #7eaff7;
+  --color-chart-canvas: #1c2735;
+  --color-chart-grid: #2c3a4a;
+  --color-chart-axis: #adbdcf;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -59,6 +80,16 @@
     --color-success: #3fb96f;
     --color-warning: #d97706;
     --color-danger: #ef5350;
+  --color-text-tertiary: #7e8ea0;
+    --color-hover: #2a3848;
+    --color-selected: #2e4560;
+    --color-active: #3a5471;
+    --color-separator: #2c3a4a;
+    --color-elevated: #223041;
+    --color-focus-ring: #7eaff7;
+    --color-chart-canvas: #1c2735;
+    --color-chart-grid: #2c3a4a;
+    --color-chart-axis: #adbdcf;
   }
 }
 
@@ -146,11 +177,11 @@ input[type="text"]:focus-visible {
   background: var(--color-bg);
 }
 
-/* Match the main app's 40px flat title bar and 46px window controls. */
+/* Match the main app's 48px flat title bar and 46px window controls. */
 .titlebar {
   display: flex;
-  height: 40px;
-  flex: 0 0 40px;
+  height: 48px;
+  flex: 0 0 48px;
   align-items: stretch;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);

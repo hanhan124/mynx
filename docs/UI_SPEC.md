@@ -42,7 +42,7 @@ theme/language 镜像同一模式）；移入 SQLite 需 Rust 侧在 `SettingsDo
 
 每套风格各有对应的深色版（同色板降亮）。`--color-on-accent` 保证
 accent 背景上的文字在 8 种组合下均可读；新增文案须同时写入中英文词典。
-标题栏与主工作区同色，高 56px，显示品牌标记和系统按钮；首页隐藏帮助、任务和命令面板按钮。
+标题栏与主工作区同色，高 48px，显示品牌标记和系统按钮；首页隐藏帮助、任务和命令面板按钮。
 侧栏默认恢复窗口宽 72px、最大化 208px，可拖动调整至 64–280px 并保存；宽度小于 168px 时只显示图标，达到该宽度后显示导航文字。选中项使用浅蓝底色和 3px 强调线，底部设置区以细线分组。
 侧栏与主工作区同色，不加分界边框。默认风格只在标题栏和侧栏使用轻透材质；所有主题的卡片、图标块和搜索框均保持平面不透明表面。
 
@@ -82,6 +82,29 @@ accent 背景上的文字在 8 种组合下均可读；新增文案须同时写�
 主题三态：`system`（跟随 prefers-color-scheme）、`graphite`、`pearl`；
 legacy `dark`/`light` 值归一化到 graphite/pearl。应用方式：
 `document.documentElement.dataset.theme = resolved`。
+
+## 语义令牌扩展（2026-11-21 重构）
+
+所有风格共用一套语义层级，禁止页面内自定义局部配色。在 legacy 令牌之上新增：
+
+| 语义 | 令牌 | 用途 |
+| --- | --- | --- |
+| 辅助文字 | `--color-text-tertiary` | 弱化说明、占位符之上的第三层级 |
+| 交互表面 | `--color-hover` / `--color-selected` / `--color-active` | 悬停 / 选中 / 按压背景 |
+| 分隔线 | `--color-separator` | 弱于 border 的 1px 细分隔 |
+| 浮层 | `--color-elevated` | Popover / Modal 表面 |
+| 焦点 | `--color-focus-ring` | `:focus-visible` 轮廓色 |
+| 图表隔离 | `--color-chart-canvas` / `--color-chart-grid` / `--color-chart-axis` | 图表容器 chrome，与科研数据系列色板严格解耦 |
+
+圆角梯度：`--mynx-radius-control`（控件）< `--mynx-radius-panel`（面板）<
+`--mynx-radius-popover`（浮层）< `--mynx-radius-modal`（对话框）< `--mynx-radius-card`。
+minimal-linear 浅色基线（macOS 冷灰白）：bg `#f5f6f8`、侧栏 `#eff1f4`、表面 `#ffffff`、
+次级表面 `#f8f9fb`、hover `#f0f3f7`、selected `#e8f0fc`、文字 `#20242b / #697383 / #929ba8`、
+分隔 `#e3e7ed`、accent `#3478d4`、success/warning/danger `#278568 / #b7822d / #c7545a`。
+深色为石墨灰多层级（bg `#1d222a` → surface `#262c35` → surface-2 `#2e3540`），
+禁用纯黑铺底。字体栈以 `-apple-system, BlinkMacSystemFont, "SF Pro Text"` 优先，
+Windows 回落 `"Segoe UI", "PingFang SC", "Microsoft YaHei"`；
+数据表格与参数数值统一 `font-variant-numeric: tabular-nums`（`.mynx-num`）。
 
 ## 布局常量
 
