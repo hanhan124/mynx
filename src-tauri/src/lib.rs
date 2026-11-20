@@ -69,6 +69,11 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle();
 
+            #[cfg(target_os = "windows")]
+            if let Some(window) = app.get_webview_window("main") {
+                disable_dwm_window_border(&window);
+            }
+
             // SQLite-backed settings store in the app config directory.
             let config_dir = handle
                 .path()
@@ -162,6 +167,43 @@ pub fn run() {
                 _ => {}
             }
         });
+}
+
+#[cfg(target_os = "windows")]
+fn disable_dwm_window_border(window: &tauri::WebviewWindow) {
+    use windows::Win32::{
+        Graphics::Dwm::{
+            DwmExtendFrameIntoClientArea, DwmSetWindowAttribute, DWMWA_BORDER_COLOR,
+            DWMWA_COLOR_NONE,
+        },
+        UI::Controls::MARGINS,
+    };
+
+    let Ok(hwnd) = window.hwnd() else {
+        return;
+    };
+
+    // Extend the DWM frame through the client area to hide its visible border while
+    // retaining the native shadow. The app shell paints an opaque surface over it.
+    let margins = MARGINS {
+        cxLeftWidth: -1,
+        cxRightWidth: -1,
+        cyTopHeight: -1,
+        cyBottomHeight: -1,
+    };
+    let _ = unsafe { DwmExtendFrameIntoClientArea(hwnd, &margins) };
+
+    // Windows 11 can explicitly suppress the DWM border. On older Windows versions
+    // this call fails harmlessly; the frame extension above remains the fallback.
+    let border_color = DWMWA_COLOR_NONE;
+    let _ = unsafe {
+        DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_BORDER_COLOR,
+            &border_color as *const u32 as *const std::ffi::c_void,
+            std::mem::size_of::<u32>() as u32,
+        )
+    };
 }
 
 fn build_menu(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {

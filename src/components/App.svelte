@@ -100,7 +100,7 @@
   });
 </script>
 
-<div class="mynx-app-shell flex h-screen min-h-0 flex-col text-text">
+<div class="mynx-app-shell flex h-screen min-h-0 flex-col text-text {app.route === '/' ? 'mynx-app-shell--home' : ''}">
   <TitleBar />
   <UpdateBanner />
   <div class="flex min-h-0 flex-1">

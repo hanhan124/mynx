@@ -49,26 +49,26 @@
   {#if !weather.enabled}
     <IconCloud size={16} stroke={1.7} class="shrink-0" aria-hidden="true" />
     <div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
-      <p class="text-[11px] font-medium">{t("home.weatherTitle")}</p>
-      <p class="text-[10px]">{t("home.weatherOffHint")}</p>
+      <p class="text-[12px] font-medium">{t("home.weatherTitle")}</p>
+      <p class="text-[11px]">{t("home.weatherOffHint")}</p>
     </div>
-    <button type="button" class="mynx-btn mynx-btn-ghost h-7 min-h-7 shrink-0 px-2 text-[11px]" onclick={() => void setWeatherEnabled(true)}>
+    <button type="button" class="mynx-btn mynx-btn-ghost h-8 min-h-8 shrink-0 px-3 text-[12px]" onclick={() => void setWeatherEnabled(true)}>
       {t("home.weatherEnable")}
     </button>
   {:else}
     {#if weather.current}
       {@const WeatherIcon = weatherIcon(weather.current.code)}
       <span aria-hidden="true">
-        <WeatherIcon size={16} stroke={1.7} class="shrink-0" />
+      <WeatherIcon size={16} stroke={1.7} class="shrink-0" />
       </span>
       <div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5 leading-tight">
         <span
-          class="mynx-truncate max-w-full text-[11px]"
+          class="mynx-truncate max-w-full text-[12px]"
           title={weather.city ? cityLabel(weather.city) : t("home.weatherTitle")}
         >{weather.city ? cityLabel(weather.city) : t("home.weatherTitle")}</span>
-        <span class="text-[14px] font-semibold leading-none tabular-nums text-text">{Math.round(weather.current.temperature)}°C</span>
-        <span class="text-[10px]">{t(conditionKey(weather.current.code))}</span>
-        <span class="text-[10px]">
+        <span class="text-[15px] font-semibold leading-none tabular-nums text-text">{Math.round(weather.current.temperature)}°C</span>
+        <span class="text-[11px]">{t(conditionKey(weather.current.code))}</span>
+        <span class="text-[11px]">
           {t("home.weatherDetails", {
             feelsLike: Math.round(weather.current.feelsLike),
             humidity: Math.round(weather.current.humidity),
@@ -79,8 +79,8 @@
     {:else}
       <IconMapPin size={16} stroke={1.7} class="shrink-0" aria-hidden="true" />
       <div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
-        <p class="text-[11px] font-medium">{t("home.weatherTitle")}</p>
-        <p class="text-[10px]">
+        <p class="text-[12px] font-medium">{t("home.weatherTitle")}</p>
+        <p class="text-[11px]">
           {#if weather.loading}
             {t("home.weatherLoading")}
           {:else if weather.city}
@@ -94,13 +94,13 @@
 
     <button
       type="button"
-      class="mynx-btn mynx-btn-ghost h-7 w-7 min-h-7 shrink-0 justify-center px-0 text-text-secondary"
+      class="mynx-btn mynx-btn-ghost h-6 w-6 min-h-6 shrink-0 justify-center px-0 text-text-secondary"
       aria-label={t("home.weatherRefresh")}
       title={t("home.weatherRefresh")}
       disabled={weather.loading}
       onclick={() => void refreshWeather()}
     >
-      <IconRefresh size={15} stroke={1.7} aria-hidden="true" />
+      <IconRefresh size={13} stroke={1.7} aria-hidden="true" />
     </button>
 
   {/if}

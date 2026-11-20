@@ -14,8 +14,8 @@ describe("normalizeUiStyle", () => {
     expect(normalizeUiStyle("MEMPHIS-POP")).toBe("memphis-pop");
   });
 
-  it("falls back to the liquid-glass default", () => {
-    expect(DEFAULT_UI_STYLE).toBe("liquid-glass");
+  it("falls back to the minimal-linear default", () => {
+    expect(DEFAULT_UI_STYLE).toBe("minimal-linear");
     expect(normalizeUiStyle(null)).toBe(DEFAULT_UI_STYLE);
     expect(normalizeUiStyle(undefined)).toBe(DEFAULT_UI_STYLE);
     expect(normalizeUiStyle("")).toBe(DEFAULT_UI_STYLE);

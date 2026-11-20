@@ -7,10 +7,10 @@
  * styles below are a second, independent dimension applied as
  * `document.documentElement[data-ui-style]`:
  *
- * - `liquid-glass`  (default) — pure-white glass, subtle blue-gray / sage
- *   glows, restrained backdrop blur, one low-saturation lake-blue accent.
- * - `minimal-linear` — pure white #FBFAF7 + kraft #F4F0E8, 1px hairlines,
- *   no shadow/gradient, sage-green accent.
+ * - `minimal-linear` (default) — macOS-inspired neutral workspace, blue
+ *   selection, soft flowing color wash, and restrained card shadows.
+ * - `liquid-glass` — pure-white glass, subtle blue-gray / sage glows,
+ *   restrained backdrop blur, one low-saturation lake-blue accent.
  * - `swiss-editorial` — pure white + ink black + one low-saturation
  *   editorial red #C2452D, square corners, strict grid.
  * - `memphis-pop` — kraft #F4ECDB + white cards + 2px warm-ink borders,
@@ -20,7 +20,7 @@
  * app already uses for the theme/language mirrors (`mynx-theme`,
  * `mynx-language`) so the style is applied before first paint.
  * TODO(sqlite): move this into the SQLite settings document once the Rust
- * side can carry it — add `ui_style: String` (default "liquid-glass") to
+ * side can carry it — add `ui_style: String` (default "minimal-linear") to
  * `SettingsDoc` in `src-tauri/crates/mynx-contracts/src/settings.rs`,
  * add the key in `SettingsStore::load`/`save` in
  * `src-tauri/crates/mynx-core/src/settings.rs`, then regenerate the TS
@@ -35,17 +35,18 @@
 export type UiStyle = "liquid-glass" | "minimal-linear" | "swiss-editorial" | "memphis-pop";
 
 export const UI_STYLES = [
-  "liquid-glass",
   "minimal-linear",
+  "liquid-glass",
   "swiss-editorial",
   "memphis-pop",
 ] as const satisfies readonly UiStyle[];
 
-export const DEFAULT_UI_STYLE: UiStyle = "liquid-glass";
+export const DEFAULT_UI_STYLE: UiStyle = "minimal-linear";
 
 const UI_STYLE_IDS = new Set<string>(UI_STYLES);
 
 const UI_STYLE_STORAGE_KEY = "mynx-ui-style";
+const UI_STYLE_MIGRATION_KEY = "mynx-ui-style-default-v2";
 
 export function normalizeUiStyle(value: string | null | undefined): UiStyle {
   if (!value) return DEFAULT_UI_STYLE;
@@ -72,8 +73,28 @@ function writeUiStyleMirror(style: UiStyle): void {
   }
 }
 
+function initialStyle(): UiStyle {
+  const saved = readUiStyleMirror();
+  try {
+    if (localStorage.getItem(UI_STYLE_MIGRATION_KEY) !== "1") {
+      // Earlier releases wrote liquid-glass on first launch even when the
+      // user had never selected a style. Move that old default once while
+      // preserving the other explicit choices.
+      const style = saved === null || saved === "liquid-glass"
+        ? DEFAULT_UI_STYLE
+        : normalizeUiStyle(saved);
+      localStorage.setItem(UI_STYLE_MIGRATION_KEY, "1");
+      writeUiStyleMirror(style);
+      return style;
+    }
+  } catch {
+    // Storage may be unavailable in web previews; use the app default.
+  }
+  return normalizeUiStyle(saved);
+}
+
 /** Persisted style (localStorage mirror) or the default. */
-export const initialUiStyle: UiStyle = normalizeUiStyle(readUiStyleMirror());
+export const initialUiStyle: UiStyle = initialStyle();
 
 /** Apply the style to `document.documentElement[data-ui-style]` + mirror. */
 export function applyUiStyle(style: UiStyle): void {

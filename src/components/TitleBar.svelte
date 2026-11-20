@@ -12,13 +12,11 @@
   import CommandPalette from "./CommandPalette.svelte";
   import { app, setAlwaysOnTopState } from "../app/state.svelte";
   import { t } from "../app/i18n.svelte";
-  import { routeTitleKey } from "../lib/router.svelte";
   import * as client from "../app/tauri.js";
 
   let maximized = $state(false);
   let unlisten: UnlistenFn | null = null;
 
-  const toolName = $derived(t(routeTitleKey(app.route)));
   const runningCount = $derived(
     app.tasks.filter(
       (task) => task.status === "running" || task.status === "queued",
@@ -61,23 +59,18 @@
 </script>
 
 <header
-  class="mynx-titlebar flex h-10 shrink-0 select-none items-stretch text-text"
+  class="mynx-titlebar flex h-12 shrink-0 select-none items-stretch text-text"
 >
   <div
-    class="flex min-w-0 flex-1 items-center gap-2 px-3"
+    class="flex min-w-0 flex-1 items-center gap-3 px-4"
     data-tauri-drag-region
   >
-    <img src="/mynx.svg" alt="" class="h-4 w-4" data-tauri-drag-region />
-    <span class="text-[12px] font-semibold" data-tauri-drag-region>Mynx</span>
-    <span
-      class="mynx-truncate text-[12px] text-text-secondary"
-      data-tauri-drag-region
-    >
-      {toolName}
-    </span>
+    <img src="/mynx.svg" alt="" class="h-7 w-7" data-tauri-drag-region />
+    <span class="text-[15px] font-semibold tracking-tight" data-tauri-drag-region>Mynx</span>
   </div>
 
   <div class="flex shrink-0 items-stretch">
+    {#if app.route !== "/"}
     <div class="flex items-center px-1.5 max-[520px]:px-1">
       <CommandPalette />
     </div>
@@ -109,6 +102,7 @@
         </span>
       {/if}
     </button>
+    {/if}
 
     <button
       type="button"
@@ -126,7 +120,6 @@
         <IconPin size={16} stroke={1.6} />
       {/if}
     </button>
-
     <span class="my-2 w-px bg-border" aria-hidden="true"></span>
 
     <button

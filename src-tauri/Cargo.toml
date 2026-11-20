@@ -8,7 +8,7 @@ members = [
 
 [package]
 name = "mynx-next"
-version = "3.0.3"
+version = "3.0.4"
 description = "Mynx — qPCR and RNA-seq analysis, scientific charts and image conversion"
 license = "Apache-2.0"
 authors = ["Mynx Team"]
@@ -44,6 +44,9 @@ thiserror = "1"
 tokio = { version = "1", features = ["fs", "process", "io-util", "rt-multi-thread", "sync", "macros", "time"] }
 reqwest = { version = "0.13", features = ["json"] }
 dunce = "1"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "=0.61.3", features = ["Win32_Foundation", "Win32_Graphics_Dwm", "Win32_UI_Controls"] }
 
 [profile.release]
 lto = "thin"
