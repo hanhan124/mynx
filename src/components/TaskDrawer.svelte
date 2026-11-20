@@ -59,7 +59,7 @@
 <aside
   id="mynx-task-drawer"
   inert={!app.taskDrawerOpen}
-  class="mynx-task-drawer fixed bottom-0 z-30 flex flex-col border-t border-border bg-surface {app.taskDrawerOpen
+  class="mynx-task-drawer fixed bottom-0 z-30 flex flex-col border-t border-border bg-elevated {app.taskDrawerOpen
     ? 'mynx-task-drawer-open translate-y-0'
     : 'mynx-task-drawer-closed pointer-events-none translate-y-full'}"
   aria-label={t("task.center")}
@@ -75,7 +75,7 @@
     <button
       type="button"
       id="mynx-task-close"
-      class="mynx-btn !h-7 !w-7 !p-0"
+      class="mynx-btn h-7 w-7 p-0"
       onclick={() => {
         app.taskDrawerOpen = false;
         document.getElementById("mynx-task-trigger")?.focus();
@@ -105,7 +105,7 @@
               {#if task.outputDir}
                 <button
                   type="button"
-                  class="mynx-btn !h-7 !w-7 !p-0 shrink-0"
+                  class="mynx-btn h-7 w-7 p-0 shrink-0"
                   onclick={() => openOutput(task)}
                   aria-label={t("task.openOutput")}
                   title={t("task.openOutput")}
@@ -116,7 +116,7 @@
               {#if task.status === "running" || task.status === "queued"}
                 <button
                   type="button"
-                  class="mynx-btn mynx-btn-danger !h-7 shrink-0"
+                  class="mynx-btn mynx-btn-danger h-7 shrink-0"
                   onclick={() => cancelTask(task)}
                   aria-label={t("task.cancel")}
                   title={t("task.cancel")}

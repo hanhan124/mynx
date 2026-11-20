@@ -380,7 +380,7 @@ import { app, pushToast } from "../../app/state.svelte";
             <span class="text-[11px] font-semibold">{t("rnaseq.rPackages")}</span>
             <button
               type="button"
-              class="mynx-btn ml-auto !h-6 !w-6 !p-0"
+              class="mynx-btn mynx-btn-compact mynx-btn-compact-sm ml-auto"
               onclick={() => void checkRDependencies()}
               disabled={rnaseq.installPhase === "running"}
               aria-label={t("common.refresh")}
@@ -440,7 +440,7 @@ import { app, pushToast } from "../../app/state.svelte";
                 </span>
                 <button
                   type="button"
-                  class="mynx-btn !h-7 !w-7 !p-0"
+                  class="mynx-btn h-7 w-7 p-0"
                   aria-label={t("rnaseq.openResults")}
                   title={t("rnaseq.openResults")}
                   onclick={() => void openPath(rnaseq.resultDir)}
@@ -621,7 +621,7 @@ import { app, pushToast } from "../../app/state.svelte";
               </span>
               <button
                 type="button"
-                class="mynx-btn !h-7 !w-7 !p-0"
+                class="mynx-btn h-7 w-7 p-0"
                 aria-label={t("rnaseq.copyLog")}
                 title={t("rnaseq.copyLog")}
                 onclick={() => void copyLog()}

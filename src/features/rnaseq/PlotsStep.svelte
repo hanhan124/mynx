@@ -392,7 +392,7 @@
         {#if rnaseq.hasResult && rnaseq.resultDir}
           <button
             type="button"
-            class="mynx-btn !h-8 !w-8 !p-0"
+            class="mynx-btn h-8 w-8 p-0"
             aria-label={t("rnaseq.openResults")}
             title={t("rnaseq.openResults")}
             onclick={() => void openPath(rnaseq.resultDir)}
@@ -572,7 +572,7 @@
               <span class="mynx-badge mynx-badge-queued">{genes.length}</span>
               <button
                 type="button"
-                class="mynx-btn mynx-btn-danger !h-8 !w-8 !p-0"
+                class="mynx-btn mynx-btn-danger h-8 w-8 p-0"
                 aria-label={t("rnaseq.deleteCluster", { name })}
                 onclick={() => deleteCluster(name)}
               >

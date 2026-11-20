@@ -263,7 +263,7 @@
               </span>
               <button
                 type="button"
-                class="mynx-btn !h-7 !w-7 !p-0"
+                class="mynx-btn h-7 w-7 p-0"
                 aria-label={t("rnaseq.assignSelectedToGroup", { name })}
                 title={t("rnaseq.assignSelectedToGroup", { name })}
                 disabled={!selected || running}
@@ -273,7 +273,7 @@
               </button>
               <button
                 type="button"
-                class="mynx-btn mynx-btn-danger !h-7 !w-7 !p-0"
+                class="mynx-btn mynx-btn-danger h-7 w-7 p-0"
                 aria-label={t("rnaseq.deleteGroup")}
                 title={t("rnaseq.deleteGroup")}
                 onclick={(event) => {
@@ -355,7 +355,7 @@
               </span>
               <button
                 type="button"
-                class="mynx-btn mynx-btn-danger !h-7 !w-7 !p-0"
+                class="mynx-btn mynx-btn-danger h-7 w-7 p-0"
                 aria-label={t("rnaseq.deleteBatch")}
                 onclick={() => removeBatch(name)}
               >
@@ -465,7 +465,7 @@
                 </select>
                 <button
                   type="button"
-                  class="mynx-btn mynx-btn-danger !h-8 !w-8 !p-0"
+                  class="mynx-btn mynx-btn-danger h-8 w-8 p-0"
                   aria-label={t("rnaseq.removeComparison")}
                   onclick={() => removeComparison(i)}
                 >

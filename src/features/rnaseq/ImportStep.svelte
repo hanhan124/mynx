@@ -244,7 +244,7 @@
           />
           <button
             type="button"
-            class="mynx-btn !h-8 !w-8 !p-0"
+            class="mynx-btn h-8 w-8 p-0"
             onclick={() => void pickOutputDir()}
             aria-label={t("rnaseq.chooseDir")}
             title={t("rnaseq.chooseDir")}

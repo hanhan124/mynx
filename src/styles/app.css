@@ -90,6 +90,12 @@
   --mynx-motion-panel: 280ms;
   --mynx-ease-settle: cubic-bezier(0.2, 0.75, 0.25, 1);
   --mynx-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --mynx-scrim: rgb(8 12 18 / 44%);
+}
+
+/* Dark mode needs a heavier scrim to keep dialogs separated from content. */
+html[data-theme="graphite"] {
+  --mynx-scrim: rgb(0 0 0 / 56%);
 }
 
 /* Legacy fallback: no data-ui-style set (pre-theme installs). */
@@ -149,6 +155,7 @@ html[data-ui-style="liquid-glass"] {
   --color-chart-canvas: #ffffff;
   --color-chart-grid: rgba(20, 50, 80, 0.12);
   --color-chart-axis: #2e4a63;
+  --mynx-shadow-pop: 0 1px 2px rgb(16 24 34 / 0.08), 0 8px 24px rgb(16 24 34 / 0.16);
   --mynx-radius-btn: 10px;
   --mynx-radius-input: 10px;
   --mynx-radius-control: 10px;
@@ -191,6 +198,7 @@ html[data-ui-style="liquid-glass"][data-theme="graphite"] {
   --color-chart-canvas: #152230;
   --color-chart-grid: rgba(190, 220, 250, 0.1);
   --color-chart-axis: #c3d4e2;
+  --mynx-shadow-pop: 0 1px 2px rgb(0 0 0 / 0.32), 0 8px 24px rgb(0 0 0 / 0.44);
   --mynx-accent-2: #3cc2a6;
   --mynx-page-bg: #10171d;
   --mynx-shadow-card: none;
@@ -238,7 +246,7 @@ html[data-ui-style="minimal-linear"] {
   --mynx-radius-modal: 16px;
   --mynx-border-width: 1px;
   --mynx-shadow-card: none;
-  --mynx-shadow-pop: none;
+  --mynx-shadow-pop: 0 1px 2px rgb(16 24 34 / 0.08), 0 8px 24px rgb(16 24 34 / 0.16);
   --mynx-page-bg: #f5f6f8;
   --mynx-card-backdrop: none;
   --mynx-nav-backdrop: saturate(160%) blur(18px);
@@ -278,7 +286,7 @@ html[data-ui-style="minimal-linear"][data-theme="graphite"] {
   --mynx-page-bg: #1d222a;
   --mynx-nav-backdrop: saturate(160%) blur(18px);
   --mynx-shadow-card: none;
-  --mynx-shadow-pop: none;
+  --mynx-shadow-pop: 0 1px 2px rgb(0 0 0 / 0.32), 0 8px 24px rgb(0 0 0 / 0.44);
 }
 
 /* --- Swiss editorial, light --------------------------------------------- */
@@ -570,6 +578,33 @@ html[data-theme="graphite"] {
     -webkit-backdrop-filter: var(--mynx-nav-backdrop);
   }
 
+  /* Unified 46px window/title bar control: hover, pressed, and focus states
+     live here so every chrome button behaves identically across platforms. */
+  .mynx-titlebar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+    transition:
+      background-color var(--mynx-motion-quick) ease,
+      color var(--mynx-motion-quick) ease;
+  }
+
+  .mynx-titlebar-btn:hover:not(:disabled) {
+    background: var(--color-hover);
+    color: var(--color-text);
+  }
+
+  .mynx-titlebar-btn:active:not(:disabled) {
+    background: var(--color-active);
+    color: var(--color-text);
+  }
+
+  .mynx-titlebar-btn:focus-visible {
+    border-radius: 6px;
+    outline-offset: -2px;
+  }
+
   /* Page hierarchy -------------------------------------------------------- */
 
   .mynx-page-title {
@@ -633,12 +668,12 @@ html[data-theme="graphite"] {
   }
 
   .mynx-nav-button:hover {
-    background: color-mix(in srgb, var(--color-accent) 8%, var(--color-nav-bg));
+    background: var(--color-hover);
     color: var(--color-text);
   }
 
   .mynx-nav-button-active {
-    background: var(--color-nav-active);
+    background: var(--color-selected);
     border-color: transparent;
     color: var(--color-text);
     font-weight: 650;
@@ -707,6 +742,25 @@ html[data-theme="graphite"] {
   .mynx-btn-primary:hover:not(:disabled) {
     background: var(--color-accent-hover);
     border-color: var(--color-accent-hover);
+  }
+
+  /* Compact variants for dense toolbars and inspector rows; they lower the
+     min-height so utility size classes (h-7/h-6) actually apply. */
+  .mynx-btn-compact {
+    min-height: 0;
+    height: 28px;
+    width: 28px;
+    padding: 0;
+  }
+
+  .mynx-btn-compact.mynx-btn-compact-sm {
+    height: 24px;
+    width: 24px;
+  }
+
+  .mynx-input-compact {
+    min-height: 28px;
+    height: 28px;
   }
 
   .mynx-btn-danger {
@@ -1491,17 +1545,19 @@ html[data-theme="graphite"] {
     color: var(--color-accent);
   }
 
-  html[data-ui-style="minimal-linear"] .mynx-modal-panel {
-    background-color: var(--color-surface);
-    border-radius: var(--mynx-radius-card);
-  }
-
   html[data-ui-style="minimal-linear"] .mynx-workspace :is(thead th, summary:hover) {
     background-color: var(--color-surface-2);
   }
 
   html[data-ui-style="minimal-linear"] .mynx-workspace :is(input[type="checkbox"], input[type="radio"], input[type="range"]) {
     accent-color: var(--color-accent);
+  }
+
+  /* Floating layers: elevated surface, modal radius, soft popover shadow. */
+  .mynx-modal-panel {
+    background-color: var(--color-elevated);
+    border-radius: var(--mynx-radius-modal);
+    box-shadow: var(--mynx-shadow-pop);
   }
 
   .mynx-modal-panel[data-state="closed"],

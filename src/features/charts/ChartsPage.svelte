@@ -796,7 +796,7 @@
                     )}
                     <select
                       id={roleInputId(role.key)}
-                      class="mynx-input {roleError ? '!border-danger' : ''}"
+                      class="mynx-input {roleError ? 'border-danger' : ''}"
                       value={value}
                       disabled={running}
                       aria-invalid={roleError ? "true" : undefined}

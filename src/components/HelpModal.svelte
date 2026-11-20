@@ -223,7 +223,7 @@
             </tbody>
           </table>
         </div>
-        <button type="button" class="mynx-btn mynx-btn-secondary self-start" onclick={() => void downloadQpcrImportTemplate()}>
+        <button type="button" class="mynx-btn self-start" onclick={() => void downloadQpcrImportTemplate()}>
           <IconDownload size={15} stroke={1.7} aria-hidden="true" />
           {t("qpcr.downloadImportTemplate")}
         </button>
@@ -236,7 +236,7 @@
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <CopyableText text={qpcrTemplate} label={t("qpcr.copyTemplate")} copyLabel={t("qpcr.copyTemplate")} />
-          <button type="button" class="mynx-btn mynx-btn-secondary" onclick={() => void downloadQpcrTemplate()}>
+          <button type="button" class="mynx-btn" onclick={() => void downloadQpcrTemplate()}>
             <IconDownload size={15} stroke={1.7} aria-hidden="true" />
             {t("qpcr.downloadTemplate")}
           </button>

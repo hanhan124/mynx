@@ -152,7 +152,7 @@
       <span class="mynx-chip text-[10px]">
         {t("qpcr.previewDimensions", { rows: snapshot.rowCount, cols: snapshot.columnCount })}
       </span>
-      <button type="button" class="mynx-btn !h-7 gap-1.5 !px-2 text-[11px]" onclick={() => (open = true)}>
+      <button type="button" class="mynx-btn h-7 gap-1.5 px-2 text-[11px]" onclick={() => (open = true)}>
         <IconSearch size={13} stroke={1.75} aria-hidden="true" />
         {t("qpcr.previewOpenFull")}
       </button>
@@ -265,7 +265,7 @@
         <span class="sr-only">{t("qpcr.previewSearch")}</span>
         <IconSearch size={14} stroke={1.75} aria-hidden="true" class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-secondary" />
         <input
-          class="mynx-input w-full !pl-8"
+          class="mynx-input w-full pl-8"
           type="search"
           value={search}
           placeholder={t("qpcr.previewSearchPlaceholder")}
@@ -338,7 +338,7 @@
       <label class="flex items-center gap-2 text-[11px] text-text-secondary">
         {t("qpcr.previewRowsPerPage")}
         <select
-          class="mynx-input !h-7 !py-0 text-[11px]"
+          class="mynx-input mynx-input-compact text-[11px]"
           value={pagination.pageSize}
           onchange={(event) => table.setPageSize(Number(event.currentTarget.value))}
         >
@@ -353,14 +353,14 @@
         </span>
         <button
           type="button"
-          class="mynx-btn !h-7 !w-7 !p-0"
+          class="mynx-btn h-7 w-7 p-0"
           aria-label={t("qpcr.previewPreviousPage")}
           disabled={!table.getCanPreviousPage()}
           onclick={() => table.previousPage()}
         ><IconChevronLeft size={15} stroke={1.75} aria-hidden="true" /></button>
         <button
           type="button"
-          class="mynx-btn !h-7 !w-7 !p-0"
+          class="mynx-btn h-7 w-7 p-0"
           aria-label={t("qpcr.previewNextPage")}
           disabled={!table.getCanNextPage()}
           onclick={() => table.nextPage()}

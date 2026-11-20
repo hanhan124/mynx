@@ -239,7 +239,7 @@
       </span>
       <input
         type="color"
-        class="mynx-input !h-8 !w-14 cursor-pointer !p-1"
+        class="mynx-input h-8 w-14 cursor-pointer p-1"
         value={doc?.chartColor ?? "#2f6fed"}
         onchange={(event) => pickChartColor(event.currentTarget.value)}
         aria-label={t("settings.chartColor")}

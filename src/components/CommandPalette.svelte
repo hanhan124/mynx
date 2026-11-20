@@ -122,9 +122,9 @@
 
 <Dialog.Root bind:open>
   <Dialog.Portal>
-    <Dialog.Overlay class="mynx-modal-scrim fixed inset-0 z-40 bg-black/40" />
+    <Dialog.Overlay class="mynx-modal-scrim fixed inset-0 z-40 bg-(--mynx-scrim)" />
     <Dialog.Content
-      class="mynx-modal-panel fixed left-1/2 top-[12%] z-50 w-[min(520px,92vw)] -translate-x-1/2 rounded-lg border border-border bg-surface p-0 outline-none"
+      class="mynx-modal-panel fixed left-1/2 top-[12%] z-50 w-[min(520px,92vw)] -translate-x-1/2 rounded-(--mynx-radius-popover) border border-border bg-elevated p-0 outline-none"
     >
       <Dialog.Title class="sr-only">{t("palette.open")}</Dialog.Title>
       <div class="flex items-center gap-2 border-b border-border px-3 py-2 focus-within:border-b-accent">
@@ -156,7 +156,7 @@
                 type="button"
                 id={`mynx-command-${item.id}`}
                 tabindex={-1}
-                class="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12px] {index === activeIndex ? 'bg-accent/10 text-accent' : 'hover:bg-surface-2'}"
+                class="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12px] {index === activeIndex ? 'bg-selected text-accent' : 'hover:bg-hover'}"
                 role="option"
                 aria-selected={index === activeIndex}
                 onmouseenter={() => (activeIndex = index)}

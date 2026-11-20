@@ -21,7 +21,7 @@
 
 <Dialog.Root bind:open>
     <Dialog.Portal>
-        <Dialog.Overlay class="mynx-modal-scrim fixed inset-0 z-40 bg-black/40" />
+        <Dialog.Overlay class="mynx-modal-scrim fixed inset-0 z-40 bg-(--mynx-scrim)" />
         <Dialog.Content
           class="mynx-card mynx-modal-panel fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden"
           style="width: min({width}px, calc(100vw - 32px))"
@@ -29,7 +29,7 @@
           <div class="flex items-start justify-between gap-2 px-4 pt-4">
             <Dialog.Title class="text-[15px] font-semibold text-text">{title}</Dialog.Title>
             <Dialog.Close
-              class="mynx-btn !h-7 !w-7 !p-0"
+              class="mynx-btn h-7 w-7 p-0"
               aria-label={t("common.close")}
               title={t("common.close")}
             >

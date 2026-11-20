@@ -74,7 +74,7 @@
     {@const Icon = item.icon}
     <button
       type="button"
-      class="mynx-nav-button cursor-pointer relative flex h-11 items-center rounded-xl border border-transparent {expanded
+      class="mynx-nav-button cursor-pointer relative flex h-11 items-center rounded-(--mynx-radius-control) border border-transparent {expanded
         ? 'w-full justify-start gap-3 px-3'
         : 'w-11 justify-center'} {active
         ? 'mynx-nav-button-active'
@@ -101,7 +101,7 @@
   <div class="mynx-nav-utilities mt-2 flex w-full flex-col items-center gap-1 border-t border-nav-border pt-3">
     <button
       type="button"
-      class="mynx-nav-button cursor-pointer relative flex h-11 items-center rounded-xl border border-transparent {expanded
+      class="mynx-nav-button cursor-pointer relative flex h-11 items-center rounded-(--mynx-radius-control) border border-transparent {expanded
         ? 'w-full justify-start gap-3 px-3'
         : 'w-11 justify-center'} {settingsActive
         ? 'mynx-nav-button-active'

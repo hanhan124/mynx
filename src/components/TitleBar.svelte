@@ -76,7 +76,7 @@
     </div>
     <button
       type="button"
-      class="flex w-[46px] max-[520px]:w-11 items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text"
+      class="mynx-titlebar-btn w-[46px] max-[520px]:w-11"
       onclick={() => (app.helpOpen = true)}
       aria-label={t("help.title")}
       title={t("help.title")}
@@ -85,7 +85,7 @@
     </button>
     <button
       type="button"
-      class="relative flex w-[46px] max-[520px]:w-11 items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text"
+      class="mynx-titlebar-btn relative w-[46px] max-[520px]:w-11"
       onclick={toggleTasks}
       aria-label={t("task.center")}
       id="mynx-task-trigger"
@@ -106,9 +106,7 @@
 
     <button
       type="button"
-      class="flex w-[46px] max-[520px]:w-11 items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text {app.alwaysOnTop
-        ? 'text-accent'
-        : ''}"
+      class="mynx-titlebar-btn w-[46px] {app.alwaysOnTop ? 'text-accent' : ''}"
       onclick={togglePin}
       aria-label={t("window.pin")}
       aria-pressed={app.alwaysOnTop}
@@ -120,11 +118,11 @@
         <IconPin size={16} stroke={1.6} />
       {/if}
     </button>
-    <span class="my-2 w-px bg-border" aria-hidden="true"></span>
+    <span class="my-2 w-px bg-separator" aria-hidden="true"></span>
 
     <button
       type="button"
-      class="flex w-[46px] items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text"
+      class="mynx-titlebar-btn w-[46px]"
       onclick={() => void client.minimizeWindow().catch(() => {})}
       aria-label={t("window.minimize")}
       title={t("window.minimize")}
@@ -134,7 +132,7 @@
 
     <button
       type="button"
-      class="flex w-[46px] items-center justify-center text-text-secondary hover:bg-surface-2 hover:text-text"
+      class="mynx-titlebar-btn w-[46px]"
       onclick={() => void client.toggleMaximizeWindow().catch(() => {})}
       aria-label={t("window.maximize")}
       title={t("window.maximize")}
@@ -148,7 +146,7 @@
 
     <button
       type="button"
-      class="flex w-[46px] items-center justify-center text-text-secondary hover:bg-danger hover:text-white"
+      class="mynx-titlebar-btn w-[46px] hover:bg-danger hover:text-on-accent"
       onclick={() => void client.closeWindow().catch(() => {})}
       aria-label={t("window.close")}
       title={t("window.close")}
