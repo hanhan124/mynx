@@ -32,7 +32,9 @@
   });
 
   function cityLabel(city: { name: string; admin1?: string | null; country: string }): string {
-    return [city.name, city.admin1, city.country].filter(Boolean).join(" · ");
+    // IP lookups often repeat the same name across city/region/country
+    // (e.g. 澳门 · 澳门 · 澳门); keep only distinct parts.
+    return [...new Set([city.name, city.admin1, city.country].filter(Boolean))].join(" · ");
   }
 
   function weatherIcon(code: number): IconComponent {
@@ -45,14 +47,14 @@
 
 </script>
 
-<section class="flex min-w-0 items-center gap-2 text-text-secondary" aria-label={t("home.weatherTitle")}>
+<section class="mynx-weather flex min-w-0 items-center gap-2 text-text-secondary" aria-label={t("home.weatherTitle")}>
   {#if !weather.enabled}
     <IconCloud size={16} stroke={1.7} class="shrink-0" aria-hidden="true" />
     <div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
-      <p class="text-[12px] font-medium">{t("home.weatherTitle")}</p>
-      <p class="text-[11px]">{t("home.weatherOffHint")}</p>
+      <p class="text-callout font-medium">{t("home.weatherTitle")}</p>
+      <p class="text-footnote">{t("home.weatherOffHint")}</p>
     </div>
-    <button type="button" class="mynx-btn mynx-btn-ghost h-8 min-h-8 shrink-0 px-3 text-[12px]" onclick={() => void setWeatherEnabled(true)}>
+    <button type="button" class="mynx-btn mynx-btn-ghost h-8 min-h-8 shrink-0 px-3 text-callout" onclick={() => void setWeatherEnabled(true)}>
       {t("home.weatherEnable")}
     </button>
   {:else}
@@ -63,12 +65,12 @@
       </span>
       <div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5 leading-tight">
         <span
-          class="mynx-truncate max-w-full text-[12px]"
+          class="mynx-truncate max-w-full text-callout"
           title={weather.city ? cityLabel(weather.city) : t("home.weatherTitle")}
-        >{weather.city ? cityLabel(weather.city) : t("home.weatherTitle")}</span>
-        <span class="text-[15px] font-semibold leading-none tabular-nums text-text">{Math.round(weather.current.temperature)}°C</span>
-        <span class="text-[11px]">{t(conditionKey(weather.current.code))}</span>
-        <span class="text-[11px]">
+        >{weather.city ? weather.city.name : t("home.weatherTitle")}</span>
+        <span class="text-headline font-semibold leading-none tabular-nums text-text">{Math.round(weather.current.temperature)}°C</span>
+        <span class="text-footnote">{t(conditionKey(weather.current.code))}</span>
+        <span class="text-footnote">
           {t("home.weatherDetails", {
             feelsLike: Math.round(weather.current.feelsLike),
             humidity: Math.round(weather.current.humidity),
@@ -79,12 +81,12 @@
     {:else}
       <IconMapPin size={16} stroke={1.7} class="shrink-0" aria-hidden="true" />
       <div class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
-        <p class="text-[12px] font-medium">{t("home.weatherTitle")}</p>
-        <p class="text-[11px]">
+        <p class="text-callout font-medium">{t("home.weatherTitle")}</p>
+        <p class="text-footnote">
           {#if weather.loading}
             {t("home.weatherLoading")}
           {:else if weather.city}
-            {cityLabel(weather.city)}
+            <span title={cityLabel(weather.city)}>{weather.city.name}</span>
           {:else}
             {t("home.weatherAutoHint")}
           {/if}

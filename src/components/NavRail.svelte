@@ -31,9 +31,16 @@
   const settingsActive = $derived(app.route === "/settings");
   const settingsLabel = $derived(t("nav.settings"));
   let maximized = $state(false);
-  const railWidth = $derived(getNavRailWidth(maximized));
+  let viewportWidth = $state(typeof window === "undefined" ? 1120 : window.innerWidth);
+  const railWidth = $derived(
+    getNavRailWidth(maximized, viewportWidth >= 900),
+  );
   const expanded = $derived(railWidth >= 168);
   let unlisten: UnlistenFn | null = null;
+
+  // macOS 27 sidebar rows (every UI style): compact rows, neutral pill.
+  const rowHeightClass = "h-9";
+  const rowRadiusClass = "rounded-[8px]";
 
   onMount(() => {
     void (async () => {
@@ -61,11 +68,13 @@
   }
 </script>
 
+<svelte:window bind:innerWidth={viewportWidth} />
+
 <nav
   class="mynx-navrail flex shrink-0 flex-col gap-1.5 px-1.5 py-2 {expanded
     ? 'items-stretch'
     : 'items-center'}"
-  style={`width: ${railWidth}px`}
+  style={`width: ${railWidth - 8}px`}
   aria-label={t("nav.primary")}
 >
   {#each items as item (item.route)}
@@ -74,8 +83,8 @@
     {@const Icon = item.icon}
     <button
       type="button"
-      class="mynx-nav-button cursor-pointer relative flex h-11 items-center rounded-(--mynx-radius-control) border border-transparent {expanded
-        ? 'w-full justify-start gap-3 px-3'
+      class="mynx-nav-button cursor-pointer relative flex {rowHeightClass} items-center {rowRadiusClass} border border-transparent {expanded
+        ? 'mynx-nav-button-expanded w-full justify-start gap-3 px-3'
         : 'w-11 justify-center'} {active
         ? 'mynx-nav-button-active'
         : ''}"
@@ -86,12 +95,9 @@
       aria-current={active ? "page" : undefined}
       title={label}
     >
-      {#if active}
-        <span class="mynx-nav-active-mark absolute left-0 top-2 bottom-2 w-[3px] rounded-full" aria-hidden="true"></span>
-      {/if}
       <span class="shrink-0" aria-hidden="true"><Icon size={18} stroke={1.9} /></span>
       {#if expanded}
-        <span class="mynx-nav-label min-w-0 flex-1 truncate text-left text-[13px]">{label}</span>
+        <span class="mynx-nav-label min-w-0 flex-1 truncate text-left text-body">{label}</span>
       {/if}
     </button>
   {/each}
@@ -101,8 +107,8 @@
   <div class="mynx-nav-utilities mt-2 flex w-full flex-col items-center gap-1 border-t border-nav-border pt-3">
     <button
       type="button"
-      class="mynx-nav-button cursor-pointer relative flex h-11 items-center rounded-(--mynx-radius-control) border border-transparent {expanded
-        ? 'w-full justify-start gap-3 px-3'
+      class="mynx-nav-button cursor-pointer relative flex {rowHeightClass} items-center {rowRadiusClass} border border-transparent {expanded
+        ? 'mynx-nav-button-expanded w-full justify-start gap-3 px-3'
         : 'w-11 justify-center'} {settingsActive
         ? 'mynx-nav-button-active'
         : ''}"
@@ -111,12 +117,9 @@
       aria-current={settingsActive ? "page" : undefined}
       title={settingsLabel}
     >
-      {#if settingsActive}
-        <span class="mynx-nav-active-mark absolute left-0 top-2 bottom-2 w-[3px] rounded-full" aria-hidden="true"></span>
-      {/if}
       <IconSettingsCog size={18} stroke={1.9} aria-hidden="true" />
       {#if expanded}
-        <span class="mynx-nav-label min-w-0 flex-1 truncate text-left text-[13px]">{settingsLabel}</span>
+        <span class="mynx-nav-label min-w-0 flex-1 truncate text-left text-body">{settingsLabel}</span>
       {/if}
     </button>
   </div>

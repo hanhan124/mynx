@@ -7,20 +7,20 @@
  * styles below are a second, independent dimension applied as
  * `document.documentElement[data-ui-style]`:
  *
- * - `minimal-linear` (default) — macOS 27-inspired cool neutrals, system-blue
- *   selection, a soft blue-violet color wash, and translucent title/navigation bars.
- * - `liquid-glass` — pure-white glass, subtle blue-gray / sage glows,
- *   restrained backdrop blur, one low-saturation lake-blue accent.
- * - `swiss-editorial` — pure white + ink black + one low-saturation
- *   editorial red #C2452D, square corners, strict grid.
- * - `memphis-pop` — kraft #F4ECDB + white cards + 2px warm-ink borders,
- *   cream pastels only as small accents.
+ * Since 2026-11-22 every style shares the macOS 27 structure (Liquid Glass
+ * chrome, controls, type scale, concentric radii; see app.css "macOS 27
+ * structure"). A style only contributes its palette:
+ * - `macos` (default) — Apple system grays + system blue.
+ * - `minimal-linear` — cool neutrals + soft blue.
+ * - `liquid-glass` — blue-gray base + lake-blue accent.
+ * - `swiss-editorial` — white / ink black + editorial red.
+ * - `memphis-pop` — kraft paper + amber accent.
  *
  * Persistence: localStorage mirror `mynx-ui-style`, the same pattern the
  * app already uses for the theme/language mirrors (`mynx-theme`,
  * `mynx-language`) so the style is applied before first paint.
  * TODO(sqlite): move this into the SQLite settings document once the Rust
- * side can carry it — add `ui_style: String` (default "minimal-linear") to
+ * side can carry it — add `ui_style: String` (default "macos") to
  * `SettingsDoc` in `src-tauri/crates/mynx-contracts/src/settings.rs`,
  * add the key in `SettingsStore::load`/`save` in
  * `src-tauri/crates/mynx-core/src/settings.rs`, then regenerate the TS
@@ -32,21 +32,27 @@
  * today would be silently dropped by the Rust struct deserialization.)
  */
 
-export type UiStyle = "liquid-glass" | "minimal-linear" | "swiss-editorial" | "memphis-pop";
+export type UiStyle =
+  | "macos"
+  | "liquid-glass"
+  | "minimal-linear"
+  | "swiss-editorial"
+  | "memphis-pop";
 
 export const UI_STYLES = [
+  "macos",
   "minimal-linear",
   "liquid-glass",
   "swiss-editorial",
   "memphis-pop",
 ] as const satisfies readonly UiStyle[];
 
-export const DEFAULT_UI_STYLE: UiStyle = "minimal-linear";
+export const DEFAULT_UI_STYLE: UiStyle = "macos";
 
 const UI_STYLE_IDS = new Set<string>(UI_STYLES);
 
 const UI_STYLE_STORAGE_KEY = "mynx-ui-style";
-const UI_STYLE_MIGRATION_KEY = "mynx-ui-style-default-v2";
+const UI_STYLE_MIGRATION_KEY = "mynx-ui-style-default-v3";
 
 export function normalizeUiStyle(value: string | null | undefined): UiStyle {
   if (!value) return DEFAULT_UI_STYLE;
@@ -77,10 +83,11 @@ function initialStyle(): UiStyle {
   const saved = readUiStyleMirror();
   try {
     if (localStorage.getItem(UI_STYLE_MIGRATION_KEY) !== "1") {
-      // Earlier releases wrote liquid-glass on first launch even when the
-      // user had never selected a style. Move that old default once while
-      // preserving the other explicit choices.
-      const style = saved === null || saved === "liquid-glass"
+      // Each release that flips the default moves the previous default once,
+      // while preserving every other explicit style choice. v2 moved the old
+      // liquid-glass default to minimal-linear; v3 moves minimal-linear to
+      // the new macOS faithful default.
+      const style = saved === null || saved === "minimal-linear"
         ? DEFAULT_UI_STYLE
         : normalizeUiStyle(saved);
       localStorage.setItem(UI_STYLE_MIGRATION_KEY, "1");

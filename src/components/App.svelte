@@ -35,7 +35,16 @@
   let pageLoadFailed = $state(false);
   let retrySequence = $state(0);
   let windowMaximized = $state(false);
-  const sidebarWidth = $derived(getNavRailWidth(windowMaximized));
+  let viewportWidth = $state(typeof window === "undefined" ? 1120 : window.innerWidth);
+  // Toolbar scroll-edge: glass + hairline only while content sits under it.
+  let workspaceScrolled = $state(false);
+  $effect(() => {
+    void app.route;
+    workspaceScrolled = false;
+  });
+  const sidebarWidth = $derived(
+    getNavRailWidth(windowMaximized, viewportWidth >= 900),
+  );
 
   onMount(() => {
     let unlisten: (() => void) | null = null;
@@ -120,13 +129,16 @@
   });
 </script>
 
+<svelte:window bind:innerWidth={viewportWidth} />
+
 <div
   class="mynx-app-shell flex h-screen min-h-0 flex-col text-text {app.route === '/' ? 'mynx-app-shell--home' : ''}"
   style={`--mynx-nav-rail-width: ${sidebarWidth}px`}
+  data-scrolled={workspaceScrolled ? "true" : "false"}
 >
   <TitleBar />
   <UpdateBanner />
-  <div class="flex min-h-0 flex-1">
+  <div class="mynx-shell-body flex min-h-0 flex-1">
     <NavRail />
     <ColumnResizeHandle
       label={t("layout.resizeSidebar")}
@@ -134,10 +146,14 @@
       min={64}
       max={280}
       alwaysVisible
+      edgeStart
       onresize={(width) => setPanelWidth("navRail", width)}
       oncommit={savePanelWidths}
     />
-    <main class="mynx-workspace min-w-0 flex-1 overflow-y-auto">
+    <main
+      class="mynx-workspace min-w-0 flex-1 overflow-y-auto"
+      onscroll={(event) => (workspaceScrolled = event.currentTarget.scrollTop > 1)}
+    >
       {#if chartsPage}
         {@const CachedChartsPage = chartsPage}
         <div

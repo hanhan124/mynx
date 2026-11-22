@@ -146,13 +146,13 @@
   <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
     <div class="flex min-w-0 items-center gap-2">
       <IconTable size={14} stroke={1.75} aria-hidden="true" />
-      <h2 class="mynx-truncate text-[12px] font-semibold">{caption}</h2>
+      <h2 class="mynx-truncate text-callout font-semibold">{caption}</h2>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-      <span class="mynx-chip text-[10px]">
+      <span class="mynx-chip text-caption2">
         {t("qpcr.previewDimensions", { rows: snapshot.rowCount, cols: snapshot.columnCount })}
       </span>
-      <button type="button" class="mynx-btn h-7 gap-1.5 px-2 text-[11px]" onclick={() => (open = true)}>
+      <button type="button" class="mynx-btn h-7 gap-1.5 px-2 text-footnote" onclick={() => (open = true)}>
         <IconSearch size={13} stroke={1.75} aria-hidden="true" />
         {t("qpcr.previewOpenFull")}
       </button>
@@ -161,7 +161,7 @@
 
   <div class="p-3">
     {#if hasYellowFill}
-      <p class="mb-2 flex items-center gap-1.5 text-[11px] text-text-secondary">
+      <p class="mb-2 flex items-center gap-1.5 text-footnote text-text-secondary">
         <span class="h-2.5 w-2.5 shrink-0 rounded-sm border border-warning/50 bg-warning/30" aria-hidden="true"></span>
         {t("qpcr.previewYellowLegend")}
       </p>
@@ -174,7 +174,7 @@
       role="region"
       aria-label={t("qpcr.previewTableAria", { sheet: snapshot.name })}
     >
-      <table class="w-max min-w-full border-separate border-spacing-0 text-left text-[11px]">
+      <table class="w-max min-w-full border-separate border-spacing-0 text-left text-footnote">
         <caption class="sr-only">{caption} · {snapshot.name}</caption>
         <thead class="sticky top-0 z-[1] bg-surface-2 text-text-secondary">
           <tr>
@@ -209,7 +209,7 @@
         </tbody>
       </table>
     </div>
-    <p class="mt-2 text-[11px] text-text-secondary">
+    <p class="mt-2 text-footnote text-text-secondary">
       {t("qpcr.previewRange", {
         rows: Math.min(snapshot.rows.length, 6),
         cols: Math.min(snapshot.columnCount, 6),
@@ -219,7 +219,7 @@
 
   {#if auditFailed}
     <div class="border-t border-border px-3 py-2.5">
-      <p class="flex items-start gap-1.5 text-[11px] leading-relaxed text-warning" role="status">
+      <p class="flex items-start gap-1.5 text-footnote leading-relaxed text-warning" role="status">
         <IconInfoCircle size={14} stroke={1.7} class="mt-0.5 shrink-0" aria-hidden="true" />
         <span>{t("qpcr.auditFailed")}</span>
       </p>
@@ -227,30 +227,30 @@
   {:else if audit}
     <div class="flex flex-col gap-1.5 border-t border-border bg-surface-2/25 px-3 py-2.5">
       <div class="flex min-w-0 items-center justify-between gap-2">
-        <h3 class="mynx-truncate text-[12px] font-semibold text-text">
+        <h3 class="mynx-truncate text-callout font-semibold text-text">
           {t(auditType === "source" ? "qpcr.auditTitle" : "qpcr.auditSummary")}
         </h3>
-        <span class="mynx-chip shrink-0 text-[10px]">
+        <span class="mynx-chip shrink-0 text-caption2">
           {auditType === "source" ? t("qpcr.auditReadOnly") : t("qpcr.auditQc")}
         </span>
       </div>
       <dl class="grid grid-cols-2 gap-x-5 gap-y-1 sm:grid-cols-3">
         {#each auditMetrics as metric (metric.label)}
           <div class="flex min-w-0 items-baseline justify-between gap-2 border-b border-border/70 py-1">
-            <dt class="mynx-truncate text-[11px] text-text-secondary" title={metric.label}>
+            <dt class="mynx-truncate text-footnote text-text-secondary" title={metric.label}>
               {metric.label}
             </dt>
-            <dd class="shrink-0 text-[12px] font-semibold tabular-nums text-text">
+            <dd class="shrink-0 text-callout font-semibold tabular-nums text-text">
               {metric.value}
             </dd>
           </div>
         {/each}
       </dl>
-      <p class="text-[11px] leading-relaxed text-text-secondary">
+      <p class="text-footnote leading-relaxed text-text-secondary">
         {t(auditType === "source" ? "qpcr.auditHint" : "qpcr.auditTransformedHint")}
       </p>
       {#if auditType === "source" && audit.issueRows.length > 0}
-        <p class="text-[11px] leading-relaxed text-warning">
+        <p class="text-footnote leading-relaxed text-warning">
           {t("qpcr.auditIssueRows")}: {audit.issueRows.join(", ")}
         </p>
       {/if}
@@ -272,11 +272,11 @@
           oninput={(event) => table.setGlobalFilter(event.currentTarget.value)}
         />
       </label>
-      <span class="mynx-chip text-[11px]" aria-live="polite">
+      <span class="mynx-chip text-footnote" aria-live="polite">
         {t("qpcr.previewMatchCount", { count: filteredCount })}
       </span>
       {#if hasYellowFill}
-        <span class="flex items-center gap-1.5 text-[11px] text-text-secondary">
+        <span class="flex items-center gap-1.5 text-footnote text-text-secondary">
           <span class="h-2.5 w-2.5 rounded-sm border border-warning/50 bg-warning/30" aria-hidden="true"></span>
           {t("qpcr.previewYellowLegend")}
         </span>
@@ -291,7 +291,7 @@
       role="region"
       aria-label={t("qpcr.previewTableAria", { sheet: snapshot.name })}
     >
-      <table class="w-max min-w-full border-separate border-spacing-0 text-left text-[12px]">
+      <table class="w-max min-w-full border-separate border-spacing-0 text-left text-callout">
         <caption class="sr-only">{caption} · {snapshot.name}</caption>
         <thead class="sticky top-0 z-20 bg-surface-2 text-text-secondary">
           <tr>
@@ -307,7 +307,7 @@
           {#each table.getRowModel().rows as tableRow (tableRow.id)}
             {@const row = tableRow.original}
             <tr class="group">
-              <th scope="row" class="sticky left-0 z-[1] border-b border-r border-border bg-surface px-3 py-1.5 text-right font-mono text-[11px] font-normal text-text-secondary group-hover:bg-surface-2">
+              <th scope="row" class="sticky left-0 z-[1] border-b border-r border-border bg-surface px-3 py-1.5 text-right font-mono text-footnote font-normal text-text-secondary group-hover:bg-surface-2">
                 {row.row}
               </th>
               {#each table.getAllLeafColumns() as column (column.id)}
@@ -325,7 +325,7 @@
             </tr>
           {:else}
             <tr>
-              <td colspan={Math.max(1, snapshot.columnCount + 1)} class="px-4 py-10 text-center text-[12px] text-text-secondary">
+              <td colspan={Math.max(1, snapshot.columnCount + 1)} class="px-4 py-10 text-center text-callout text-text-secondary">
                 {t("qpcr.previewNoMatches")}
               </td>
             </tr>
@@ -335,10 +335,10 @@
     </div>
 
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <label class="flex items-center gap-2 text-[11px] text-text-secondary">
+      <label class="flex items-center gap-2 text-footnote text-text-secondary">
         {t("qpcr.previewRowsPerPage")}
         <select
-          class="mynx-input mynx-input-compact text-[11px]"
+          class="mynx-input mynx-input-compact text-footnote"
           value={pagination.pageSize}
           onchange={(event) => table.setPageSize(Number(event.currentTarget.value))}
         >
@@ -348,7 +348,7 @@
         </select>
       </label>
       <div class="flex items-center gap-2">
-        <span class="min-w-20 text-center text-[11px] text-text-secondary">
+        <span class="min-w-20 text-center text-footnote text-text-secondary">
           {t("qpcr.previewPage", { current: Math.min(pagination.pageIndex + 1, Math.max(pageCount, 1)), total: Math.max(pageCount, 1) })}
         </span>
         <button

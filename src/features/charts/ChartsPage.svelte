@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Switch from "../../components/Switch.svelte";
   import { tick, untrack } from "svelte";
   import { convertFileSrc } from "@tauri-apps/api/core";
   import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
@@ -519,13 +520,15 @@
     }
     await runGeneration();
   }
+  /** Fallback value shown by colour fields with no saved value (data default, unchanged). */
+  const DEFAULT_FIELD_COLOR = "#0A84FF";
 </script>
 
 {#snippet fieldLabel(label: string, required?: boolean)}
-  <span class="flex items-center gap-1 text-[12px] font-medium">
+  <span class="flex items-center gap-1 text-callout font-medium">
     <span class="mynx-truncate">{label}</span>
     {#if required}
-      <span class="shrink-0 text-[10px] text-danger">{t("charts.roleRequired")}</span>
+      <span class="shrink-0 text-caption2 text-danger">{t("charts.roleRequired")}</span>
     {/if}
   </span>
 {/snippet}
@@ -533,7 +536,7 @@
 <section
   class="flex min-h-full flex-col gap-3 p-4 {dragOver ? 'ring-2 ring-accent ring-inset' : ''}"
 >
-  <header class="flex shrink-0 flex-wrap items-baseline gap-3">
+  <header class="mynx-page-header flex shrink-0 flex-wrap items-baseline gap-3">
     <h1 class="mynx-page-title">{t("nav.charts")}</h1>
     <div class="flex w-full min-w-0 flex-wrap items-center gap-2 xl:ml-auto xl:w-auto">
       {#if chartState.rFound === false}
@@ -581,7 +584,7 @@
     <!-- ── Left: template catalog ─────────────────────────────────────── -->
     <div class="mynx-card flex min-w-0 flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
-        <span class="text-[12px] font-semibold">{t("charts.templates")}</span>
+        <span class="text-callout font-semibold">{t("charts.templates")}</span>
         <span class="mynx-chip">{visibleTemplates.length}/{chartTemplates.length}</span>
       </div>
       <div class="flex items-center gap-1.5 border-b border-border px-3 py-2">
@@ -617,7 +620,7 @@
           <button
             type="button"
             aria-pressed={chartState.family === family}
-            class="mynx-btn px-2 py-1 text-[11px] {chartState.family === family
+            class="mynx-btn px-2 py-1 text-footnote {chartState.family === family
               ? 'border-accent bg-accent/10 text-accent'
               : ''}"
             onclick={() => {
@@ -631,7 +634,7 @@
       </div>
       <div class="max-h-80 overflow-y-auto p-2 xl:max-h-[36rem]">
         {#if visibleTemplates.length === 0}
-          <p class="p-3 text-center text-[12px] text-text-secondary">{t("charts.noMatch")}</p>
+          <p class="p-3 text-center text-callout text-text-secondary">{t("charts.noMatch")}</p>
         {:else}
           <ul class="flex flex-col gap-1">
             {#each visibleTemplates as item (item.id)}
@@ -658,8 +661,8 @@
                     <Icon size={15} stroke={1.75} />
                   </span>
                   <span class="min-w-0 flex-1">
-                    <span class="mynx-truncate block text-[12px] font-medium">{copy.name}</span>
-                    <span class="mynx-truncate block text-[11px] text-text-secondary">
+                    <span class="mynx-truncate block text-callout font-medium">{copy.name}</span>
+                    <span class="mynx-truncate block text-footnote text-text-secondary">
                       {copy.description}
                     </span>
                   </span>
@@ -685,7 +688,7 @@
       <div class="mynx-card flex shrink-0 flex-col">
         <div class="flex items-center gap-2 border-b border-border px-3 py-2">
           <IconFileSpreadsheet size={15} stroke={1.75} aria-hidden="true" />
-          <span class="text-[12px] font-semibold">{t("charts.dataPanel")}</span>
+          <span class="text-callout font-semibold">{t("charts.dataPanel")}</span>
         </div>
         <div class="flex flex-col gap-3 p-3">
           <div
@@ -700,10 +703,10 @@
               <IconFileSpreadsheet size={17} stroke={1.75} />
             </span>
             <span class="min-w-0 flex-1">
-              <span class="mynx-truncate block text-[12px] font-medium">
+              <span class="mynx-truncate block text-callout font-medium">
                 {cfg.filePath ? baseName(cfg.filePath) : t("charts.noFile")}
               </span>
-              <span class="mynx-truncate block text-[11px] text-text-secondary">
+              <span class="mynx-truncate block text-footnote text-text-secondary">
                 {cfg.filePath || t("charts.dropHint")}
               </span>
             </span>
@@ -747,9 +750,9 @@
 
           {#if imported}
             <div class="flex flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("charts.preview")}</span>
+              <span class="text-callout font-medium">{t("charts.preview")}</span>
               <div class="max-h-44 overflow-auto rounded-md border border-border">
-                <table class="w-full border-collapse text-[11px]">
+                <table class="w-full border-collapse text-footnote">
                   <thead>
                     <tr class="sticky top-0 bg-surface-2 text-left text-text-secondary">
                       {#each imported.columns as column (column)}
@@ -774,15 +777,15 @@
               </div>
             </div>
           {:else}
-            <p class="rounded-md border border-dashed border-border p-3 text-center text-[12px] text-text-secondary">
+            <p class="rounded-md border border-dashed border-border p-3 text-center text-callout text-text-secondary">
               {t("charts.previewEmpty")}
             </p>
           {/if}
 
           <!-- Field mapping -->
           <div class="flex flex-col gap-1.5">
-            <span class="text-[12px] font-medium">{t("charts.mapping")}</span>
-            <p class="text-[11px] text-text-secondary">{t("charts.mappingHint")}</p>
+            <span class="text-callout font-medium">{t("charts.mapping")}</span>
+            <p class="text-footnote text-text-secondary">{t("charts.mappingHint")}</p>
             {#if mappedRoles.length > 0}
               <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {#each mappedRoles as role (role.key)}
@@ -814,13 +817,13 @@
                     {#if roleError}
                       <span
                         id={`${roleInputId(role.key)}-error`}
-                        class="text-[11px] text-danger"
+                        class="text-footnote text-danger"
                       >
                         {t(roleError.key, roleError.values)}
                       </span>
                     {/if}
                     {#if role.description}
-                      <span class="mynx-truncate text-[11px] text-text-secondary" title={role.description}>
+                      <span class="mynx-truncate text-footnote text-text-secondary" title={role.description}>
                         {role.description}
                       </span>
                     {/if}
@@ -828,10 +831,10 @@
                 {/each}
               </div>
             {:else if chartState.manifest}
-              <p class="text-[11px] text-text-secondary">{t("charts.autoColumns")}</p>
+              <p class="text-footnote text-text-secondary">{t("charts.autoColumns")}</p>
             {/if}
             {#if unmappedRoles.some((role) => role.key === "value")}
-              <p class="text-[11px] text-text-secondary">
+              <p class="text-footnote text-text-secondary">
                 {t("charts.fixedValueColumn")}
               </p>
             {/if}
@@ -841,8 +844,8 @@
           <div class="flex items-center gap-2 rounded-md border border-border p-2">
             <IconFolder size={15} stroke={1.75} class="shrink-0 text-text-secondary" aria-hidden="true" />
             <span class="min-w-0 flex-1">
-              <span class="block text-[12px] font-medium">{t("charts.outputFolder")}</span>
-              <span class="mynx-truncate block text-[11px] text-text-secondary" title={cfg.outputDir}>
+              <span class="block text-callout font-medium">{t("charts.outputFolder")}</span>
+              <span class="mynx-truncate block text-footnote text-text-secondary" title={cfg.outputDir}>
                 {cfg.outputDir || "—"}
               </span>
             </span>
@@ -866,7 +869,7 @@
       <!-- Run card -->
       <div class="mynx-card flex flex-col">
         <div class="flex items-center gap-2 border-b border-border px-3 py-2">
-          <span class="text-[12px] font-semibold">{t("charts.runTitle")}</span>
+          <span class="text-callout font-semibold">{t("charts.runTitle")}</span>
           <span class="mynx-chip mynx-truncate">{templateCopy.name}</span>
           <span class="ml-auto">
             {#if chartState.runPhase !== "idle" || chartState.installingR}
@@ -883,7 +886,7 @@
               aria-label={t("charts.progress")}
             ></progress>
           {/if}
-          <p class="text-[12px] text-text-secondary">
+          <p class="text-callout text-text-secondary">
             {chartState.runPhase === "idle" && !chartState.lastResult ? t("charts.runReady") : runStatusText}
           </p>
           <div class="flex items-center gap-2">
@@ -908,7 +911,7 @@
               </button>
             {/if}
           </div>
-          <label class="flex items-center gap-2 text-[12px]">
+          <label class="flex items-center gap-2 text-callout">
             <input
               type="checkbox"
               class="accent-accent"
@@ -923,12 +926,12 @@
             <div class="flex flex-col gap-2 rounded-md border border-border p-2">
               <div class="flex items-center gap-2">
                 <IconCircleCheckFilled size={15} stroke={1.75} class="shrink-0 text-success" aria-hidden="true" />
-                <span class="text-[12px] font-medium">
+                <span class="text-callout font-medium">
                   {chartState.runPhase === "success" ? t("charts.result") : t("charts.resultPrev")}
                 </span>
               </div>
               {#if chartState.runPhase !== "success"}
-                <p class="text-[11px] text-text-secondary">{t("charts.resultPrevNote")}</p>
+                <p class="text-footnote text-text-secondary">{t("charts.resultPrevNote")}</p>
               {/if}
               {#if resultUrl}
                 <img
@@ -940,7 +943,7 @@
                 />
               {/if}
               <CopyableText text={chartState.lastResult.outputPath} />
-              <p class="text-[11px] text-text-secondary">{t("charts.sidecarNote")}</p>
+              <p class="text-footnote text-text-secondary">{t("charts.sidecarNote")}</p>
               <div class="flex flex-wrap items-center gap-2">
                 <button type="button" class="mynx-btn" onclick={() => void openResult()}>
                   <IconFolder size={14} stroke={1.75} aria-hidden="true" />
@@ -962,10 +965,10 @@
               </div>
               {#if chartState.lastResult.files.length > 0}
                 <div class="flex flex-col gap-1">
-                  <span class="text-[11px] font-medium">{t("charts.outputFiles")}</span>
+                  <span class="text-footnote font-medium">{t("charts.outputFiles")}</span>
                   <ul class="flex flex-col gap-0.5">
                     {#each chartState.lastResult.files.slice(0, 8) as file (file)}
-                      <li class="mynx-truncate text-[11px] text-text-secondary" title={file}>
+                      <li class="mynx-truncate text-footnote text-text-secondary" title={file}>
                         {baseName(file)}
                       </li>
                     {/each}
@@ -991,13 +994,13 @@
     <!-- ── Right: inspector ───────────────────────────────────────────── -->
     <div class="mynx-card flex min-w-0 flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
-        <span class="text-[12px] font-semibold">{templateCopy.name}</span>
+        <span class="text-callout font-semibold">{templateCopy.name}</span>
         <span class="mynx-chip mynx-truncate">{localizedFamily(template.family, app.language)}</span>
       </div>
       <div class="min-w-0 p-3">
         {#if chartState.referenceUrl || chartState.referenceError}
           <div class="mb-3 flex flex-col gap-1">
-            <span class="text-[12px] font-medium">{t("charts.reference")}</span>
+            <span class="text-callout font-medium">{t("charts.reference")}</span>
             {#if chartState.referenceUrl}
               <img
                 src={chartState.referenceUrl}
@@ -1012,7 +1015,7 @@
               />
             {:else}
               <a
-                class="mynx-link inline-flex items-center gap-1 text-[11px]"
+                class="mynx-link inline-flex items-center gap-1 text-footnote"
                 href={template.galleryUrl}
                 target="_blank"
                 rel="noreferrer"
@@ -1027,11 +1030,11 @@
         {#each INSPECTOR_SECTIONS.filter((section) => sectionVisible(section.id)) as section (section.id)}
           <details
             open={section.id === "layout"}
-            class="mb-2 rounded-md border border-border"
+            class="mynx-inspector-section mb-2 rounded-md border border-border"
             ontoggle={(event) => onInspectorToggle(section.id, event)}
           >
             <summary
-              class="cursor-pointer select-none px-2.5 py-1.5 text-[12px] font-semibold"
+              class="cursor-pointer select-none px-2.5 py-1.5 text-callout font-semibold"
               onclick={() => mountInspectorSection(section.id)}
             >
               {t(section.titleKey)}
@@ -1042,7 +1045,7 @@
                   {@const label = t(field.labelKey)}
                   {#if field.kind === "text"}
                     <label class="flex flex-col gap-1">
-                      <span class="text-[12px] font-medium">{label}</span>
+                      <span class="text-callout font-medium">{label}</span>
                       <input
                         type="text"
                         class="mynx-input"
@@ -1054,7 +1057,7 @@
                     </label>
                   {:else if field.kind === "number"}
                     <label class="flex flex-col gap-1">
-                      <span class="text-[12px] font-medium">{label}</span>
+                      <span class="text-callout font-medium">{label}</span>
                       <input
                         type="number"
                         class="mynx-input"
@@ -1069,7 +1072,7 @@
                     </label>
                   {:else if field.kind === "select"}
                     <label class="flex flex-col gap-1">
-                      <span class="text-[12px] font-medium">{label}</span>
+                      <span class="text-callout font-medium">{label}</span>
                       <select
                         class="mynx-input"
                         value={String(cfg[field.key] ?? "")}
@@ -1092,32 +1095,21 @@
                     </label>
                   {:else if field.kind === "switch"}
                     <div class="flex items-center justify-between gap-2">
-                      <span class="text-[12px] font-medium">{label}</span>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={cfg[field.key] === true}
-                        aria-label={label}
+                      <span class="text-callout font-medium">{label}</span>
+                      <Switch
+                        checked={cfg[field.key] === true}
+                        {label}
                         disabled={running}
-                        class="relative h-5 w-9 shrink-0 rounded-full border transition-colors {cfg[field.key] === true
-                          ? 'border-accent bg-accent'
-                          : 'border-border bg-surface-2'} {running ? 'opacity-50' : ''}"
-                        onclick={() => onSwitch(field.key, !cfg[field.key])}
-                      >
-                        <span
-                          class="absolute left-0.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white transition-transform {cfg[field.key] === true
-                            ? 'translate-x-4'
-                            : ''}"
-                        ></span>
-                      </button>
+                        onchange={() => onSwitch(field.key, !cfg[field.key])}
+                      />
                     </div>
                   {:else if field.kind === "color"}
                     <label class="flex flex-col gap-1">
-                      <span class="text-[12px] font-medium">{label}</span>
+                      <span class="text-callout font-medium">{label}</span>
                       <input
                         type="color"
                         class="mynx-input h-9 p-1"
-                        value={String(cfg[field.key] ?? "#0A84FF")}
+                        value={String(cfg[field.key] ?? DEFAULT_FIELD_COLOR)}
                         disabled={running}
                         oninput={(event) => onTextInput(field.key, event.currentTarget.value)}
                       />
@@ -1130,7 +1122,7 @@
         {/each}
 
         <a
-          class="mynx-link mt-1 inline-flex items-center gap-1 text-[11px]"
+          class="mynx-link mt-1 inline-flex items-center gap-1 text-footnote"
           href={template.galleryUrl}
           target="_blank"
           rel="noreferrer"
@@ -1146,7 +1138,7 @@
   <div class="mynx-card flex min-h-[120px] shrink-0 flex-col">
     <div class="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-2">
       <IconInfoCircle size={15} stroke={1.75} aria-hidden="true" />
-      <span class="text-[12px] font-semibold">{t("charts.logTitle")}</span>
+      <span class="text-callout font-semibold">{t("charts.logTitle")}</span>
       <span class="mynx-chip">{runStatusText}</span>
       <button
         type="button"
@@ -1161,7 +1153,7 @@
     </div>
     <div class="max-h-64 overflow-y-auto p-3" role="log" aria-live="polite">
       {#if chartState.events.length === 0}
-        <p class="text-[12px] text-text-secondary">{t("charts.logInitial")}</p>
+        <p class="text-callout text-text-secondary">{t("charts.logInitial")}</p>
       {:else}
         <ul class="flex flex-col gap-1.5">
           {#each [...chartState.events].reverse() as entry, index (entry.tsMs + "-" + index)}
@@ -1169,7 +1161,7 @@
               <span class="mynx-badge shrink-0 {TONE_BADGE[entry.tone]}">
                 {t(STAGE_KEYS[entry.stage] ?? "charts.stageLog")}
               </span>
-              <span class="mynx-truncate text-[12px]" title={entry.message}>
+              <span class="mynx-truncate text-callout" title={entry.message}>
                 {entry.message}
               </span>
             </li>
@@ -1177,8 +1169,8 @@
         </ul>
       {/if}
       <details class="mt-2">
-        <summary class="cursor-pointer text-[11px] text-text-secondary">{t("charts.logTitle")}</summary>
-        <pre class="mynx-mono mt-1 max-h-40 overflow-auto whitespace-pre-wrap rounded-md bg-surface-2 p-2 text-[11px]">{chartState.logText}</pre>
+        <summary class="cursor-pointer text-footnote text-text-secondary">{t("charts.logTitle")}</summary>
+        <pre class="mynx-mono mt-1 max-h-40 overflow-auto whitespace-pre-wrap rounded-md bg-surface-2 p-2 text-footnote">{chartState.logText}</pre>
       </details>
     </div>
   </div>
@@ -1187,7 +1179,7 @@
   {#if chartState.presets.length > 0}
     <div class="mynx-card shrink-0">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
-        <span class="text-[12px] font-semibold">{t("charts.presetsTitle")}</span>
+        <span class="text-callout font-semibold">{t("charts.presetsTitle")}</span>
         <span class="mynx-chip">{chartState.presets.length}</span>
       </div>
       <ul class="flex flex-wrap gap-2 p-3">
@@ -1204,7 +1196,7 @@
             >
               <IconUpload size={13} stroke={1.75} aria-hidden="true" />
               <span class="mynx-truncate max-w-[180px]">{preset.name}</span>
-              <span class="text-[11px] text-text-secondary">{t("charts.loadPreset")}</span>
+              <span class="text-footnote text-text-secondary">{t("charts.loadPreset")}</span>
             </button>
             <button
               type="button"
@@ -1224,7 +1216,7 @@
     </div>
   {/if}
 
-  <p class="shrink-0 text-[11px] text-text-secondary">
+  <p class="shrink-0 text-footnote text-text-secondary">
     {t("charts.onDemandHint")}
   </p>
 </section>
@@ -1233,7 +1225,7 @@
 <Modal bind:open={presetDialogOpen} title={t("charts.savePreset")}>
   <div class="flex flex-col gap-3">
     <label class="flex flex-col gap-1">
-      <span class="text-[12px] font-medium">{t("charts.presetNameLabel")}</span>
+      <span class="text-callout font-medium">{t("charts.presetNameLabel")}</span>
       <input
         type="text"
         class="mynx-input"
@@ -1257,7 +1249,7 @@
 
 <Modal open={deleteTarget !== null} title={t("charts.deletePreset")}>
   <div class="flex flex-col gap-3">
-    <p class="text-[12px]">
+    <p class="text-callout">
       {t("charts.deletePresetConfirm", { name: deleteTarget?.name ?? "" })}
     </p>
     <div class="flex items-center justify-end gap-2">
@@ -1288,7 +1280,7 @@
 
 <Modal bind:open={rDialogOpen} title={t("charts.installRTitle")}>
   <div class="flex flex-col gap-3">
-    <p class="text-[12px]">{t("charts.installRBody")}</p>
+    <p class="text-callout">{t("charts.installRBody")}</p>
     <div class="flex items-center justify-end gap-2">
       <button
         type="button"

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Switch from "../../components/Switch.svelte";
   import { tick, untrack } from "svelte";
   import { getCurrentWebview } from "@tauri-apps/api/webview";
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
@@ -288,28 +289,13 @@
 </script>
 
 {#snippet toggleSwitch(checked: boolean, set: (next: boolean) => void, label: string)}
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    aria-label={label}
-    class="relative h-5 w-9 shrink-0 rounded-full border transition-colors {checked
-      ? 'border-accent bg-accent'
-      : 'border-border bg-surface-2'}"
-    onclick={() => set(!checked)}
-  >
-    <span
-      class="absolute left-0.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white transition-transform {checked
-        ? 'translate-x-4'
-        : ''}"
-    ></span>
-  </button>
+  <Switch {checked} {label} onchange={set} />
 {/snippet}
 
 <section
   class="flex h-full min-h-0 flex-col gap-3 p-4 {dragOver ? 'ring-2 ring-accent ring-inset' : ''}"
 >
-  <header class="flex items-baseline gap-3">
+  <header class="mynx-page-header flex items-baseline gap-3">
     <h1 class="mynx-page-title">{t("imgconv.title")}</h1>
   </header>
 
@@ -318,7 +304,7 @@
     <div class="mynx-card flex min-h-0 flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
         <IconFolder size={15} stroke={1.75} aria-hidden="true" />
-        <span class="text-[12px] font-semibold">{t("imgconv.files")}</span>
+        <span class="text-callout font-semibold">{t("imgconv.files")}</span>
         {#if files.length > 0}
           <span class="mynx-chip">{files.length}</span>
         {/if}
@@ -327,7 +313,7 @@
       <div bind:this={fileListEl} class="min-h-0 flex-1 overflow-y-auto p-3">
         {#if files.length === 0}
           <div
-            class="flex h-full min-h-[120px] items-center justify-center rounded-md border border-dashed border-border p-4 text-center text-[12px] text-text-secondary"
+            class="flex h-full min-h-[120px] items-center justify-center rounded-md border border-dashed border-border p-4 text-center text-callout text-text-secondary"
           >
             {t("imgconv.dropHint")}
           </div>
@@ -357,10 +343,10 @@
                     {/if}
                   </span>
                   <span class="min-w-0 flex-1">
-                    <span class="mynx-truncate block text-[12px] font-medium" title={item.path}>
+                    <span class="mynx-truncate block text-callout font-medium" title={item.path}>
                       {item.name}
                     </span>
-                    <span class="mynx-truncate block text-[11px] text-text-secondary">
+                    <span class="mynx-truncate block text-footnote text-text-secondary">
                       {[item.dims, item.size !== null ? formatBytes(item.size) : null]
                         .filter(Boolean)
                         .join(" · ") || item.path}
@@ -422,7 +408,7 @@
           </button>
         {/if}
         {#if files.length > 0}
-          <span class="mynx-truncate ml-auto text-[11px] text-text-secondary">
+          <span class="mynx-truncate ml-auto text-footnote text-text-secondary">
             {t("imgconv.fileCount", { count: files.length })}{totalSize > 0
               ? ` · ${formatBytes(totalSize)}`
               : ""}
@@ -444,19 +430,19 @@
     <div class="mynx-card flex min-h-0 flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
         <IconAdjustments size={15} stroke={1.75} aria-hidden="true" />
-        <span class="text-[12px] font-semibold">{t("imgconv.options")}</span>
+        <span class="text-callout font-semibold">{t("imgconv.options")}</span>
       </div>
 
       <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
         <p
-          class="flex items-start gap-1.5 rounded-md border border-border bg-surface-2 p-2 text-[11px] text-text-secondary"
+          class="flex items-start gap-1.5 rounded-md border border-border bg-surface-2 p-2 text-footnote text-text-secondary"
         >
           <IconInfoCircle size={14} stroke={1.75} class="mt-0.5 shrink-0" aria-hidden="true" />
           {t("imgconv.compressionHint")}
         </p>
 
         <div class="flex flex-col gap-1.5">
-          <span class="text-[12px] font-medium">{t("imgconv.compression")}</span>
+          <span class="text-callout font-medium">{t("imgconv.compression")}</span>
           <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("imgconv.compression")}>
             {#each MODE_OPTIONS as option (option.id)}
               <label
@@ -465,7 +451,7 @@
                   ? 'border-accent bg-accent/10'
                   : 'border-border bg-surface hover:border-text-secondary'}"
               >
-                <span class="mynx-truncate text-[12px] font-medium">{t(option.key)}</span>
+                <span class="mynx-truncate text-callout font-medium">{t(option.key)}</span>
                 <input
                   type="radio"
                   name="imgconv-mode"
@@ -480,7 +466,7 @@
 
         {#if settings.mode === "lossless"}
           <div class="flex flex-col gap-1.5">
-            <span class="text-[12px] font-medium">{t("imgconv.optimizeLevel")}</span>
+            <span class="text-callout font-medium">{t("imgconv.optimizeLevel")}</span>
             <div
               class="grid grid-cols-3 gap-2"
               role="radiogroup"
@@ -493,7 +479,7 @@
                     ? 'border-accent bg-accent/10'
                     : 'border-border bg-surface hover:border-text-secondary'}"
                 >
-                  <span class="text-[12px] font-medium">{t(option.key)}</span>
+                  <span class="text-callout font-medium">{t(option.key)}</span>
                   <input
                     type="radio"
                     name="imgconv-level"
@@ -508,7 +494,7 @@
         {:else}
           <div class="grid grid-cols-2 gap-3">
             <label class="flex flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("imgconv.colors")}</span>
+              <span class="text-callout font-medium">{t("imgconv.colors")}</span>
               <select
                 class="mynx-input"
                 value={String(settings.colors)}
@@ -520,7 +506,7 @@
               </select>
             </label>
             <div class="flex items-end justify-between gap-2 pb-1">
-              <span class="text-[12px] font-medium">{t("imgconv.dither")}</span>
+              <span class="text-callout font-medium">{t("imgconv.dither")}</span>
               {@render toggleSwitch(
                 settings.dither,
                 (next) => updateSettings({ dither: next }),
@@ -531,9 +517,9 @@
         {/if}
 
         <fieldset class="flex flex-col gap-3 rounded-md border border-border p-3">
-          <legend class="px-1 text-[12px] font-medium">{t("imgconv.watermark")}</legend>
+          <legend class="px-1 text-callout font-medium">{t("imgconv.watermark")}</legend>
           <div class="flex items-center justify-between gap-2">
-            <span class="text-[12px]">{t("imgconv.watermark")}</span>
+            <span class="text-callout">{t("imgconv.watermark")}</span>
             {@render toggleSwitch(
               settings.watermarkOn,
               (next) => updateSettings({ watermarkOn: next }),
@@ -543,7 +529,7 @@
 
           {#if settings.watermarkOn}
             <div class="flex flex-col gap-1.5">
-              <span class="text-[12px] font-medium">{t("imgconv.wmKind")}</span>
+              <span class="text-callout font-medium">{t("imgconv.wmKind")}</span>
               <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("imgconv.wmKind")}>
                 {#each WM_KIND_OPTIONS as option (option.id)}
                   <label
@@ -552,7 +538,7 @@
                       ? 'border-accent bg-accent/10'
                       : 'border-border bg-surface hover:border-text-secondary'}"
                   >
-                    <span class="text-[12px] font-medium">{t(option.key)}</span>
+                    <span class="text-callout font-medium">{t(option.key)}</span>
                     <input
                       type="radio"
                       name="imgconv-wm-kind"
@@ -567,7 +553,7 @@
 
             {#if wm.kind === "text"}
               <label class="flex flex-col gap-1">
-                <span class="text-[12px] font-medium">{t("imgconv.wmContent")}</span>
+                <span class="text-callout font-medium">{t("imgconv.wmContent")}</span>
                 <input
                   type="text"
                   class="mynx-input"
@@ -578,7 +564,7 @@
               </label>
               <div class="grid grid-cols-2 gap-3">
                 <label class="flex flex-col gap-1">
-                  <span class="text-[12px] font-medium">{t("imgconv.font")}</span>
+                  <span class="text-callout font-medium">{t("imgconv.font")}</span>
                   <select
                     class="mynx-input"
                     value={wm.font}
@@ -590,7 +576,7 @@
                   </select>
                 </label>
                 <label class="flex flex-col gap-1">
-                  <span class="text-[12px] font-medium">{t("imgconv.fontSize")}</span>
+                  <span class="text-callout font-medium">{t("imgconv.fontSize")}</span>
                   <select
                     class="mynx-input"
                     value={String(wm.fontSize)}
@@ -605,11 +591,11 @@
               </div>
               <div class="grid grid-cols-2 gap-3">
                 <div class="flex items-center justify-between gap-2">
-                  <span class="text-[12px] font-medium">{t("imgconv.bold")}</span>
+                  <span class="text-callout font-medium">{t("imgconv.bold")}</span>
                   {@render toggleSwitch(wm.bold, (next) => updateWatermark({ bold: next }), t("imgconv.bold"))}
                 </div>
                 <div class="flex flex-col gap-1" role="radiogroup" aria-label={t("imgconv.color")}>
-                  <span class="text-[12px] font-medium">{t("imgconv.color")}</span>
+                  <span class="text-callout font-medium">{t("imgconv.color")}</span>
                   <div class="flex items-center gap-2">
                     {#each COLOR_OPTIONS as option (option.id)}
                       <label
@@ -626,12 +612,12 @@
                           onchange={() => updateWatermark({ color: option.id })}
                         />
                         <span
-                          class="h-3 w-3 shrink-0 rounded-full border border-border {option.id === 'white'
-                            ? 'bg-white'
-                            : 'bg-black'}"
+                          class="mynx-swatch h-3 w-3 shrink-0 rounded-full border border-border {option.id === 'white'
+                            ? 'mynx-swatch-white'
+                            : 'mynx-swatch-black'}"
                           aria-hidden="true"
                         ></span>
-                        <span class="text-[11px]">{t(option.key)}</span>
+                        <span class="text-footnote">{t(option.key)}</span>
                       </label>
                     {/each}
                   </div>
@@ -647,9 +633,9 @@
             {/if}
 
             <label class="flex flex-col gap-1">
-              <span class="flex items-center justify-between text-[12px] font-medium">
+              <span class="flex items-center justify-between text-callout font-medium">
                 {t("imgconv.opacity")}
-                <span class="text-[11px] font-normal text-text-secondary">
+                <span class="text-footnote font-normal text-text-secondary">
                   {Math.round(wm.opacity * 100)}%
                 </span>
               </span>
@@ -667,7 +653,7 @@
 
             <div class="flex items-start justify-between gap-3">
               <div class="flex flex-col gap-1.5">
-                <span class="text-[12px] font-medium">{t("imgconv.position")}</span>
+                <span class="text-callout font-medium">{t("imgconv.position")}</span>
                 <div class="grid grid-cols-3 gap-1">
                   {#each POSITION_GRID as option (option.id)}
                     <button
@@ -706,7 +692,7 @@
 
             {#if wm.kind === "image"}
               <label class="flex flex-col gap-1">
-                <span class="text-[12px] font-medium">{t("imgconv.logoScale")}</span>
+                <span class="text-callout font-medium">{t("imgconv.logoScale")}</span>
                 <select
                   class="mynx-input"
                   value={String(wm.scale)}
@@ -719,7 +705,7 @@
               </label>
             {:else}
               <label class="flex flex-col gap-1">
-                <span class="text-[12px] font-medium">{t("imgconv.background")}</span>
+                <span class="text-callout font-medium">{t("imgconv.background")}</span>
                 <select
                   class="mynx-input"
                   value={wm.background}
@@ -740,7 +726,7 @@
         </fieldset>
 
         <div class="flex flex-col gap-1.5">
-          <span class="text-[12px] font-medium">{t("imgconv.output")}</span>
+          <span class="text-callout font-medium">{t("imgconv.output")}</span>
           <div class="flex flex-col gap-1.5" role="radiogroup" aria-label={t("imgconv.output")}>
             {#each OUTPUT_MODES as option (option.id)}
               <label
@@ -749,7 +735,7 @@
                   ? 'border-accent bg-accent/10'
                   : 'border-border bg-surface hover:border-text-secondary'}"
               >
-                <span class="mynx-truncate text-[12px]">{t(option.key)}</span>
+                <span class="mynx-truncate text-callout">{t(option.key)}</span>
                 <input
                   type="radio"
                   name="imgconv-output"
@@ -768,19 +754,19 @@
               </span>
             </button>
           {/if}
-          <p class="text-[11px] text-text-secondary">{t("imgconv.outputHint")}</p>
+          <p class="text-footnote text-text-secondary">{t("imgconv.outputHint")}</p>
         </div>
       </div>
 
       <div class="flex flex-col gap-2 border-t border-border px-3 py-2">
         {#if imageState.collectingFiles}
-          <p class="text-[11px] text-text-secondary" role="status">
+          <p class="text-footnote text-text-secondary" role="status">
             {t("imgconv.collectingFiles")}
           </p>
         {/if}
         {#if running}
           <div class="flex flex-col gap-1">
-            <div class="flex items-center justify-between gap-2 text-[11px] text-text-secondary">
+            <div class="flex items-center justify-between gap-2 text-footnote text-text-secondary">
               <span class="mynx-truncate">{imageState.progressText}</span>
               {#if imageState.progress !== null}
                 <span class="shrink-0">{imageState.progress}%</span>
@@ -835,7 +821,7 @@
   {#if summary}
     <div class="mynx-card flex max-h-[42%] min-h-[140px] shrink-0 flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
-        <span class="text-[12px] font-semibold">{t("imgconv.result")}</span>
+        <span class="text-callout font-semibold">{t("imgconv.result")}</span>
         {#if firstOutput}
           <button type="button" class="mynx-link ml-auto" onclick={() => void openOutputDir()}>
             <IconFolderOpen size={14} stroke={1.75} aria-hidden="true" />
@@ -845,9 +831,9 @@
       </div>
 
       <div class="min-h-0 flex-1 overflow-auto">
-        <table class="w-full border-collapse text-[12px]">
+        <table class="w-full border-collapse text-callout">
           <thead>
-            <tr class="sticky top-0 bg-surface-2 text-left text-[11px] text-text-secondary">
+            <tr class="sticky top-0 bg-surface-2 text-left text-footnote text-text-secondary">
               <th class="px-2 py-1.5 font-medium">#</th>
               <th class="px-2 py-1.5 font-medium">{t("imgconv.colFile")}</th>
               <th class="px-2 py-1.5 font-medium">{t("imgconv.colOriginal")}</th>
@@ -884,7 +870,7 @@
                 </td>
                 <td class="max-w-[200px] px-2 py-1.5">
                   {#if item.error}
-                    <span class="mynx-truncate block text-[11px] text-danger" title={item.error}>
+                    <span class="mynx-truncate block text-footnote text-danger" title={item.error}>
                       {item.error}
                     </span>
                   {:else}
@@ -895,7 +881,7 @@
                   {#if item.outputs.length > 0}
                     <CopyableText text={item.outputs[0]} label={baseName(item.outputs[0])} />
                     {#if item.outputs.length > 1}
-                      <span class="text-[11px] text-text-secondary">+{item.outputs.length - 1}</span>
+                      <span class="text-footnote text-text-secondary">+{item.outputs.length - 1}</span>
                     {/if}
                   {:else}
                     <span class="text-text-secondary">—</span>
@@ -907,7 +893,7 @@
         </table>
       </div>
 
-      <div class="flex items-center justify-between gap-2 border-t border-border px-3 py-2 text-[12px]">
+      <div class="flex items-center justify-between gap-2 border-t border-border px-3 py-2 text-callout">
         <span class="mynx-truncate text-text-secondary">
           {t("imgconv.summary", { ok: summary.ok, failed: summary.failed })}
           {#if summary.status === "cancelled"}

@@ -243,7 +243,7 @@ import { app, pushToast } from "../../app/state.svelte";
 {/snippet}
 
 <section class="flex h-full min-h-0 flex-col gap-3 p-4">
-  <header class="flex items-baseline gap-3">
+  <header class="mynx-page-header flex items-baseline gap-3">
     <h1 class="mynx-page-title">{t("rnaseq.title")}</h1>
     <button
       type="button"
@@ -256,14 +256,14 @@ import { app, pushToast } from "../../app/state.svelte";
   </header>
 
   {#if !rnaseq.configReady}
-    <div class="mynx-card flex items-center gap-2 p-4 text-[12px] text-text-secondary">
+    <div class="mynx-card flex items-center gap-2 p-4 text-callout text-text-secondary">
       <IconRefresh size={14} stroke={1.75} aria-hidden="true" />
       {t("common.loading")}
     </div>
   {:else}
     <div class="mynx-resizable-two min-h-0 flex-1" style={`--mynx-first-column: ${panelWidths.rnaseqSidebar}px`}>
       <!-- ── Rail ─────────────────────────────────────────────────────────── -->
-      <aside class="mynx-card flex flex-col gap-1 overflow-y-auto p-2">
+      <aside class="mynx-card mynx-step-rail flex flex-col gap-1 overflow-y-auto p-2">
         {#each RAIL as item (item.id)}
           <button
             type="button"
@@ -277,7 +277,7 @@ import { app, pushToast } from "../../app/state.svelte";
             <span class="shrink-0">
               {@render railIcon(item.id)}
             </span>
-            <span class="mynx-truncate flex-1 text-[12px] font-medium">
+            <span class="mynx-truncate flex-1 text-callout font-medium">
               {t(item.labelKey)}
             </span>
             {#if stepReady(item.id)}
@@ -300,11 +300,11 @@ import { app, pushToast } from "../../app/state.svelte";
           aria-current={rnaseq.step === "results" ? "step" : undefined}
         >
           <IconPhoto size={15} stroke={1.75} aria-hidden="true" />
-          <span class="mynx-truncate flex-1 text-[12px] font-medium">
+          <span class="mynx-truncate flex-1 text-callout font-medium">
             {t("rnaseq.results")}
           </span>
           {#if rnaseq.resultFiles.length > 0}
-            <span class="mynx-badge mynx-badge-success">{rnaseq.resultFiles.length}</span>
+            <span class="mynx-badge mynx-badge-success mynx-count">{rnaseq.resultFiles.length}</span>
           {/if}
         </button>
         <button
@@ -317,11 +317,11 @@ import { app, pushToast } from "../../app/state.svelte";
           aria-current={rnaseq.step === "history" ? "step" : undefined}
         >
           <IconHistory size={15} stroke={1.75} aria-hidden="true" />
-          <span class="mynx-truncate flex-1 text-[12px] font-medium">
+          <span class="mynx-truncate flex-1 text-callout font-medium">
             {t("rnaseq.history")}
           </span>
           {#if rnaseq.history.length > 0}
-            <span class="mynx-badge mynx-badge-queued">{rnaseq.history.length}</span>
+            <span class="mynx-badge mynx-badge-queued mynx-count">{rnaseq.history.length}</span>
           {/if}
         </button>
 
@@ -353,7 +353,7 @@ import { app, pushToast } from "../../app/state.svelte";
               <IconPlayerStop size={13} stroke={1.75} aria-hidden="true" />
               {t("common.cancel")}
             </button>
-            <span class="mynx-mono text-[11px] text-text-secondary">{elapsedSec}s</span>
+            <span class="mynx-mono text-footnote text-text-secondary">{elapsedSec}s</span>
           {/if}
         </div>
 
@@ -377,7 +377,7 @@ import { app, pushToast } from "../../app/state.svelte";
         <!-- R packages -->
         <div class="flex flex-col gap-1 rounded-md border border-border p-2">
           <div class="flex items-center gap-2">
-            <span class="text-[11px] font-semibold">{t("rnaseq.rPackages")}</span>
+            <span class="text-footnote font-semibold">{t("rnaseq.rPackages")}</span>
             <button
               type="button"
               class="mynx-btn mynx-btn-compact mynx-btn-compact-sm ml-auto"
@@ -390,11 +390,11 @@ import { app, pushToast } from "../../app/state.svelte";
             </button>
           </div>
           {#if rnaseq.rDeps === null}
-            <span class="text-[11px] text-text-secondary">{t("rnaseq.rCheckUnavailable")}</span>
+            <span class="text-footnote text-text-secondary">{t("rnaseq.rCheckUnavailable")}</span>
           {:else if rnaseq.rDeps.missing.length === 0}
             <span class="mynx-badge mynx-badge-success">{t("rnaseq.rAllInstalled")}</span>
           {:else}
-            <span class="mynx-truncate text-[11px] text-warning" title={rnaseq.rDeps.missing.join(", ")}>
+            <span class="mynx-truncate text-footnote text-warning" title={rnaseq.rDeps.missing.join(", ")}>
               {t("rnaseq.rMissing", { list: rnaseq.rDeps.missing.join(", ") })}
             </span>
             <button
@@ -433,7 +433,7 @@ import { app, pushToast } from "../../app/state.svelte";
           <div class="mynx-card flex flex-col">
             <div class="flex items-center gap-2 border-b border-border px-3 py-2">
               <IconPhoto size={15} stroke={1.75} aria-hidden="true" />
-              <span class="text-[12px] font-semibold">{t("rnaseq.results")}</span>
+              <span class="text-callout font-semibold">{t("rnaseq.results")}</span>
               {#if rnaseq.resultDir}
                 <span class="ml-auto">
                   <CopyableText text={rnaseq.resultDir} label={baseName(rnaseq.resultDir)} />
@@ -452,9 +452,9 @@ import { app, pushToast } from "../../app/state.svelte";
             <div class="flex flex-col gap-3 p-3">
               {#if rnaseq.deSummary.length > 0}
                 <div class="flex flex-col gap-1">
-                  <span class="text-[12px] font-medium">{t("rnaseq.deSummaryTitle")}</span>
+                  <span class="text-callout font-medium">{t("rnaseq.deSummaryTitle")}</span>
                   <div class="overflow-x-auto">
-                    <table class="w-full text-left text-[12px]">
+                    <table class="w-full text-left text-callout">
                       <thead>
                         <tr class="border-b border-border text-text-secondary">
                           <th class="px-2 py-1 font-medium">{t("rnaseq.deSummaryComparison")}</th>
@@ -498,14 +498,14 @@ import { app, pushToast } from "../../app/state.svelte";
               {#if rnaseq.resultFiles.length > 0}
                 <div class="flex flex-col gap-2">
                   <div class="flex items-center gap-2">
-                    <span class="text-[12px] font-medium">{t("rnaseq.outputFigures")}</span>
+                    <span class="text-callout font-medium">{t("rnaseq.outputFigures")}</span>
                     <span class="mynx-badge mynx-badge-queued">
                       {t("rnaseq.filesCount", { count: rnaseq.resultFiles.length })}
                     </span>
                   </div>
                   {#each groupedFiles as [subdir, files] (subdir)}
                     <div class="flex flex-col gap-1">
-                      <span class="mynx-truncate text-[11px] font-medium text-text-secondary">
+                      <span class="mynx-truncate text-footnote font-medium text-text-secondary">
                         {subdir}
                       </span>
                       <div
@@ -528,16 +528,16 @@ import { app, pushToast } from "../../app/state.svelte";
                                   class="max-h-full max-w-full object-contain"
                                 />
                               {:else}
-                                <span class="text-[12px] font-medium text-text-secondary">
+                                <span class="text-callout font-medium text-text-secondary">
                                   {file.name.split(".").pop()?.toUpperCase()}
                                 </span>
                               {/if}
                             </button>
                             <figcaption class="flex flex-col gap-0.5">
-                              <span class="mynx-truncate text-[11px] font-medium" title={file.name}>
+                              <span class="mynx-truncate text-footnote font-medium" title={file.name}>
                                 {file.name}
                               </span>
-                              <span class="text-[10px] text-text-secondary">
+                              <span class="text-caption2 text-text-secondary">
                                 {formatFileSize(file.size)}
                               </span>
                             </figcaption>
@@ -548,7 +548,7 @@ import { app, pushToast } from "../../app/state.svelte";
                   {/each}
                 </div>
               {:else if !rnaseq.hasResult}
-                <p class="text-[12px] text-text-secondary">
+                <p class="text-callout text-text-secondary">
                   {rnaseq.resultDir
                     ? t("rnaseq.errNotRunDir")
                     : t("rnaseq.resultDirPlaceholder")}
@@ -561,7 +561,7 @@ import { app, pushToast } from "../../app/state.svelte";
           <div class="mynx-card flex flex-col">
             <div class="flex items-center gap-2 border-b border-border px-3 py-2">
               <IconHistory size={15} stroke={1.75} aria-hidden="true" />
-              <span class="text-[12px] font-semibold">{t("rnaseq.history")}</span>
+              <span class="text-callout font-semibold">{t("rnaseq.history")}</span>
               <button
                 type="button"
                 class="mynx-btn ml-auto"
@@ -573,15 +573,15 @@ import { app, pushToast } from "../../app/state.svelte";
               </button>
             </div>
             <div class="flex flex-col gap-2 p-3">
-              <p class="text-[11px] text-text-secondary">{t("rnaseq.historyHint")}</p>
+              <p class="text-footnote text-text-secondary">{t("rnaseq.historyHint")}</p>
               {#if rnaseq.history.length === 0}
-                <p class="text-[12px] text-text-secondary">{t("rnaseq.historyEmpty")}</p>
+                <p class="text-callout text-text-secondary">{t("rnaseq.historyEmpty")}</p>
               {:else}
                 {#each rnaseq.history as entry (entry.path)}
                   <div
                     class="flex flex-wrap items-center gap-2 rounded-md border border-border p-2"
                   >
-                    <span class="mynx-truncate min-w-0 flex-1 text-[12px] font-medium" title={entry.path}>
+                    <span class="mynx-truncate min-w-0 flex-1 text-callout font-medium" title={entry.path}>
                       {entry.name}
                     </span>
                     {#if entry.hasDe}
@@ -589,7 +589,7 @@ import { app, pushToast } from "../../app/state.svelte";
                     {:else}
                       <span class="mynx-badge mynx-badge-queued">{t("rnaseq.noDe")}</span>
                     {/if}
-                    <span class="text-[11px] text-text-secondary">
+                    <span class="text-footnote text-text-secondary">
                       {historyDate(entry.mtimeMs)}
                     </span>
                     <CopyableText text={entry.path} label={baseName(entry.path)} />
@@ -613,7 +613,7 @@ import { app, pushToast } from "../../app/state.svelte";
           <div class="mynx-card flex flex-col">
             <div class="flex items-center gap-2 border-b border-border px-3 py-2">
               <IconTerminal size={15} stroke={1.75} aria-hidden="true" />
-              <span class="text-[12px] font-semibold">
+              <span class="text-callout font-semibold">
                 {t("rnaseq.logTitle", { count: rnaseq.logs.length })}
               </span>
               <span class="mynx-badge {RUN_BADGE[rnaseq.status]} ml-auto">
@@ -663,7 +663,7 @@ import { app, pushToast } from "../../app/state.svelte";
     {#if zoom && zoomIsImage}
       <img src={zoomUrl} alt={zoom.name} class="max-h-[65vh] max-w-full object-contain" />
     {:else if zoom}
-      <p class="text-[12px] text-text-secondary">{zoom.name} · PDF</p>
+      <p class="text-callout text-text-secondary">{zoom.name} · PDF</p>
       <button
         type="button"
         class="mynx-btn mynx-btn-primary"

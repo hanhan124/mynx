@@ -37,12 +37,12 @@
   const title = $derived(t("home.rEnvironment"));
 </script>
 
-<section class="mynx-card p-4" aria-label={title}>
+<section class="mynx-card mynx-form-card mynx-rstatus p-4" aria-label={title}>
   <div class="flex items-center gap-2">
     <h2 class="mynx-section-title flex-1">{title}</h2>
     <button
       type="button"
-      class="mynx-btn h-7 w-7 p-0"
+      class="mynx-btn mynx-btn-ghost h-7 w-7 p-0"
       onclick={refresh}
       disabled={loading}
       aria-label={t("common.refresh")}
@@ -63,13 +63,13 @@
   </div>
 
   {#if found && rscriptPath}
-    <div class="mt-2 flex items-center gap-2 text-[12px] text-text-secondary">
+    <div class="mt-2 flex items-center gap-2 text-callout text-text-secondary">
       <span class="shrink-0">{t("home.rPath")}</span>
       <div class="min-w-0 flex-1">
         <CopyableText text={rscriptPath} />
       </div>
     </div>
   {:else if !loading && !found}
-    <p class="mt-2 text-[12px] text-text-secondary">{t("home.rMissingHint")}</p>
+    <p class="mt-2 text-callout text-text-secondary">{t("home.rMissingHint")}</p>
   {/if}
 </section>

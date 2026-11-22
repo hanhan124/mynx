@@ -26,10 +26,10 @@
           class="mynx-card mynx-modal-panel fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden"
           style="width: min({width}px, calc(100vw - 32px))"
         >
-          <div class="flex items-start justify-between gap-2 px-4 pt-4">
-            <Dialog.Title class="text-[15px] font-semibold text-text">{title}</Dialog.Title>
+          <div class="flex items-center justify-between gap-2 px-5 pt-4">
+            <Dialog.Title class="text-headline font-semibold text-text">{title}</Dialog.Title>
             <Dialog.Close
-              class="mynx-btn h-7 w-7 p-0"
+              class="mynx-btn mynx-modal-close h-7 w-7 p-0"
               aria-label={t("common.close")}
               title={t("common.close")}
             >
@@ -37,13 +37,13 @@
             </Dialog.Close>
           </div>
           {#if description}
-            <Dialog.Description class="px-4 pt-1 text-[13px] text-text-secondary">
+            <Dialog.Description class="px-5 pt-1 text-body text-text-secondary">
               {description}
             </Dialog.Description>
           {:else}
             <Dialog.Description class="sr-only">{title}</Dialog.Description>
           {/if}
-          <div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+          <div class="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-3">
             {@render children?.()}
           </div>
         </Dialog.Content>

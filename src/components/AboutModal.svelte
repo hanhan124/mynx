@@ -41,15 +41,15 @@
 </script>
 
 <Modal bind:open={app.aboutOpen} title={t("about.title")} width={440}>
-  <div class="flex flex-col gap-4">
-    <div class="flex items-center gap-3">
+  <div class="mynx-about flex flex-col gap-4">
+    <div class="mynx-about-hero flex items-center gap-3">
       <img src="/mynx.svg" alt="" class="h-10 w-10" />
       <div class="min-w-0">
-        <p class="text-[14px] font-semibold">Mynx</p>
+        <p class="text-subheadline font-semibold">Mynx</p>
       </div>
     </div>
 
-    <dl class="flex flex-col gap-1.5 text-[12px]">
+    <dl class="mynx-about-facts flex flex-col gap-1.5 text-callout">
       <div class="flex items-center gap-2">
         <dt class="w-16 shrink-0 text-text-secondary">{t("about.version")}</dt>
         <dd class="mynx-truncate mynx-mono" title={version}>{version}</dd>
@@ -82,7 +82,7 @@
           {t("about.checkUpdate")}
         </button>
         {#if updateLine}
-          <p class="mynx-truncate flex-1 text-[12px] text-text-secondary" title={updateLine}>
+          <p class="mynx-truncate flex-1 text-callout text-text-secondary" title={updateLine}>
             {updateLine}
           </p>
         {/if}

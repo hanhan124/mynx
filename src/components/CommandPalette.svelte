@@ -109,7 +109,7 @@
 
 <button
   type="button"
-  class="mynx-btn flex items-center gap-1.5 px-2 py-1 text-[11px] text-text-secondary"
+  class="mynx-btn mynx-palette-trigger flex items-center gap-1.5 px-2 py-1 text-footnote text-text-secondary"
   onclick={openPalette}
   aria-label={t("palette.open")}
   aria-haspopup="dialog"
@@ -117,21 +117,21 @@
 >
   <IconSearch size={13} stroke={1.6} />
   <span class="hidden sm:inline">{t("palette.open")}</span>
-  <kbd class="hidden rounded border border-border bg-surface-2 px-1 text-[10px] min-[521px]:inline">Ctrl K</kbd>
+  <kbd class="hidden rounded border border-border bg-surface-2 px-1 text-caption2 min-[521px]:inline">{shortcutLabel}</kbd>
 </button>
 
 <Dialog.Root bind:open>
   <Dialog.Portal>
     <Dialog.Overlay class="mynx-modal-scrim fixed inset-0 z-40 bg-(--mynx-scrim)" />
     <Dialog.Content
-      class="mynx-modal-panel fixed left-1/2 top-[12%] z-50 w-[min(520px,92vw)] -translate-x-1/2 rounded-(--mynx-radius-popover) border border-border bg-elevated p-0 outline-none"
+      class="mynx-modal-panel mynx-palette fixed left-1/2 top-[12%] z-50 w-[min(520px,92vw)] -translate-x-1/2 rounded-(--mynx-radius-popover) border border-border bg-elevated p-0 outline-none"
     >
       <Dialog.Title class="sr-only">{t("palette.open")}</Dialog.Title>
-      <div class="flex items-center gap-2 border-b border-border px-3 py-2 focus-within:border-b-accent">
+      <div class="mynx-palette-field flex items-center gap-2 border-b border-border px-3 py-2 focus-within:border-b-accent">
         <IconSearch size={15} stroke={1.6} class="text-text-secondary" />
         <input
           type="text"
-          class="w-full bg-transparent text-[13px] outline-none"
+          class="w-full bg-transparent text-body outline-none"
           placeholder={t("palette.placeholder")}
           bind:value={query}
           aria-label={t("palette.placeholder")}
@@ -143,9 +143,9 @@
           onkeydown={onSearchKeydown}
         />
       </div>
-      <ul id="mynx-command-list" class="max-h-[320px] overflow-y-auto py-1" role="listbox" aria-label={t("palette.open")}>
+      <ul id="mynx-command-list" class="mynx-palette-list max-h-[320px] overflow-y-auto py-1" role="listbox" aria-label={t("palette.open")}>
         {#if filtered.length === 0}
-          <li class="px-3 py-6 text-center text-[12px] text-text-secondary">
+          <li class="px-3 py-6 text-center text-callout text-text-secondary">
             {t("palette.empty")}
           </li>
         {:else}
@@ -156,7 +156,7 @@
                 type="button"
                 id={`mynx-command-${item.id}`}
                 tabindex={-1}
-                class="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12px] {index === activeIndex ? 'bg-selected text-accent' : 'hover:bg-hover'}"
+                class="mynx-palette-item flex w-full items-center gap-2.5 px-3 py-2 text-left text-callout {index === activeIndex ? 'bg-selected text-accent' : 'hover:bg-hover'}"
                 role="option"
                 aria-selected={index === activeIndex}
                 onmouseenter={() => (activeIndex = index)}
@@ -164,7 +164,7 @@
               >
                 <ItemIcon size={15} stroke={1.6} class="shrink-0" />
                 <span class="mynx-truncate flex-1">{item.label}</span>
-                <span class="text-[10px] uppercase text-text-secondary">
+                <span class="text-caption2 uppercase text-text-secondary">
                   {item.group === "navigate" ? t("palette.groupGo") : t("palette.groupDo")}
                 </span>
               </button>

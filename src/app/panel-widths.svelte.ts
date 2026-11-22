@@ -3,6 +3,7 @@ import { patchSettings } from "./state.svelte.js";
 /** In-session widths for the application's resizable work-area columns. */
 export const panelWidths = $state({
   navRail: 208,
+  chatSidebar: 240,
   qpcrSidebar: 240,
   rnaseqSidebar: 260,
   imageFiles: 320,
@@ -13,6 +14,7 @@ let navRailCustomized = $state(false);
 
 const limits = {
   navRail: [64, 280],
+  chatSidebar: [180, 360],
   qpcrSidebar: [180, 480],
   rnaseqSidebar: [180, 480],
   imageFiles: [220, 620],
@@ -25,8 +27,13 @@ export function setPanelWidth(id: keyof typeof panelWidths, width: number): void
   if (id === "navRail") navRailCustomized = true;
 }
 
-export function getNavRailWidth(maximized: boolean): number {
-  return navRailCustomized ? panelWidths.navRail : maximized ? 208 : 72;
+/**
+ * Sidebar width. `preferExpanded` lets the macOS style show a labelled
+ * sidebar in roomy restored windows (HIG: sidebars carry text labels).
+ */
+export function getNavRailWidth(maximized: boolean, preferExpanded = false): number {
+  if (navRailCustomized) return panelWidths.navRail;
+  return maximized || preferExpanded ? 208 : 72;
 }
 
 export function loadPanelWidths(saved: Record<string, number>): void {

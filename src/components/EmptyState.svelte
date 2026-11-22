@@ -17,11 +17,11 @@
   } = $props();
 </script>
 
-<div class="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center">
+<div class="mynx-empty flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center">
   <Icon size={26} stroke={1.5} class="text-text-secondary" />
-  <p class="text-[13px] font-medium text-text">{title}</p>
+  <p class="text-body font-medium text-text">{title}</p>
   {#if hint}
-    <p class="max-w-[360px] text-[12px] text-text-secondary">{hint}</p>
+    <p class="max-w-[360px] text-callout text-text-secondary">{hint}</p>
   {/if}
   {#if children}
     <div class="mt-2">{@render children()}</div>

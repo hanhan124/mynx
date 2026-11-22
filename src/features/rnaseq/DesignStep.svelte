@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Switch from "../../components/Switch.svelte";
   import IconChartDots from "@tabler/icons-svelte/icons/chart-dots";
   import IconFlask from "@tabler/icons-svelte/icons/flask";
   import IconFolderOpen from "@tabler/icons-svelte/icons/folder-open";
@@ -124,7 +125,7 @@
       ? 'border-success/50'
       : ''}"
   >
-    <p class="text-[12px]">
+    <p class="text-callout">
       {#if !dataReady}
         <span class="text-warning">{t("rnaseq.designNotImported")}</span>
       {:else if !designReady}
@@ -149,7 +150,7 @@
     </div>
     {#if hasSingleton}
       <p
-        class="rounded-md border border-warning/40 bg-warning/10 p-2 text-[12px] text-warning"
+        class="mynx-callout mynx-callout-warning rounded-md border border-warning/40 bg-warning/10 p-2 text-callout text-warning"
         role="status"
       >
         {t("rnaseq.singletonWarning")}
@@ -161,8 +162,8 @@
   <div class="mynx-card flex flex-col">
     <div class="flex items-center gap-2 border-b border-border px-3 py-2">
       <IconLayersIntersect size={15} stroke={1.75} aria-hidden="true" />
-      <span class="text-[12px] font-semibold">{t("rnaseq.groups")}</span>
-      <span class="mynx-truncate hidden text-[11px] text-text-secondary sm:inline">
+      <span class="text-callout font-semibold">{t("rnaseq.groups")}</span>
+      <span class="mynx-truncate hidden text-footnote text-text-secondary sm:inline">
         {t("rnaseq.groupsHint")}
       </span>
       <button type="button" class="mynx-btn ml-auto" onclick={() => addGroup()}>
@@ -187,19 +188,19 @@
         data-sample-pool
       >
         <div class="flex items-center gap-2">
-          <span class="text-[12px] font-medium">{t("rnaseq.unassigned")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.unassigned")}</span>
           <span class="mynx-badge mynx-badge-queued">{pool.length}</span>
         </div>
         {#if selected}
-          <p class="text-[11px] text-accent">
+          <p class="text-footnote text-accent">
             {t("rnaseq.selectedSample", { name: selected })}
           </p>
         {:else}
-          <p class="text-[11px] text-text-secondary">{t("rnaseq.clickAssign")}</p>
+          <p class="text-footnote text-text-secondary">{t("rnaseq.clickAssign")}</p>
         {/if}
         <div class="flex flex-wrap gap-1">
           {#if pool.length === 0}
-            <p class="text-[11px] text-text-secondary">
+            <p class="text-footnote text-text-secondary">
               {assignedCount === 0 ? t("rnaseq.poolEmpty") : t("rnaseq.allAssigned")}
             </p>
           {:else}
@@ -224,8 +225,8 @@
         {#if groupNames.length === 0}
           <div class="flex flex-col items-center gap-1 rounded-md border border-dashed border-border p-4 text-center">
             <IconLayersIntersect size={20} stroke={1.5} aria-hidden="true" />
-            <span class="text-[12px] font-medium">{t("rnaseq.noGroups")}</span>
-            <span class="text-[11px] text-text-secondary">{t("rnaseq.noGroupsHint")}</span>
+            <span class="text-callout font-medium">{t("rnaseq.noGroups")}</span>
+            <span class="text-footnote text-text-secondary">{t("rnaseq.noGroupsHint")}</span>
           </div>
         {/if}
         {#each groupNames as name, index (name)}
@@ -286,7 +287,7 @@
             </div>
             <div class="mt-2 flex flex-wrap gap-1">
               {#if samples.length === 0}
-                <span class="text-[11px] text-text-secondary">{t("rnaseq.groupDropHint")}</span>
+                <span class="text-footnote text-text-secondary">{t("rnaseq.groupDropHint")}</span>
               {:else}
                 {#each samples as sample (sample)}
                   <span
@@ -325,7 +326,7 @@
   <div class="mynx-card flex flex-col">
     <div class="flex items-center gap-2 border-b border-border px-3 py-2">
       <IconFlask size={15} stroke={1.75} aria-hidden="true" />
-      <span class="text-[12px] font-semibold">{t("rnaseq.batch")}</span>
+      <span class="text-callout font-semibold">{t("rnaseq.batch")}</span>
       <span class="mynx-badge mynx-badge-queued ml-auto">
         {batchNames.length > 0 ? batchNames.length : t("rnaseq.batchUnset")}
       </span>
@@ -335,9 +336,9 @@
       </button>
     </div>
     <div class="flex flex-col gap-3 p-3">
-      <p class="text-[11px] text-text-secondary">{t("rnaseq.batchNote")}</p>
+      <p class="text-footnote text-text-secondary">{t("rnaseq.batchNote")}</p>
       {#if batchNames.length === 0}
-        <p class="text-[11px] text-text-secondary">{t("rnaseq.noBatchNote")}</p>
+        <p class="text-footnote text-text-secondary">{t("rnaseq.noBatchNote")}</p>
       {:else}
         {#each batchNames as name (name)}
           {@const members = cfg.batch[name] ?? []}
@@ -378,7 +379,7 @@
         {/each}
         {#if missingBatches.length > 0}
           <p
-            class="rounded-md border border-warning/40 bg-warning/10 p-2 text-[12px] text-warning"
+            class="mynx-callout mynx-callout-warning rounded-md border border-warning/40 bg-warning/10 p-2 text-callout text-warning"
             role="alert"
           >
             {t("rnaseq.batchMissing", { count: missingBatches.length, list: missingBatches.join(", ") })}
@@ -392,7 +393,7 @@
   <div class="mynx-card flex flex-col">
     <div class="flex items-center gap-2 border-b border-border px-3 py-2">
       <IconFlask size={15} stroke={1.75} aria-hidden="true" />
-      <span class="text-[12px] font-semibold">{t("rnaseq.comparisons")}</span>
+      <span class="text-callout font-semibold">{t("rnaseq.comparisons")}</span>
       <button
         type="button"
         class="mynx-btn ml-auto"
@@ -403,9 +404,9 @@
       </button>
     </div>
     <div class="flex flex-col gap-2 p-3">
-      <p class="text-[11px] text-text-secondary">{t("rnaseq.comparisonsTip")}</p>
+      <p class="text-footnote text-text-secondary">{t("rnaseq.comparisonsTip")}</p>
       {#if cfg.comparisons.length === 0}
-        <p class="text-[11px] text-text-secondary">{t("rnaseq.noComparisons")}</p>
+        <p class="text-footnote text-text-secondary">{t("rnaseq.noComparisons")}</p>
       {:else}
         <div class="flex flex-col gap-2">
           {#each cfg.comparisons as comparison, i (i)}
@@ -438,7 +439,7 @@
                   <option value={name}>{name}</option>
                 {/each}
               </select>
-              <span class="text-center text-[11px] text-text-secondary">vs</span>
+              <span class="text-center text-footnote text-text-secondary">vs</span>
               <select
                 class="mynx-input"
                 value={comparison.control}
@@ -483,8 +484,8 @@
   <div class="mynx-card flex flex-col">
     <div class="flex items-center gap-2 border-b border-border px-3 py-2">
       <IconFlask size={15} stroke={1.75} aria-hidden="true" />
-      <span class="text-[12px] font-semibold">{t("rnaseq.deParams")}</span>
-      <span class="mynx-truncate hidden text-[11px] text-text-secondary sm:inline">
+      <span class="text-callout font-semibold">{t("rnaseq.deParams")}</span>
+      <span class="mynx-truncate hidden text-footnote text-text-secondary sm:inline">
         {t("rnaseq.deParamsHint")}
       </span>
     </div>
@@ -497,7 +498,7 @@
               ? 'border-accent bg-accent/10'
               : ''}"
           >
-            <span class="mynx-truncate text-[12px] font-medium">
+            <span class="mynx-truncate text-callout font-medium">
               {method === "deseq2" ? t("rnaseq.deMethodDeseq2") : t("rnaseq.deMethodEdger")}
             </span>
             <input
@@ -510,9 +511,9 @@
           </label>
         {/each}
       </div>
-      <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div class="mynx-param-grid grid grid-cols-2 gap-3 lg:grid-cols-4">
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.dePadj")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.dePadj")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -525,7 +526,7 @@
           />
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.deLog2fc")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.deLog2fc")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -537,7 +538,7 @@
           />
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.deBcv")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.deBcv")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -550,7 +551,7 @@
           />
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.deShrink")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.deShrink")}</span>
           <select
             class="mynx-input"
             value={cfg.de.shrink}
@@ -563,7 +564,7 @@
           </select>
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.deFilter")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.deFilter")}</span>
           <select
             class="mynx-input"
             value={cfg.de.filter.method}
@@ -579,7 +580,7 @@
         </label>
         {#if cfg.de.filter.method !== "none"}
           <label class="flex min-w-0 flex-col gap-1">
-            <span class="text-[12px] font-medium">{t("rnaseq.minCount")}</span>
+            <span class="text-callout font-medium">{t("rnaseq.minCount")}</span>
             <input
               type="number"
               class="mynx-input"
@@ -593,7 +594,7 @@
           </label>
           {#if cfg.de.filter.method === "filterByExpr"}
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("rnaseq.minTotalCount")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.minTotalCount")}</span>
               <input
                 type="number"
                 class="mynx-input"
@@ -611,7 +612,7 @@
           {/if}
           {#if cfg.de.filter.method === "min_count"}
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("rnaseq.minSamples")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.minSamples")}</span>
               <input
                 type="number"
                 class="mynx-input"
@@ -629,27 +630,15 @@
           {/if}
         {/if}
         <div class="flex items-center justify-between gap-2">
-          <span class="mynx-truncate text-[12px]" title={t("rnaseq.useBatchHint")}>
+          <span class="mynx-truncate text-callout" title={t("rnaseq.useBatchHint")}>
             {t("rnaseq.useBatch")}
           </span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={cfg.de.use_batch}
-            aria-label={t("rnaseq.useBatch")}
+          <Switch
+            checked={cfg.de.use_batch}
+            label={t("rnaseq.useBatch")}
             title={t("rnaseq.useBatchHint")}
-            class="relative h-5 w-9 shrink-0 rounded-full border transition-colors {cfg.de.use_batch
-              ? 'border-accent bg-accent'
-              : 'border-border bg-surface-2'}"
-            onclick={() => (cfg.de.use_batch = !cfg.de.use_batch)}
-          >
-            <span
-              class="absolute left-0.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white transition-transform {cfg
-                .de.use_batch
-                ? 'translate-x-4'
-                : ''}"
-            ></span>
-          </button>
+            onchange={() => (cfg.de.use_batch = !cfg.de.use_batch)}
+          />
         </div>
       </div>
     </div>
@@ -671,7 +660,7 @@
     </div>
     {#if done}
       <div class="flex flex-wrap items-center gap-2 rounded-md border border-success/40 bg-success/10 p-2">
-        <span class="text-[12px] font-medium text-success">{t("rnaseq.deDone")}</span>
+        <span class="text-callout font-medium text-success">{t("rnaseq.deDone")}</span>
         <button type="button" class="mynx-btn ml-auto" onclick={() => goStep("plots")}>
           <IconChartDots size={14} stroke={1.75} aria-hidden="true" />
           {t("rnaseq.goPlots")}
@@ -689,21 +678,21 @@
       </div>
     {:else if rnaseq.status === "failed"}
       <div
-        class="rounded-md border border-danger/40 bg-danger/10 p-2 text-[12px] text-danger"
+        class="rounded-md border border-danger/40 bg-danger/10 p-2 text-callout text-danger"
         role="alert"
       >
         {t("rnaseq.runFailedTitle")}
       </div>
     {:else if rnaseq.status === "cancelled"}
       <div
-        class="rounded-md border border-border bg-surface-2 p-2 text-[12px] text-text-secondary"
+        class="rounded-md border border-border bg-surface-2 p-2 text-callout text-text-secondary"
         role="status"
       >
         {t("rnaseq.runCancelledTitle")}
       </div>
     {/if}
     {#if running}
-      <p class="text-[12px] text-text-secondary" role="status">{t("status.running")}</p>
+      <p class="text-callout text-text-secondary" role="status">{t("status.running")}</p>
     {/if}
   </div>
 </div>

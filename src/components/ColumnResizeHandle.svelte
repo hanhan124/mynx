@@ -6,6 +6,7 @@
     max: number;
     invert?: boolean;
     alwaysVisible?: boolean;
+    edgeStart?: boolean;
     onresize: (value: number) => void;
     oncommit: () => void;
   }
@@ -17,6 +18,7 @@
     max,
     invert = false,
     alwaysVisible = false,
+    edgeStart = false,
     onresize,
     oncommit,
   }: Props = $props();
@@ -47,6 +49,10 @@
   function endResize(event: PointerEvent): void {
     if (pointerId !== event.pointerId) return;
     pointerId = null;
+    // Pointer-driven drags must not leave the (focusable) track focused,
+    // otherwise its accent focus line stays lit long after the drag.
+    const handle = event.currentTarget;
+    if (handle instanceof HTMLElement && handle.matches(":focus")) handle.blur();
     oncommit();
   }
 
@@ -74,7 +80,9 @@
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
-  class="mynx-column-resizer {alwaysVisible ? 'mynx-column-resizer--always' : ''}"
+  class="mynx-column-resizer {alwaysVisible ? 'mynx-column-resizer--always' : ''} {edgeStart
+    ? 'mynx-column-resizer--edge-start'
+    : ''}"
   role="separator"
   aria-label={label}
   aria-orientation="vertical"

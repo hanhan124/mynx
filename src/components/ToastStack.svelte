@@ -26,7 +26,7 @@
 <!-- Toast 置于右下、任务抽屉折叠位之上：避免覆盖各功能页头部的导入/参数/模板按钮。 -->
 <div
   class="pointer-events-none fixed right-3 z-50 flex w-80 flex-col-reverse gap-2 {app.taskDrawerOpen
-    ? 'bottom-[292px] max-h-[calc(100vh-344px)] overflow-y-auto'
+    ? 'bottom-[calc(min(17.5rem,42dvh)+1.25rem)] max-h-[calc(100dvh-min(17.5rem,42dvh)-5rem)] overflow-y-auto'
     : 'bottom-14'}"
   role="region"
   aria-label={t("toast.dismiss")}
@@ -39,10 +39,10 @@
       role="status"
     >
       <LevelIcon size={16} stroke={1.6} class="shrink-0 {level.text}" />
-      <span class="min-w-0 flex-1 break-words text-[12px]">{toast.message}</span>
+      <span class="min-w-0 flex-1 break-words text-callout">{toast.message}</span>
       <button
         type="button"
-        class="shrink-0 text-text-secondary hover:text-text"
+        class="mynx-toast-close shrink-0 text-text-secondary hover:text-text"
         onclick={() => dismissToast(toast.id)}
         aria-label={t("toast.dismiss")}
         title={t("toast.dismiss")}

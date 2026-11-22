@@ -1,4 +1,6 @@
 <script lang="ts">
+  import SwitchCard from "../../components/SwitchCard.svelte";
+  import Switch from "../../components/Switch.svelte";
   import IconChartDots from "@tabler/icons-svelte/icons/chart-dots";
   import IconChartHistogram from "@tabler/icons-svelte/icons/chart-histogram";
   import IconFlame from "@tabler/icons-svelte/icons/flame";
@@ -265,53 +267,13 @@
 </script>
 
 {#snippet figureSwitch(checked: boolean, set: (next: boolean) => void, label: string, hint: string)}
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    aria-label={label}
-    class="flex flex-col gap-1 rounded-md border p-2 text-left {checked
-      ? 'border-accent bg-accent/10'
-      : 'border-border hover:border-text-secondary'}"
-    onclick={() => set(!checked)}
-  >
-    <span class="flex items-center justify-between gap-2">
-      <span class="text-[12px] font-medium">{label}</span>
-      <span
-        class="relative h-5 w-9 shrink-0 rounded-full border transition-colors {checked
-          ? 'border-accent bg-accent'
-          : 'border-border bg-surface-2'}"
-      >
-        <span
-          class="absolute left-0.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white transition-transform {checked
-            ? 'translate-x-4'
-            : ''}"
-        ></span>
-      </span>
-    </span>
-    <span class="text-[11px] text-text-secondary">{hint}</span>
-  </button>
+  <SwitchCard {checked} {label} {hint} onchange={set} />
 {/snippet}
 
 {#snippet toggleRow(checked: boolean, set: (next: boolean) => void, label: string)}
   <div class="flex items-center justify-between gap-2">
-    <span class="mynx-truncate text-[12px]">{label}</span>
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      class="relative h-5 w-9 shrink-0 rounded-full border transition-colors {checked
-        ? 'border-accent bg-accent'
-        : 'border-border bg-surface-2'}"
-      onclick={() => set(!checked)}
-    >
-      <span
-        class="absolute left-0.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white transition-transform {checked
-          ? 'translate-x-4'
-          : ''}"
-      ></span>
-    </button>
+    <span class="mynx-truncate text-callout">{label}</span>
+    <Switch {checked} {label} onchange={set} />
   </div>
 {/snippet}
 
@@ -320,13 +282,13 @@
   <div class="mynx-card flex flex-col">
     <div class="flex items-center gap-2 border-b border-border px-3 py-2">
       <IconChartDots size={15} stroke={1.75} aria-hidden="true" />
-      <span class="text-[12px] font-semibold">{t("rnaseq.chooseFigures")}</span>
+      <span class="text-callout font-semibold">{t("rnaseq.chooseFigures")}</span>
       <span class="mynx-badge mynx-badge-queued ml-auto">
         {t("rnaseq.figuresSelected", { count: figureCount })}
       </span>
     </div>
     <div class="flex flex-col gap-3 p-3">
-      <p class="text-[11px] text-text-secondary">{t("rnaseq.chooseFiguresHint")}</p>
+      <p class="text-footnote text-text-secondary">{t("rnaseq.chooseFiguresHint")}</p>
       <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {@render figureSwitch(
           overallEnabled,
@@ -366,7 +328,7 @@
   <div class="mynx-card flex flex-col">
     <div class="flex items-center gap-2 border-b border-border px-3 py-2">
       <IconFlame size={15} stroke={1.75} aria-hidden="true" />
-      <span class="text-[12px] font-semibold">{t("rnaseq.resultSource")}</span>
+      <span class="text-callout font-semibold">{t("rnaseq.resultSource")}</span>
       <span
         class="mynx-badge ml-auto {rnaseq.hasResult
           ? 'mynx-badge-success'
@@ -376,7 +338,7 @@
       </span>
     </div>
     <div class="flex flex-col gap-2 p-3">
-      <p class="text-[11px] text-text-secondary">{t("rnaseq.sourceHint")}</p>
+      <p class="text-footnote text-text-secondary">{t("rnaseq.sourceHint")}</p>
       <div class="flex items-center gap-2">
         <input
           type="text"
@@ -414,11 +376,11 @@
     <div class="mynx-card flex flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
         <IconPhoto size={15} stroke={1.75} aria-hidden="true" />
-        <span class="text-[12px] font-semibold">{t("rnaseq.overallTitle")}</span>
+        <span class="text-callout font-semibold">{t("rnaseq.overallTitle")}</span>
       </div>
-      <div class="grid grid-cols-2 gap-3 p-3 lg:grid-cols-4">
+      <div class="mynx-param-grid grid grid-cols-2 gap-3 p-3 lg:grid-cols-4">
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.geneSource")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.geneSource")}</span>
           <select
             class="mynx-input"
             value={cfg.overall_heatmap.gene_source}
@@ -433,7 +395,7 @@
         </label>
         {#if cfg.overall_heatmap.gene_source === "variable"}
           <label class="flex min-w-0 flex-col gap-1">
-            <span class="text-[12px] font-medium">{t("rnaseq.topN")}</span>
+            <span class="text-callout font-medium">{t("rnaseq.topN")}</span>
             <input
               type="text"
               class="mynx-input"
@@ -450,7 +412,7 @@
           )}
         {:else}
           <label class="flex min-w-0 flex-col gap-1">
-            <span class="text-[12px] font-medium">{t("rnaseq.maxGenes")}</span>
+            <span class="text-callout font-medium">{t("rnaseq.maxGenes")}</span>
             <input
               type="number"
               class="mynx-input"
@@ -466,9 +428,9 @@
             />
           </label>
           <div class="col-span-2 flex flex-col gap-1 lg:col-span-4">
-            <span class="text-[12px] font-medium">{t("rnaseq.includeComparisons")}</span>
+            <span class="text-callout font-medium">{t("rnaseq.includeComparisons")}</span>
             {#if comparisonNames.length === 0}
-              <p class="text-[11px] text-text-secondary">{t("rnaseq.comparisonsEmptyHint")}</p>
+              <p class="text-footnote text-text-secondary">{t("rnaseq.comparisonsEmptyHint")}</p>
             {:else}
               <div class="flex flex-wrap gap-1">
                 {#each comparisonNames as name (name)}
@@ -488,7 +450,7 @@
           </div>
         {/if}
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.nClusters")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.nClusters")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -505,7 +467,7 @@
           t("rnaseq.sampleCorrelation"),
         )}
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.corrPalette")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.corrPalette")}</span>
           <select
             class="mynx-input"
             value={cfg.overall_heatmap.correlation_palette}
@@ -519,7 +481,7 @@
           </select>
         </label>
         <label class="col-span-2 flex min-w-0 flex-col gap-1 lg:col-span-4">
-          <span class="text-[12px] font-medium">{t("rnaseq.markerGenes")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.markerGenes")}</span>
           <textarea
             class="mynx-input min-h-[80px]"
             rows={5}
@@ -528,7 +490,7 @@
             oninput={(event) =>
               (cfg.overall_heatmap.marker_genes = parseGeneList(event.currentTarget.value))}
           ></textarea>
-          <span class="text-[11px] text-text-secondary">{t("rnaseq.markerGenesHint")}</span>
+          <span class="text-footnote text-text-secondary">{t("rnaseq.markerGenesHint")}</span>
         </label>
       </div>
     </div>
@@ -539,7 +501,7 @@
     <div class="mynx-card flex flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
         <IconLayersIntersect size={15} stroke={1.75} aria-hidden="true" />
-        <span class="text-[12px] font-semibold">{t("rnaseq.selectedTitle")}</span>
+        <span class="text-callout font-semibold">{t("rnaseq.selectedTitle")}</span>
         <span class="mynx-badge mynx-badge-queued ml-auto">
           {t("rnaseq.clustersStat", { clusters: clusterCount, genes: clusterGeneCount })}
         </span>
@@ -551,7 +513,7 @@
       <div class="flex flex-col gap-3 p-3">
         <!-- gene clusters editor -->
         <div class="flex flex-col gap-2">
-          <span class="text-[12px] font-medium">{t("rnaseq.geneClusters")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.geneClusters")}</span>
           {#each Object.entries(cfg.gene_clusters) as [name, genes] (name)}
             <div class="grid grid-cols-1 items-center gap-2 sm:grid-cols-[160px_minmax(0,1fr)_auto_auto]">
               <input
@@ -588,9 +550,9 @@
 
         {#each cfg.selected_heatmaps as job, ji (ji)}
           <fieldset class="grid grid-cols-2 gap-3 rounded-md border border-border p-3 lg:grid-cols-4">
-            <legend class="px-1 text-[12px] font-medium">{job.name}</legend>
+            <legend class="px-1 text-callout font-medium">{job.name}</legend>
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("rnaseq.outputName")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.outputName")}</span>
               <input
                 type="text"
                 class="mynx-input"
@@ -604,7 +566,7 @@
               />
             </label>
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("rnaseq.figureTitle")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.figureTitle")}</span>
               <input
                 type="text"
                 class="mynx-input"
@@ -629,7 +591,7 @@
               </button>
             {/if}
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("rnaseq.widthIn")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.widthIn")}</span>
               <input
                 type="number"
                 class="mynx-input"
@@ -668,9 +630,9 @@
               t("rnaseq.showClusterNames"),
             )}
             <div class="col-span-2 flex flex-col gap-1 lg:col-span-4">
-              <span class="text-[12px] font-medium">{t("rnaseq.plotGroups")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.plotGroups")}</span>
               {#if groupNames.length === 0}
-                <p class="text-[11px] text-text-secondary">{t("rnaseq.noGroupsHint")}</p>
+                <p class="text-footnote text-text-secondary">{t("rnaseq.noGroupsHint")}</p>
               {:else}
                 <div class="flex flex-wrap gap-1">
                   {#each groupNames as group (group)}
@@ -699,11 +661,11 @@
     <div class="mynx-card flex flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
         <IconPalette size={15} stroke={1.75} aria-hidden="true" />
-        <span class="text-[12px] font-semibold">{t("rnaseq.heatmapStyle")}</span>
+        <span class="text-callout font-semibold">{t("rnaseq.heatmapStyle")}</span>
       </div>
-      <div class="grid grid-cols-2 gap-3 p-3 lg:grid-cols-4">
+      <div class="mynx-param-grid grid grid-cols-2 gap-3 p-3 lg:grid-cols-4">
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.transform")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.transform")}</span>
           <select
             class="mynx-input"
             value={cfg.heatmap.transform}
@@ -717,7 +679,7 @@
           </select>
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.scale")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.scale")}</span>
           <select
             class="mynx-input"
             value={cfg.heatmap.scale}
@@ -729,7 +691,7 @@
           </select>
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.palette")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.palette")}</span>
           <select
             class="mynx-input"
             value={cfg.heatmap.palette}
@@ -747,7 +709,7 @@
           t("rnaseq.reversePalette"),
         )}
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.zlim")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.zlim")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -759,7 +721,7 @@
           />
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.groupPalette")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.groupPalette")}</span>
           <select
             class="mynx-input"
             value={cfg.heatmap.group_palette}
@@ -772,7 +734,7 @@
           </select>
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.clusterPalette")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.clusterPalette")}</span>
           <select
             class="mynx-input"
             value={cfg.heatmap.gene_group_palette}
@@ -785,7 +747,7 @@
           </select>
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.clusterMethod")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.clusterMethod")}</span>
           <select
             class="mynx-input"
             value={cfg.heatmap.cluster_method}
@@ -798,7 +760,7 @@
           </select>
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.rowDistance")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.rowDistance")}</span>
           <select
             class="mynx-input"
             value={cfg.heatmap.row_distance}
@@ -811,7 +773,7 @@
           </select>
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.columnDistance")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.columnDistance")}</span>
           <select
             class="mynx-input"
             value={cfg.heatmap.column_distance}
@@ -834,7 +796,7 @@
           t("rnaseq.clusterSampleCols"),
         )}
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.columnNamesRot")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.columnNamesRot")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -851,7 +813,7 @@
           />
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.columnNamesSide")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.columnNamesSide")}</span>
           <select
             class="mynx-input"
             value={cfg.heatmap.column_names_side}
@@ -865,7 +827,7 @@
           </select>
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.fontSize")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.fontSize")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -903,7 +865,7 @@
           t("rnaseq.showBatchAnnotation"),
         )}
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.heatmapDpi")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.heatmapDpi")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -923,7 +885,7 @@
     <div class="mynx-card flex flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
         <IconChartDots size={15} stroke={1.75} aria-hidden="true" />
-        <span class="text-[12px] font-semibold">{t("rnaseq.pcaTitle")}</span>
+        <span class="text-callout font-semibold">{t("rnaseq.pcaTitle")}</span>
         <button type="button" class="mynx-btn ml-auto" onclick={addPcaJob}>
           <IconPlus size={14} stroke={1.75} aria-hidden="true" />
           {t("rnaseq.addFigure")}
@@ -932,9 +894,9 @@
       <div class="flex flex-col gap-3 p-3">
         {#each cfg.plots.pca as job, pi (pi)}
           <fieldset class="grid grid-cols-2 gap-3 rounded-md border border-border p-3 lg:grid-cols-4">
-            <legend class="px-1 text-[12px] font-medium">{job.name}</legend>
+            <legend class="px-1 text-callout font-medium">{job.name}</legend>
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("rnaseq.outputName")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.outputName")}</span>
               <input
                 type="text"
                 class="mynx-input"
@@ -947,7 +909,7 @@
               />
             </label>
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("rnaseq.pcaNtop")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.pcaNtop")}</span>
               <input
                 type="number"
                 class="mynx-input"
@@ -959,7 +921,7 @@
               />
             </label>
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("rnaseq.pcaX")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.pcaX")}</span>
               <input
                 type="number"
                 class="mynx-input"
@@ -975,7 +937,7 @@
               />
             </label>
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("rnaseq.pcaY")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.pcaY")}</span>
               <input
                 type="number"
                 class="mynx-input"
@@ -1006,7 +968,7 @@
               t("rnaseq.pcaSquare"),
             )}
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("rnaseq.legendPos")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.legendPos")}</span>
               <select
                 class="mynx-input"
                 value={job.legend_pos}
@@ -1020,7 +982,7 @@
               </select>
             </label>
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("rnaseq.widthMm")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.widthMm")}</span>
               <input
                 type="number"
                 class="mynx-input"
@@ -1033,7 +995,7 @@
               />
             </label>
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="text-[12px] font-medium">{t("rnaseq.heightMm")}</span>
+              <span class="text-callout font-medium">{t("rnaseq.heightMm")}</span>
               <input
                 type="number"
                 class="mynx-input"
@@ -1071,11 +1033,11 @@
     <div class="mynx-card flex flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
         <IconChartHistogram size={15} stroke={1.75} aria-hidden="true" />
-        <span class="text-[12px] font-semibold">{t("rnaseq.volcanoTitle")}</span>
+        <span class="text-callout font-semibold">{t("rnaseq.volcanoTitle")}</span>
       </div>
-      <div class="grid grid-cols-2 gap-3 p-3 lg:grid-cols-4">
+      <div class="mynx-param-grid grid grid-cols-2 gap-3 p-3 lg:grid-cols-4">
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.volcanoLabelTop")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.volcanoLabelTop")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -1090,7 +1052,7 @@
           />
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.pointSize")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.pointSize")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -1106,7 +1068,7 @@
           />
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.widthMm")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.widthMm")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -1122,7 +1084,7 @@
           />
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.heightMm")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.heightMm")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -1138,7 +1100,7 @@
           />
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.legendPos")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.legendPos")}</span>
           <select
             class="mynx-input"
             value={cfg.plots.volcano.legend_pos}
@@ -1156,7 +1118,7 @@
           (next) => (cfg.plots.volcano.show_subtitle = next),
           t("rnaseq.showSubtitle"),
         )}
-        <p class="col-span-2 self-end text-[11px] text-text-secondary lg:col-span-4">
+        <p class="col-span-2 self-end text-footnote text-text-secondary lg:col-span-4">
           {t("rnaseq.volcanoColorsHint")}
         </p>
       </div>
@@ -1167,11 +1129,11 @@
   <div class="mynx-card flex flex-col">
     <div class="flex items-center gap-2 border-b border-border px-3 py-2">
       <IconChartHistogram size={15} stroke={1.75} aria-hidden="true" />
-      <span class="text-[12px] font-semibold">{t("rnaseq.exportQc")}</span>
+      <span class="text-callout font-semibold">{t("rnaseq.exportQc")}</span>
     </div>
-    <div class="grid grid-cols-2 gap-3 p-3 lg:grid-cols-4">
+    <div class="mynx-param-grid grid grid-cols-2 gap-3 p-3 lg:grid-cols-4">
       <div class="col-span-2 flex flex-col gap-1 lg:col-span-4">
-        <span class="text-[12px] font-medium">{t("rnaseq.exportFormats")}</span>
+        <span class="text-callout font-medium">{t("rnaseq.exportFormats")}</span>
         <div class="flex flex-wrap gap-1">
           {#each EXPORT_FORMATS as format (format)}
             <button
@@ -1186,10 +1148,10 @@
             </button>
           {/each}
         </div>
-        <span class="text-[11px] text-text-secondary">{t("rnaseq.exportFormatsHint")}</span>
+        <span class="text-footnote text-text-secondary">{t("rnaseq.exportFormatsHint")}</span>
       </div>
       <label class="flex min-w-0 flex-col gap-1">
-        <span class="text-[12px] font-medium">{t("rnaseq.dpi")}</span>
+        <span class="text-callout font-medium">{t("rnaseq.dpi")}</span>
         <input
           type="number"
           class="mynx-input"
@@ -1202,7 +1164,7 @@
         />
       </label>
       <label class="flex min-w-0 flex-col gap-1">
-        <span class="text-[12px] font-medium">{t("rnaseq.fontFamily")}</span>
+        <span class="text-callout font-medium">{t("rnaseq.fontFamily")}</span>
         <input
           type="text"
           class="mynx-input"
@@ -1215,7 +1177,7 @@
         />
       </label>
       <label class="flex min-w-0 flex-col gap-1">
-        <span class="text-[12px] font-medium">{t("rnaseq.baseSize")}</span>
+        <span class="text-callout font-medium">{t("rnaseq.baseSize")}</span>
         <input
           type="number"
           class="mynx-input"
@@ -1229,7 +1191,7 @@
         />
       </label>
       <label class="flex min-w-0 flex-col gap-1">
-        <span class="text-[12px] font-medium">{t("rnaseq.plotsGroupPalette")}</span>
+        <span class="text-callout font-medium">{t("rnaseq.plotsGroupPalette")}</span>
         <select
           class="mynx-input"
           value={cfg.plots.group_palette}
@@ -1250,7 +1212,7 @@
           )}
         {/each}
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.addTopN")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.addTopN")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -1265,7 +1227,7 @@
           />
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.qcWidth")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.qcWidth")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -1281,7 +1243,7 @@
           />
         </label>
         <label class="flex min-w-0 flex-col gap-1">
-          <span class="text-[12px] font-medium">{t("rnaseq.qcHeight")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.qcHeight")}</span>
           <input
             type="number"
             class="mynx-input"
@@ -1297,7 +1259,7 @@
           />
         </label>
         <label class="col-span-2 flex min-w-0 flex-col gap-1 lg:col-span-4">
-          <span class="text-[12px] font-medium">{t("rnaseq.targetGenes")}</span>
+          <span class="text-callout font-medium">{t("rnaseq.targetGenes")}</span>
           <textarea
             class="mynx-input min-h-[60px]"
             rows={3}

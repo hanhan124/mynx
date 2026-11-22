@@ -45,7 +45,9 @@
 - 所有运行任务显示 idle、running、success、error、cancelled 状态
 - 取消必须调用真实取消 API（tasks_cancel / 任务取消钩子），不能卸载组件模拟
 - 长文本、路径、基因名允许省略、换行或复制（.mynx-truncate / CopyableText）
-- 视觉风格遵循 `docs/UI_SPEC.md`：平面、1px 边框、无渐变/玻璃拟态/装饰阴影
+- 视觉风格遵循 `docs/UI_SPEC.md`：五套界面风格都采用 macOS 27 Liquid Glass 结构（窗口原生材质、玻璃工具栏/侧栏/浮层、常规玻璃卡片、同心圆角），风格之间只有配色不同；必须支持降低透明度/增强对比度/减少动态效果
+- 页面不得写死字号与十六进制颜色，使用语义令牌；macos 风格的控件外观集中在 `app.css` 的 “macOS 27 layer”
+- 开关用 `components/Switch.svelte`；下拉框保持原生 `<select class="mynx-input">`（macOS 风格由 `src/lib/popup-menu.ts` 呈现菜单）；`npm run lint` 含 UI 令牌检查（`scripts/check-ui-tokens.cjs`），不得调高基线
 
 ## 核心功能边界
 

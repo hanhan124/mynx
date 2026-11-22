@@ -66,7 +66,7 @@
   aria-hidden={!app.taskDrawerOpen}
 >
   <div class="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2">
-    <p class="flex-1 text-[13px] font-semibold">{t("task.center")}</p>
+    <p class="flex-1 text-body font-semibold">{t("task.center")}</p>
     {#if activeTaskCount() > 0}
       <span class="mynx-badge mynx-badge-running">
         {activeTaskCount()}
@@ -140,11 +140,11 @@
               </div>
             {/if}
             {#if task.error}
-              <p class="mynx-truncate text-[12px] text-danger" title={task.error}>
+              <p class="mynx-truncate text-callout text-danger" title={task.error}>
                 {task.error}
               </p>
             {:else if task.detail}
-              <p class="mynx-truncate text-[12px] text-text-secondary" title={task.detail}>
+              <p class="mynx-truncate text-callout text-text-secondary" title={task.detail}>
                 {task.detail}
               </p>
             {/if}

@@ -41,7 +41,7 @@
 <span class="inline-flex min-w-0 max-w-full items-center gap-1">
   <span class="mynx-truncate" title={display}>{display}</span>
   <button
-    class="mynx-link shrink-0"
+    class="mynx-link mynx-copy-btn shrink-0"
     onclick={() => void copy()}
     aria-label={copyLabel ?? t("common.copy")}
     title={copyLabel ?? t("common.copy")}

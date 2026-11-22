@@ -77,7 +77,7 @@
   <div class="mynx-card flex flex-col">
     <div class="flex items-center gap-2 border-b border-border px-3 py-2">
       <IconFileImport size={15} stroke={1.75} aria-hidden="true" />
-      <span class="text-[12px] font-semibold">{t("rnaseq.countsFile")}</span>
+      <span class="text-callout font-semibold">{t("rnaseq.countsFile")}</span>
       {#if rnaseq.importPhase !== "idle"}
         <span
           class="mynx-badge ml-auto {rnaseq.importPhase === 'running'
@@ -104,9 +104,9 @@
           onclick={() => void pickFile()}
         >
           <IconTable size={26} stroke={1.5} aria-hidden="true" />
-          <span class="text-[13px] font-medium">{t("rnaseq.dropCounts")}</span>
-          <span class="text-[11px] text-text-secondary">{t("rnaseq.dropCountsHint")}</span>
-          <span class="text-[11px] text-warning">{t("rnaseq.rawCountsHint")}</span>
+          <span class="text-body font-medium">{t("rnaseq.dropCounts")}</span>
+          <span class="text-footnote text-text-secondary">{t("rnaseq.dropCountsHint")}</span>
+          <span class="text-footnote text-warning">{t("rnaseq.rawCountsHint")}</span>
         </button>
       {:else}
         <div class="flex items-center gap-2 rounded-md border border-border bg-surface-2 p-2">
@@ -117,7 +117,7 @@
           </span>
           <span class="min-w-0 flex-1">
             <span
-              class="mynx-truncate block text-[12px] font-medium"
+              class="mynx-truncate block text-callout font-medium"
               title={rnaseq.importSourcePath}
             >
               {baseName(rnaseq.importSourcePath)}
@@ -143,8 +143,8 @@
               : 'border-border hover:border-text-secondary'}"
             onclick={() => void chooseFormat(fmt.id)}
           >
-            <span class="text-[12px] font-medium">{t(fmt.labelKey)}</span>
-            <span class="text-[11px] text-text-secondary">{t(fmt.subKey)}</span>
+            <span class="text-callout font-medium">{t(fmt.labelKey)}</span>
+            <span class="text-footnote text-text-secondary">{t(fmt.subKey)}</span>
           </button>
         {/each}
       </div>
@@ -174,7 +174,7 @@
           <div class="flex flex-col gap-1" role="alert">
             {#each warnings as warning, i (i)}
               <p
-                class="rounded-md border border-warning/40 bg-warning/10 p-2 text-[12px] text-warning"
+                class="mynx-callout mynx-callout-warning rounded-md border border-warning/40 bg-warning/10 p-2 text-callout text-warning"
               >
                 {warning}
               </p>
@@ -185,7 +185,7 @@
 
       {#if rnaseq.importPhase === "error" && rnaseq.importMessage}
         <p
-          class="rounded-md border border-danger/40 bg-danger/10 p-2 text-[12px] text-danger"
+          class="rounded-md border border-danger/40 bg-danger/10 p-2 text-callout text-danger"
           role="alert"
         >
           {rnaseq.importMessage}
@@ -199,14 +199,14 @@
     <div class="mynx-card flex flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
         <IconTag size={15} stroke={1.75} aria-hidden="true" />
-        <span class="text-[12px] font-semibold">{t("rnaseq.sampleLabels")}</span>
+        <span class="text-callout font-semibold">{t("rnaseq.sampleLabels")}</span>
       </div>
       <div class="flex flex-col gap-2 p-3">
-        <p class="text-[11px] text-text-secondary">{t("rnaseq.sampleLabelsHint")}</p>
+        <p class="text-footnote text-text-secondary">{t("rnaseq.sampleLabelsHint")}</p>
         <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {#each sampleCols as sample (sample)}
             <label class="flex min-w-0 flex-col gap-1">
-              <span class="mynx-truncate text-[12px] font-medium" title={sample}>
+              <span class="mynx-truncate text-callout font-medium" title={sample}>
                 {sample}
               </span>
               <input
@@ -228,11 +228,11 @@
   <div class="mynx-card flex flex-col">
     <div class="flex items-center gap-2 border-b border-border px-3 py-2">
       <IconDatabase size={15} stroke={1.75} aria-hidden="true" />
-      <span class="text-[12px] font-semibold">{t("rnaseq.outputSettings")}</span>
+      <span class="text-callout font-semibold">{t("rnaseq.outputSettings")}</span>
     </div>
     <div class="flex flex-col gap-3 p-3">
       <label class="flex min-w-0 flex-col gap-1">
-        <span class="text-[12px] font-medium">{t("rnaseq.outputRoot")}</span>
+        <span class="text-callout font-medium">{t("rnaseq.outputRoot")}</span>
         <div class="flex items-center gap-2">
           <input
             type="text"
@@ -254,7 +254,7 @@
         </div>
       </label>
       <label class="flex min-w-0 flex-col gap-1">
-        <span class="text-[12px] font-medium">{t("rnaseq.runName")}</span>
+        <span class="text-callout font-medium">{t("rnaseq.runName")}</span>
         <input
           type="text"
           class="mynx-input"
@@ -278,13 +278,13 @@
     <div class="mynx-card flex flex-col">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2">
         <IconTable size={15} stroke={1.75} aria-hidden="true" />
-        <span class="text-[12px] font-semibold">{t("rnaseq.preview")}</span>
+        <span class="text-callout font-semibold">{t("rnaseq.preview")}</span>
         <span class="mynx-badge mynx-badge-queued ml-auto">
           {t("rnaseq.previewCols", { count: data.previewColumns.length })}
         </span>
       </div>
       <div class="overflow-x-auto p-3">
-        <table class="w-full text-left text-[12px]">
+        <table class="w-full text-left text-callout">
           <thead>
             <tr class="border-b border-border text-text-secondary">
               {#each data.previewColumns as column (column)}
@@ -307,6 +307,6 @@
   {/if}
 
   {#if importing}
-    <p class="text-[12px] text-text-secondary" role="status">{t("rnaseq.importing")}</p>
+    <p class="text-callout text-text-secondary" role="status">{t("rnaseq.importing")}</p>
   {/if}
 </div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Switch from "../../components/Switch.svelte";
   import { convertFileSrc } from "@tauri-apps/api/core";
   import { getCurrentWebview } from "@tauri-apps/api/webview";
   import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
@@ -530,8 +531,8 @@
 {#snippet groupRenameEditor()}
   <section class="mynx-card flex flex-col gap-3 p-3" aria-labelledby="qpcr-group-rename-title">
     <div>
-      <h3 id="qpcr-group-rename-title" class="text-[12px] font-semibold">{t("qpcr.renameGroupsTitle")}</h3>
-      <p class="mt-1 text-[11px] text-text-secondary">{t("qpcr.renameGroupsHint")}</p>
+      <h3 id="qpcr-group-rename-title" class="text-callout font-semibold">{t("qpcr.renameGroupsTitle")}</h3>
+      <p class="mt-1 text-footnote text-text-secondary">{t("qpcr.renameGroupsHint")}</p>
     </div>
     {#if qpcr.groups.length > 0}
       <div class="flex flex-col gap-2 sm:flex-row">
@@ -572,15 +573,15 @@
           {@render phaseBadge(qpcr.groupRenamePhase)}
         {/if}
         {#if qpcr.groupRenameMessage}
-          <p class="text-[11px] {qpcr.groupRenamePhase === 'error' ? 'text-danger' : qpcr.groupRenamePhase === 'success' ? 'text-success' : 'text-text-secondary'}" role={qpcr.groupRenamePhase === "error" ? "alert" : "status"}>
+          <p class="text-footnote {qpcr.groupRenamePhase === 'error' ? 'text-danger' : qpcr.groupRenamePhase === 'success' ? 'text-success' : 'text-text-secondary'}" role={qpcr.groupRenamePhase === "error" ? "alert" : "status"}>
             {qpcr.groupRenameMessage}
           </p>
         {/if}
       </div>
       <div class="max-w-full overflow-x-auto rounded-md border border-border">
-        <table class="w-full min-w-[520px] border-collapse text-left text-[12px]">
+        <table class="w-full min-w-[520px] border-collapse text-left text-callout">
           <thead>
-            <tr class="bg-surface-2 text-[10px] text-text-secondary">
+            <tr class="bg-surface-2 text-caption2 text-text-secondary">
               <th class="w-12 border-b border-r border-border px-2 py-1 text-center">#</th>
               <th class="border-b border-r border-border px-2 py-1">A</th>
               <th class="border-b border-border px-2 py-1">B</th>
@@ -594,7 +595,7 @@
           <tbody>
             {#each qpcr.groups as group, index (group)}
               <tr class={selectedRenameGroups.includes(group) ? "bg-accent/10" : index % 2 ? "bg-surface-2/50" : "bg-surface"}>
-                <th scope="row" class="border-b border-r border-border px-2 py-1.5 text-center font-mono text-[11px] font-normal text-text-secondary">{index + 2}</th>
+                <th scope="row" class="border-b border-r border-border px-2 py-1.5 text-center font-mono text-footnote font-normal text-text-secondary">{index + 2}</th>
                 <td class="border-b border-r border-border p-0">
                   <button
                     type="button"
@@ -624,43 +625,28 @@
         </table>
       </div>
       {#if effectiveGroups.length < qpcr.groups.length}
-        <p class="text-[11px] text-text-secondary">{t("qpcr.mergedGroupNames", { count: effectiveGroups.length })}</p>
+        <p class="text-footnote text-text-secondary">{t("qpcr.mergedGroupNames", { count: effectiveGroups.length })}</p>
       {/if}
     {:else}
-      <p class="text-[12px] text-text-secondary">{t("qpcr.transformFirst")}</p>
+      <p class="text-callout text-text-secondary">{t("qpcr.transformFirst")}</p>
     {/if}
   </section>
 {/snippet}
 
 {#snippet toggleSwitch(checked: boolean, set: (next: boolean) => void, label: string)}
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    aria-label={label}
-    class="relative h-5 w-9 shrink-0 rounded-full border transition-colors {checked
-      ? 'border-accent bg-accent'
-      : 'border-border bg-surface-2'}"
-    onclick={() => set(!checked)}
-  >
-    <span
-      class="absolute left-0.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white transition-transform {checked
-        ? 'translate-x-4'
-        : ''}"
-    ></span>
-  </button>
+  <Switch {checked} {label} onchange={set} />
 {/snippet}
 
 <section
   class="flex h-full min-h-0 flex-col gap-3 p-4 {dragOver ? 'ring-2 ring-accent ring-inset' : ''}"
 >
-  <header class="flex items-baseline gap-3">
+  <header class="mynx-page-header flex items-baseline gap-3">
     <h1 class="mynx-page-title">{t("qpcr.title")}</h1>
   </header>
 
   <div class="mynx-resizable-two min-h-0 flex-1" style={`--mynx-first-column: ${panelWidths.qpcrSidebar}px`}>
     <!-- ── Steps rail ─────────────────────────────────────────────────────── -->
-    <aside class="mynx-card flex flex-col gap-1 p-2">
+    <aside class="mynx-card mynx-step-rail flex flex-col gap-1 p-2">
       {#each [1, 2, 3, 4] as item (item)}
         <button
           type="button"
@@ -672,14 +658,14 @@
           aria-current={step === item ? "step" : undefined}
         >
           <span
-            class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-[11px] {step ===
+            class="mynx-step-index flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-footnote {step ===
             item
               ? 'border-accent bg-accent mynx-on-accent'
               : 'border-border bg-surface-2 text-text-secondary'}"
           >
             {item}
           </span>
-          <span class="mynx-truncate flex-1 text-[12px] font-medium">
+          <span class="mynx-truncate flex-1 text-callout font-medium">
             {item === 1
               ? t("qpcr.stepFile")
               : item === 2
@@ -706,23 +692,23 @@
       {/each}
 
       <div class="mt-2 flex flex-col gap-1 border-t border-border pt-2">
-        <span class="text-[11px] font-semibold text-text-secondary">
+        <span class="text-footnote font-semibold text-text-secondary">
           {t("qpcr.fileInfo")}
         </span>
         {#if hasFile}
-          <span class="mynx-truncate text-[12px] font-medium" title={qpcr.filePath}>
+          <span class="mynx-truncate text-callout font-medium" title={qpcr.filePath}>
             {qpcr.fileName}
           </span>
           <CopyableText text={qpcr.filePath} />
-          <span class="mynx-truncate text-[11px] text-text-secondary">
+          <span class="mynx-truncate text-footnote text-text-secondary">
             {t("qpcr.sheet")}: {qpcr.selectedSheet || "—"} · {qpcr.sheetNames.length}
           </span>
-          <span class="mynx-truncate text-[11px] text-text-secondary">
+          <span class="mynx-truncate text-footnote text-text-secondary">
             {t("qpcr.geneList")}: {qpcr.geneNames.length} · {t("qpcr.groupList")}:
             {qpcr.groups.length}
           </span>
         {:else}
-          <span class="text-[11px] text-text-secondary">{t("qpcr.noFileSelected")}</span>
+          <span class="text-footnote text-text-secondary">{t("qpcr.noFileSelected")}</span>
         {/if}
       </div>
     </aside>
@@ -743,7 +729,7 @@
         <div class="mynx-card flex flex-col">
           <div class="flex items-center gap-2 border-b border-border px-3 py-2">
             <IconFileSpreadsheet size={15} stroke={1.75} aria-hidden="true" />
-            <span class="text-[12px] font-semibold">{t("qpcr.dataFile")}</span>
+            <span class="text-callout font-semibold">{t("qpcr.dataFile")}</span>
             {#if qpcr.loadPhase !== "idle"}
               <span class="ml-auto">{@render phaseBadge(qpcr.loadPhase)}</span>
             {/if}
@@ -752,7 +738,7 @@
             {#if !hasFile}
               <button
                 type="button"
-                class="flex min-h-[120px] w-full items-center justify-center rounded-md border border-dashed border-border p-4 text-center text-[12px] text-text-secondary hover:border-accent/50"
+                class="flex min-h-[120px] w-full items-center justify-center rounded-md border border-dashed border-border p-4 text-center text-callout text-text-secondary hover:border-accent/50"
                 onclick={() => void pickFile()}
               >
                 {t("qpcr.drop")} · {t("qpcr.open")}
@@ -765,7 +751,7 @@
                   <IconFileSpreadsheet size={18} stroke={1.6} aria-hidden="true" />
                 </span>
                 <span class="min-w-0 flex-1">
-                  <span class="mynx-truncate block text-[12px] font-medium" title={qpcr.filePath}>
+                  <span class="mynx-truncate block text-callout font-medium" title={qpcr.filePath}>
                     {qpcr.fileName}
                   </span>
                   <CopyableText text={qpcr.filePath} />
@@ -791,7 +777,7 @@
             </div>
             {#if qpcr.sheetNames.length > 0}
               <label class="flex min-w-0 flex-col gap-1">
-                <span class="text-[12px] font-medium">{t("qpcr.sheet")}</span>
+                <span class="text-callout font-medium">{t("qpcr.sheet")}</span>
                 <select
                   class="mynx-input"
                   bind:value={qpcr.selectedSheet}
@@ -805,7 +791,7 @@
               </label>
             {/if}
             {#if qpcr.loadPhase === "error" && qpcr.loadMessage}
-              <p class="flex items-center gap-1.5 text-[12px] text-danger" role="alert">
+              <p class="flex items-center gap-1.5 text-callout text-danger" role="alert">
                 <IconInfoCircle size={14} stroke={1.75} aria-hidden="true" />
                 <span class="mynx-truncate">{qpcr.loadMessage}</span>
               </p>
@@ -813,11 +799,11 @@
           </div>
         </div>
         {#if sourcePreviewStatus === "loading"}
-          <p class="mynx-card text-[12px] text-text-secondary" role="status">
+          <p class="mynx-card text-callout text-text-secondary" role="status">
             {t("qpcr.previewLoading")}
           </p>
         {:else if sourcePreviewStatus === "error"}
-          <p class="mynx-card text-[12px] text-text-secondary" role="status">
+          <p class="mynx-card text-callout text-text-secondary" role="status">
             {t("qpcr.previewFailed")}
           </p>
         {:else if sourceSheetPreview}
@@ -833,20 +819,20 @@
         <div class="mynx-card flex flex-col">
           <div class="flex items-center gap-2 border-b border-border px-3 py-2">
             <IconFlask size={15} stroke={1.75} aria-hidden="true" />
-            <span class="text-[12px] font-semibold">{t("qpcr.transform")}</span>
+            <span class="text-callout font-semibold">{t("qpcr.transform")}</span>
             {#if qpcr.transformPhase !== "idle"}
               <span class="ml-auto">{@render phaseBadge(qpcr.transformPhase)}</span>
             {/if}
           </div>
           <div class="flex flex-col gap-3 p-3">
-            <p class="text-[12px] text-text-secondary">{t("qpcr.transformHint")}</p>
-            <p class="flex items-center gap-1.5 text-[11px] text-text-secondary">
+            <p class="text-callout text-text-secondary">{t("qpcr.transformHint")}</p>
+            <p class="flex items-center gap-1.5 text-footnote text-text-secondary">
               <IconInfoCircle size={13} stroke={1.75} aria-hidden="true" />
               {t("qpcr.saveHint")}
             </p>
             {#if transformed && qpcr.transformPhase !== "running"}
               <p
-                class="flex items-center gap-1.5 rounded-md border border-success/40 bg-success/10 p-2 text-[12px] text-success"
+                class="flex items-center gap-1.5 rounded-md border border-success/40 bg-success/10 p-2 text-callout text-success"
                 role="status"
               >
                 <IconDna size={14} stroke={1.75} aria-hidden="true" />
@@ -867,14 +853,14 @@
             </button>
             {#if qpcr.transformPhase === "success" && qpcr.transformMessage}
               <p
-                class="rounded-md border border-success/40 bg-success/10 p-2 text-[12px] text-success"
+                class="rounded-md border border-success/40 bg-success/10 p-2 text-callout text-success"
                 role="status"
               >
                 {qpcr.transformMessage}
               </p>
             {:else if qpcr.transformPhase === "error" && qpcr.transformMessage}
               <p
-                class="rounded-md border border-danger/40 bg-danger/10 p-2 text-[12px] text-danger"
+                class="rounded-md border border-danger/40 bg-danger/10 p-2 text-callout text-danger"
                 role="alert"
               >
                 {qpcr.transformMessage}
@@ -882,7 +868,7 @@
             {/if}
             {#if qpcr.geneNames.length > 0}
               <div class="flex flex-col gap-1">
-                <span class="text-[12px] font-medium">
+                <span class="text-callout font-medium">
                   {t("qpcr.geneList")} · {qpcr.geneNames.length}
                 </span>
                 <div class="flex flex-wrap gap-1">
@@ -896,7 +882,7 @@
             {/if}
             {#if qpcr.groups.length > 0}
               <div class="flex flex-col gap-1">
-                <span class="text-[12px] font-medium">
+                <span class="text-callout font-medium">
                   {t("qpcr.groupList")} · {qpcr.groups.length}
                 </span>
                 <div class="flex flex-wrap gap-1">
@@ -911,11 +897,11 @@
           </div>
         </div>
         {#if transformedPreviewStatus === "loading"}
-          <p class="mynx-card text-[12px] text-text-secondary" role="status">
+          <p class="mynx-card text-callout text-text-secondary" role="status">
             {t("qpcr.previewLoading")}
           </p>
         {:else if transformedPreviewStatus === "error"}
-          <p class="mynx-card text-[12px] text-text-secondary" role="status">
+          <p class="mynx-card text-callout text-text-secondary" role="status">
             {t("qpcr.previewFailed")}
           </p>
         {:else if transformedSheetPreview}
@@ -932,18 +918,18 @@
       {:else if step === 3}
         <!-- Step 3: calculate -->
         {#if hasPendingGroupRenames()}
-          <p class="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[12px] text-text-secondary" role="status">
+          <p class="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-callout text-text-secondary" role="status">
             {t("qpcr.applyRenameBeforeCalc")}
             <button type="button" class="mynx-link ml-2" onclick={() => (step = 2)}>{t("qpcr.stepTransform")}</button>
           </p>
         {/if}
         {#if !transformed}
           <div class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2">
-            <p class="flex items-center gap-1.5 text-[12px] text-text-secondary">
+            <p class="flex items-center gap-1.5 text-callout text-text-secondary">
               <IconInfoCircle size={14} stroke={1.75} aria-hidden="true" />
               {t("qpcr.existingTransformMissing")}
             </p>
-            <button type="button" class="mynx-link text-[12px]" onclick={() => (step = 2)}>
+            <button type="button" class="mynx-link text-callout" onclick={() => (step = 2)}>
               {t("qpcr.goTransformStep")}
             </button>
           </div>
@@ -952,7 +938,7 @@
         <div class="mynx-card flex flex-col">
           <div class="flex items-center gap-2 border-b border-border px-3 py-2">
             <IconCalculator size={15} stroke={1.75} aria-hidden="true" />
-            <span class="text-[12px] font-semibold">{t("qpcr.calculate")}</span>
+            <span class="text-callout font-semibold">{t("qpcr.calculate")}</span>
             {#if qpcr.calcPhase !== "idle" || qpcr.chartInjectPhase !== "idle"}
               <span class="ml-auto">
                 {@render phaseBadge(
@@ -974,7 +960,7 @@
                     ? 'border-accent bg-accent/10'
                     : 'border-border bg-surface hover:border-text-secondary'}"
                 >
-                  <span class="mynx-truncate text-[12px] font-medium">
+                  <span class="mynx-truncate text-callout font-medium">
                     {t(methodLabelKey(method))}
                     {method === "ref-normalized" ? `（${t("qpcr.default")}）` : ""}
                   </span>
@@ -991,7 +977,7 @@
 
             {#if qpcr.calcMethod === "control-relative"}
               <label class="flex min-w-0 flex-col gap-1">
-                <span class="text-[12px] font-medium">{t("qpcr.controlGroup")}</span>
+                <span class="text-callout font-medium">{t("qpcr.controlGroup")}</span>
                 <select
                   class="mynx-input"
                   bind:value={() => selectedControlGroup(), (v) => (qpcr.controlGroup = v)}
@@ -1011,7 +997,7 @@
 
             <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <label class="flex min-w-0 flex-col gap-1">
-                <span class="text-[12px] font-medium">{t("qpcr.repeats")}</span>
+                <span class="text-callout font-medium">{t("qpcr.repeats")}</span>
                 <input
                   type="number"
                   class="mynx-input"
@@ -1025,7 +1011,7 @@
                 />
               </label>
               <label class="flex min-w-0 flex-col gap-1">
-                <span class="text-[12px] font-medium">{t("qpcr.referenceGene")}</span>
+                <span class="text-callout font-medium">{t("qpcr.referenceGene")}</span>
                 <select
                   class="mynx-input"
                   bind:value={() => selectedRefGene(), (v) => (qpcr.refGene = v)}
@@ -1042,7 +1028,7 @@
                 </select>
               </label>
               <label class="flex min-w-0 flex-col gap-1">
-                <span class="text-[12px] font-medium">{t("qpcr.selectNum")}</span>
+                <span class="text-callout font-medium">{t("qpcr.selectNum")}</span>
                 <input
                   type="number"
                   class="mynx-input"
@@ -1055,7 +1041,7 @@
                 />
               </label>
               <label class="flex min-w-0 flex-col gap-1">
-                <span class="text-[12px] font-medium">{t("qpcr.outlierSd")}</span>
+                <span class="text-callout font-medium">{t("qpcr.outlierSd")}</span>
                 <input
                   type="number"
                   class="mynx-input"
@@ -1070,20 +1056,20 @@
             </div>
 
             <div class="flex items-center gap-2">
-              <span class="text-[12px] font-medium">{t("qpcr.chartColor")}</span>
+              <span class="text-callout font-medium">{t("qpcr.chartColor")}</span>
               <span
                 class="h-4 w-4 rounded border border-border"
                 style={`background: ${qpcr.chartColor}`}
                 aria-hidden="true"
               ></span>
-              <span class="mynx-mono text-[11px] text-text-secondary">
+              <span class="mynx-mono text-footnote text-text-secondary">
                 {qpcr.chartColor.toUpperCase()}
               </span>
             </div>
 
             {#if calcFailure}
               <p
-                class="rounded-md border border-warning/40 bg-warning/10 p-2 text-[12px] text-warning"
+                class="rounded-md border border-warning/40 bg-warning/10 p-2 text-callout text-warning"
                 role="alert"
               >
                 {t(calcFailure.key, calcFailure.values)}
@@ -1101,7 +1087,7 @@
 
             {#if qpcr.calcPhase === "success" && qpcr.calcMessage}
               <p
-                class="rounded-md border border-success/40 bg-success/10 p-2 text-[12px] text-success"
+                class="rounded-md border border-success/40 bg-success/10 p-2 text-callout text-success"
                 role="status"
               >
                 {qpcr.calcMessage}
@@ -1111,7 +1097,7 @@
               </button>
             {:else if qpcr.calcPhase === "error" && qpcr.calcMessage}
               <p
-                class="rounded-md border border-danger/40 bg-danger/10 p-2 text-[12px] text-danger"
+                class="rounded-md border border-danger/40 bg-danger/10 p-2 text-callout text-danger"
                 role="alert"
               >
                 {qpcr.calcMessage}
@@ -1119,17 +1105,17 @@
             {/if}
 
             {#if qpcr.chartInjectPhase === "running"}
-              <p class="flex items-center gap-2 text-[12px] text-text-secondary" role="status">
+              <p class="flex items-center gap-2 text-callout text-text-secondary" role="status">
                 {t("qpcr.generating")}
                 {@render phaseBadge(qpcr.chartInjectPhase)}
               </p>
             {:else if qpcr.chartInjectPhase === "error" && qpcr.chartInjectMessage}
-              <p class="text-[12px] text-danger" role="alert">{qpcr.chartInjectMessage}</p>
+              <p class="text-callout text-danger" role="alert">{qpcr.chartInjectMessage}</p>
             {/if}
 
             {#if qpcr.geneSheetNames.length > 0}
               <div class="flex flex-col gap-1">
-                <span class="text-[12px] font-medium">
+                <span class="text-callout font-medium">
                   {t("qpcr.summarySheets")} · {qpcr.geneSheetNames.length}
                 </span>
                 <div class="flex flex-wrap gap-1">
@@ -1147,11 +1133,11 @@
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
                   <div class="flex min-w-0 items-center gap-2">
                     <IconChartBar size={14} stroke={1.75} aria-hidden="true" />
-                    <h2 class="text-[12px] font-semibold">{t("qpcr.previewResult")}</h2>
+                    <h2 class="text-callout font-semibold">{t("qpcr.previewResult")}</h2>
                   </div>
                   {#if qpcr.chartSeries.length > 1}
                     <label class="flex min-w-0 items-center gap-2">
-                      <span class="text-[11px] text-text-secondary">{t("qpcr.previewGene")}</span>
+                      <span class="text-footnote text-text-secondary">{t("qpcr.previewGene")}</span>
                       <select
                         class="mynx-input max-w-48"
                         value={resultPreviewSeries.geneName}
@@ -1171,7 +1157,7 @@
                   {#if resultPreviewSeries.points.length > PREVIEW_ROW_LIMIT}
                     <button
                       type="button"
-                      class="mynx-link inline-flex items-center gap-1 text-[11px]"
+                      class="mynx-link inline-flex items-center gap-1 text-footnote"
                       aria-expanded={showAllResultGroups}
                       onclick={() => (showAllResultGroups = !showAllResultGroups)}
                     >
@@ -1186,11 +1172,11 @@
                   {/if}
                 </div>
                 <div class="flex flex-col gap-3 p-3">
-                  <p class="text-[11px] text-text-secondary">{t("qpcr.previewResultHint")}</p>
+                  <p class="text-footnote text-text-secondary">{t("qpcr.previewResultHint")}</p>
                   <div class="flex flex-col gap-2" role="img" aria-label={t("qpcr.previewResult")}>
                     {#each visibleResultPreviewPoints as point (point.name)}
                       <div class="grid min-w-0 grid-cols-[minmax(4.5rem,0.8fr)_minmax(3rem,2fr)_minmax(5rem,1fr)] items-center gap-2">
-                        <span class="mynx-truncate text-[11px]" title={point.name}>{point.name}</span>
+                        <span class="mynx-truncate text-footnote" title={point.name}>{point.name}</span>
                         <span class="h-2.5 overflow-hidden rounded-sm bg-surface-2">
                           <span
                             class="block h-full rounded-sm"
@@ -1198,7 +1184,7 @@
                             aria-hidden="true"
                           ></span>
                         </span>
-                        <span class="mynx-mono text-right text-[10px] text-text-secondary">
+                        <span class="mynx-mono text-right text-caption2 text-text-secondary">
                           {formatPreviewNumber(point.avg)} ± {formatPreviewNumber(point.stdev)}
                         </span>
                       </div>
@@ -1207,7 +1193,7 @@
                   <!-- Intentional keyboard target for horizontal result-table scrolling. -->
                   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
                   <div class="max-w-full overflow-auto rounded-md border border-border" tabindex="0" role="region" aria-label={t("qpcr.previewResultTableAria")}>
-                    <table class="w-full min-w-[360px] border-separate border-spacing-0 text-left text-[11px]">
+                    <table class="w-full min-w-[360px] border-separate border-spacing-0 text-left text-footnote">
                       <caption class="sr-only">{t("qpcr.previewResult")}: {resultPreviewSeries.geneName}</caption>
                       <thead class="bg-surface-2 text-text-secondary">
                         <tr>
@@ -1240,7 +1226,7 @@
         <div class="mynx-card flex flex-col">
           <div class="flex items-center gap-2 border-b border-border px-3 py-2">
             <IconChartBar size={15} stroke={1.75} aria-hidden="true" />
-            <span class="text-[12px] font-semibold">{t("qpcr.plotTitle")}</span>
+            <span class="text-callout font-semibold">{t("qpcr.plotTitle")}</span>
             {#if qpcr.plotPhase !== "idle"}
               <span class="ml-auto">{@render phaseBadge(qpcr.plotPhase)}</span>
             {/if}
@@ -1262,7 +1248,7 @@
                   {:else}
                     <IconGrid4x4 size={18} stroke={1.6} aria-hidden="true" />
                   {/if}
-                  <span class="mynx-truncate text-[12px] font-medium">
+                  <span class="mynx-truncate text-callout font-medium">
                     {kind === "bar" ? t("qpcr.plotTypeBar") : t("qpcr.plotTypeHeatmap")}
                   </span>
                 </button>
@@ -1271,10 +1257,10 @@
 
             <!-- common -->
             <fieldset class="flex flex-col gap-3 rounded-md border border-border p-3">
-              <legend class="px-1 text-[12px] font-medium">{t("qpcr.commonSection")}</legend>
+              <legend class="px-1 text-callout font-medium">{t("qpcr.commonSection")}</legend>
               <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <label class="flex min-w-0 flex-col gap-1">
-                  <span class="text-[12px] font-medium">{t("qpcr.plotSheet")}</span>
+                  <span class="text-callout font-medium">{t("qpcr.plotSheet")}</span>
                   <select
                     class="mynx-input"
                     bind:value={qpcr.plotSheetName}
@@ -1288,7 +1274,7 @@
                   </select>
                 </label>
                 <label class="flex min-w-0 flex-col gap-1">
-                  <span class="text-[12px] font-medium">{t("qpcr.outputPrefix")}</span>
+                  <span class="text-callout font-medium">{t("qpcr.outputPrefix")}</span>
                   <input
                     type="text"
                     class="mynx-input"
@@ -1298,7 +1284,7 @@
                   />
                 </label>
                 <label class="flex min-w-0 flex-col gap-1">
-                  <span class="text-[12px] font-medium">{t("qpcr.plotFormat")}</span>
+                  <span class="text-callout font-medium">{t("qpcr.plotFormat")}</span>
                   <select
                     class="mynx-input"
                     bind:value={() => plotDraft.format, (v) => updatePlotDraft({ format: v })}
@@ -1310,7 +1296,7 @@
                   </select>
                 </label>
                 <label class="flex min-w-0 flex-col gap-1">
-                  <span class="text-[12px] font-medium">DPI</span>
+                  <span class="text-callout font-medium">DPI</span>
                   <select
                     class="mynx-input"
                     value={String(plotDraft.dpi)}
@@ -1323,7 +1309,7 @@
                   </select>
                 </label>
                 <label class="flex min-w-0 flex-col gap-1">
-                  <span class="text-[12px] font-medium">{t("qpcr.plotWidth")}</span>
+                  <span class="text-callout font-medium">{t("qpcr.plotWidth")}</span>
                   <input
                     type="number"
                     class="mynx-input"
@@ -1337,7 +1323,7 @@
                   />
                 </label>
                 <label class="flex min-w-0 flex-col gap-1">
-                  <span class="text-[12px] font-medium">{t("qpcr.plotHeight")}</span>
+                  <span class="text-callout font-medium">{t("qpcr.plotHeight")}</span>
                   <input
                     type="number"
                     class="mynx-input"
@@ -1352,7 +1338,7 @@
                 </label>
                 {#if qpcr.plotKind === "bar"}
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.plotGene")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.plotGene")}</span>
                     <select
                       class="mynx-input"
                       bind:value={() => plotDraft.gene, (v) => updatePlotDraft({ gene: v })}
@@ -1367,7 +1353,7 @@
                 {/if}
                 <div class="flex flex-col justify-center gap-2">
                   <div class="flex items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.installMissing")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.installMissing")}</span>
                     {@render toggleSwitch(
                       qpcr.installMissing,
                       (next) => (qpcr.installMissing = next),
@@ -1376,7 +1362,7 @@
                   </div>
                   {#if qpcr.plotKind === "bar"}
                     <div class="flex items-center justify-between gap-2">
-                      <span class="mynx-truncate text-[12px]">{t("qpcr.batchMode")}</span>
+                      <span class="mynx-truncate text-callout">{t("qpcr.batchMode")}</span>
                       {@render toggleSwitch(
                         plotDraft.batchMode,
                         (next) => updatePlotDraft({ batchMode: next }),
@@ -1392,7 +1378,7 @@
                   {qpcr.plotOutputDir ? t("qpcr.changeOutputDir") : t("qpcr.chooseOutputDir")}
                 </button>
                 <span
-                  class="mynx-truncate flex-1 text-[11px] text-text-secondary"
+                  class="mynx-truncate flex-1 text-footnote text-text-secondary"
                   title={qpcr.plotOutputDir}
                 >
                   {qpcr.plotOutputDir || t("qpcr.noOutputDir")}
@@ -1403,10 +1389,10 @@
             {#if qpcr.plotKind === "bar"}
               <!-- bar params -->
               <fieldset class="flex flex-col gap-3 rounded-md border border-border p-3">
-                <legend class="px-1 text-[12px] font-medium">{t("qpcr.barSection")}</legend>
+                <legend class="px-1 text-callout font-medium">{t("qpcr.barSection")}</legend>
                 <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.barFill")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.barFill")}</span>
                     <input
                       type="color"
                       class="mynx-input h-[30px] p-0.5"
@@ -1416,7 +1402,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.errorColor")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.errorColor")}</span>
                     <input
                       type="color"
                       class="mynx-input h-[30px] p-0.5"
@@ -1426,7 +1412,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.barBorder")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.barBorder")}</span>
                     <input
                       type="color"
                       class="mynx-input h-[30px] p-0.5"
@@ -1436,7 +1422,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.barBorderWidth")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.barBorderWidth")}</span>
                     <input
                       type="number"
                       class="mynx-input"
@@ -1452,7 +1438,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.barWidth")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.barWidth")}</span>
                     <input
                       type="number"
                       class="mynx-input"
@@ -1466,7 +1452,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.errorWidth")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.errorWidth")}</span>
                     <input
                       type="number"
                       class="mynx-input"
@@ -1482,7 +1468,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.errorCap")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.errorCap")}</span>
                     <input
                       type="number"
                       class="mynx-input"
@@ -1496,7 +1482,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.xAngle")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.xAngle")}</span>
                     <select
                       class="mynx-input"
                       value={String(plotDraft.xAngle)}
@@ -1510,7 +1496,7 @@
                     </select>
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.xLabel")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.xLabel")}</span>
                     <input
                       type="text"
                       class="mynx-input"
@@ -1520,7 +1506,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.yLabel")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.yLabel")}</span>
                     <input
                       type="text"
                       class="mynx-input"
@@ -1531,7 +1517,7 @@
                   </label>
                   <div class="flex flex-col justify-center gap-2">
                     <div class="flex items-center justify-between gap-2">
-                      <span class="mynx-truncate text-[12px]">{t("qpcr.showRawPoints")}</span>
+                      <span class="mynx-truncate text-callout">{t("qpcr.showRawPoints")}</span>
                       {@render toggleSwitch(
                         plotDraft.showRawPoints,
                         (next) => updatePlotDraft({ showRawPoints: next }),
@@ -1539,7 +1525,7 @@
                       )}
                     </div>
                     <div class="flex items-center justify-between gap-2">
-                      <span class="mynx-truncate text-[12px]">{t("qpcr.showXTick")}</span>
+                      <span class="mynx-truncate text-callout">{t("qpcr.showXTick")}</span>
                       {@render toggleSwitch(
                         plotDraft.showXTick,
                         (next) => updatePlotDraft({ showXTick: next }),
@@ -1549,7 +1535,7 @@
                   </div>
                   <div class="flex flex-col justify-center gap-2">
                     <div class="flex items-center justify-between gap-2">
-                      <span class="mynx-truncate text-[12px]">{t("qpcr.scientificNotation")}</span>
+                      <span class="mynx-truncate text-callout">{t("qpcr.scientificNotation")}</span>
                       {@render toggleSwitch(
                         plotDraft.scientificNotation,
                         (next) => updatePlotDraft({ scientificNotation: next }),
@@ -1557,7 +1543,7 @@
                       )}
                     </div>
                     <div class="flex items-center justify-between gap-2">
-                      <span class="mynx-truncate text-[12px]">{t("qpcr.autoSize")}</span>
+                      <span class="mynx-truncate text-callout">{t("qpcr.autoSize")}</span>
                       {@render toggleSwitch(
                         plotDraft.autoSize,
                         (next) => updatePlotDraft({ autoSize: next }),
@@ -1570,10 +1556,10 @@
 
               <!-- stats -->
               <fieldset class="flex flex-col gap-3 rounded-md border border-border p-3">
-                <legend class="px-1 text-[12px] font-medium">{t("qpcr.statsSection")}</legend>
+                <legend class="px-1 text-callout font-medium">{t("qpcr.statsSection")}</legend>
                 <div class="flex flex-wrap gap-x-4 gap-y-2">
                   <div class="flex min-w-[150px] flex-1 items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.enableStats")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.enableStats")}</span>
                     {@render toggleSwitch(
                       plotDraft.enableStats,
                       (next) => updatePlotDraft({ enableStats: next }),
@@ -1581,7 +1567,7 @@
                     )}
                   </div>
                   <div class="flex min-w-[150px] flex-1 items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.showStats")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.showStats")}</span>
                     {@render toggleSwitch(
                       plotDraft.showStats,
                       (next) => updatePlotDraft({ showStats: next }),
@@ -1589,7 +1575,7 @@
                     )}
                   </div>
                   <div class="flex min-w-[150px] flex-1 items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.showNs")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.showNs")}</span>
                     {@render toggleSwitch(
                       plotDraft.showNs,
                       (next) => updatePlotDraft({ showNs: next }),
@@ -1599,7 +1585,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.sigMode")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.sigMode")}</span>
                     <select
                       class="mynx-input"
                       bind:value={() => plotDraft.sigMode, (v) => updatePlotDraft({ sigMode: v })}
@@ -1611,7 +1597,7 @@
                     </select>
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.controlGroup")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.controlGroup")}</span>
                     <select
                       class="mynx-input"
                       bind:value={() => plotDraft.controlGroup, (v) => updatePlotDraft({ controlGroup: v })}
@@ -1624,7 +1610,7 @@
                     </select>
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.statTest")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.statTest")}</span>
                     <select
                       class="mynx-input"
                       bind:value={() => plotDraft.statTest, (v) => updatePlotDraft({ statTest: v })}
@@ -1636,7 +1622,7 @@
                     </select>
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.pAdjustMethod")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.pAdjustMethod")}</span>
                     <select
                       class="mynx-input"
                       bind:value={() => plotDraft.pAdjustMethod, (v) => updatePlotDraft({ pAdjustMethod: v })}
@@ -1648,7 +1634,7 @@
                     </select>
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.labelStyle")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.labelStyle")}</span>
                     <select
                       class="mynx-input"
                       bind:value={() => plotDraft.labelStyle, (v) => updatePlotDraft({ labelStyle: v })}
@@ -1660,7 +1646,7 @@
                     </select>
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.sigFile")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.sigFile")}</span>
                     <input
                       type="text"
                       class="mynx-input"
@@ -1674,10 +1660,10 @@
             {:else}
               <!-- heatmap params -->
               <fieldset class="flex flex-col gap-3 rounded-md border border-border p-3">
-                <legend class="px-1 text-[12px] font-medium">{t("qpcr.heatSection")}</legend>
+                <legend class="px-1 text-callout font-medium">{t("qpcr.heatSection")}</legend>
                 <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.heatScale")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.heatScale")}</span>
                     <select
                       class="mynx-input"
                       bind:value={() => plotDraft.heatmapScale, (v) => updatePlotDraft({ heatmapScale: v })}
@@ -1689,7 +1675,7 @@
                     </select>
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.heatPalette")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.heatPalette")}</span>
                     <select
                       class="mynx-input"
                       bind:value={() => plotDraft.heatmapPalette, (v) => updatePlotDraft({ heatmapPalette: v })}
@@ -1701,7 +1687,7 @@
                     </select>
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.zlim")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.zlim")}</span>
                     <select
                       class="mynx-input"
                       value={String(plotDraft.zlim)}
@@ -1715,7 +1701,7 @@
                     </select>
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.legendPosition")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.legendPosition")}</span>
                     <select
                       class="mynx-input"
                       bind:value={() => plotDraft.legendPosition, (v) => updatePlotDraft({ legendPosition: v })}
@@ -1727,7 +1713,7 @@
                     </select>
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.heatTitle")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.heatTitle")}</span>
                     <input
                       type="text"
                       class="mynx-input"
@@ -1737,7 +1723,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.legendTitle")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.legendTitle")}</span>
                     <input
                       type="text"
                       class="mynx-input"
@@ -1747,7 +1733,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.cellTextSize")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.cellTextSize")}</span>
                     <input
                       type="number"
                       class="mynx-input"
@@ -1763,7 +1749,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.tileBorder")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.tileBorder")}</span>
                     <input
                       type="color"
                       class="mynx-input h-[30px] p-0.5"
@@ -1773,7 +1759,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.tileBorderWidth")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.tileBorderWidth")}</span>
                     <input
                       type="number"
                       class="mynx-input"
@@ -1791,7 +1777,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 lg:grid-cols-3">
                   <div class="flex items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.clusterRows")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.clusterRows")}</span>
                     {@render toggleSwitch(
                       plotDraft.heatmapClusterRows,
                       (next) => updatePlotDraft({ heatmapClusterRows: next }),
@@ -1799,7 +1785,7 @@
                     )}
                   </div>
                   <div class="flex items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.clusterCols")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.clusterCols")}</span>
                     {@render toggleSwitch(
                       plotDraft.heatmapClusterCols,
                       (next) => updatePlotDraft({ heatmapClusterCols: next }),
@@ -1807,7 +1793,7 @@
                     )}
                   </div>
                   <div class="flex items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.showCellValues")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.showCellValues")}</span>
                     {@render toggleSwitch(
                       plotDraft.showCellValues,
                       (next) => updatePlotDraft({ showCellValues: next }),
@@ -1815,7 +1801,7 @@
                     )}
                   </div>
                   <div class="flex items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.cellTextBold")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.cellTextBold")}</span>
                     {@render toggleSwitch(
                       plotDraft.cellTextBold,
                       (next) => updatePlotDraft({ cellTextBold: next }),
@@ -1823,7 +1809,7 @@
                     )}
                   </div>
                   <div class="flex items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.showRowNames")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.showRowNames")}</span>
                     {@render toggleSwitch(
                       plotDraft.showRowNames,
                       (next) => updatePlotDraft({ showRowNames: next }),
@@ -1831,7 +1817,7 @@
                     )}
                   </div>
                   <div class="flex items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.showColNames")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.showColNames")}</span>
                     {@render toggleSwitch(
                       plotDraft.showColNames,
                       (next) => updatePlotDraft({ showColNames: next }),
@@ -1839,7 +1825,7 @@
                     )}
                   </div>
                   <div class="flex items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.rowLabelItalic")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.rowLabelItalic")}</span>
                     {@render toggleSwitch(
                       plotDraft.rowLabelItalic,
                       (next) => updatePlotDraft({ rowLabelItalic: next }),
@@ -1847,7 +1833,7 @@
                     )}
                   </div>
                   <div class="flex items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.exportPng")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.exportPng")}</span>
                     {@render toggleSwitch(
                       plotDraft.exportPng,
                       (next) => updatePlotDraft({ exportPng: next }),
@@ -1855,7 +1841,7 @@
                     )}
                   </div>
                   <div class="flex items-center justify-between gap-2">
-                    <span class="mynx-truncate text-[12px]">{t("qpcr.exportPdf")}</span>
+                    <span class="mynx-truncate text-callout">{t("qpcr.exportPdf")}</span>
                     {@render toggleSwitch(
                       plotDraft.exportPdf,
                       (next) => updatePlotDraft({ exportPdf: next }),
@@ -1865,7 +1851,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.pngDpi")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.pngDpi")}</span>
                     <select
                       class="mynx-input"
                       value={String(plotDraft.pngDpi)}
@@ -1879,7 +1865,7 @@
                     </select>
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.pngWidth")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.pngWidth")}</span>
                     <input
                       type="number"
                       class="mynx-input"
@@ -1893,7 +1879,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.pngHeight")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.pngHeight")}</span>
                     <input
                       type="number"
                       class="mynx-input"
@@ -1907,7 +1893,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.pdfWidth")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.pdfWidth")}</span>
                     <input
                       type="number"
                       class="mynx-input"
@@ -1921,7 +1907,7 @@
                     />
                   </label>
                   <label class="flex min-w-0 flex-col gap-1">
-                    <span class="text-[12px] font-medium">{t("qpcr.pdfHeight")}</span>
+                    <span class="text-callout font-medium">{t("qpcr.pdfHeight")}</span>
                     <input
                       type="number"
                       class="mynx-input"
@@ -1972,28 +1958,28 @@
             </div>
             {#if qpcr.plotPhase === "error" && qpcr.plotMessage}
               <p
-                class="rounded-md border border-danger/40 bg-danger/10 p-2 text-[12px] text-danger"
+                class="rounded-md border border-danger/40 bg-danger/10 p-2 text-callout text-danger"
                 role="alert"
               >
                 {qpcr.plotMessage}
               </p>
             {:else if qpcr.plotPhase === "success" && qpcr.plotMessage}
               <p
-                class="rounded-md border border-success/40 bg-success/10 p-2 text-[12px] text-success"
+                class="rounded-md border border-success/40 bg-success/10 p-2 text-callout text-success"
                 role="status"
               >
                 {qpcr.plotMessage}
               </p>
             {:else if qpcr.plotPhase === "cancelled"}
               <p
-                class="flex items-center gap-2 rounded-md border border-border bg-surface-2 p-2 text-[12px] text-text-secondary"
+                class="flex items-center gap-2 rounded-md border border-border bg-surface-2 p-2 text-callout text-text-secondary"
               >
                 {@render phaseBadge(qpcr.plotPhase)}
                 {qpcr.plotMessage}
               </p>
             {/if}
             {#if qpcr.plotResult?.outputDir}
-              <div class="flex flex-wrap items-center gap-2 text-[12px]">
+              <div class="flex flex-wrap items-center gap-2 text-callout">
                 <button type="button" class="mynx-link" onclick={openResultDir}>
                   <IconFolderOpen size={14} stroke={1.75} aria-hidden="true" />
                   {t("task.openOutput")}
@@ -2008,11 +1994,11 @@
               </div>
             {/if}
             {#if plotPreviewStatus === "loading"}
-              <p class="mynx-card text-[12px] text-text-secondary" role="status">
+              <p class="mynx-card text-callout text-text-secondary" role="status">
                 {t("qpcr.previewLoading")}
               </p>
             {:else if plotPreviewStatus === "error"}
-              <p class="mynx-card text-[12px] text-text-secondary" role="status">
+              <p class="mynx-card text-callout text-text-secondary" role="status">
                 {t("qpcr.previewFailed")}
               </p>
             {:else if plotPreviewFiles.length > 0}
@@ -2020,13 +2006,13 @@
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
                   <div class="flex min-w-0 items-center gap-2">
                     <IconChartBar size={14} stroke={1.75} aria-hidden="true" />
-                    <h2 class="text-[12px] font-semibold">{t("qpcr.plotPreview")}</h2>
-                    <span class="mynx-chip text-[10px]">{plotPreviewFiles.length}</span>
+                    <h2 class="text-callout font-semibold">{t("qpcr.plotPreview")}</h2>
+                    <span class="mynx-chip text-caption2">{plotPreviewFiles.length}</span>
                   </div>
                   {#if plotPreviewFiles.length > PLOT_PREVIEW_LIMIT}
                     <button
                       type="button"
-                      class="mynx-link text-[11px]"
+                      class="mynx-link text-footnote"
                       onclick={() => (showAllPlotPreviews = !showAllPlotPreviews)}
                       aria-expanded={showAllPlotPreviews}
                     >
@@ -2047,7 +2033,7 @@
                           loading="lazy"
                         />
                       </div>
-                      <figcaption class="border-t border-border px-2 py-1.5 text-[11px]">
+                      <figcaption class="border-t border-border px-2 py-1.5 text-footnote">
                         <span class="mynx-truncate block" title={file}>{fileLabelOf(file)}</span>
                       </figcaption>
                     </figure>
@@ -2055,7 +2041,7 @@
                 </div>
               </section>
             {:else if qpcr.plotPhase === "success" && plotPreviewStatus === "ready"}
-              <p class="mynx-card text-[12px] text-text-secondary" role="status">
+              <p class="mynx-card text-callout text-text-secondary" role="status">
                 {t("qpcr.previewUnavailable")}
               </p>
             {/if}
@@ -2063,7 +2049,7 @@
               <div class="flex flex-col gap-1">
                 <div class="flex items-center gap-2">
                   <IconTerminal size={13} stroke={1.75} aria-hidden="true" />
-                  <span class="text-[12px] font-medium">{t("qpcr.runLog")}</span>
+                  <span class="text-callout font-medium">{t("qpcr.runLog")}</span>
                   {#if plotRunning}
                     <span class="mynx-badge mynx-badge-running">{t("status.running")}</span>
                   {/if}

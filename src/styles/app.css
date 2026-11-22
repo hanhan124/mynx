@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* chat-next renders markdown with svelte-streamdown (utility classes). */
+@source "../../node_modules/svelte-streamdown/dist";
 
 /*
  * Mynx visual system tokens (Svelte 5 + Tailwind 4).
@@ -7,10 +9,10 @@
  * - Light/dark MODE: the generated `ThemeId` contract ("pearl" |
  *   "graphite" | "system"), applied as `document.documentElement[data-theme]`
  *   with a concrete resolved value ("pearl" | "graphite"), never "system".
- * - Visual STYLE: one of "liquid-glass" | "minimal-linear" |
+ * - Visual STYLE: one of "macos" | "liquid-glass" | "minimal-linear" |
  *   "swiss-editorial" | "memphis-pop" (see `src/app/ui-style.svelte.ts`),
  *   applied as `document.documentElement[data-ui-style]`.
- *   Default style is "minimal-linear".
+ *   Default style is "macos".
  *
  * The @theme block below holds the legacy Pearl values (branding:check
  * locks them against the installer). Every style x mode combination lives
@@ -20,8 +22,10 @@
  * `data-ui-style` before first paint (default "minimal-linear"), so the
  * @theme defaults are only a pre-paint fallback.
  * Theme variants change color and shape. The home launcher uses a quiet,
- * animated gradient behind the shell. The default macOS-inspired style uses
- * translucency only on title/navigation bars; cards stay opaque for clarity.
+ * animated gradient behind the shell. The macOS style (default) follows the
+ * Apple HIG: system colors + accessible variants, traffic-light window
+ * controls, vibrancy on title/navigation bars, hairline borders; cards stay
+ * opaque for clarity.
  *
  * Persistence note: the style is stored in the `mynx-ui-style`
  * localStorage mirror (same pattern as the theme/language mirrors). It is
@@ -62,6 +66,19 @@
 
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
     "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+
+  /* Semantic type scale (text-body / text-callout / text-footnote /
+   * text-caption2). Pages use these instead of text-[Npx]; each UI style
+   * may re-map them (macOS 27 lifts caption2 to 11px). */
+  --text-body: 13px;
+  --text-callout: 12px;
+  --text-footnote: 11px;
+  --text-caption2: 10px;
+  --text-subheadline: 14px;
+  --text-headline: 15px;
+  --text-title3: 20px;
+  --text-brand: 21px;
+  --text-brand-lg: 24px;
   --font-mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
 
   /* Radius gradient bridging: page-level rounded-* utilities follow the
@@ -135,6 +152,81 @@
   --mynx-shadow-drawer: 0 -1px 2px rgb(0 0 0 / 0.32), 0 -8px 24px rgb(0 0 0 / 0.44);
 }
 
+/* --- macOS 27 structure, shared by every style ---------------------------
+ * Every UI style uses the macOS 27 chrome, controls, materials and type
+ * scale. A style only supplies its palette (the colour blocks below), and
+ * the glass tints are derived from that palette. The macos block further
+ * down refines these with exact Apple system values. */
+html[data-ui-style] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Microsoft YaHei UI",
+    "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --color-text-quaternary: color-mix(in srgb, var(--color-text) 25%, transparent);
+  --color-fill: color-mix(in srgb, var(--color-text) 8%, transparent);
+  --color-fill-strong: color-mix(in srgb, var(--color-text) 14%, transparent);
+  --color-focus-ring: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  --mynx-radius-window: 16px;
+  --mynx-radius-card: 14px;
+  --mynx-radius-btn: 9999px;
+  --mynx-radius-input: 8px;
+  --mynx-radius-control: 8px;
+  --mynx-radius-panel: 14px;
+  --mynx-radius-popover: 14px;
+  --mynx-radius-modal: 20px;
+  --mynx-border-width: 1px;
+  --mynx-glass-clear: color-mix(in srgb, var(--color-surface) 50%, transparent);
+  --mynx-glass-regular: color-mix(in srgb, var(--color-surface) 78%, transparent);
+  --mynx-glass-thick: color-mix(in srgb, var(--color-elevated) 88%, transparent);
+  --mynx-glass-blur: blur(24px) saturate(180%);
+  --mynx-glass-blur-strong: blur(40px) saturate(190%);
+  --mynx-glass-edge: rgb(255 255 255 / 70%);
+  --mynx-glass-rim: rgb(0 0 0 / 10%);
+  --mynx-glass-shadow:
+    0 0 0 0.5px var(--mynx-glass-rim), inset 0 0.5px 0 var(--mynx-glass-edge),
+    0 2px 6px rgb(0 0 0 / 5%), 0 10px 28px rgb(0 0 0 / 7%);
+  --mynx-shadow-card: 0 0 0 0.5px rgb(0 0 0 / 7%), 0 1px 2px rgb(0 0 0 / 4%);
+  --mynx-shadow-pop:
+    0 0 0 0.5px rgb(0 0 0 / 12%), inset 0 0.5px 0 rgb(255 255 255 / 70%),
+    0 8px 24px rgb(0 0 0 / 12%), 0 24px 60px rgb(0 0 0 / 14%);
+  --mynx-shadow-control: 0 0 0 0.5px rgb(0 0 0 / 14%), 0 0.5px 1.5px rgb(0 0 0 / 12%);
+  --mynx-shadow-drawer: var(--mynx-shadow-pop);
+  --mynx-window-tint: color-mix(in srgb, var(--color-bg) 72%, transparent);
+  --mynx-card-backdrop: var(--mynx-glass-blur);
+  --mynx-nav-backdrop: var(--mynx-glass-blur-strong);
+  --mynx-glass-highlight: none;
+  --mynx-title-tracking: -0.01em;
+  --mynx-scrim: rgb(0 0 0 / 22%);
+  --mynx-traffic-inactive: rgb(0 0 0 / 14%);
+  --mynx-motion-quick: 140ms;
+  --mynx-motion-control: 220ms;
+  --mynx-motion-panel: 360ms;
+  --mynx-ease-settle: cubic-bezier(0.32, 0.72, 0, 1);
+  --mynx-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+html[data-ui-style][data-theme="graphite"] {
+  --color-fill: color-mix(in srgb, var(--color-text) 12%, transparent);
+  --color-fill-strong: color-mix(in srgb, var(--color-text) 20%, transparent);
+  --color-focus-ring: color-mix(in srgb, var(--color-accent) 60%, transparent);
+  --mynx-glass-clear: color-mix(in srgb, var(--color-surface) 46%, transparent);
+  --mynx-glass-regular: color-mix(in srgb, var(--color-surface) 74%, transparent);
+  --mynx-glass-thick: color-mix(in srgb, var(--color-elevated) 86%, transparent);
+  --mynx-glass-edge: rgb(255 255 255 / 14%);
+  --mynx-glass-rim: rgb(0 0 0 / 50%);
+  --mynx-glass-shadow:
+    0 0 0 0.5px var(--mynx-glass-rim), inset 0 0.5px 0 var(--mynx-glass-edge),
+    0 2px 6px rgb(0 0 0 / 24%), 0 10px 28px rgb(0 0 0 / 30%);
+  --mynx-shadow-card: 0 0 0 0.5px rgb(255 255 255 / 8%), 0 1px 2px rgb(0 0 0 / 30%);
+  --mynx-shadow-pop:
+    0 0 0 0.5px rgb(0 0 0 / 60%), inset 0 0.5px 0 rgb(255 255 255 / 14%),
+    0 8px 24px rgb(0 0 0 / 40%), 0 24px 60px rgb(0 0 0 / 46%);
+  --mynx-shadow-control: 0 0 0 0.5px rgb(255 255 255 / 12%), 0 0.5px 1.5px rgb(0 0 0 / 40%);
+  --mynx-window-tint: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  --mynx-scrim: rgb(0 0 0 / 45%);
+  --mynx-traffic-inactive: rgb(255 255 255 / 16%);
+}
+
 /* --- Liquid glass, light (optional style) ------------------------------ */
 html[data-ui-style="liquid-glass"] {
   --color-bg: #edf2f3;
@@ -158,23 +250,10 @@ html[data-ui-style="liquid-glass"] {
   --color-active: #d1e5f6;
   --color-separator: rgba(20, 50, 80, 0.1);
   --color-elevated: #ffffff;
-  --color-focus-ring: #1c62ad;
   --color-chart-canvas: #ffffff;
   --color-chart-grid: rgba(20, 50, 80, 0.12);
   --color-chart-axis: #2e4a63;
-  --mynx-shadow-pop: 0 1px 2px rgb(16 24 34 / 0.08), 0 8px 24px rgb(16 24 34 / 0.16);
-  --mynx-radius-btn: 10px;
-  --mynx-radius-input: 10px;
-  --mynx-radius-control: 10px;
-  --mynx-radius-panel: 18px;
-  --mynx-radius-popover: 16px;
-  --mynx-radius-modal: 18px;
   --mynx-page-bg: #edf2f3;
-  --mynx-shadow-card: none;
-  --mynx-shadow-pop: none;
-  --mynx-card-backdrop: none;
-  --mynx-nav-backdrop: none;
-  --mynx-glass-highlight: none;
 }
 
 /* --- Liquid glass, dark -------------------------------------------------- */
@@ -201,18 +280,11 @@ html[data-ui-style="liquid-glass"][data-theme="graphite"] {
   --color-active: #2b4d6c;
   --color-separator: rgba(190, 220, 250, 0.09);
   --color-elevated: #1a2836;
-  --color-focus-ring: #5ea8ec;
   --color-chart-canvas: #152230;
   --color-chart-grid: rgba(190, 220, 250, 0.1);
   --color-chart-axis: #c3d4e2;
-  --mynx-shadow-pop: 0 1px 2px rgb(0 0 0 / 0.32), 0 8px 24px rgb(0 0 0 / 0.44);
   --mynx-accent-2: #3cc2a6;
   --mynx-page-bg: #10171d;
-  --mynx-shadow-card: none;
-  --mynx-shadow-pop: none;
-  --mynx-card-backdrop: none;
-  --mynx-nav-backdrop: none;
-  --mynx-glass-highlight: none;
 }
 
 /* --- Minimal linear, light (macOS-inspired default) -------------------- */
@@ -239,26 +311,11 @@ html[data-ui-style="minimal-linear"] {
   --color-active: #dfeafc;
   --color-separator: #e3e7ed;
   --color-elevated: #ffffff;
-  --color-focus-ring: #3478d4;
   --color-chart-canvas: #ffffff;
   --color-chart-grid: #e3e7ed;
   --color-chart-axis: #697383;
   --mynx-accent-2: #8b72e8;
-  --mynx-radius-card: 16px;
-  --mynx-radius-btn: 8px;
-  --mynx-radius-input: 8px;
-  --mynx-radius-control: 8px;
-  --mynx-radius-panel: 12px;
-  --mynx-radius-popover: 12px;
-  --mynx-radius-modal: 16px;
-  --mynx-border-width: 1px;
-  --mynx-shadow-card: none;
-  --mynx-shadow-pop: 0 1px 2px rgb(16 24 34 / 0.08), 0 8px 24px rgb(16 24 34 / 0.16);
   --mynx-page-bg: #f5f6f8;
-  --mynx-card-backdrop: none;
-  --mynx-nav-backdrop: saturate(160%) blur(18px);
-  --mynx-glass-highlight: none;
-  --mynx-title-tracking: -0.02em;
 }
 
 /* --- Minimal linear, dark ----------------------------------------------- */
@@ -285,15 +342,141 @@ html[data-ui-style="minimal-linear"][data-theme="graphite"] {
   --color-active: #35496b;
   --color-separator: #333a44;
   --color-elevated: #2a313b;
-  --color-focus-ring: #6aa5e8;
   --color-chart-canvas: #262c35;
   --color-chart-grid: #333a44;
   --color-chart-axis: #a7b0bc;
   --mynx-accent-2: #a08ae6;
   --mynx-page-bg: #1d222a;
-  --mynx-nav-backdrop: saturate(160%) blur(18px);
-  --mynx-shadow-card: none;
-  --mynx-shadow-pop: 0 1px 2px rgb(0 0 0 / 0.32), 0 8px 24px rgb(0 0 0 / 0.44);
+}
+
+/* --- macOS 27, light (default; Liquid Glass, HIG 2026) ------------------- */
+html[data-ui-style="macos"] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Microsoft YaHei UI",
+    "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --color-bg: #f2f2f4;
+  --color-surface: #ffffff;
+  --color-surface-2: #f4f4f6;
+  --color-border: rgb(0 0 0 / 12%);
+  --color-text: #1d1d1f;
+  --color-text-secondary: #6e6e73;
+  --color-text-tertiary: #86868b;
+  --color-text-quaternary: rgb(0 0 0 / 25%);
+  --color-accent: #0071e3;
+  --color-accent-hover: #0068d1;
+  --color-on-accent: #ffffff;
+  --color-nav-bg: transparent;
+  --color-nav-border: rgb(0 0 0 / 8%);
+  --color-nav-text: #1d1d1f;
+  --color-nav-active: rgb(0 0 0 / 8%);
+  --color-success: #008932;
+  --color-warning: #c55300;
+  --color-danger: #d70015;
+  --color-hover: rgb(0 0 0 / 5%);
+  --color-selected: color-mix(in srgb, #0071e3 14%, transparent);
+  --color-active: rgb(0 0 0 / 10%);
+  --color-separator: rgb(0 0 0 / 9%);
+  --color-elevated: #ffffff;
+  --color-focus-ring: color-mix(in srgb, #0071e3 55%, transparent);
+  --color-chart-canvas: #ffffff;
+  --color-chart-grid: #e5e5ea;
+  --color-chart-axis: #6e6e73;
+  --color-fill: rgb(120 120 128 / 12%);
+  --color-fill-strong: rgb(120 120 128 / 20%);
+  --mynx-accent-2: #5ac8fa;
+  /* Concentric radii (inner = outer - inset). */
+  --mynx-radius-window: 16px;
+  --mynx-radius-card: 14px;
+  --mynx-radius-btn: 9999px;
+  --mynx-radius-input: 8px;
+  --mynx-radius-control: 8px;
+  --mynx-radius-panel: 14px;
+  --mynx-radius-popover: 14px;
+  --mynx-radius-modal: 20px;
+  --mynx-border-width: 1px;
+  /* Liquid Glass materials: clear (chrome), regular (cards), thick (popovers). */
+  --mynx-glass-clear: rgb(255 255 255 / 50%);
+  --mynx-glass-regular: rgb(255 255 255 / 78%);
+  --mynx-glass-thick: rgb(250 250 252 / 88%);
+  --mynx-glass-blur: blur(24px) saturate(180%);
+  --mynx-glass-blur-strong: blur(40px) saturate(190%);
+  --mynx-glass-edge: rgb(255 255 255 / 70%);
+  --mynx-glass-rim: rgb(0 0 0 / 10%);
+  --mynx-glass-shadow:
+    0 0 0 0.5px var(--mynx-glass-rim), inset 0 0.5px 0 var(--mynx-glass-edge),
+    0 2px 6px rgb(0 0 0 / 5%), 0 10px 28px rgb(0 0 0 / 7%);
+  --mynx-shadow-card: 0 0 0 0.5px rgb(0 0 0 / 7%), 0 1px 2px rgb(0 0 0 / 4%);
+  --mynx-shadow-pop:
+    0 0 0 0.5px rgb(0 0 0 / 12%), inset 0 0.5px 0 rgb(255 255 255 / 70%),
+    0 8px 24px rgb(0 0 0 / 12%), 0 24px 60px rgb(0 0 0 / 14%);
+  --mynx-shadow-control: 0 0 0 0.5px rgb(0 0 0 / 14%), 0 0.5px 1.5px rgb(0 0 0 / 12%);
+  --mynx-window-tint: rgb(242 242 245 / 72%);
+  --mynx-page-bg: #f2f2f4;
+  --mynx-card-backdrop: var(--mynx-glass-blur);
+  --mynx-nav-backdrop: var(--mynx-glass-blur-strong);
+  --mynx-glass-highlight: none;
+  --mynx-title-tracking: -0.01em;
+  --mynx-scrim: rgb(0 0 0 / 22%);
+  --mynx-shadow-drawer: var(--mynx-shadow-pop);
+  --mynx-traffic-inactive: rgb(0 0 0 / 14%);
+  --mynx-motion-quick: 140ms;
+  --mynx-motion-control: 220ms;
+  --mynx-motion-panel: 360ms;
+  /* Spring-like settle (macOS 27 fluid motion). */
+  --mynx-ease-settle: cubic-bezier(0.32, 0.72, 0, 1);
+  --mynx-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* --- macOS 27, dark ------------------------------------------------------- */
+html[data-ui-style="macos"][data-theme="graphite"] {
+  --color-bg: #1e1e20;
+  --color-surface: #2a2a2d;
+  --color-surface-2: #333336;
+  --color-border: rgb(255 255 255 / 13%);
+  --color-text: #f5f5f7;
+  --color-text-secondary: #a1a1a6;
+  --color-text-tertiary: #8d8d93;
+  --color-text-quaternary: rgb(255 255 255 / 25%);
+  --color-accent: #0a84ff;
+  --color-accent-hover: #409cff;
+  --color-on-accent: #ffffff;
+  --color-nav-bg: transparent;
+  --color-nav-border: rgb(255 255 255 / 9%);
+  --color-nav-text: #f5f5f7;
+  --color-nav-active: rgb(255 255 255 / 10%);
+  --color-success: #30d158;
+  --color-warning: #ff9f0a;
+  --color-danger: #ff453a;
+  --color-hover: rgb(255 255 255 / 7%);
+  --color-selected: color-mix(in srgb, #0a84ff 26%, transparent);
+  --color-active: rgb(255 255 255 / 12%);
+  --color-separator: rgb(255 255 255 / 9%);
+  --color-elevated: #2c2c2f;
+  --color-focus-ring: color-mix(in srgb, #0a84ff 60%, transparent);
+  --color-chart-canvas: #2a2a2d;
+  --color-chart-grid: rgb(255 255 255 / 10%);
+  --color-chart-axis: #a1a1a6;
+  --color-fill: rgb(120 120 128 / 24%);
+  --color-fill-strong: rgb(120 120 128 / 36%);
+  --mynx-accent-2: #64d2ff;
+  --mynx-glass-clear: rgb(40 40 44 / 46%);
+  --mynx-glass-regular: rgb(44 44 48 / 74%);
+  --mynx-glass-thick: rgb(38 38 42 / 86%);
+  --mynx-glass-edge: rgb(255 255 255 / 14%);
+  --mynx-glass-rim: rgb(0 0 0 / 50%);
+  --mynx-glass-shadow:
+    0 0 0 0.5px var(--mynx-glass-rim), inset 0 0.5px 0 var(--mynx-glass-edge),
+    0 2px 6px rgb(0 0 0 / 24%), 0 10px 28px rgb(0 0 0 / 30%);
+  --mynx-shadow-card: 0 0 0 0.5px rgb(255 255 255 / 8%), 0 1px 2px rgb(0 0 0 / 30%);
+  --mynx-shadow-pop:
+    0 0 0 0.5px rgb(0 0 0 / 60%), inset 0 0.5px 0 rgb(255 255 255 / 14%),
+    0 8px 24px rgb(0 0 0 / 40%), 0 24px 60px rgb(0 0 0 / 46%);
+  --mynx-shadow-control: 0 0 0 0.5px rgb(255 255 255 / 12%), 0 0.5px 1.5px rgb(0 0 0 / 40%);
+  --mynx-window-tint: rgb(30 30 32 / 70%);
+  --mynx-page-bg: #1e1e20;
+  --mynx-scrim: rgb(0 0 0 / 45%);
+  --mynx-traffic-inactive: rgb(255 255 255 / 16%);
 }
 
 /* --- Swiss editorial, light --------------------------------------------- */
@@ -320,26 +503,11 @@ html[data-ui-style="swiss-editorial"] {
   --color-active: #f0ddd6;
   --color-separator: #eceae2;
   --color-elevated: #ffffff;
-  --color-focus-ring: #c2452d;
   --color-chart-canvas: #ffffff;
   --color-chart-grid: #e4e2da;
   --color-chart-axis: #55534c;
   --mynx-accent-2: #c2452d;
-  --mynx-radius-card: 0px;
-  --mynx-radius-btn: 0px;
-  --mynx-radius-input: 0px;
-  --mynx-radius-control: 0px;
-  --mynx-radius-panel: 0px;
-  --mynx-radius-popover: 0px;
-  --mynx-radius-modal: 0px;
-  --mynx-border-width: 1px;
-  --mynx-shadow-card: none;
-  --mynx-shadow-pop: none;
   --mynx-page-bg: #ffffff;
-  --mynx-card-backdrop: none;
-  --mynx-nav-backdrop: none;
-  --mynx-glass-highlight: none;
-  --mynx-title-tracking: -0.01em;
 }
 
 /* --- Swiss editorial, dark ---------------------------------------------- */
@@ -366,7 +534,6 @@ html[data-ui-style="swiss-editorial"][data-theme="graphite"] {
   --color-active: #473028;
   --color-separator: #2a2923;
   --color-elevated: #202019;
-  --color-focus-ring: #de6b52;
   --color-chart-canvas: #1b1b18;
   --color-chart-grid: #2e2d27;
   --color-chart-axis: #b9b6aa;
@@ -397,26 +564,11 @@ html[data-ui-style="memphis-pop"] {
   --color-active: #ecd9a6;
   --color-separator: #e9dfc8;
   --color-elevated: #ffffff;
-  --color-focus-ring: #8a5a12;
   --color-chart-canvas: #ffffff;
   --color-chart-grid: #e9dfc8;
   --color-chart-axis: #5a4f3f;
   --mynx-accent-2: #e9a13b;
-  --mynx-radius-card: 14px;
-  --mynx-radius-btn: 10px;
-  --mynx-radius-input: 10px;
-  --mynx-radius-control: 10px;
-  --mynx-radius-panel: 12px;
-  --mynx-radius-popover: 12px;
-  --mynx-radius-modal: 14px;
-  --mynx-border-width: 2px;
-  --mynx-shadow-card: none;
-  --mynx-shadow-pop: none;
   --mynx-page-bg: #f4ecdb;
-  --mynx-card-backdrop: none;
-  --mynx-nav-backdrop: none;
-  --mynx-glass-highlight: none;
-  --mynx-title-tracking: -0.02em;
 }
 
 /* --- Memphis pop, dark --------------------------------------------------- */
@@ -443,13 +595,10 @@ html[data-ui-style="memphis-pop"][data-theme="graphite"] {
   --color-active: #574827;
   --color-separator: #4a4132;
   --color-elevated: #3b3427;
-  --color-focus-ring: #f0b95c;
   --color-chart-canvas: #332c22;
   --color-chart-grid: #4a4132;
   --color-chart-axis: #c9bba0;
   --mynx-page-bg: #26211a;
-  --mynx-shadow-card: none;
-  --mynx-shadow-pop: none;
 }
 
 html[data-theme="pearl"] {
@@ -536,7 +685,7 @@ html[data-theme="graphite"] {
   .mynx-app-shell--home::after {
     content: "";
     position: fixed;
-    inset: -10%;
+    inset: -15%;
     z-index: -1;
     pointer-events: none;
   }
@@ -546,23 +695,35 @@ html[data-theme="graphite"] {
       radial-gradient(ellipse 48% 44% at 18% 18%, color-mix(in oklab, var(--color-accent) 14%, transparent), transparent 76%),
       radial-gradient(ellipse 50% 46% at 82% 24%, color-mix(in oklab, var(--mynx-accent-2) 12%, transparent), transparent 78%),
       radial-gradient(ellipse 52% 44% at 68% 84%, color-mix(in oklab, var(--color-accent) 8%, transparent), transparent 80%);
-    animation: mynx-home-gradient-flow 16s ease-in-out infinite alternate;
+    animation: mynx-home-gradient-flow 13s ease-in-out infinite alternate;
   }
 
   .mynx-app-shell--home::after {
     background:
       radial-gradient(ellipse 48% 40% at 54% 10%, color-mix(in oklab, var(--mynx-accent-2) 7%, transparent), transparent 82%);
-    animation: mynx-home-gradient-flow-reverse 22s ease-in-out infinite alternate;
+    animation: mynx-home-gradient-flow-reverse 18s ease-in-out infinite alternate;
   }
 
   @keyframes mynx-home-gradient-flow {
-    from { transform: translate3d(-1.2%, -0.8%, 0) scale(1.04); }
-    to { transform: translate3d(1.2%, 0.9%, 0) scale(1.1); }
+    from {
+      transform: translate3d(-4.5%, -3.2%, 0) scale(1.04) rotate(-1.2deg);
+      filter: hue-rotate(-14deg);
+    }
+    to {
+      transform: translate3d(4.5%, 3.2%, 0) scale(1.18) rotate(2.2deg);
+      filter: hue-rotate(16deg);
+    }
   }
 
   @keyframes mynx-home-gradient-flow-reverse {
-    from { transform: translate3d(1%, 0.8%, 0) scale(1.08); }
-    to { transform: translate3d(-1%, -1%, 0) scale(1.03); }
+    from {
+      transform: translate3d(4%, 3%, 0) scale(1.14) rotate(1.2deg);
+      filter: hue-rotate(14deg);
+    }
+    to {
+      transform: translate3d(-4%, -3%, 0) scale(1.02) rotate(-2.2deg);
+      filter: hue-rotate(-16deg);
+    }
   }
 
   .mynx-app-shell--home .mynx-titlebar,
@@ -611,6 +772,71 @@ html[data-theme="graphite"] {
     border-radius: 6px;
     outline-offset: -2px;
   }
+
+  /* macOS traffic lights (TitleBar, macos style only): close / minimize /
+     zoom dots with hover glyphs, dimmed while the window is unfocused. */
+  .mynx-traffic {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-inline: 13px 10px;
+  }
+
+  .mynx-traffic-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    border: none;
+    border-radius: 9999px;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 14%);
+    transition:
+      background-color var(--mynx-motion-quick) ease,
+      filter var(--mynx-motion-quick) ease;
+  }
+
+  .mynx-traffic-btn:active:not(:disabled) {
+    filter: brightness(0.88);
+  }
+
+  .mynx-traffic-btn:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .mynx-traffic-close {
+    background: #ff5f57;
+  }
+
+  .mynx-traffic-min {
+    background: #febc2e;
+  }
+
+  .mynx-traffic-max {
+    background: #28c840;
+  }
+
+  .mynx-traffic-glyph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgb(0 0 0 / 52%);
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+
+  .mynx-traffic:hover .mynx-traffic-glyph {
+    opacity: 1;
+  }
+
+  .mynx-traffic-inactive .mynx-traffic-btn {
+    background: var(--mynx-traffic-inactive);
+    box-shadow: none;
+  }
+
 
   /* Page hierarchy -------------------------------------------------------- */
 
@@ -792,6 +1018,66 @@ html[data-theme="graphite"] {
     border-color: transparent;
   }
 
+  /* Switch (components/Switch.svelte, SwitchTrack.svelte). */
+  .mynx-switch {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    width: 36px;
+    height: 20px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 9999px;
+    background: var(--color-surface-2);
+    cursor: pointer;
+    transition:
+      background-color var(--mynx-motion-control) ease,
+      border-color var(--mynx-motion-control) ease;
+  }
+
+  .mynx-switch:is([aria-checked="true"], [data-checked="true"]) {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+  }
+
+  .mynx-switch:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .mynx-switch-thumb {
+    position: absolute;
+    top: 50%;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    background: #ffffff;
+    translate: 0 -50%;
+    transition: translate var(--mynx-motion-control) var(--mynx-ease-settle);
+  }
+
+  .mynx-switch:is([aria-checked="true"], [data-checked="true"]) > .mynx-switch-thumb {
+    translate: 16px -50%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mynx-switch,
+    .mynx-switch-thumb {
+      transition: none;
+    }
+  }
+
+  /* Literal colour previews (watermark colour choices): they show the
+     output colour itself, so they are intentionally not themed. */
+  .mynx-swatch-white {
+    background-color: #ffffff;
+  }
+
+  .mynx-swatch-black {
+    background-color: #000000;
+  }
+
   /* Text sitting on an accent background (badge counts, icon tiles). */
   .mynx-on-accent {
     color: var(--color-on-accent);
@@ -951,6 +1237,10 @@ html[data-theme="graphite"] {
       transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
+  .mynx-tool-tile--chat {
+    --tool-color: #0891b2;
+  }
+
   .mynx-tool-tile--charts {
     --tool-color: #843bbe;
   }
@@ -985,6 +1275,10 @@ html[data-theme="graphite"] {
 
   .mynx-home-search {
     box-shadow: none;
+  }
+
+  .mynx-home-search input:placeholder-shown {
+    text-align: center;
   }
 
   .mynx-home-engine-select:focus-within {
@@ -1364,6 +1658,16 @@ html[data-theme="graphite"] {
     transition: background-color 120ms ease;
   }
 
+  /* Rail handle: the hairline hugs the sidebar edge (start of the track) so
+     the separator lines up with the nav boundary instead of floating in the
+     middle of the gutter; it follows the edge while dragging. Placed after
+     the base rule so the start alignment wins the source order. */
+  .mynx-column-resizer--edge-start::before {
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+    transform: none;
+  }
+
   .mynx-column-resizer:hover::before,
   .mynx-column-resizer:focus-visible::before {
     background: var(--color-accent);
@@ -1539,26 +1843,242 @@ html[data-theme="graphite"] {
       color var(--mynx-motion-control) ease;
   }
 
-  html[data-ui-style="minimal-linear"] :is(.mynx-input, .mynx-home-search) {
-    background-color: var(--color-surface);
-    caret-color: var(--color-accent);
+  /* --- Chat page --------------------------------------------------------- */
+
+  /* Message stream: smooth follow for discrete events, contained overscroll,
+     and a stable gutter so bubbles never shift horizontally. Smooth scrolling
+     is opt-out under prefers-reduced-motion. */
+  .mynx-chat-scroll {
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    position: relative;
   }
 
-  html[data-ui-style="minimal-linear"] .mynx-btn-primary:active:not(:disabled) {
-    background-color: var(--color-accent-hover);
+  @media (prefers-reduced-motion: no-preference) {
+    .mynx-chat-scroll {
+      scroll-behavior: smooth;
+    }
   }
 
-  html[data-ui-style="minimal-linear"] .mynx-nav-button[aria-current="page"] > span[aria-hidden] > svg {
+  .mynx-chat-text .mynx-chat-heading {
+    margin: 0.35em 0 0.15em;
+    font-size: 13.5px;
+    font-weight: 650;
+  }
+
+  .mynx-chat-text .mynx-chat-list {
+    margin: 0.25em 0;
+    padding-inline-start: 1.2em;
+    list-style: disc;
+  }
+
+  .mynx-chat-text .mynx-chat-olist {
+    margin: 0.25em 0;
+    padding-inline-start: 1.4em;
+    list-style: decimal;
+  }
+
+  .mynx-chat-text .mynx-chat-quote {
+    margin: 0.4em 0;
+    border-inline-start: 3px solid var(--color-border);
+    padding: 0.15em 0.8em;
+    color: var(--color-text-secondary);
+  }
+
+  .mynx-chat-text .mynx-chat-hr {
+    border: none;
+    border-top: 1px solid var(--color-separator);
+    margin: 0.8em 0;
+  }
+
+  .mynx-chat-tablewrap {
+    margin: 0.5em 0;
+    overflow-x: auto;
+    border: var(--mynx-border-width) solid var(--color-border);
+    border-radius: var(--mynx-radius-control);
+  }
+
+  .mynx-chat-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .mynx-chat-table th {
+    background: var(--color-surface-2);
+    text-align: left;
+    font-weight: 600;
+  }
+
+  .mynx-chat-table th,
+  .mynx-chat-table td {
+    padding: 0.4em 0.65em;
+    border-bottom: 1px solid var(--color-separator);
+  }
+
+  .mynx-chat-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .mynx-chat-text .mynx-chat-p {
+    margin: 0.15em 0;
+  }
+
+  .mynx-chat-text code {
+    border-radius: 4px;
+    background: var(--color-surface-2);
+    padding: 0.08em 0.35em;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .mynx-chat-codebox {
+    width: 100%;
+    border: var(--mynx-border-width) solid var(--color-border);
+    border-radius: var(--mynx-radius-control);
+    background: var(--color-surface-2);
+  }
+
+  .mynx-chat-codebox pre {
+    margin: 0;
+    color: var(--color-text);
+    white-space: pre;
+  }
+
+  /* highlight.js token palette mapped to theme tokens (no static themes). */
+  .mynx-chat-codebox .hljs-keyword,
+  .mynx-chat-codebox .hljs-selector-tag,
+  .mynx-chat-codebox .hljs-built_in,
+  .mynx-chat-codebox .hljs-type {
     color: var(--color-accent);
   }
 
-  html[data-ui-style="minimal-linear"] .mynx-workspace :is(thead th, summary:hover) {
-    background-color: var(--color-surface-2);
+  .mynx-chat-codebox .hljs-string,
+  .mynx-chat-codebox .hljs-attr,
+  .mynx-chat-codebox .hljs-template-string {
+    color: var(--color-success);
   }
 
-  html[data-ui-style="minimal-linear"] .mynx-workspace :is(input[type="checkbox"], input[type="radio"], input[type="range"]) {
-    accent-color: var(--color-accent);
+  .mynx-chat-codebox .hljs-comment,
+  .mynx-chat-codebox .hljs-quote {
+    color: var(--color-text-tertiary);
+    font-style: italic;
   }
+
+  .mynx-chat-codebox .hljs-number,
+  .mynx-chat-codebox .hljs-literal {
+    color: var(--color-warning);
+  }
+
+  .mynx-chat-codebox .hljs-title,
+  .mynx-chat-codebox .hljs-name,
+  .mynx-chat-codebox .hljs-function {
+    color: var(--mynx-accent-2);
+  }
+
+  .mynx-chat-codebox .hljs-meta,
+  .mynx-chat-codebox .hljs-symbol {
+    color: var(--color-text-secondary);
+  }
+
+  /* DeepSeek-reasoner chain-of-thought (collapsible, muted). */
+  .mynx-chat-reasoning {
+    border-inline-start: 2px solid var(--color-border);
+    border-radius: var(--mynx-radius-control);
+    background: var(--color-surface-2);
+    padding: 0.35rem 0.6rem;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+
+  .mynx-chat-reasoning summary {
+    cursor: pointer;
+    font-weight: 550;
+    user-select: none;
+  }
+
+  .mynx-chat-reasoning-body {
+    margin-block-start: 0.4rem;
+    white-space: pre-wrap;
+    line-height: 1.55;
+  }
+
+  .mynx-chat-text .katex-display {
+    margin: 0.5em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  /* "Thinking" dots (assistant placeholder before the first delta). */
+  .mynx-chat-thinking {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .mynx-chat-thinking i {
+    inline-size: 5px;
+    block-size: 5px;
+    border-radius: 9999px;
+    background: var(--color-text-tertiary);
+    animation: mynx-chat-dot 1.2s ease-in-out infinite;
+  }
+
+  .mynx-chat-thinking i:nth-child(2) {
+    animation-delay: 150ms;
+  }
+
+  .mynx-chat-thinking i:nth-child(3) {
+    animation-delay: 300ms;
+  }
+
+  @keyframes mynx-chat-dot {
+    0%,
+    60%,
+    100% {
+      opacity: 0.35;
+      translate: 0 0;
+    }
+    30% {
+      opacity: 1;
+      translate: 0 -3px;
+    }
+  }
+
+  /* Blinking caret at the streaming edge. */
+  .mynx-chat-caret {
+    display: inline-block;
+    inline-size: 2px;
+    block-size: 1em;
+    margin-inline-start: 2px;
+    vertical-align: text-bottom;
+    background: var(--color-accent);
+    animation: mynx-chat-caret 1s steps(2, start) infinite;
+  }
+
+  @keyframes mynx-chat-caret {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  /* FLIP ghost frame used by the home → chat handoff (plan A). */
+  .mynx-chat-ghost,
+  #mynx-chat-ghost {
+    pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mynx-chat-thinking i,
+    .mynx-chat-caret {
+      animation: none;
+    }
+  }
+
+  /* macOS 27 component voices live in the "macOS 27 layer" at the end. */
 
   /* Floating layers: elevated surface, modal radius, soft popover shadow. */
   .mynx-modal-panel {
@@ -1590,6 +2110,12 @@ html[data-theme="graphite"] {
 
   @keyframes mynx-toast-in {
     from { opacity: 0; translate: 0 6px; }
+  }
+
+  /* Home tool cards stagger in on mount / filter change (frontend-aesthetics
+     motion pattern: purposeful, transform-only, capped total delay). */
+  @keyframes mynx-tool-in {
+    from { opacity: 0; translate: 0 10px; }
   }
 
   @keyframes mynx-selection-in {
@@ -1630,6 +2156,10 @@ html[data-theme="graphite"] {
       animation: mynx-toast-in var(--mynx-motion-panel) var(--mynx-ease-settle);
     }
 
+    .mynx-home-tool-enter {
+      animation: mynx-tool-in 360ms var(--mynx-ease-settle) backwards;
+    }
+
     .mynx-nav-active-mark {
       animation: mynx-selection-in var(--mynx-motion-control) var(--mynx-ease-settle);
     }
@@ -1661,5 +2191,1712 @@ html[data-theme="graphite"] {
     [role="switch"] .transition-transform.transition-transform {
       transition: none;
     }
+  }
+
+  /* ======================================================================
+   * macOS 27 layer (default style). Liquid Glass chrome, concentric radii,
+   * HIG controls. Everything is scoped to [data-ui-style="macos"] so the
+   * other four styles keep their own voice. Presentation only.
+   * ==================================================================== */
+
+  /* Window material: with a native glass window (macOS NSVisualEffect /
+     Windows 11 Mica, see window-material.ts) the page paints a translucent
+     tint over it; otherwise (Windows 10, browser preview) it stays opaque. */
+  html[data-ui-style][data-window-material="glass"],
+  html[data-ui-style][data-window-material="glass"] body {
+    background: transparent;
+  }
+
+  html[data-ui-style][data-window-material="glass"] .mynx-app-shell {
+    background: var(--mynx-window-tint);
+  }
+
+  html[data-ui-style] body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern";
+  }
+
+  /* Text selection keeps its ink (macOS highlight, not inverted). */
+  html[data-ui-style] ::selection {
+    background: color-mix(in srgb, var(--color-accent) 28%, transparent);
+    color: inherit;
+  }
+
+  /* One focus ring only: a soft accent halo hugging the control. */
+  html[data-ui-style] :focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 1px;
+  }
+
+  /* Overlay-style scrollbars: hidden until the region is hovered. */
+  html[data-ui-style] * {
+    scrollbar-color: transparent transparent;
+  }
+
+  html[data-ui-style] *:hover {
+    scrollbar-color: color-mix(in srgb, var(--color-text) 28%, transparent) transparent;
+  }
+
+  /* Home backdrop: still, soft, low-saturation (no hue cycling). */
+  html[data-ui-style] .mynx-app-shell--home::before {
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 0%, color-mix(in oklab, var(--color-accent) 10%, transparent), transparent 70%),
+      radial-gradient(ellipse 55% 45% at 85% 10%, color-mix(in oklab, var(--mynx-accent-2) 9%, transparent), transparent 72%);
+    animation: none;
+  }
+
+  html[data-ui-style] .mynx-app-shell--home::after {
+    background: none;
+    animation: none;
+  }
+
+  /* --- Shell: content scrolls under a glass toolbar ------------------- */
+  html[data-ui-style] .mynx-app-shell > .mynx-titlebar {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 20;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition:
+      background-color var(--mynx-motion-control) ease,
+      box-shadow var(--mynx-motion-control) ease;
+  }
+
+  /* Scroll-edge effect: only while the workspace has content under the bar
+     (App.svelte sets data-scrolled). No gradient/mask, so no seam. */
+  html[data-ui-style] .mynx-app-shell[data-scrolled="true"] > .mynx-titlebar {
+    background: var(--mynx-glass-thick);
+    box-shadow: 0 0.5px 0 var(--color-separator);
+    backdrop-filter: var(--mynx-glass-blur);
+    -webkit-backdrop-filter: var(--mynx-glass-blur);
+  }
+
+  html[data-ui-style] .mynx-shell-body {
+    padding-block-start: 0;
+  }
+
+  html[data-ui-style] .mynx-shell-body > .mynx-workspace {
+    padding-block-start: 48px;
+    scroll-padding-block-start: 56px;
+  }
+
+  html[data-ui-style] .mynx-column-resizer--edge-start::before {
+    background: transparent;
+  }
+
+  html[data-ui-style] .mynx-column-resizer--edge-start {
+    flex-basis: 12px;
+    min-inline-size: 12px;
+  }
+
+  html[data-ui-style] .mynx-column-resizer::before {
+    inset-block: 1rem;
+    background: var(--color-separator);
+  }
+
+  html[data-ui-style] .mynx-column-resizer:hover::before,
+  html[data-ui-style] .mynx-column-resizer:focus-visible::before {
+    background: color-mix(in srgb, var(--color-accent) 60%, var(--color-separator));
+  }
+
+  html[data-ui-style] .mynx-task-drawer {
+    inset-inline-start: calc(var(--mynx-nav-rail-width, 208px) + 20px + 1rem);
+  }
+
+  /* --- Title bar: traffic lights, title, glass tool capsule ----------- */
+  html[data-ui-style] .mynx-traffic {
+    gap: 9px;
+    padding-inline: 20px 12px;
+  }
+
+  html[data-ui-style] .mynx-traffic-btn {
+    width: 14px;
+    height: 14px;
+    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 18%);
+  }
+
+  .mynx-titlebar-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  html[data-ui-style] .mynx-titlebar-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .mynx-toolbar-group {
+    display: flex;
+    align-items: center;
+  }
+
+  html[data-ui-style] .mynx-toolbar-group {
+    align-self: center;
+    height: 34px;
+    padding-inline: 3px;
+    margin-inline-end: 8px;
+    gap: 0;
+    border-radius: 9999px;
+    background: var(--mynx-glass-regular);
+    box-shadow: var(--mynx-glass-shadow);
+    backdrop-filter: var(--mynx-glass-blur);
+    -webkit-backdrop-filter: var(--mynx-glass-blur);
+  }
+
+  html[data-ui-style] .mynx-titlebar-tool,
+  .mynx-titlebar--mac .mynx-titlebar-tool {
+    align-self: center;
+    height: 28px;
+    width: 32px;
+    margin-inline: 0;
+    border-radius: 9999px;
+  }
+
+  html[data-ui-style] .mynx-titlebar-tool:hover:not(:disabled) {
+    background: var(--color-hover);
+  }
+
+  /* --- Typography ------------------------------------------------------ */
+  html[data-ui-style] .mynx-page-title {
+    font-size: 26px;
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  html[data-ui-style] .mynx-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+
+  html[data-ui-style] .mynx-note {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+
+  /* --- Surfaces -------------------------------------------------------- */
+  html[data-ui-style] .mynx-card {
+    background: var(--mynx-glass-regular);
+    border-color: transparent;
+    box-shadow: var(--mynx-glass-shadow);
+    backdrop-filter: var(--mynx-card-backdrop);
+    -webkit-backdrop-filter: var(--mynx-card-backdrop);
+  }
+
+  /* Nested cards / panels inside cards stay calm: no stacked shadows. */
+  html[data-ui-style] .mynx-card .mynx-card {
+    background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+    box-shadow: 0 0 0 0.5px var(--color-separator);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  html[data-ui-style] button.mynx-card:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+    border-color: transparent;
+  }
+
+  html[data-ui-style] button.mynx-card:active:not(:disabled) {
+    background: color-mix(in srgb, var(--color-text) 6%, var(--color-surface));
+  }
+
+  html[data-ui-style] button.mynx-home-tool:hover:not(:disabled),
+  html[data-ui-style] button.mynx-home-tool:active:not(:disabled),
+  html[data-ui-style] button.mynx-home-tool:hover:not(:disabled) .mynx-tool-tile {
+    transform: none;
+  }
+
+  html[data-ui-style] .mynx-divider {
+    background: var(--color-separator);
+  }
+
+  /* App-icon tiles: solid system hue, subtle top light, white glyph. */
+  html[data-ui-style] .mynx-tool-tile {
+    background:
+      linear-gradient(to bottom, rgb(255 255 255 / 22%), rgb(255 255 255 / 0%) 60%),
+      var(--tool-color);
+    border-color: transparent;
+    border-radius: 10px;
+    color: #ffffff;
+    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 10%), 0 1px 2px rgb(0 0 0 / 12%);
+  }
+
+  html[data-ui-style] .mynx-tool-tile--chat { --tool-color: #00c3d0; }
+  html[data-ui-style] .mynx-tool-tile--charts { --tool-color: #af52de; }
+  html[data-ui-style] .mynx-tool-tile--qpcr { --tool-color: #0088ff; }
+  html[data-ui-style] .mynx-tool-tile--image { --tool-color: #34c759; }
+  html[data-ui-style] .mynx-tool-tile--rnaseq { --tool-color: #ff8d28; }
+  html[data-ui-style][data-theme="graphite"] .mynx-tool-tile--chat { --tool-color: #00d2e0; }
+  html[data-ui-style][data-theme="graphite"] .mynx-tool-tile--charts { --tool-color: #bf5af2; }
+  html[data-ui-style][data-theme="graphite"] .mynx-tool-tile--qpcr { --tool-color: #0a84ff; }
+  html[data-ui-style][data-theme="graphite"] .mynx-tool-tile--image { --tool-color: #30d158; }
+  html[data-ui-style][data-theme="graphite"] .mynx-tool-tile--rnaseq { --tool-color: #ff9f0a; }
+
+  /* --- Buttons --------------------------------------------------------- */
+  html[data-ui-style] .mynx-btn {
+    min-height: 28px;
+    padding-inline: 14px;
+    gap: 5px;
+    border: 0;
+    border-radius: 9999px;
+    background: var(--color-surface);
+    box-shadow: var(--mynx-shadow-control);
+    color: var(--color-text);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  html[data-ui-style][data-theme="graphite"] .mynx-btn {
+    background: color-mix(in srgb, #ffffff 14%, var(--color-surface));
+  }
+
+  /* HIG: push buttons do not tint on hover; they respond on press. */
+  html[data-ui-style] .mynx-btn:hover:not(:disabled) {
+    background: var(--color-surface);
+    border-color: transparent;
+  }
+
+  html[data-ui-style][data-theme="graphite"] .mynx-btn:hover:not(:disabled) {
+    background: color-mix(in srgb, #ffffff 18%, var(--color-surface));
+  }
+
+  html[data-ui-style] .mynx-btn:active:not(:disabled) {
+    background: color-mix(in srgb, var(--color-text) 9%, var(--color-surface));
+  }
+
+  html[data-ui-style] .mynx-btn:disabled {
+    opacity: 0.45;
+  }
+
+  html[data-ui-style] .mynx-btn-primary,
+  html[data-ui-style] .mynx-btn-primary:hover:not(:disabled),
+  html[data-ui-style][data-theme="graphite"] .mynx-btn-primary,
+  html[data-ui-style][data-theme="graphite"] .mynx-btn-primary:hover:not(:disabled) {
+    background:
+      linear-gradient(to bottom, rgb(255 255 255 / 14%), rgb(255 255 255 / 0%)),
+      var(--color-accent);
+    color: var(--color-on-accent);
+    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 12%), 0 1px 2px color-mix(in srgb, var(--color-accent) 35%, transparent);
+  }
+
+  html[data-ui-style] .mynx-btn-primary:active:not(:disabled) {
+    background: var(--color-accent-hover);
+  }
+
+  /* Destructive: red label on a normal bezel; the action keeps its confirm. */
+  html[data-ui-style] .mynx-btn-danger,
+  html[data-ui-style] .mynx-btn-danger:hover:not(:disabled) {
+    color: var(--color-danger);
+  }
+
+  html[data-ui-style] .mynx-btn-danger:active:not(:disabled) {
+    background: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface));
+    color: var(--color-danger);
+  }
+
+  html[data-ui-style] .mynx-btn-ghost,
+  html[data-ui-style][data-theme="graphite"] .mynx-btn-ghost {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  html[data-ui-style] .mynx-btn-ghost:hover:not(:disabled),
+  html[data-ui-style][data-theme="graphite"] .mynx-btn-ghost:hover:not(:disabled) {
+    background: var(--color-hover);
+  }
+
+  html[data-ui-style] .mynx-btn-compact {
+    padding: 0;
+  }
+
+  /* --- Text fields ----------------------------------------------------- */
+  html[data-ui-style] .mynx-input {
+    min-height: 28px;
+    padding-inline: 9px;
+    border: 0;
+    border-radius: var(--mynx-radius-input);
+    background: var(--color-surface);
+    box-shadow:
+      inset 0 0 0 0.5px rgb(0 0 0 / 16%),
+      inset 0 1px 1.5px rgb(0 0 0 / 5%);
+    caret-color: var(--color-accent);
+    transition: box-shadow var(--mynx-motion-quick) ease;
+  }
+
+  html[data-ui-style][data-theme="graphite"] .mynx-input {
+    background: rgb(255 255 255 / 6%);
+    box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 16%);
+  }
+
+  html[data-ui-style] .mynx-input::placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  html[data-ui-style] .mynx-input:hover:not(:disabled) {
+    border-color: transparent;
+  }
+
+  html[data-ui-style] .mynx-input:focus,
+  html[data-ui-style] .mynx-input:focus-visible {
+    outline: none;
+    box-shadow:
+      inset 0 0 0 0.5px var(--color-accent),
+      0 0 0 3.5px var(--color-focus-ring);
+  }
+
+  html[data-ui-style] textarea.mynx-input {
+    padding-block: 6px;
+    line-height: 1.45;
+  }
+
+  /* Pop-up buttons: native select restyled with the up/down chevron. */
+  html[data-ui-style] select.mynx-input {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-inline-end: 28px;
+    border-radius: 8px;
+    background-color: var(--color-surface);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4.5' fill='%230071e3'/%3E%3Cpath d='M5.2 6.6 8 3.9l2.8 2.7M5.2 9.4 8 12.1l2.8-2.7' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 5px center;
+    background-size: 16px 16px;
+    box-shadow: var(--mynx-shadow-control);
+    cursor: default;
+  }
+
+  html[data-ui-style][data-theme="graphite"] select.mynx-input {
+    background-color: color-mix(in srgb, #ffffff 14%, var(--color-surface));
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4.5' fill='%230a84ff'/%3E%3Cpath d='M5.2 6.6 8 3.9l2.8 2.7M5.2 9.4 8 12.1l2.8-2.7' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+
+  html[data-ui-style] select.mynx-input:focus-visible {
+    box-shadow: var(--mynx-shadow-control), 0 0 0 3.5px var(--color-focus-ring);
+  }
+
+  /* --- Checkbox / radio / slider --------------------------------------- */
+  html[data-ui-style] input[type="checkbox"],
+  html[data-ui-style] input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    border-radius: 4px;
+    background: var(--color-surface);
+    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 28%), 0 0.5px 1px rgb(0 0 0 / 10%);
+    display: inline-grid;
+    place-content: center;
+    cursor: default;
+    transition: background-color var(--mynx-motion-quick) ease;
+  }
+
+  html[data-ui-style][data-theme="graphite"] input:is([type="checkbox"], [type="radio"]) {
+    background: rgb(255 255 255 / 10%);
+    box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 24%);
+  }
+
+  html[data-ui-style] input[type="radio"] {
+    border-radius: 9999px;
+  }
+
+  html[data-ui-style] input:is([type="checkbox"], [type="radio"]):checked {
+    background: var(--color-accent);
+    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 14%);
+  }
+
+  html[data-ui-style] input[type="checkbox"]:checked::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    background: #ffffff;
+    clip-path: polygon(14% 52%, 0 66%, 38% 100%, 100% 22%, 86% 8%, 38% 72%);
+  }
+
+  html[data-ui-style] input[type="radio"]:checked::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: #ffffff;
+  }
+
+  html[data-ui-style] input:is([type="checkbox"], [type="radio"]):disabled {
+    opacity: 0.45;
+  }
+
+  html[data-ui-style] input[type="range"] {
+    appearance: none;
+    -webkit-appearance: none;
+    height: 20px;
+    background: transparent;
+  }
+
+  html[data-ui-style] input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--color-fill-strong);
+  }
+
+  html[data-ui-style] input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    margin-top: -8px;
+    border-radius: 9999px;
+    background: #ffffff;
+    box-shadow: 0 0 0 0.5px rgb(0 0 0 / 14%), 0 1px 3px rgb(0 0 0 / 22%);
+  }
+
+  html[data-ui-style] input[type="range"]::-moz-range-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--color-fill-strong);
+  }
+
+  html[data-ui-style] input[type="range"]::-moz-range-progress {
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--color-accent);
+  }
+
+  html[data-ui-style] input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border: 0;
+    border-radius: 9999px;
+    background: #ffffff;
+    box-shadow: 0 0 0 0.5px rgb(0 0 0 / 14%), 0 1px 3px rgb(0 0 0 / 22%);
+  }
+
+  html[data-ui-style] input[type="color"] {
+    border-radius: 6px;
+  }
+
+  /* --- Disclosure (inspector sections, logs) --------------------------- */
+  html[data-ui-style] details > summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+  }
+
+  html[data-ui-style] details > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  html[data-ui-style] details > summary::before {
+    content: "";
+    flex: 0 0 auto;
+    width: 6px;
+    height: 6px;
+    margin-inline: 2px 2px;
+    border-right: 1.6px solid var(--color-text-secondary);
+    border-bottom: 1.6px solid var(--color-text-secondary);
+    rotate: -45deg;
+    transition: rotate var(--mynx-motion-control) var(--mynx-ease-settle);
+  }
+
+  html[data-ui-style] details[open] > summary::before {
+    rotate: 45deg;
+  }
+
+  /* --- Progress / badges / chips --------------------------------------- */
+  html[data-ui-style] .mynx-progress {
+    height: 4px;
+    background: var(--color-fill);
+  }
+
+  html[data-ui-style] .mynx-badge,
+  html[data-ui-style] .mynx-chip {
+    border-color: transparent;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  html[data-ui-style] .mynx-chip {
+    background: var(--color-fill);
+    color: var(--color-text);
+  }
+
+  html[data-ui-style] .mynx-badge-queued,
+  html[data-ui-style] .mynx-badge-cancelled {
+    background: var(--color-fill);
+  }
+
+  html[data-ui-style] .mynx-badge-running {
+    background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  }
+
+  html[data-ui-style] .mynx-badge-success {
+    background: color-mix(in srgb, var(--color-success) 15%, transparent);
+  }
+
+  html[data-ui-style] .mynx-badge-error {
+    background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  }
+
+  /* --- Step lists (qPCR / RNA-seq / image) ----------------------------- */
+  html[data-ui-style] .mynx-step-button {
+    border-color: transparent;
+    border-radius: 8px;
+  }
+
+  /* --- Floating layers ------------------------------------------------- */
+  html[data-ui-style] .mynx-modal-panel {
+    border: 0;
+    border-radius: var(--mynx-radius-modal);
+    background: var(--mynx-glass-thick);
+    box-shadow: var(--mynx-shadow-pop);
+    backdrop-filter: var(--mynx-glass-blur-strong);
+    -webkit-backdrop-filter: var(--mynx-glass-blur-strong);
+  }
+
+  html[data-ui-style] .mynx-modal-close {
+    width: 28px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+    background: var(--color-fill);
+    box-shadow: none;
+    color: var(--color-text-secondary);
+  }
+
+  html[data-ui-style] .mynx-modal-close:hover:not(:disabled) {
+    background: var(--color-fill-strong);
+    color: var(--color-text);
+  }
+
+  html[data-ui-style] .mynx-popover {
+    border: 0;
+    border-radius: var(--mynx-radius-popover);
+    background: var(--mynx-glass-thick);
+    box-shadow: var(--mynx-shadow-pop);
+    backdrop-filter: var(--mynx-glass-blur-strong);
+    -webkit-backdrop-filter: var(--mynx-glass-blur-strong);
+  }
+
+  /* Empty states: larger glyph, headline + secondary line. */
+  html[data-ui-style] .mynx-empty svg {
+    width: 36px;
+    height: 36px;
+    color: var(--color-text-tertiary);
+  }
+
+  html[data-ui-style] .mynx-empty > p:first-of-type {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  html[data-ui-style] .mynx-empty > p + p {
+    font-size: 13px;
+  }
+
+  /* Chat code tokens: comments stay readable. */
+  html[data-ui-style] .mynx-chat-codebox :is(.hljs-comment, .hljs-quote) {
+    color: var(--color-text-secondary);
+  }
+
+  html[data-ui-style] .mynx-chat-codebox,
+  html[data-ui-style] .mynx-chat-tablewrap {
+    border-color: var(--color-separator);
+    border-radius: 10px;
+  }
+
+  /* Unified Tabler stroke weight (SF Symbols-like regular weight). */
+  html[data-ui-style] svg.tabler-icon {
+    stroke-width: 1.75;
+  }
+
+  html[data-ui-style] .mynx-traffic-glyph svg.tabler-icon {
+    stroke-width: 2.6;
+  }
+
+  /* --- Motion: spring settle, reduced-motion respected ----------------- */
+  @media (prefers-reduced-motion: no-preference) {
+    html[data-ui-style] .mynx-home-tool-enter {
+      animation-duration: 260ms;
+    }
+  }
+}
+
+
+/* ==========================================================================
+ * macOS 27 utility remaps (unlayered so they win over Tailwind utilities).
+ * They only re-voice repeated page patterns under the default style; markup,
+ * state and behavior are untouched.
+ * ======================================================================== */
+
+/* Typography: HIG scale (Body 13 / Callout 12 / Subheadline 11).
+   Field labels become regular-weight Body; 10px micro text rises to 11. */
+html[data-ui-style] .text-callout.font-medium {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+html[data-ui-style] {
+  --text-caption2: 11px;
+}
+
+html[data-ui-style] .uppercase {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+html[data-ui-style] .tracking-wide {
+  letter-spacing: 0;
+}
+
+/* Interaction surfaces: one hover, one selection language. */
+@media (hover: hover) {
+  html[data-ui-style] .hover\:bg-surface-2:hover {
+    background-color: var(--color-hover);
+  }
+}
+
+html[data-ui-style] .border-accent.bg-accent\/10 {
+  border-color: transparent;
+  background-color: var(--color-selected);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+
+html[data-ui-style] .mynx-chip.border-accent.bg-accent\/10 {
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: none;
+}
+
+html[data-ui-style] .mynx-step-button.border-accent.bg-accent\/10 {
+  background-color: var(--color-nav-active);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+/* Generic radii: page-level rounded-md / rounded follow the concentric set. */
+html[data-ui-style] .rounded-md {
+  border-radius: 8px;
+}
+
+html[data-ui-style] .rounded {
+  border-radius: 6px;
+}
+
+
+/* Shell and floating-layer glass (must beat their own bg/padding utilities). */
+html[data-ui-style] .mynx-update-banner {
+  position: absolute;
+  inset-block-start: 52px;
+  inset-inline: 50% auto;
+  translate: -50% 0;
+  z-index: 25;
+  width: min(640px, calc(100% - 32px));
+  border: 0;
+  border-radius: 9999px;
+  background: var(--mynx-glass-thick);
+  box-shadow: var(--mynx-glass-shadow);
+  backdrop-filter: var(--mynx-glass-blur);
+  -webkit-backdrop-filter: var(--mynx-glass-blur);
+}
+
+html[data-ui-style] .mynx-update-banner.mynx-update-progress {
+  border-radius: var(--mynx-radius-popover);
+}
+
+/* Floating glass sidebar, inset from the window edges. */
+html[data-ui-style] .mynx-navrail {
+  margin-block: 52px 8px;
+  margin-inline-start: 8px;
+  padding: 6px;
+  gap: 2px;
+  border-radius: var(--mynx-radius-panel);
+  background: var(--mynx-glass-clear);
+  box-shadow: var(--mynx-glass-shadow);
+  backdrop-filter: var(--mynx-nav-backdrop);
+  -webkit-backdrop-filter: var(--mynx-nav-backdrop);
+  color: var(--color-text);
+}
+
+html[data-ui-style] .mynx-navrail .mynx-nav-button {
+  height: 30px;
+  border-radius: 8px;
+  font-weight: 400;
+  color: var(--color-text);
+}
+
+html[data-ui-style] .mynx-navrail .mynx-nav-button:not(.mynx-nav-button-expanded) {
+  width: 36px;
+  height: 36px;
+}
+
+html[data-ui-style] .mynx-navrail .mynx-nav-button svg {
+  color: var(--color-accent);
+}
+
+html[data-ui-style] .mynx-navrail .mynx-nav-button:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+/* Neutral selection pill, accent glyph (macOS 26+/27 sidebar). */
+html[data-ui-style] .mynx-navrail .mynx-nav-button-active,
+html[data-ui-style] .mynx-navrail .mynx-nav-button-active:hover {
+  background: var(--color-nav-active);
+  color: var(--color-text);
+}
+
+html[data-ui-style] .mynx-navrail .mynx-nav-button-active .mynx-nav-label {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+html[data-ui-style] .mynx-nav-utilities {
+  border-top-color: var(--color-separator);
+  padding-top: 6px;
+  margin-top: 4px;
+}
+
+html[data-ui-style] .mynx-palette-trigger {
+  height: 28px;
+  min-height: 28px;
+  padding-inline: 10px;
+  border-radius: 9999px;
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  color: var(--color-text-secondary);
+}
+
+html[data-ui-style] .mynx-palette-trigger kbd {
+  border: 0;
+  background: var(--color-fill);
+  border-radius: 5px;
+  padding-inline: 5px;
+  font-family: var(--font-sans);
+  color: var(--color-text-secondary);
+}
+
+/* Home search: Spotlight-like glass capsule. */
+html[data-ui-style] .mynx-home-search {
+  border-color: transparent;
+  border-radius: 9999px;
+  background: var(--mynx-glass-regular);
+  box-shadow: var(--mynx-glass-shadow);
+  backdrop-filter: var(--mynx-glass-blur);
+  -webkit-backdrop-filter: var(--mynx-glass-blur);
+  transition: box-shadow var(--mynx-motion-control) var(--mynx-ease-settle);
+}
+
+html[data-ui-style] .mynx-home-search:focus-within {
+  box-shadow: var(--mynx-glass-shadow), 0 0 0 3.5px var(--color-focus-ring);
+}
+
+html[data-ui-style] .mynx-home-engine-btn {
+  border-radius: 9999px;
+}
+
+/* Command palette: Spotlight voice. */
+html[data-ui-style] .mynx-palette {
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+html[data-ui-style] .mynx-palette-field {
+  padding: 12px 16px;
+  gap: 10px;
+  border-bottom-color: var(--color-separator);
+}
+
+html[data-ui-style] .mynx-palette-field input {
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+html[data-ui-style] .mynx-palette-field:focus-within {
+  border-bottom-color: var(--color-separator);
+}
+
+html[data-ui-style] .mynx-palette-list {
+  padding: 6px;
+}
+
+html[data-ui-style] .mynx-palette-item {
+  border-radius: 10px;
+  font-size: 13px;
+  padding-block: 7px;
+}
+
+html[data-ui-style] .mynx-palette-item[aria-selected="true"] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+html[data-ui-style] .mynx-palette-item[aria-selected="true"] span {
+  color: inherit;
+}
+
+/* Toasts: notification banners. */
+html[data-ui-style] .mynx-toast {
+  border: 0;
+  border-radius: 16px;
+  padding: 10px 12px;
+  background: var(--mynx-glass-thick);
+  box-shadow: var(--mynx-shadow-pop);
+  backdrop-filter: var(--mynx-glass-blur-strong);
+  -webkit-backdrop-filter: var(--mynx-glass-blur-strong);
+}
+
+html[data-ui-style] .mynx-toast > span {
+  font-size: 13px;
+}
+
+html[data-ui-style] .mynx-toast-close {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+}
+
+html[data-ui-style] .mynx-toast-close:hover {
+  background: var(--color-fill);
+}
+
+/* Task center: floating glass panel. */
+html[data-ui-style] .mynx-task-drawer {
+  inset-block-end: 8px;
+  border: 0;
+  border-radius: var(--mynx-radius-panel);
+  background: var(--mynx-glass-thick);
+  backdrop-filter: var(--mynx-glass-blur-strong);
+  -webkit-backdrop-filter: var(--mynx-glass-blur-strong);
+}
+
+html[data-ui-style] .mynx-task-drawer-closed {
+  translate: 0 calc(100% + 16px);
+}
+
+html[data-ui-style] .mynx-task-drawer > div:first-child {
+  border-bottom-color: var(--color-separator);
+  padding: 10px 12px;
+}
+
+html[data-ui-style] .mynx-task-drawer ul {
+  border-color: var(--color-separator);
+}
+
+
+/* ==========================================================================
+ * macOS 27 page refinements (phase 2). Hooks: .mynx-page-header,
+ * .mynx-step-rail, .mynx-settings*, .mynx-form*, .mynx-chat-*,
+ * .mynx-inspector-section, .mynx-search-field. Presentation only.
+ * ======================================================================== */
+
+/* Page titles move into the window toolbar (TitleBar shows the page name);
+   the in-page heading stays for assistive tech. Headers that only carried
+   the title collapse; headers with actions keep the actions, trailing. */
+html[data-ui-style] .mynx-page-header > .mynx-page-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+html[data-ui-style] .mynx-page-header:not(:has(> :not(.mynx-page-title))) {
+  display: none;
+}
+
+html[data-ui-style] .mynx-page-header {
+  justify-content: flex-end;
+}
+
+/* Hairlines inside panels use the separator, not the control border. */
+html[data-ui-style] :is(.border-b, .border-t, .border-y, .border-r, .border-l).border-border {
+  border-color: var(--color-separator);
+}
+
+html[data-ui-style] .divide-border > :not(:last-child) {
+  border-color: var(--color-separator);
+}
+
+/* Panel header rows: Headline voice. */
+html[data-ui-style] .mynx-card > .border-b:first-child {
+  min-height: 40px;
+}
+
+html[data-ui-style] .mynx-card > .border-b:first-child > .text-callout.font-semibold {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Drop zones. */
+html[data-ui-style] .border-dashed {
+  border-width: 1.5px;
+  border-color: color-mix(in srgb, var(--color-text) 22%, transparent);
+  border-radius: 12px;
+  background-color: color-mix(in srgb, var(--color-fill) 50%, transparent);
+}
+
+/* Shared search field voice (chat sessions, pickers). */
+html[data-ui-style] .mynx-search-field {
+  min-height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-fill);
+}
+
+html[data-ui-style] .mynx-search-field:focus-within {
+  box-shadow: 0 0 0 3.5px var(--color-focus-ring);
+}
+
+/* --- Step rails (qPCR / RNA-seq): plain source list, no second card --- */
+html[data-ui-style] .mynx-step-rail {
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 2px 0;
+  gap: 2px;
+}
+
+html[data-ui-style] .mynx-step-rail > .mynx-step-button {
+  min-height: 32px;
+  padding-inline: 8px;
+}
+
+html[data-ui-style] .mynx-step-rail > .border-t {
+  margin-inline: 8px;
+}
+
+html[data-ui-style] .mynx-step-index {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--color-fill-strong);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+html[data-ui-style] .mynx-step-index.bg-accent {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+/* Step status becomes a quiet dot; the word stays for screen readers. */
+html[data-ui-style] .mynx-step-rail > .mynx-step-button .mynx-badge {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  overflow: hidden;
+  font-size: 0;
+  line-height: 0;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+html[data-ui-style] .mynx-step-rail > .mynx-step-button .mynx-badge-success { background: var(--color-success); }
+html[data-ui-style] .mynx-step-rail > .mynx-step-button .mynx-badge-running { background: var(--color-accent); }
+html[data-ui-style] .mynx-step-rail > .mynx-step-button .mynx-badge-error { background: var(--color-danger); }
+html[data-ui-style] .mynx-step-rail > .mynx-step-button :is(.mynx-badge-queued, .mynx-badge-cancelled) {
+  background: var(--color-text-quaternary);
+}
+
+/* --- Settings: System Settings voice ---------------------------------- */
+html[data-ui-style] .mynx-settings {
+  padding-block-start: 16px;
+}
+
+html[data-ui-style] .mynx-settings-nav {
+  gap: 2px;
+}
+
+html[data-ui-style] .mynx-settings-nav-item {
+  min-height: 30px;
+  padding: 3px 8px;
+  gap: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text);
+}
+
+html[data-ui-style] .mynx-settings-nav-item.bg-selected {
+  background: var(--color-nav-active);
+  font-weight: 500;
+}
+
+.mynx-settings-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+html[data-ui-style] .mynx-settings-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background:
+    linear-gradient(to bottom, rgb(255 255 255 / 22%), rgb(255 255 255 / 0%) 60%),
+    var(--tile, #8e8e93);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 10%);
+}
+
+html[data-ui-style] .mynx-settings-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+html[data-ui-style] .mynx-settings-icon--appearance { --tile: #5e5ce6; }
+html[data-ui-style] .mynx-settings-icon--models { --tile: #af52de; }
+html[data-ui-style] .mynx-settings-icon--websearch { --tile: #0088ff; }
+html[data-ui-style] .mynx-settings-icon--window { --tile: #34c759; }
+html[data-ui-style] .mynx-settings-icon--about { --tile: #8e8e93; }
+
+/* Pane: transparent fieldset, legend as pane title, children as inset
+   groups, footnotes below the groups. */
+html[data-ui-style] .mynx-form {
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+  gap: 12px;
+  min-width: 0;
+}
+
+html[data-ui-style] .mynx-form > legend {
+  float: left;
+  width: 100%;
+  padding: 0 4px;
+  margin-block-end: 4px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+html[data-ui-style] .mynx-form > legend + * {
+  clear: both;
+}
+
+html[data-ui-style] .mynx-form > :not(legend, p),
+html[data-ui-style] .mynx-form-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--mynx-glass-regular);
+  box-shadow: var(--mynx-glass-shadow);
+}
+
+html[data-ui-style] .mynx-form > p {
+  padding-inline: 4px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Rows inside a group are separated by inset hairlines. */
+html[data-ui-style] .mynx-form-rows {
+  gap: 0;
+}
+
+html[data-ui-style] .mynx-form-rows > * {
+  padding-block: 8px;
+}
+
+html[data-ui-style] .mynx-form-rows > * + * {
+  border-top: 1px solid var(--color-separator);
+}
+
+html[data-ui-style] .mynx-form-rows > :first-child { padding-block-start: 0; }
+html[data-ui-style] .mynx-form-rows > :last-child { padding-block-end: 0; }
+
+/* Labelled fields: label leading, field trailing (wide panes only). */
+@media (min-width: 720px) {
+  html[data-ui-style] .mynx-settings label.flex-col:has(> span:first-child + :is(input, select, textarea, div)) {
+    display: grid;
+    grid-template-columns: minmax(110px, 30%) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 12px;
+  }
+
+  html[data-ui-style] .mynx-settings label.flex-col:has(> textarea) {
+    align-items: start;
+  }
+
+  html[data-ui-style] .mynx-settings label.flex-col:has(> textarea) > span:first-child {
+    padding-block-start: 5px;
+  }
+}
+
+/* Picker cards (theme / style / language): accent ring when chosen. */
+html[data-ui-style] .mynx-settings label.mynx-card {
+  background: var(--color-surface);
+  box-shadow: 0 0 0 0.5px var(--color-separator), 0 1px 2px rgb(0 0 0 / 5%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-ui-style] .mynx-settings label.mynx-card.border-accent {
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+html[data-ui-style] .mynx-settings label.mynx-card:focus-within {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Colour well. */
+html[data-ui-style] input[type="color"].mynx-input {
+  width: 44px;
+  height: 24px;
+  min-height: 24px;
+  padding: 3px;
+  border-radius: 7px;
+  box-shadow: var(--mynx-shadow-control);
+  cursor: default;
+}
+
+html[data-ui-style] input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+html[data-ui-style] input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 4px; }
+html[data-ui-style] input[type="color"]::-moz-color-swatch { border: 0; border-radius: 4px; }
+
+/* --- Chat ------------------------------------------------------------- */
+html[data-ui-style] .mynx-chat-sidebar {
+  border-right-color: transparent;
+}
+
+html[data-ui-style] .mynx-chat-sessions > div {
+  min-height: 30px;
+  border-radius: 8px;
+}
+
+html[data-ui-style] .mynx-chat-sessions > div.bg-selected {
+  background: var(--color-nav-active);
+}
+
+html[data-ui-style] .mynx-chat-header {
+  border-bottom-color: transparent;
+}
+
+html[data-ui-style] .mynx-chat-bubble-user {
+  border-radius: 18px;
+  background: var(--color-fill-strong);
+  padding: 8px 14px;
+}
+
+html[data-ui-style] .mynx-chat-empty-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+html[data-ui-style] .mynx-chat-composer {
+  border: 0;
+  border-radius: 22px;
+  padding: 6px;
+  background: var(--mynx-glass-thick);
+  box-shadow: var(--mynx-shadow-pop);
+  backdrop-filter: var(--mynx-glass-blur-strong);
+  -webkit-backdrop-filter: var(--mynx-glass-blur-strong);
+}
+
+html[data-ui-style] .mynx-chat-composer:focus-within {
+  box-shadow: var(--mynx-shadow-pop), 0 0 0 3.5px var(--color-focus-ring);
+}
+
+html[data-ui-style] .mynx-chat-composer .mynx-btn {
+  border-radius: 9999px;
+}
+
+/* --- Charts inspector: hairline-divided disclosure sections ---------- */
+html[data-ui-style] .mynx-inspector-section {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--color-separator);
+}
+
+html[data-ui-style] .mynx-inspector-section > summary {
+  min-height: 32px;
+  padding-inline: 4px;
+  font-size: 13px;
+}
+
+html[data-ui-style] .mynx-inspector-section > div {
+  border-top: 0;
+  padding: 2px 4px 12px 18px;
+}
+
+/* --- Tables: macOS list voice (quiet header, hairlines, zebra) -------- */
+html[data-ui-style] .mynx-workspace table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+html[data-ui-style] .mynx-workspace thead th {
+  background-color: var(--mynx-glass-thick);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-separator);
+}
+
+html[data-ui-style] .mynx-workspace tbody tr:nth-child(even) > td:not([class*="bg-"]) {
+  background-color: color-mix(in srgb, var(--color-fill) 45%, transparent);
+}
+
+html[data-ui-style] .mynx-workspace tbody td {
+  border-color: var(--color-separator);
+}
+
+html[data-ui-style] .mynx-workspace tbody tr:hover > td:not([class*="bg-"]) {
+  background-color: var(--color-hover);
+}
+
+/* --- Switch + pop-up menu (macOS 27) ---------------------------------- */
+html[data-ui-style] .mynx-switch {
+  width: 38px;
+  height: 22px;
+  border: 0;
+  background: var(--color-fill-strong);
+  box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 6%);
+}
+
+html[data-ui-style] .mynx-switch:is([aria-checked="true"], [data-checked="true"]) {
+  background: var(--color-accent);
+}
+
+html[data-ui-style] .mynx-switch-thumb {
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 6%), 0 1px 2.5px rgb(0 0 0 / 28%);
+}
+
+html[data-ui-style] .mynx-switch:is([aria-checked="true"], [data-checked="true"]) > .mynx-switch-thumb {
+  translate: 16px -50%;
+}
+
+html[data-ui-style] .mynx-switch:active:not(:disabled) > .mynx-switch-thumb {
+  width: 22px;
+}
+
+html[data-ui-style] .mynx-switch[aria-checked="true"]:active:not(:disabled) > .mynx-switch-thumb {
+  translate: 12px -50%;
+}
+
+.mynx-popup-menu {
+  position: fixed;
+  z-index: 70;
+  overflow-y: auto;
+  padding: 5px;
+  border-radius: 12px;
+  background: var(--mynx-glass-thick, var(--color-elevated));
+  box-shadow: var(--mynx-shadow-pop);
+  backdrop-filter: var(--mynx-glass-blur-strong, none);
+  -webkit-backdrop-filter: var(--mynx-glass-blur-strong, none);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  user-select: none;
+  overscroll-behavior: contain;
+}
+
+.mynx-popup-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 2px 12px 2px 4px;
+  border-radius: 6px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.mynx-popup-item.is-active:not([aria-disabled="true"]) {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.mynx-popup-item[aria-disabled="true"] {
+  color: var(--color-text-tertiary);
+}
+
+.mynx-popup-check {
+  display: inline-flex;
+  justify-content: center;
+  width: 16px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mynx-popup-group {
+  padding: 6px 12px 2px 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mynx-popup-menu {
+    animation: mynx-fade-in 120ms ease-out;
+  }
+}
+
+@media (forced-colors: active) {
+  .mynx-popup-menu {
+    border: 1px solid CanvasText;
+  }
+
+  .mynx-popup-item.is-active {
+    background: Highlight;
+    color: HighlightText;
+  }
+}
+
+/* --- Phase 4: remaining pages (macOS 27) ------------------------------ */
+
+/* Step-rail count badges keep their number (results / history). */
+html[data-ui-style] .mynx-step-rail > .mynx-step-button .mynx-badge.mynx-count {
+  width: auto;
+  height: auto;
+  min-width: 20px;
+  padding: 0 6px;
+  overflow: visible;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  background: var(--color-fill-strong);
+  color: var(--color-text-secondary);
+}
+
+/* Step rail run controls: full-width capsules with even rhythm. */
+html[data-ui-style] .mynx-step-rail > .mynx-btn {
+  margin-inline: 4px;
+}
+
+/* Inline callouts (warnings / errors / success notes). */
+html[data-ui-style] :is(.bg-warning\/10, .bg-danger\/10, .bg-success\/10) {
+  border-color: transparent;
+  border-radius: 10px;
+}
+
+html[data-ui-style] .bg-warning\/10 {
+  background-color: color-mix(in srgb, var(--color-warning) 12%, transparent);
+}
+
+html[data-ui-style] .bg-danger\/10 {
+  background-color: color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+html[data-ui-style] .bg-success\/10 {
+  background-color: color-mix(in srgb, var(--color-success) 11%, transparent);
+}
+
+/* Callout text stays readable: tinted label colour on a pale wash. */
+html[data-ui-style] .mynx-callout {
+  padding: 8px 10px;
+  color: color-mix(in srgb, var(--color-warning) 82%, var(--color-text));
+}
+
+/* Parameter grids: label above field, macOS form rhythm. */
+html[data-ui-style] .mynx-param-grid {
+  column-gap: 16px;
+  row-gap: 12px;
+}
+
+html[data-ui-style] .mynx-param-grid > label > span:first-child {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+/* Copy affordance: quiet borderless icon button with a real hit target. */
+html[data-ui-style] .mynx-copy-btn {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+}
+
+html[data-ui-style] .mynx-copy-btn:hover {
+  background: var(--color-fill);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* R status (settings > about). */
+html[data-ui-style] .mynx-rstatus .mynx-section-title {
+  font-size: 13px;
+}
+
+/* Weather line under the home brand: one calm row, tabular temperature. */
+html[data-ui-style] .mynx-weather {
+  gap: 6px;
+  color: var(--color-text-secondary);
+}
+
+html[data-ui-style] .mynx-weather .text-headline {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-ui-style] .mynx-weather .mynx-btn-ghost {
+  border-radius: 9999px;
+}
+
+/* About sheet: centred app identity like the macOS About panel. */
+html[data-ui-style] .mynx-about {
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+}
+
+html[data-ui-style] .mynx-about-hero {
+  flex-direction: column;
+  gap: 8px;
+}
+
+html[data-ui-style] .mynx-about-hero img {
+  width: 64px;
+  height: 64px;
+}
+
+html[data-ui-style] .mynx-about-hero p {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+html[data-ui-style] .mynx-about-facts {
+  align-items: center;
+  color: var(--color-text-secondary);
+}
+
+html[data-ui-style] .mynx-about-facts dt {
+  width: auto;
+}
+
+html[data-ui-style] .mynx-about > div,
+html[data-ui-style] .mynx-about > div > div {
+  justify-content: center;
+}
+
+html[data-ui-style] .mynx-about > .mynx-divider {
+  width: 100%;
+}
+
+/* Help: Apple Help voice — tinted icon tile, grouped definition list,
+   hairline tables, quiet accent rules. */
+html[data-ui-style] .mynx-help {
+  gap: 22px;
+}
+
+html[data-ui-style] .mynx-help-icon {
+  border: 0;
+  border-radius: 10px;
+  background:
+    linear-gradient(to bottom, rgb(255 255 255 / 22%), rgb(255 255 255 / 0%) 60%),
+    var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 10%);
+}
+
+html[data-ui-style] .mynx-help h2 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+html[data-ui-style] .mynx-help h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+html[data-ui-style] .mynx-help .border-s-2 {
+  border-inline-start-width: 0;
+  padding-inline-start: 0;
+}
+
+html[data-ui-style] :is(.mynx-help-controls, .mynx-help-table) {
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  box-shadow: 0 0 0 0.5px var(--color-separator);
+  overflow: hidden;
+}
+
+html[data-ui-style] .mynx-help-table :is(th, td) {
+  border-color: var(--color-separator);
+}
+
+html[data-ui-style] .mynx-help-pre {
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-fill);
+  font-family: var(--font-mono);
+}
+
+html[data-ui-style] .mynx-help .bg-accent\/10 {
+  background: var(--color-fill-strong);
+  color: var(--color-text-secondary);
+}
+
+/* Home brand: Large Title voice. */
+html[data-ui-style] .mynx-home-brand {
+  letter-spacing: -0.022em;
+}
+
+/* Pop-up button chevron tile follows each palette's accent. */
+html[data-ui-style="liquid-glass"] select.mynx-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4.5' fill='%231c62ad'/%3E%3Cpath d='M5.2 6.6 8 3.9l2.8 2.7M5.2 9.4 8 12.1l2.8-2.7' fill='none' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+html[data-ui-style="liquid-glass"][data-theme="graphite"] select.mynx-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4.5' fill='%235ea8ec'/%3E%3Cpath d='M5.2 6.6 8 3.9l2.8 2.7M5.2 9.4 8 12.1l2.8-2.7' fill='none' stroke='%230b1219' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+html[data-ui-style="minimal-linear"] select.mynx-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4.5' fill='%233478d4'/%3E%3Cpath d='M5.2 6.6 8 3.9l2.8 2.7M5.2 9.4 8 12.1l2.8-2.7' fill='none' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+html[data-ui-style="minimal-linear"][data-theme="graphite"] select.mynx-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4.5' fill='%236aa5e8'/%3E%3Cpath d='M5.2 6.6 8 3.9l2.8 2.7M5.2 9.4 8 12.1l2.8-2.7' fill='none' stroke='%23101822' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+html[data-ui-style="swiss-editorial"] select.mynx-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4.5' fill='%23c2452d'/%3E%3Cpath d='M5.2 6.6 8 3.9l2.8 2.7M5.2 9.4 8 12.1l2.8-2.7' fill='none' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+html[data-ui-style="swiss-editorial"][data-theme="graphite"] select.mynx-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4.5' fill='%23de6b52'/%3E%3Cpath d='M5.2 6.6 8 3.9l2.8 2.7M5.2 9.4 8 12.1l2.8-2.7' fill='none' stroke='%23131311' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+html[data-ui-style="memphis-pop"] select.mynx-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4.5' fill='%238a5a12'/%3E%3Cpath d='M5.2 6.6 8 3.9l2.8 2.7M5.2 9.4 8 12.1l2.8-2.7' fill='none' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+html[data-ui-style="memphis-pop"][data-theme="graphite"] select.mynx-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4.5' fill='%23f0b95c'/%3E%3Cpath d='M5.2 6.6 8 3.9l2.8 2.7M5.2 9.4 8 12.1l2.8-2.7' fill='none' stroke='%2326211a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* --- Fixes from visual review (2026-11-22) ------------------------------ */
+
+/* Sidebar drag tracks (nav rail, chat sessions) draw no line of their own:
+   the floating nav panel / the sidebar hairline is the boundary. The
+   accent line still appears on hover and keyboard focus. */
+html[data-ui-style] .mynx-column-resizer.mynx-column-resizer--edge-start::before {
+  background: transparent;
+}
+
+html[data-ui-style] .mynx-column-resizer.mynx-column-resizer--edge-start:is(:hover, :focus-visible)::before {
+  background: color-mix(in srgb, var(--color-accent) 60%, transparent);
+}
+
+/* Chat sessions sidebar: the drag track IS the boundary — one hairline that
+   turns accent on hover/focus. The aside draws no border of its own. */
+html[data-ui-style] .mynx-chat-page > aside.mynx-chat-sidebar.border-r {
+  border-right-color: transparent;
+}
+
+html[data-ui-style] .mynx-chat-page > .mynx-column-resizer.mynx-column-resizer--edge-start::before {
+  inset-block: 8px;
+  background: var(--color-separator);
+}
+
+html[data-ui-style] .mynx-chat-page > .mynx-column-resizer.mynx-column-resizer--edge-start:is(:hover, :focus-visible)::before {
+  background: color-mix(in srgb, var(--color-accent) 60%, transparent);
+}
+
+/* Cards sit inside scroll/overflow containers, so far-reaching shadows got
+   clipped into hard edges. Content cards use an inset rim (never clipped)
+   plus a 1-2px contact shadow; big soft shadows stay on floating layers. */
+html[data-ui-style] {
+  --mynx-shadow-card:
+    inset 0 0 0 0.5px var(--mynx-glass-rim), inset 0 0.5px 0 var(--mynx-glass-edge),
+    0 0.5px 1.5px rgb(0 0 0 / 6%);
+}
+
+html[data-ui-style][data-theme="graphite"] {
+  --mynx-shadow-card:
+    inset 0 0 0 0.5px rgb(255 255 255 / 10%), inset 0 0.5px 0 var(--mynx-glass-edge),
+    0 0.5px 1.5px rgb(0 0 0 / 30%);
+}
+
+html[data-ui-style] .mynx-card,
+html[data-ui-style] .mynx-form > :not(legend, p),
+html[data-ui-style] .mynx-form-card {
+  box-shadow: var(--mynx-shadow-card);
+}
+
+html[data-ui-style] .mynx-card .mynx-card {
+  box-shadow: inset 0 0 0 0.5px var(--color-separator);
+}
+
+html[data-ui-style] .mynx-settings label.mynx-card.border-accent {
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+html[data-ui-style] .border-accent.bg-accent\/10 {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+
+/* Accessibility: reduce transparency / increase contrast. */
+@media (prefers-reduced-transparency: reduce) {
+  html[data-ui-style] {
+    --mynx-glass-clear: var(--color-bg);
+    --mynx-glass-regular: var(--color-surface);
+    --mynx-glass-thick: var(--color-elevated);
+    --mynx-window-tint: var(--color-bg);
+    --mynx-glass-blur: none;
+    --mynx-glass-blur-strong: none;
+    --mynx-card-backdrop: none;
+    --mynx-nav-backdrop: none;
+  }
+
+  html[data-ui-style] .mynx-app-shell > .mynx-titlebar {
+    background: var(--color-bg);
+  }
+
+  html[data-ui-style] .mynx-app-shell[data-scrolled="true"] > .mynx-titlebar {
+    background: var(--color-bg);
+  }
+}
+
+@media (prefers-contrast: more) {
+  html[data-ui-style] {
+    --color-border: color-mix(in srgb, var(--color-text) 42%, transparent);
+    --color-separator: color-mix(in srgb, var(--color-text) 30%, transparent);
+    --mynx-glass-rim: color-mix(in srgb, var(--color-text) 45%, transparent);
+    --color-text-secondary: color-mix(in srgb, var(--color-text) 82%, var(--color-bg));
+    --color-text-tertiary: color-mix(in srgb, var(--color-text) 70%, var(--color-bg));
+  }
+}
+
+@media (forced-colors: active) {
+  html[data-ui-style] :is(.mynx-card, .mynx-navrail, .mynx-modal-panel, .mynx-toast, .mynx-task-drawer, .mynx-toolbar-group) {
+    border: 1px solid CanvasText;
   }
 }

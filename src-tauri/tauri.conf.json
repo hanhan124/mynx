@@ -20,7 +20,15 @@
         "minHeight": 500,
         "resizable": true,
         "decorations": false,
-        "shadow": true
+        "shadow": true,
+        "transparent": true,
+        "windowEffects": {
+          "effects": [
+            "underWindowBackground",
+            "mica"
+          ],
+          "state": "followsWindowActiveState"
+        }
       }
     ],
     "macOSPrivateApi": true,
