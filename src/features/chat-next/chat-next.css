@@ -1,0 +1,1402 @@
+/* chat-next styles. Tokens only; every UI style x light/dark works. */
+
+.mynx-cn {
+  --cn-column: 768px;
+  --cn-sidebar: 264px;
+  position: relative;
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+/* --- Sidebar ----------------------------------------------------------- */
+.mynx-cn-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: var(--cn-sidebar);
+  flex-shrink: 0;
+  min-height: 0;
+  padding: 10px 8px 8px;
+  border-right: 1px solid var(--color-separator);
+}
+
+.mynx-cn.is-narrow .mynx-cn-sidebar {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 30;
+  background: var(--mynx-glass-thick, var(--color-elevated));
+  box-shadow: var(--mynx-shadow-pop);
+  backdrop-filter: var(--mynx-glass-blur-strong, none);
+  -webkit-backdrop-filter: var(--mynx-glass-blur-strong, none);
+  border-right: 0;
+}
+
+.mynx-cn-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 29;
+  border: 0;
+  background: var(--mynx-scrim);
+}
+
+.mynx-cn-sidebar-top {
+  display: flex;
+  gap: 4px;
+}
+
+.mynx-cn-new {
+  flex: 1;
+  justify-content: flex-start;
+}
+
+.mynx-cn-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+}
+
+.mynx-cn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-inline: -2px;
+  padding-inline: 2px;
+}
+
+.mynx-cn-section {
+  margin: 10px 8px 2px;
+  font-size: var(--text-footnote);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.mynx-cn-section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block: 4px 0;
+}
+
+.mynx-cn-conv,
+.mynx-cn-folder {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 30px;
+  border-radius: 8px;
+  color: var(--color-text);
+}
+
+.mynx-cn-conv:hover,
+.mynx-cn-folder:hover {
+  background: var(--color-hover);
+}
+
+.mynx-cn-conv.is-active {
+  background: var(--color-nav-active, var(--color-selected));
+}
+
+.mynx-cn-conv-main,
+.mynx-cn-folder-main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 4px 5px 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.mynx-cn-conv-main {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+
+.mynx-cn-conv-main > .text-footnote {
+  flex-basis: 100%;
+}
+
+.mynx-cn-folder-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-inline-start: 14px;
+}
+
+.mynx-cn-caret {
+  transition: rotate var(--mynx-motion-quick, 140ms) ease;
+}
+
+.mynx-cn-caret.is-open {
+  rotate: 90deg;
+}
+
+.mynx-cn-conv-action {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin-inline-end: 3px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  opacity: 0;
+}
+
+.mynx-cn-conv:hover .mynx-cn-conv-action,
+.mynx-cn-folder:hover .mynx-cn-conv-action,
+.mynx-cn-conv.is-active .mynx-cn-conv-action,
+.mynx-cn-conv-action:focus-visible,
+.mynx-cn-conv-action[data-state="open"] {
+  opacity: 1;
+}
+
+.mynx-cn-conv-action:hover {
+  background: var(--color-fill);
+  color: var(--color-text);
+}
+
+.mynx-cn-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-inline-end: 3px;
+}
+
+.mynx-cn-mini {
+  min-height: 24px;
+  height: 24px;
+  padding-inline: 8px;
+  font-size: var(--text-footnote);
+}
+
+.mynx-cn-rename {
+  margin: 2px 4px;
+}
+
+.mynx-cn-sidebar-foot {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-separator);
+}
+
+.mynx-cn-menu {
+  z-index: 60;
+  min-width: 180px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 5px;
+  border-radius: 12px;
+  background: var(--mynx-glass-thick, var(--color-elevated));
+  box-shadow: var(--mynx-shadow-pop);
+  backdrop-filter: var(--mynx-glass-blur-strong, none);
+  -webkit-backdrop-filter: var(--mynx-glass-blur-strong, none);
+  outline: none;
+}
+
+.mynx-cn-menu-item {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: var(--text-body);
+  color: var(--color-text);
+  cursor: default;
+  outline: none;
+  user-select: none;
+}
+
+.mynx-cn-menu-item[data-highlighted] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.mynx-cn-menu-item.is-danger:not([data-highlighted]) {
+  color: var(--color-danger);
+}
+
+.mynx-cn-menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--color-separator);
+}
+
+.mynx-cn-menu-label {
+  padding: 4px 10px 2px;
+  font-size: var(--text-footnote);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+/* --- Main column ------------------------------------------------------- */
+.mynx-cn-main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.mynx-cn-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 12px;
+}
+
+.mynx-cn-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.mynx-cn-scroll {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.mynx-cn-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: var(--cn-column);
+  margin-inline: auto;
+  padding: 12px 20px 40px;
+}
+
+.mynx-cn-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-block: 16vh 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.mynx-cn-hello {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.mynx-cn-jump {
+  position: absolute;
+  inset-block-end: 12px;
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  z-index: 5;
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 9999px;
+  box-shadow: var(--mynx-shadow-pop);
+}
+
+/* --- Messages ---------------------------------------------------------- */
+.mynx-cn-user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.mynx-cn-bubble {
+  max-width: 85%;
+  padding: 8px 14px;
+  border-radius: 18px;
+  background: var(--color-fill-strong, var(--color-surface-2));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mynx-cn-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.mynx-cn-assistant {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mynx-cn-markdown {
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.mynx-cn-markdown :is(pre, code) {
+  font-family: var(--font-mono);
+}
+
+.mynx-cn-plain {
+  white-space: pre-wrap;
+}
+
+.mynx-cn-reasoning,
+.mynx-cn-tool {
+  color: var(--color-text-secondary);
+}
+
+.mynx-cn-reasoning > summary,
+.mynx-cn-tool > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+  user-select: none;
+}
+
+.mynx-cn-reasoning-body {
+  margin-block-start: 6px;
+  padding-inline-start: 12px;
+  border-inline-start: 2px solid var(--color-separator);
+  white-space: pre-wrap;
+}
+
+.mynx-cn-tool-body {
+  margin-block-start: 6px;
+  max-height: 240px;
+  overflow: auto;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--color-fill);
+  font-family: var(--font-mono);
+  font-size: var(--text-footnote);
+  white-space: pre-wrap;
+}
+
+.mynx-cn-approval {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-warning) 35%, transparent);
+}
+
+.mynx-cn-error {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  color: color-mix(in srgb, var(--color-danger) 85%, var(--color-text));
+}
+
+.mynx-cn-error-block {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mynx-cn-error {
+  white-space: pre-wrap;
+}
+
+.mynx-cn-pulse {
+  animation: mynx-cn-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes mynx-cn-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.mynx-cn-model-label {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.mynx-cn-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.mynx-cn-thumb {
+  max-width: 220px;
+  max-height: 160px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: inset 0 0 0 0.5px var(--color-separator);
+}
+
+.mynx-cn-artifact-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mynx-cn-artifact-chip {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--mynx-glass-regular, var(--color-surface));
+  box-shadow: var(--mynx-shadow-card);
+  color: var(--color-text);
+  font-size: var(--text-body);
+  cursor: default;
+}
+
+.mynx-cn-artifact-chip:hover {
+  background: var(--color-hover);
+}
+
+.mynx-cn-sources {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mynx-cn-source {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--color-fill);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.mynx-cn-source:hover {
+  background: var(--color-fill-strong);
+}
+
+.mynx-cn-source-n {
+  grid-row: span 2;
+  align-self: center;
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: var(--color-surface);
+  font-size: var(--text-footnote);
+  font-weight: 600;
+}
+
+.mynx-cn-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  min-height: 24px;
+  opacity: 0;
+  transition: opacity var(--mynx-motion-quick, 140ms) ease;
+}
+
+.group:hover > .mynx-cn-actions,
+.mynx-cn-actions:focus-within,
+.mynx-cn-column > .mynx-cn-assistant:last-child > .mynx-cn-actions,
+.mynx-cn-compare-col .mynx-cn-actions {
+  opacity: 1;
+}
+
+.mynx-cn-meta {
+  display: inline-flex;
+  min-width: 0;
+  gap: 8px;
+  margin-inline-start: 6px;
+  color: var(--color-text-tertiary);
+}
+
+.mynx-cn-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-text-secondary);
+}
+
+/* --- Compare ----------------------------------------------------------- */
+.mynx-cn-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mynx-cn.is-narrow .mynx-cn-compare-grid {
+  grid-template-columns: minmax(0, 1fr);
+  margin-inline: 0;
+}
+
+.mynx-cn-compare-col {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--mynx-glass-regular, var(--color-surface));
+  box-shadow: var(--mynx-shadow-card);
+}
+
+.mynx-cn-compare-col.is-chosen {
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+.mynx-cn-choose {
+  align-self: flex-start;
+}
+
+.mynx-cn-compare {
+  z-index: 60;
+  display: flex;
+  width: min(360px, 90vw);
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--mynx-glass-thick, var(--color-elevated));
+  box-shadow: var(--mynx-shadow-pop);
+  backdrop-filter: var(--mynx-glass-blur-strong, none);
+  -webkit-backdrop-filter: var(--mynx-glass-blur-strong, none);
+}
+
+.mynx-cn-compare-list {
+  display: flex;
+  max-height: 260px;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.mynx-cn-compare-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 8px;
+}
+
+.mynx-cn-compare-row:hover {
+  background: var(--color-hover);
+}
+
+/* --- Composer ---------------------------------------------------------- */
+.mynx-cn-composer-wrap {
+  padding: 0 16px 14px;
+}
+
+.mynx-cn-composer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: var(--cn-column);
+  margin-inline: auto;
+  padding: 10px 10px 8px 14px;
+  border-radius: 22px;
+  background: var(--mynx-glass-thick, var(--color-elevated));
+  box-shadow: var(--mynx-shadow-pop);
+  backdrop-filter: var(--mynx-glass-blur-strong, none);
+  -webkit-backdrop-filter: var(--mynx-glass-blur-strong, none);
+}
+
+.mynx-cn-composer:focus-within {
+  box-shadow: var(--mynx-shadow-pop), 0 0 0 3.5px var(--color-focus-ring);
+}
+
+.mynx-cn-composer.is-dragging {
+  box-shadow: var(--mynx-shadow-pop), 0 0 0 2px var(--color-accent);
+}
+
+.mynx-cn-input {
+  width: 100%;
+  min-height: 24px;
+  max-height: 240px;
+  resize: none;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  line-height: 1.5;
+  outline: none;
+}
+
+.mynx-cn-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.mynx-cn-composer .mynx-cn-attachments {
+  justify-content: flex-start;
+}
+
+.mynx-cn-attachment {
+  display: inline-flex;
+  max-width: 260px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px 4px 8px;
+  border-radius: 10px;
+  background: var(--color-fill);
+}
+
+.mynx-cn-attachment img {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.mynx-cn-attachment-x {
+  display: inline-grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.mynx-cn-attachment-x:hover {
+  background: var(--color-fill-strong);
+}
+
+.mynx-cn-composer-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mynx-cn-select {
+  width: auto;
+  max-width: 200px;
+}
+
+.mynx-cn-model {
+  max-width: 240px;
+}
+
+.mynx-cn-on {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.mynx-cn-send {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 9999px;
+}
+
+.mynx-cn-prompts {
+  position: absolute;
+  inset-inline: 8px;
+  inset-block-end: calc(100% + 6px);
+  z-index: 20;
+  max-height: 280px;
+  margin: 0;
+  overflow-y: auto;
+  padding: 5px;
+  list-style: none;
+  border-radius: 14px;
+  background: var(--mynx-glass-thick, var(--color-elevated));
+  box-shadow: var(--mynx-shadow-pop);
+  backdrop-filter: var(--mynx-glass-blur-strong, none);
+  -webkit-backdrop-filter: var(--mynx-glass-blur-strong, none);
+}
+
+.mynx-cn-prompt {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+}
+
+.mynx-cn-prompt.is-active {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.mynx-cn-prompt.is-active .text-text-secondary {
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* --- Artifacts panel --------------------------------------------------- */
+.mynx-cn-artifacts {
+  display: flex;
+  width: min(48%, 620px);
+  min-width: 320px;
+  flex-direction: column;
+  margin: 0 12px 12px 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--mynx-glass-regular, var(--color-surface));
+  box-shadow: var(--mynx-shadow-card);
+}
+
+.mynx-cn.is-narrow .mynx-cn-artifacts {
+  position: absolute;
+  inset: 0 8px 8px;
+  z-index: 25;
+  width: auto;
+  min-width: 0;
+  margin: 0;
+  background: var(--mynx-glass-thick, var(--color-elevated));
+  box-shadow: var(--mynx-shadow-pop);
+}
+
+.mynx-cn-artifacts-head,
+.mynx-cn-artifacts-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+.mynx-cn-artifacts-bar {
+  padding-block: 0 8px;
+  border-bottom: 1px solid var(--color-separator);
+}
+
+.mynx-cn-artifacts-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px;
+}
+
+.mynx-cn-artifact-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-chart-canvas, var(--color-surface));
+}
+
+.mynx-cn-artifact-code {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-footnote);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mynx-cn-segmented {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--color-fill);
+}
+
+.mynx-cn-segmented > button {
+  min-height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--text-callout);
+}
+
+.mynx-cn-segmented > button[aria-pressed="true"] {
+  background: var(--color-surface);
+  box-shadow: var(--mynx-shadow-control);
+  font-weight: 600;
+}
+
+/* --- Settings sheet ---------------------------------------------------- */
+.mynx-cn-settings {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 16px;
+  min-height: min(560px, 70vh);
+}
+
+@media (max-width: 760px) {
+  .mynx-cn-settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.mynx-cn-settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+@media (max-width: 760px) {
+  .mynx-cn-settings-nav {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+}
+
+.mynx-cn-settings-tab {
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--text-body);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.mynx-cn-settings-tab:hover {
+  background: var(--color-hover);
+}
+
+.mynx-cn-settings-tab.is-active {
+  background: var(--color-nav-active, var(--color-selected));
+  font-weight: 600;
+}
+
+.mynx-cn-settings-body {
+  min-width: 0;
+}
+
+.mynx-cn-split {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 760px) {
+  .mynx-cn-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.mynx-cn-list-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mynx-cn-list-col > .mynx-btn,
+.mynx-cn-list-col > select {
+  margin-bottom: 6px;
+}
+
+.mynx-cn-list-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.mynx-cn-list-row:hover {
+  background: var(--color-hover);
+}
+
+.mynx-cn-list-row.is-active {
+  background: var(--color-nav-active, var(--color-selected));
+}
+
+.mynx-cn-dot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--color-text-quaternary, var(--color-border));
+}
+
+.mynx-cn-dot.is-ok {
+  background: var(--color-success);
+}
+
+.mynx-cn-editor {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mynx-cn-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.mynx-cn-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mynx-cn-field-switch {
+  align-items: flex-start;
+}
+
+.mynx-cn-field-icon {
+  width: 72px;
+}
+
+.mynx-cn-field-label {
+  color: var(--color-text-secondary);
+}
+
+.mynx-cn-models {
+  display: flex;
+  max-height: 320px;
+  flex-direction: column;
+  overflow: auto;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 0.5px var(--color-separator);
+}
+
+.mynx-cn-model-head,
+.mynx-cn-model-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) 44px 44px 44px 84px 70px 70px 28px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+}
+
+.mynx-cn-model-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--mynx-glass-thick, var(--color-elevated));
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.mynx-cn-model-row + .mynx-cn-model-row {
+  border-top: 1px solid var(--color-separator);
+}
+
+.mynx-cn-model-row input[type="checkbox"] {
+  justify-self: center;
+}
+
+.mynx-cn-model-row .mynx-input {
+  min-height: 24px;
+  height: 24px;
+  padding-inline: 6px;
+}
+
+.mynx-cn-memories {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mynx-cn-memories > li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+}
+
+.mynx-cn-memories > li + li {
+  border-top: 1px solid var(--color-separator);
+}
+
+.mynx-cn-shortcuts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0;
+}
+
+.mynx-cn-shortcuts kbd {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--color-fill);
+  font-family: var(--font-sans);
+  font-size: var(--text-footnote);
+}
+
+/* --- Markdown: svelte-streamdown mapped onto Mynx tokens --------------- */
+/* Unlayered, so these win over the library's Tailwind utility classes. */
+.mynx-cn-markdown :is(h1, h2, h3, h4) {
+  margin: 1.1em 0 0.4em;
+  font-weight: 650;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.mynx-cn-markdown h1 { font-size: 1.45em; }
+.mynx-cn-markdown h2 { font-size: 1.25em; }
+.mynx-cn-markdown h3 { font-size: 1.1em; }
+.mynx-cn-markdown h4 { font-size: 1em; }
+
+.mynx-cn-markdown > :first-child,
+.mynx-cn-markdown > * > :first-child {
+  margin-top: 0;
+}
+
+.mynx-cn-markdown :is(p, ul, ol) {
+  margin-block: 0.5em;
+}
+
+.mynx-cn-markdown :is(ul, ol) {
+  margin-inline-start: 0;
+  padding-inline-start: 1.4em;
+  list-style-position: outside;
+}
+
+.mynx-cn-markdown li {
+  padding-block: 0.15em;
+}
+
+.mynx-cn-markdown a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+.mynx-cn-markdown a:hover {
+  text-decoration-color: currentColor;
+}
+
+.mynx-cn-markdown [data-streamdown-codespan] {
+  padding: 0.1em 0.35em;
+  border-radius: 5px;
+  background: var(--color-fill);
+  color: var(--color-text);
+  font-size: 0.9em;
+}
+
+.mynx-cn-markdown [data-streamdown-code] {
+  margin-block: 0.75em;
+  overflow: hidden;
+  border: 0;
+  border-radius: 12px;
+  background: var(--color-fill);
+  box-shadow: inset 0 0 0 0.5px var(--color-separator);
+}
+
+.mynx-cn-markdown [data-streamdown-code] > div:first-child {
+  padding: 6px 8px 6px 12px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--text-footnote);
+  border-bottom: 1px solid var(--color-separator);
+}
+
+.mynx-cn-markdown [data-streamdown-code] > div:last-child,
+.mynx-cn-markdown [data-streamdown-code] pre {
+  background: transparent;
+}
+
+.mynx-cn-markdown [data-streamdown-code] pre {
+  padding: 10px 12px;
+  font-size: var(--text-callout);
+  line-height: 1.55;
+}
+
+.mynx-cn-markdown [data-streamdown-code] button {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.mynx-cn-markdown [data-streamdown-code] button:hover {
+  background: var(--color-fill-strong);
+  color: var(--color-text);
+}
+
+.mynx-cn-markdown [data-streamdown-table] {
+  margin-block: 0.75em;
+  border: 0;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 0.5px var(--color-separator);
+}
+
+.mynx-cn-markdown :is([data-streamdown-th], [data-streamdown-td]) {
+  min-width: 0;
+  padding: 6px 10px;
+  font-size: var(--text-callout);
+  text-align: left;
+}
+
+.mynx-cn-markdown [data-streamdown-thead] {
+  background: var(--color-fill);
+  color: var(--color-text-secondary);
+}
+
+.mynx-cn-markdown [data-streamdown-th] {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.mynx-cn-markdown [data-streamdown-tr] {
+  border-color: var(--color-separator);
+}
+
+.mynx-cn-markdown [data-streamdown-tr]:hover {
+  background: var(--color-hover);
+}
+
+.mynx-cn-markdown [data-streamdown-blockquote] {
+  margin-block: 0.75em;
+  padding-inline-start: 12px;
+  border-inline-start: 3px solid var(--color-separator);
+  color: var(--color-text-secondary);
+  font-style: normal;
+}
+
+.mynx-cn-markdown [data-streamdown-hr] {
+  margin-block: 1.2em;
+  border-color: var(--color-separator);
+}
+
+.mynx-cn-markdown img {
+  max-width: 100%;
+  border-radius: 10px;
+}
+
+/* --- Message extras ---------------------------------------------------- */
+.mynx-cn-thumb-btn {
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.mynx-cn-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 48px;
+}
+
+.mynx-cn-lightbox-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: var(--mynx-scrim);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: zoom-out;
+}
+
+.mynx-cn-lightbox img {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 12px;
+  box-shadow: var(--mynx-shadow-pop);
+  pointer-events: none;
+}
+
+.mynx-cn-lightbox-close {
+  position: absolute;
+  inset-block-start: 16px;
+  inset-inline-end: 16px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 9999px;
+}
+
+.mynx-cn-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.mynx-cn-error > span {
+  flex: 1;
+  min-width: 200px;
+}
+
+.mynx-cn-continue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mynx-cn-inline-btn {
+  min-height: 26px;
+  height: 26px;
+  padding-inline: 10px;
+  font-size: var(--text-callout);
+}
+
+.mynx-cn-split-btn {
+  display: inline-flex;
+  align-items: center;
+}
+
+.mynx-cn-split-caret {
+  display: inline-grid;
+  width: 14px;
+  height: 24px;
+  place-items: center;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+}
+
+.mynx-cn-split-caret:hover:not(:disabled) {
+  background: var(--color-fill);
+  color: var(--color-text);
+}
+
+.mynx-cn-menu-hint {
+  margin-inline-start: auto;
+  padding-inline-start: 12px;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-footnote);
+  white-space: nowrap;
+}
+
+.mynx-cn-menu-item[data-highlighted] .mynx-cn-menu-hint {
+  color: inherit;
+  opacity: 0.8;
+}
+
+.mynx-cn-menu-item[data-disabled] {
+  opacity: 0.45;
+}
+
+/* --- Header title, starters, summary ----------------------------------- */
+.mynx-cn-title {
+  min-width: 0;
+  max-width: min(60%, 520px);
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  cursor: text;
+}
+
+.mynx-cn-title:hover {
+  background: var(--color-hover);
+}
+
+.mynx-cn-title-input {
+  width: min(60%, 520px);
+}
+
+.mynx-cn-starters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 620px;
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .mynx-cn-starters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.mynx-cn-starter {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--mynx-glass-regular, var(--color-surface));
+  box-shadow: var(--mynx-shadow-card);
+  color: var(--color-text);
+  text-align: left;
+}
+
+.mynx-cn-starter > svg {
+  grid-row: span 2;
+  color: var(--color-accent);
+}
+
+.mynx-cn-starter:hover {
+  background: var(--color-hover);
+}
+
+.mynx-cn-summary {
+  max-height: 180px;
+  overflow: auto;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--color-fill);
+  white-space: pre-wrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mynx-cn-actions,
+  .mynx-cn-caret {
+    transition: none;
+  }
+
+  .mynx-cn-pulse {
+    animation: none;
+  }
+}

@@ -1,6 +1,7 @@
 <script lang="ts">
   import IconSearch from "@tabler/icons-svelte/icons/search";
   import IconHome from "@tabler/icons-svelte/icons/home";
+  import IconMessageChatbot from "@tabler/icons-svelte/icons/message-chatbot";
   import IconPhoto from "@tabler/icons-svelte/icons/photo";
   import IconChartBar from "@tabler/icons-svelte/icons/chart-bar";
   import IconDna2 from "@tabler/icons-svelte/icons/dna-2";
@@ -30,11 +31,14 @@
   }
 
   let open = $state(false);
+  const isMac = typeof navigator !== "undefined" && /Mac/i.test(navigator.userAgent);
+  const shortcutLabel = isMac ? "⌘K" : "Ctrl K";
   let query = $state("");
   let activeIndex = $state(0);
 
   const items = $derived<PaletteItem[]>([
     { id: "nav-home", label: t("nav.home"), group: "navigate", icon: IconHome, keywords: "home 首页", run: () => navigate("/") },
+    { id: "nav-chat", label: t("nav.chat"), group: "navigate", icon: IconMessageChatbot, keywords: "chat 聊天 对话 ai 新对话", run: () => navigate("/chat") },
     { id: "nav-image", label: t("nav.image"), group: "navigate", icon: IconPhoto, keywords: "image png tiff 转换 convert", run: () => navigate("/image") },
     { id: "nav-qpcr", label: t("nav.qpcr"), group: "navigate", icon: IconChartBar, keywords: "qpcr 实时荧光定量", run: () => navigate("/qpcr") },
     { id: "nav-rnaseq", label: t("nav.rnaseq"), group: "navigate", icon: IconDna2, keywords: "rnaseq 转录组 de 差异", run: () => navigate("/rnaseq") },

@@ -3,6 +3,7 @@
 
 pub mod app;
 pub mod charts;
+pub mod chat;
 pub mod image;
 pub mod qpcr;
 pub mod r_runtime;

@@ -3,6 +3,7 @@
   import type { UnlistenFn } from "@tauri-apps/api/event";
   import type { IconComponent } from "../lib/icons.js";
   import IconHome from "@tabler/icons-svelte/icons/home";
+  import IconMessageChatbot from "@tabler/icons-svelte/icons/message-chatbot";
   import IconPhoto from "@tabler/icons-svelte/icons/photo";
   import IconChartBar from "@tabler/icons-svelte/icons/chart-bar";
   import IconDna2 from "@tabler/icons-svelte/icons/dna-2";
@@ -22,6 +23,7 @@
 
   const items: NavItem[] = [
     { route: "/", icon: IconHome, key: "nav.home" },
+    { route: "/chat", icon: IconMessageChatbot, key: "nav.chat" },
     { route: "/charts", icon: IconChartHistogram, key: "nav.charts" },
     { route: "/qpcr", icon: IconChartBar, key: "nav.qpcr" },
     { route: "/image", icon: IconPhoto, key: "nav.image" },

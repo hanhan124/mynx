@@ -14,3 +14,15 @@ tokio-util = { version = "0.7", features = ["rt"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 dirs = "5"
 reqwest = { version = "0.13", features = ["json"] }
+
+# OS keychain for chat API keys. keyring 3 falls back to an in-memory mock
+# store when no platform feature is enabled, so each target enables its
+# native store explicitly.
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "3.6", features = ["windows-native"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3.6", features = ["apple-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3.6", features = ["linux-native"] }

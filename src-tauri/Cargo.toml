@@ -33,7 +33,8 @@ mynx-charts = { path = "crates/mynx-charts" }
 
 tauri = { version = "=2.11.5", features = ["macos-private-api", "protocol-asset", "unstable"] }
 tauri-plugin-dialog = "=2.7.1"
-tauri-plugin-fs = "=2.5.1"
+tauri-plugin-http = "=2.6.0"
+tauri-plugin-fs = "=2.5.2"
 tauri-plugin-os = "=2.3.2"
 tauri-plugin-shell = "=2.3.5"
 tauri-plugin-updater = "=2.10.1"

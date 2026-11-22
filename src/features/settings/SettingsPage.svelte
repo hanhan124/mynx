@@ -1,8 +1,13 @@
 <script lang="ts">
+  import Switch from "../../components/Switch.svelte";
   import type { ThemeId } from "../../lib/contracts/generated/settings/ThemeId.js";
   import type { SettingsDoc } from "../../lib/contracts/generated/settings/SettingsDoc.js";
   import IconCheck from "@tabler/icons-svelte/icons/check";
+  import IconAppWindow from "@tabler/icons-svelte/icons/app-window";
   import IconBrandGithub from "@tabler/icons-svelte/icons/brand-github";
+  import IconCpu from "@tabler/icons-svelte/icons/cpu";
+  import IconInfoCircle from "@tabler/icons-svelte/icons/info-circle";
+  import IconPalette from "@tabler/icons-svelte/icons/palette";
   import IconExternalLink from "@tabler/icons-svelte/icons/external-link";
   import { t } from "../../app/i18n.svelte";
   import {
@@ -18,6 +23,8 @@
   import { MYNX_GITHUB_URL, MYNX_WEBSITE_URL } from "../../app/tauri.js";
   import RStatusCard from "../../components/RStatusCard.svelte";
   import { checkForUpdates } from "../../app/updater.svelte";
+  import { requestChatSettings } from "../chat-next/handoff.js";
+  import { navigate } from "../../lib/router.svelte";
 
   const version = $derived(app.appInfo?.version ?? t("common.loading"));
 
@@ -54,6 +61,12 @@
     swatches: [string, string, string];
   }> = [
     {
+      id: "macos",
+      nameKey: "uiStyle.macos.name",
+      descKey: "uiStyle.macos.description",
+      swatches: ["#f2f2f4", "#ffffff", "#0071e3"],
+    },
+    {
       id: "liquid-glass",
       nameKey: "uiStyle.liquid-glass.name",
       descKey: "uiStyle.liquid-glass.description",
@@ -86,6 +99,20 @@
 
   let doc = $state<SettingsDoc | null>(null);
   let saving = $state(false);
+
+  /** Sidebar navigation for the settings sections (ZCode-style). */
+  type SettingsSection = "appearance" | "models" | "window" | "about";
+  let settingsSection = $state<SettingsSection>("appearance");
+  const SETTINGS_SECTIONS: Array<{
+    id: SettingsSection;
+    labelKey: string;
+    icon: typeof IconPalette;
+  }> = [
+    { id: "appearance", labelKey: "settings.appearance", icon: IconPalette },
+    { id: "models", labelKey: "chatNext.title", icon: IconCpu },
+    { id: "window", labelKey: "settings.window", icon: IconAppWindow },
+    { id: "about", labelKey: "settings.about", icon: IconInfoCircle },
+  ];
 
   function detailOf(err: unknown): string {
     if (err && typeof err === "object" && "message" in err) {
@@ -156,15 +183,42 @@
       ? "border-accent bg-selected"
       : "border-border bg-surface hover:border-text-secondary";
   }
+  /** Fallback chart colour when the settings doc has none (data default, unchanged). */
+  const DEFAULT_CHART_COLOR = "#2f6fed";
 </script>
 
-<section class="mx-auto flex w-full max-w-[720px] flex-col gap-5 p-6">
-  <header class="flex flex-col gap-1">
+<section class="mynx-settings mx-auto flex w-full max-w-[980px] flex-col gap-5 p-6">
+  <header class="mynx-page-header flex flex-col gap-1">
     <h1 class="mynx-page-title">{t("settings.title")}</h1>
   </header>
 
-  <fieldset class="mynx-card flex flex-col gap-3 p-4" disabled={saving}>
-    <legend class="px-1 text-[13px] font-semibold">{t("settings.appearance")}</legend>
+  <div class="flex flex-col gap-5 min-[720px]:flex-row min-[720px]:items-start">
+  <nav
+    class="mynx-settings-nav flex shrink-0 flex-row gap-1 overflow-x-auto min-[720px]:w-48 min-[720px]:flex-col"
+    aria-label={t("settings.title")}
+  >
+    {#each SETTINGS_SECTIONS as section (section.id)}
+      {@const SectionIcon = section.icon}
+      <button
+        type="button"
+        class="mynx-settings-nav-item flex shrink-0 items-center gap-2 rounded-(--mynx-radius-control) px-3 py-2 text-left text-callout {settingsSection === section.id
+          ? 'bg-selected font-semibold text-text'
+          : 'text-text-secondary hover:bg-hover hover:text-text'}"
+        aria-current={settingsSection === section.id ? "true" : undefined}
+        onclick={() => (settingsSection = section.id)}
+      >
+        <span class="mynx-settings-icon mynx-settings-icon--{section.id}" aria-hidden="true">
+          <SectionIcon size={15} stroke={1.7} />
+        </span>
+        <span class="min-w-0 truncate">{t(section.labelKey)}</span>
+      </button>
+    {/each}
+  </nav>
+
+  <div class="flex min-w-0 flex-1 flex-col gap-5">
+  {#if settingsSection === "appearance"}
+  <fieldset class="mynx-card mynx-form flex flex-col gap-3 p-4" disabled={saving}>
+    <legend class="px-1 text-body font-semibold">{t("settings.appearance")}</legend>
 
     <div class="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t("theme.title")}>
       {#each THEME_OPTIONS as option (option.id)}
@@ -177,14 +231,14 @@
             checked={selected}
             onchange={() => pickTheme(option.id)}
           />
-          <span class="text-[12px] font-medium">{t(option.nameKey)}</span>
-          <span class="text-[11px] text-text-secondary">{t(option.descKey)}</span>
+          <span class="text-callout font-medium">{t(option.nameKey)}</span>
+          <span class="text-footnote text-text-secondary">{t(option.descKey)}</span>
         </label>
       {/each}
     </div>
 
     <div class="flex flex-col gap-2">
-      <span class="text-[12px] font-medium">{t("uiStyle.title")}</span>
+      <span class="text-callout font-medium">{t("uiStyle.title")}</span>
       <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("uiStyle.title")}>
         {#each UI_STYLE_OPTIONS as option (option.id)}
           {@const selected = app.uiStyle === option.id}
@@ -207,8 +261,8 @@
                 <IconCheck size={15} stroke={2} class="ml-auto shrink-0 text-accent" aria-hidden="true" />
               {/if}
             </span>
-            <span class="text-[12px] font-medium">{t(option.nameKey)}</span>
-            <span class="text-[11px] text-text-secondary">{t(option.descKey)}</span>
+            <span class="text-callout font-medium">{t(option.nameKey)}</span>
+            <span class="text-footnote text-text-secondary">{t(option.descKey)}</span>
           </label>
         {/each}
       </div>
@@ -218,7 +272,7 @@
       {#each LANGUAGE_OPTIONS as option (option.id)}
         {@const selected = app.language === option.id}
         <label class="mynx-card flex cursor-pointer items-center justify-between p-3 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent {cardClass(selected)}">
-          <span class="text-[12px] font-medium">{t(option.labelKey)}</span>
+          <span class="text-callout font-medium">{t(option.labelKey)}</span>
           <input
             type="radio"
             name="mynx-language"
@@ -235,57 +289,69 @@
 
     <div class="flex items-center gap-2">
       <span class="flex-1">
-        <span class="block text-[12px] font-medium">{t("settings.chartColor")}</span>
+        <span class="block text-callout font-medium">{t("settings.chartColor")}</span>
       </span>
       <input
         type="color"
         class="mynx-input h-8 w-14 cursor-pointer p-1"
-        value={doc?.chartColor ?? "#2f6fed"}
+        value={doc?.chartColor ?? DEFAULT_CHART_COLOR}
         onchange={(event) => pickChartColor(event.currentTarget.value)}
         aria-label={t("settings.chartColor")}
       />
     </div>
   </fieldset>
+  {/if}
 
-  <fieldset class="mynx-card flex flex-col gap-3 p-4" disabled={saving}>
-    <legend class="px-1 text-[13px] font-semibold">{t("settings.window")}</legend>
-    <div class="flex items-center gap-2">
-      <span class="flex-1">
-        <span class="block text-[12px] font-medium">{t("settings.alwaysOnTop")}</span>
-      </span>
+  {#if settingsSection === "models"}
+  <fieldset class="mynx-card mynx-form flex flex-col gap-3 p-4">
+    <legend class="px-1 text-body font-semibold">{t("chatNext.title")}</legend>
+    <div class="flex flex-col items-start gap-2">
+      <p class="text-callout text-text-secondary">{t("chatNext.settingsMoved")}</p>
       <button
         type="button"
-        class="relative h-5 w-9 rounded-full border transition-colors {app.alwaysOnTop
-          ? 'border-accent bg-accent'
-          : 'border-border bg-surface-2'}"
-        onclick={togglePin}
-        role="switch"
-        aria-checked={app.alwaysOnTop}
-        aria-label={t("settings.alwaysOnTop")}
+        class="mynx-btn mynx-btn-primary"
+        onclick={() => {
+          requestChatSettings();
+          navigate("/chat");
+        }}
       >
-        <span
-          class="absolute left-0.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white transition-transform {app.alwaysOnTop
-            ? 'translate-x-4'
-            : ''}"
-        ></span>
+        {t("chatNext.openChatSettings")}
       </button>
     </div>
   </fieldset>
+  {/if}
 
+  {#if settingsSection === "window"}
+  <fieldset class="mynx-card mynx-form flex flex-col gap-3 p-4" disabled={saving}>
+    <legend class="px-1 text-body font-semibold">{t("settings.window")}</legend>
+    <div class="flex items-center gap-2">
+      <span class="flex-1">
+        <span class="block text-callout font-medium">{t("settings.alwaysOnTop")}</span>
+      </span>
+      <Switch
+        checked={app.alwaysOnTop}
+        label={t("settings.alwaysOnTop")}
+        onchange={() => togglePin()}
+      />
+    </div>
+  </fieldset>
+  {/if}
+
+  {#if settingsSection === "about"}
   <RStatusCard />
 
-  <section class="mynx-card flex flex-col gap-3 p-4" aria-labelledby="settings-about-heading">
+  <section class="mynx-card mynx-form-card flex flex-col gap-3 p-4" aria-labelledby="settings-about-heading">
     <header class="flex items-center gap-3">
       <img src="/mynx.svg" alt="" class="h-9 w-9 shrink-0" />
       <div class="min-w-0">
-        <h2 id="settings-about-heading" class="text-[13px] font-semibold">{t("settings.about")}</h2>
-        <p class="text-[11px] text-text-secondary">{t("settings.about.description")}</p>
+        <h2 id="settings-about-heading" class="text-body font-semibold">{t("settings.about")}</h2>
+        <p class="text-footnote text-text-secondary">{t("settings.about.description")}</p>
       </div>
     </header>
 
     <div class="flex flex-col gap-2 border-y border-border py-3 sm:flex-row sm:items-center">
-      <span class="text-[12px] text-text-secondary">{t("about.version")}</span>
-      <span class="mynx-truncate min-w-0 font-mono text-[12px]" title={version}>{version}</span>
+      <span class="text-callout text-text-secondary">{t("about.version")}</span>
+      <span class="mynx-truncate min-w-0 font-mono text-callout" title={version}>{version}</span>
     </div>
 
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -298,7 +364,7 @@
       >
         <IconBrandGithub size={16} stroke={1.7} aria-hidden="true" />
         <span class="shrink-0">{t("about.github")}</span>
-        <span class="mynx-truncate min-w-0 flex-1 text-left font-mono text-[10px] text-text-secondary">{MYNX_GITHUB_URL.replace("https://", "")}</span>
+        <span class="mynx-truncate min-w-0 flex-1 text-left font-mono text-caption2 text-text-secondary">{MYNX_GITHUB_URL.replace("https://", "")}</span>
         <IconExternalLink size={14} stroke={1.7} aria-hidden="true" />
       </button>
       <button
@@ -315,17 +381,20 @@
     <div class="flex flex-wrap items-center gap-2">
       <button
         type="button"
-        class="mynx-btn min-h-8 px-2.5 text-[11px]"
+        class="mynx-btn min-h-8 px-2.5 text-footnote"
         onclick={() => void checkForUpdates()}
         disabled={app.update.status === "checking" || app.update.status === "downloading"}
       >
         {t("about.checkUpdate")}
       </button>
       {#if updateLine}
-        <p class="mynx-truncate min-w-0 flex-1 text-[11px] text-text-secondary" title={updateLine}>
+        <p class="mynx-truncate min-w-0 flex-1 text-footnote text-text-secondary" title={updateLine}>
           {updateLine}
         </p>
       {/if}
     </div>
   </section>
+  {/if}
+  </div>
+  </div>
 </section>

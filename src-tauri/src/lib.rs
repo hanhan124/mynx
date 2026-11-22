@@ -18,6 +18,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::default().build())
@@ -65,6 +66,14 @@ pub fn run() {
             commands::charts::charts_install_template_package,
             commands::charts::charts_run,
             commands::charts::charts_cancel,
+            commands::chat::chat_store_load,
+            commands::chat::chat_store_is_empty,
+            commands::chat::chat_store_put_conversation,
+            commands::chat::chat_store_delete_conversation,
+            commands::chat::chat_store_put_meta,
+            commands::chat::chat_secret_get,
+            commands::chat::chat_secret_set,
+            commands::chat::chat_secret_delete,
         ])
         .setup(|app| {
             let handle = app.handle();
@@ -84,12 +93,17 @@ pub fn run() {
                 mynx_core::settings::SettingsStore::open(config_dir.join("settings.sqlite3"))
                     .map_err(|e| format!("settings store: {e}"))?;
 
+            // AI chat (chat-next) database beside the settings store.
+            let chat_store = mynx_core::chat_store::ChatStore::open(config_dir.join("chat.sqlite3"))
+                .map_err(|e| format!("chat store: {e}"))?;
+
             // Migrate the legacy config.json (tauri-plugin-store file) once;
             // keys are identical so this is lossless.
             migrate_legacy_store(&store, &config_dir);
 
             let app_state = Arc::new(AppState {
                 settings: store,
+                chat: chat_store,
                 jobs: Arc::new(mynx_jobs::JobManager::new()),
                 r: mynx_core::r::RRuntime::new(),
             });

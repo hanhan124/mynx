@@ -161,6 +161,15 @@
 
     "updater:default",
     "os:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    {
+      "comment": "http: chat streaming / model list / web search through user-configured OpenAI-compatible APIs (CORS is enforced by WebView2 for direct fetches).",
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://**" },
+        { "url": "http://localhost:**" },
+        { "url": "http://127.0.0.1:**" }
+      ]
+    }
   ]
 }

@@ -5,18 +5,23 @@
   import IconChartBar from "@tabler/icons-svelte/icons/chart-bar";
   import IconDna2 from "@tabler/icons-svelte/icons/dna-2";
   import IconChartHistogram from "@tabler/icons-svelte/icons/chart-histogram";
+  import IconMessageChatbot from "@tabler/icons-svelte/icons/message-chatbot";
   import IconChevronRight from "@tabler/icons-svelte/icons/chevron-right";
   import IconChevronDown from "@tabler/icons-svelte/icons/chevron-down";
   import { t } from "../../app/i18n.svelte";
   import { pushToast } from "../../app/state.svelte";
   import { navigate } from "../../lib/router.svelte";
   import * as client from "../../app/tauri.js";
+  import { Popover } from "bits-ui";
   import EmptyState from "../../components/EmptyState.svelte";
   import IconAlertTriangle from "@tabler/icons-svelte/icons/alert-triangle";
   import IconSearch from "@tabler/icons-svelte/icons/search";
+  import IconCheck from "@tabler/icons-svelte/icons/check";
+  import IconWorld from "@tabler/icons-svelte/icons/world";
   import { isSearchEngine, SEARCH_ENGINES, searchUrl, type SearchEngine } from "./search.js";
   import { patchSettings } from "../../app/state.svelte";
   import WeatherWidget from "./WeatherWidget.svelte";
+  import { isChatConfigured, queuePendingPrompt, resolveSubmitIntent } from "../chat-next/handoff.js";
 
   interface ToolCard {
     route: string;
@@ -26,6 +31,7 @@
   }
 
   const tools: ToolCard[] = [
+    { route: "/chat", icon: IconMessageChatbot, titleKey: "tool.chat.title", tile: "mynx-tool-tile--chat" },
     { route: "/charts", icon: IconChartHistogram, titleKey: "tool.charts.title", tile: "mynx-tool-tile--charts" },
     { route: "/qpcr", icon: IconChartBar, titleKey: "tool.qpcr.title", tile: "mynx-tool-tile--qpcr" },
     { route: "/image", icon: IconPhoto, titleKey: "tool.image.title", tile: "mynx-tool-tile--image" },
@@ -172,9 +178,7 @@
     navigate(route);
   }
 
-  function chooseSearchEngine(event: Event): void {
-    const value = (event.currentTarget as HTMLSelectElement).value;
-    if (!isSearchEngine(value)) return;
+  function chooseSearchEngine(value: SearchEngine): void {
     searchEngineTouched = true;
     searchEngine = value;
     void patchSettings({ searchEngine: value });
@@ -188,10 +192,72 @@
     });
   }
 
+  /**
+   * Chat handoff (FLIP plan A): freeze the search box's rect into a fixed
+   * "ghost" that carries the typed text, hide the real box (opacity only —
+   * never display:none), queue the prompt and navigate. The chat page measures
+   * its composer after mount and animates the ghost onto it (320ms).
+   */
+  function startChatHandoff(query: string): void {
+    const source = document.querySelector<HTMLElement>(".mynx-home-search");
+    if (source) {
+      const rect = source.getBoundingClientRect();
+      const cs = getComputedStyle(source);
+      const ghost = document.createElement("div");
+      ghost.id = "mynx-chat-ghost";
+      ghost.textContent = query;
+      Object.assign(ghost.style, {
+        position: "fixed",
+        left: `${rect.left}px`,
+        top: `${rect.top}px`,
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+        boxSizing: "border-box",
+        borderRadius: cs.borderRadius,
+        border: cs.border,
+        background: cs.backgroundColor,
+        boxShadow: cs.boxShadow,
+        color: cs.color,
+        font: cs.font,
+        fontSize: cs.fontSize,
+        lineHeight: cs.lineHeight,
+        paddingInline: cs.paddingLeft,
+        display: "flex",
+        alignItems: "center",
+        zIndex: "80",
+        pointerEvents: "none",
+      });
+      document.body.appendChild(ghost);
+      source.style.opacity = "0";
+    }
+    queuePendingPrompt(query);
+    navigate("/chat");
+  }
+
+  function submitHomeQuery(): void {
+    const query = toolQuery.trim();
+    if (!query) return;
+    const intent = resolveSubmitIntent(
+      query,
+      visibleTools.map((tool) => ({ route: tool.route, title: t(tool.titleKey) })),
+      isChatConfigured(),
+    );
+    if (intent.kind === "tool") {
+      navigate(intent.route);
+      return;
+    }
+    if (intent.kind === "chat") {
+      toolQuery = "";
+      startChatHandoff(query);
+      return;
+    }
+    searchWeb();
+  }
+
   function handleSearchKeydown(event: KeyboardEvent): void {
     if (event.key !== "Enter" || event.isComposing) return;
     event.preventDefault();
-    searchWeb();
+    submitHomeQuery();
   }
 
   function warmTool(route: string): void {
@@ -210,31 +276,18 @@
   >
     <div class="flex items-center gap-2.5">
       <img src="/mynx.svg" alt="" aria-hidden="true" class="h-9 w-9 sm:h-10 sm:w-10" />
-      <h1 class="text-[21px] leading-none font-bold tracking-tight sm:text-[24px]">{t("app.name")}</h1>
+      <h1 class="mynx-home-brand text-brand leading-none font-bold tracking-tight sm:text-brand-lg">{t("app.name")}</h1>
     </div>
     <div class="mynx-home-weather mt-2 min-h-5 text-center">
       <WeatherWidget />
     </div>
 
     <search class="mt-3 flex w-full max-w-[680px] items-center" aria-label={t("home.searchAria")}>
-      <label class="mynx-home-search flex min-h-[38px] w-full min-w-0 items-center gap-2 rounded-xl border border-border bg-surface px-3 sm:min-h-[42px] sm:gap-2.5 sm:px-3.5">
-        <IconSearch size={18} stroke={1.7} class="shrink-0 text-text-secondary" aria-hidden="true" />
-        <span class="mynx-home-engine-select relative flex h-8 w-5 shrink-0 items-center justify-center text-text-secondary">
-          <IconChevronDown size={14} stroke={1.7} aria-hidden="true" />
-          <select
-            class="mynx-home-search-engine absolute inset-0 h-full w-full cursor-pointer appearance-none bg-transparent text-[1px] text-transparent outline-none"
-            value={searchEngine}
-            onchange={chooseSearchEngine}
-            aria-label={t("home.searchEngine")}
-          >
-            {#each SEARCH_ENGINES as engine (engine.id)}
-              <option value={engine.id}>{engine.label}</option>
-            {/each}
-          </select>
-        </span>
+      <div class="mynx-home-search flex min-h-[38px] w-full min-w-0 items-center gap-2 rounded-full border border-border bg-surface px-4 sm:min-h-[42px] sm:gap-2.5">
+        <IconSearch size={17} stroke={1.7} class="shrink-0 text-text-secondary" aria-hidden="true" />
         <input
           type="search"
-          class="min-w-0 flex-1 bg-transparent text-[12px] outline-none sm:text-[13px]"
+          class="mynx-home-search-input min-w-0 flex-1 bg-transparent text-callout outline-none sm:text-body"
           placeholder={t("home.searchPlaceholder")}
           bind:value={toolQuery}
           aria-label={t("home.searchAria")}
@@ -245,7 +298,47 @@
           autocapitalize="none"
           spellcheck={false}
         />
-      </label>
+        <Popover.Root>
+          <Popover.Trigger
+            class="mynx-home-engine-btn flex shrink-0 items-center gap-1 rounded-full px-1.5 py-1 text-text-secondary hover:bg-hover hover:text-text"
+            aria-label={t("home.searchEngine")}
+            title={t("home.searchEngine")}
+          >
+            <IconWorld size={15} stroke={1.7} />
+            <IconChevronDown size={12} stroke={1.7} />
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content
+              class="mynx-card mynx-popover z-50 w-[min(260px,80vw)] overflow-hidden p-1 shadow-(--mynx-shadow-pop)"
+              sideOffset={8}
+              align="end"
+            >
+              <p class="px-3 pb-1 pt-2 text-caption2 uppercase tracking-wide text-text-secondary">
+                {t("home.searchEngine")}
+              </p>
+              {#each SEARCH_ENGINES as engine (engine.id)}
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-2 rounded-(--mynx-radius-control) px-3 py-1.5 text-left text-callout {engine.id === searchEngine
+                    ? 'bg-selected text-text'
+                    : 'hover:bg-hover text-text-secondary'}"
+                  role="menuitemradio"
+                  aria-checked={engine.id === searchEngine}
+                  onclick={() => chooseSearchEngine(engine.id)}
+                >
+                  <span class="min-w-0 flex-1">{engine.label}</span>
+                  {#if engine.id === searchEngine}
+                    <IconCheck size={13} stroke={2} class="shrink-0 text-accent" aria-hidden="true" />
+                  {/if}
+                </button>
+              {/each}
+              <p class="border-t border-border px-3 py-2 text-caption2 leading-relaxed text-text-secondary">
+                {t("home.engineFallbackHint")}
+              </p>
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
+      </div>
       <span id="home-search-hint" class="sr-only">{t("home.searchHint")}</span>
     </search>
   </header>
@@ -271,19 +364,20 @@
 
   <section class="mt-4 flex flex-col gap-3 sm:mt-5" aria-label={t("home.toolsHeading")}>
     <h2 class="mynx-section-title flex items-baseline gap-1">
-      <span class="mynx-home-tool-count text-[20px] leading-none tabular-nums">{tools.length}</span>
-      <span class="text-[12px] font-semibold text-text-secondary">{t("home.tools")}</span>
+      <span class="mynx-home-tool-count text-title3 leading-none tabular-nums">{tools.length}</span>
+      <span class="text-callout font-semibold text-text-secondary">{t("home.tools")}</span>
     </h2>
 
     {#if visibleTools.length === 0}
       <EmptyState title={t("home.noMatch", { query: toolQuery })} icon={IconSearch} />
     {:else}
       <div class="mynx-home-grid grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-3">
-        {#each visibleTools as tool (tool.route)}
+        {#each visibleTools as tool, index (tool.route)}
           {@const ToolIcon = tool.icon}
           <button
             type="button"
-            class="mynx-card mynx-home-tool group cursor-pointer flex min-h-[56px] items-center gap-2.5 p-2.5 text-left sm:min-h-[64px] sm:gap-3 sm:p-3 lg:min-h-[68px]"
+            class="mynx-card mynx-home-tool mynx-home-tool-enter group cursor-pointer flex min-h-[56px] items-center gap-2.5 p-2.5 text-left sm:min-h-[64px] sm:gap-3 sm:p-3 lg:min-h-[68px]"
+            style={`animation-delay: ${Math.min(index * 35, 175)}ms`}
             onpointerenter={() => warmTool(tool.route)}
             onfocus={() => warmTool(tool.route)}
             onclick={() => openTool(tool.route)}
@@ -292,7 +386,7 @@
             <span class="mynx-tool-tile {tool.tile}" aria-hidden="true">
               <ToolIcon size={20} stroke={1.85} />
             </span>
-            <span class="mynx-truncate min-w-0 flex-1 text-[14px] font-semibold">{t(tool.titleKey)}</span>
+            <span class="mynx-truncate min-w-0 flex-1 text-subheadline font-semibold">{t(tool.titleKey)}</span>
             <IconChevronRight size={15} stroke={2} class="shrink-0 text-text-secondary group-hover:text-accent" aria-hidden="true" />
           </button>
         {/each}
@@ -306,18 +400,18 @@
       role="alert"
       aria-label={t("home.recentFailures")}
     >
-      <h2 class="flex items-center gap-2 text-[13px] font-semibold text-danger">
+      <h2 class="flex items-center gap-2 text-body font-semibold text-danger">
         <IconAlertTriangle size={16} stroke={1.6} />
         {t("home.recentFailures")}
       </h2>
       <ul class="mt-2 flex flex-col divide-y divide-border">
         {#each recentFailures as failure (String(failure.id ?? failure.label ?? ""))}
           <li class="flex items-start gap-2 py-2">
-            <span class="mynx-truncate min-w-0 flex-1 text-[12px]" title={String(failure.label ?? "")}>
+            <span class="mynx-truncate min-w-0 flex-1 text-callout" title={String(failure.label ?? "")}>
               {String(failure.label ?? "")}
             </span>
             <span
-              class="mynx-truncate max-w-[45%] text-[11px] text-danger"
+              class="mynx-truncate max-w-[45%] text-footnote text-danger"
               title={String(failure.error ?? "")}
             >
               {String(failure.error ?? "")}

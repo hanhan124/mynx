@@ -44,7 +44,7 @@
           "$RESOURCE/**"
         ]
       },
-      "csp": "default-src 'self'; img-src 'self' data: asset: http://asset.localhost blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; connect-src 'self' ipc: http://ipc.localhost https://github.com https://api.github.com https://release-assets.githubusercontent.com https://objects.githubusercontent.com https://api.open-meteo.com https://ipwho.is"
+      "csp": "default-src 'self'; img-src 'self' data: asset: http://asset.localhost blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; connect-src 'self' ipc: http://ipc.localhost https: http://localhost:* http://127.0.0.1:* https://github.com https://api.github.com https://release-assets.githubusercontent.com https://objects.githubusercontent.com https://api.open-meteo.com https://ipwho.is"
     }
   },
   "bundle": {

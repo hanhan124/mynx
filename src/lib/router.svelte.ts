@@ -6,7 +6,7 @@ import {
   recordChartNavigationStage,
 } from "./chart-navigation-timings.js";
 
-export const ROUTES = ["/", "/settings", "/image", "/qpcr", "/rnaseq", "/charts"] as const;
+export const ROUTES = ["/", "/chat", "/settings", "/image", "/qpcr", "/rnaseq", "/charts"] as const;
 
 export type Route = (typeof ROUTES)[number];
 
@@ -14,6 +14,8 @@ export type Route = (typeof ROUTES)[number];
 const REDIRECTS: Record<string, Route> = {
   "/tiff": "/image",
   "/search-window": "/",
+  // The chat rewrite previewed here; it now lives at /chat.
+  "/chat-next": "/chat",
 };
 
 const ROUTE_SET = new Set<string>(ROUTES);
@@ -100,6 +102,8 @@ export function routeTitleKey(route: string): string {
   switch (route) {
     case "/":
       return "nav.home";
+    case "/chat":
+      return "chat.title";
     case "/settings":
       return "nav.settings";
     case "/image":

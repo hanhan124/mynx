@@ -22,6 +22,7 @@
   type PageModule = { default: Component };
   const pageLoaders: Record<string, () => Promise<PageModule>> = {
     "/": () => import("../features/home/HomePage.svelte"),
+    "/chat": () => import("../features/chat-next/ChatNextPage.svelte"),
     "/settings": () => import("../features/settings/SettingsPage.svelte"),
     "/image": () => import("../features/image/ImagePage.svelte"),
     "/qpcr": () => import("../features/qpcr/QpcrPage.svelte"),

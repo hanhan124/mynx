@@ -54,3 +54,29 @@ Mynx 使用以下第三方开源组件。各组件版权归其各自作者所有
 
 - 应用图标与界面素材为 Mynx 原创内容。
 - 本项目自身代码以 Apache License 2.0 发布,详见 [LICENSE](./LICENSE)。
+
+
+## AI chat (chat-next) dependencies — added 2026-11-22
+
+Runtime dependencies of the rebuilt chat page (`src/features/chat-next`). Each license was
+checked against Mynx's Apache-2.0 before adding. No source code from other chat clients
+(LibreChat, Open WebUI, LobeChat, Cherry Studio) was copied; they were used as behavioural
+references only.
+
+| Package | Version | License |
+| --- | --- | --- |
+| ai (Vercel AI SDK) | 7.0.179 | Apache-2.0 |
+| @ai-sdk/openai | 4.0.122 | Apache-2.0 |
+| @ai-sdk/openai-compatible | 3.0.94 | Apache-2.0 |
+| @ai-sdk/anthropic | 4.0.107 | Apache-2.0 |
+| @ai-sdk/google | 4.0.124 | Apache-2.0 |
+| @ai-sdk/mcp | 2.0.102 | Apache-2.0 |
+| @ai-sdk/svelte | 5.0.179 | Apache-2.0 |
+| @ai-sdk/provider, @ai-sdk/provider-utils | 4.0.39, 5.0.83 | Apache-2.0 |
+| zod (peer of the AI SDK) | 4.6.7 | MIT |
+| svelte-streamdown | 5.1.1 | MIT |
+| marked, pele, @tanstack/highlight, cn, @floating-ui/dom (via svelte-streamdown) | 18.0.12, 1.13.0, 1.2.12, 0.5.2, 1.8.0 | MIT |
+| katex (nested copy via svelte-streamdown) | 0.16.47 | MIT |
+| dompurify | 3.5.0 | MPL-2.0 OR Apache-2.0 (used under Apache-2.0) |
+| pdfjs-dist | 6.5.438 | Apache-2.0 |
+| keyring (Rust crate, OS keychain) | 3.6 | MIT OR Apache-2.0 |
