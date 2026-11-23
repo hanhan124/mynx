@@ -4,20 +4,41 @@
   // svelte-streamdown (marked + highlighting + math + mermaid) loads on the
   // first rendered answer, not with the page.
   let cached: Component<any> | null = null;
-  let loading: Promise<Component<any>> | null = null;
+  let cachedMath: Component<any> | null = null;
+  let loading: Promise<{ renderer: Component<any>; math: Component<any> }> | null = null;
 
-  function loadRenderer(): Promise<Component<any>> {
-    loading ??= import("svelte-streamdown").then((mod) => (cached = mod.Streamdown as Component<any>));
+  function loadRenderer(): Promise<{ renderer: Component<any>; math: Component<any> }> {
+    // The Math component brings KaTeX styles (~25 KB + fonts) only when an
+    // answer is rendered.
+    loading ??= Promise.all([
+      import("svelte-streamdown"),
+      import("svelte-streamdown/math"),
+    ])
+      .then(([mod, math]) => {
+        cached = mod.Streamdown as Component<any>;
+        cachedMath = math.default as Component<any>;
+        return { renderer: cached, math: cachedMath };
+      })
+      .catch((error: unknown) => {
+        // Let the next answer try again instead of staying plain text forever.
+        loading = null;
+        throw error;
+      });
     return loading;
   }
+
+  /** Formulas with an unknown command still render (in red) instead of vanishing. */
+  const KATEX_CONFIG = { throwOnError: false, strict: "ignore", trust: false } as const;
 </script>
 
 <script lang="ts">
   import { openExternal } from "../../../app/tauri.js";
   import { t } from "../../../app/i18n.svelte";
+  import { normalizeMath } from "../core/markdown.js";
 
   let { content, streaming = false }: { content: string; streaming?: boolean } = $props();
   let Renderer = $state<Component<any> | null>(cached);
+  let MathRenderer = $state<Component<any> | null>(cachedMath);
   const translations = $derived({
     controls: {
       copyCode: t("chatNext.md.copyCode"),
@@ -37,9 +58,22 @@
     },
   });
   let root = $state<HTMLElement | null>(null);
+  let loadFailed = $state(false);
+  const source = $derived(normalizeMath(content));
 
   $effect(() => {
-    if (!Renderer) void loadRenderer().then((component) => (Renderer = component));
+    if (Renderer && MathRenderer) return;
+    void loadRenderer().then(
+      ({ renderer, math }) => {
+        Renderer = renderer;
+        MathRenderer = math;
+        loadFailed = false;
+      },
+      (error: unknown) => {
+        loadFailed = true;
+        console.error("Markdown renderer failed to load", error);
+      },
+    );
   });
 
   // External links open in the system browser, never inside the app window.
@@ -59,9 +93,17 @@
 </script>
 
 <div class="mynx-cn-markdown text-body" bind:this={root}>
-  {#if Renderer}
-    <Renderer {content} {translations} parseIncompleteMarkdown={streaming} renderHtml={false} />
+  {#if Renderer && MathRenderer}
+    <Renderer
+      content={source}
+      {translations}
+      components={{ math: MathRenderer }}
+      katexConfig={KATEX_CONFIG}
+      static={!streaming}
+      parseIncompleteMarkdown={streaming}
+      renderHtml={false}
+    />
   {:else}
-    <div class="mynx-cn-plain">{content}</div>
+    <div class="mynx-cn-plain" title={loadFailed ? t("chatNext.md.loadFailed") : undefined}>{content}</div>
   {/if}
 </div>

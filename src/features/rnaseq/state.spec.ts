@@ -549,7 +549,10 @@ describe("run state machine", () => {
     expect(rnaseq.logs).toHaveLength(1);
     expect(rnaseq.logs[0].message).toBe("engine started");
     expect(rnaseq.config.output_dir).toBe("C:\\out");
-    expect(rnaseq.config.run_name).toBe("run1");
+    // An auto name stays "auto"; the run itself got a timestamped folder.
+    expect(rnaseq.config.run_name).toBe("auto");
+    const sent = mocks.rnaseqRun.mock.calls.at(-1)?.[0] as { run_name: string };
+    expect(sent.run_name).toMatch(/^run_\d{8}_\d{6}$/);
     expect(rnaseq.resultDir).toBe("C:\\out\\run1");
     expect(rnaseq.resultFiles).toEqual(files);
     expect(rnaseq.deSummary).toEqual(summary);

@@ -13,33 +13,40 @@ import {
 } from "../patch-render.js";
 
 /**
- * ExcelJS compatibility worker ("dumb renderer").
+ * ExcelJS compatibility worker ("dumb renderer") that owns the open workbook.
  *
- * The qPCR pipeline never parses xlsx on the main thread: workbook bytes come
- * in as an ArrayBuffer, this worker loads them with ExcelJS and either
- * extracts a JSON SheetSnapshot for Rust or applies a WorkbookPatch produced
- * by Rust and returns the saved bytes. No pipeline logic lives here.
+ * The qPCR pipeline never parses xlsx on the main thread. The page opens a
+ * workbook once (its bytes are *transferred* here, not copied) and then
+ * addresses it by handle: extracts reuse the parsed workbook instead of
+ * re-parsing, and only rendered results travel back (transferred as well).
+ * Rendering never touches the committed state; the page commits the rendered
+ * bytes after they were saved to disk, so a failed save changes nothing.
+ * No pipeline logic lives here.
  */
 
 /** Solid ARGB fill the calculation pipeline treats as the imputation flag. */
 const YELLOW_FILL_ARGB = "FFFFFF00";
 const GROUP_MAPPING_SHEET = "Group Mapping";
 
-export interface LoadPayload {
+export interface OpenPayload {
+  handle: number;
   bytes: ArrayBuffer;
+}
+export interface HandlePayload {
+  handle: number;
 }
 export interface LoadResult {
   sheetNames: string[];
 }
 export interface ExtractPayload {
-  bytes: ArrayBuffer;
+  handle: number;
   sheetName: string;
 }
 export interface ExtractResult {
   snapshot: SheetSnapshot;
 }
 export interface ApplyPatchPayload {
-  bytes: ArrayBuffer;
+  handle: number;
   patch: WorkbookPatch;
 }
 export interface ApplyPatchResult {
@@ -47,35 +54,87 @@ export interface ApplyPatchResult {
   sheetNames: string[];
 }
 export interface GroupRenamePayload {
-  bytes: ArrayBuffer;
+  handle: number;
   sheetName: string;
   renames: Record<string, string>;
+}
+export interface CommitPayload {
+  handle: number;
+  bytes: ArrayBuffer;
 }
 export interface TemplateResult {
   bytes: ArrayBuffer;
 }
 
+export type WorkerResult = LoadResult | ExtractResult | ApplyPatchResult | TemplateResult | null;
+
 export type WorkerRequest =
-  | { id: number; op: "load"; payload: LoadPayload }
+  | { id: number; op: "open"; payload: OpenPayload }
   | { id: number; op: "extract"; payload: ExtractPayload }
   | { id: number; op: "applyPatch"; payload: ApplyPatchPayload }
   | { id: number; op: "renameGroups"; payload: GroupRenamePayload }
+  | { id: number; op: "commit"; payload: CommitPayload }
+  | { id: number; op: "close"; payload: HandlePayload }
   | { id: number; op: "createTemplate" };
 
 export type WorkerResponse =
-  | { id: number; ok: true; result: LoadResult | ExtractResult | ApplyPatchResult | TemplateResult }
+  | { id: number; ok: true; result: WorkerResult }
   | { id: number; ok: false; error: string };
+
+/** Committed bytes (what is on disk) plus the lazily parsed workbook. */
+interface Session {
+  bytes: ArrayBuffer;
+  parsed: Promise<ExcelJS.Workbook> | null;
+}
+
+const sessions = new Map<number, Session>();
+
+function session(handle: number): Session {
+  const found = sessions.get(handle);
+  if (!found) throw new Error(`workbook is not open: ${handle}`);
+  return found;
+}
+
+/** Parsed committed workbook, parsed at most once per committed state. */
+function parsed(handle: number): Promise<ExcelJS.Workbook> {
+  const current = session(handle);
+  if (!current.parsed) {
+    const loading = loadWorkbook(current.bytes);
+    // A failed parse must not stick: the next call tries again.
+    loading.catch(() => {
+      if (current.parsed === loading) current.parsed = null;
+    });
+    current.parsed = loading;
+  }
+  return current.parsed;
+}
+
+/**
+ * Workbook to render into: the parsed committed workbook, detached from the
+ * session so the mutation never leaks into later extracts. The committed
+ * bytes stay as they are until the page commits.
+ */
+async function takeForRender(handle: number): Promise<ExcelJS.Workbook> {
+  const workbook = await parsed(handle);
+  session(handle).parsed = null;
+  return workbook;
+}
 
 function toBuffer(bytes: ArrayBuffer): ExcelJS.Buffer {
   return bytes as unknown as ExcelJS.Buffer;
 }
 
+/** ExcelJS output as a standalone ArrayBuffer (no copy when it already is one). */
 function toArrayBuffer(data: ExcelJS.Buffer | ArrayBuffer): ArrayBuffer {
   if (data instanceof ArrayBuffer) return data;
-  const view = new Uint8Array(data as unknown as ArrayBufferLike);
-  const out = new ArrayBuffer(view.byteLength);
-  new Uint8Array(out).set(view);
-  return out;
+  const raw: unknown = data;
+  const view = ArrayBuffer.isView(raw)
+    ? new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength)
+    : new Uint8Array(raw as ArrayBufferLike);
+  if (view.buffer instanceof ArrayBuffer && view.byteOffset === 0 && view.byteLength === view.buffer.byteLength) {
+    return view.buffer;
+  }
+  return view.slice().buffer;
 }
 
 async function loadWorkbook(bytes: ArrayBuffer): Promise<ExcelJS.Workbook> {
@@ -172,9 +231,7 @@ function applyPatch(workbook: ExcelJS.Workbook, patch: WorkbookPatch): void {
   }
 }
 
-async function handle(
-  request: WorkerRequest,
-): Promise<LoadResult | ExtractResult | ApplyPatchResult | TemplateResult> {
+async function handle(request: WorkerRequest): Promise<WorkerResult> {
   if (request.op === "createTemplate") {
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "Mynx";
@@ -199,18 +256,36 @@ async function handle(
     const written = await workbook.xlsx.writeBuffer();
     return { bytes: toArrayBuffer(written) };
   }
-  if (request.op === "load") {
-    const workbook = await loadWorkbook(request.payload.bytes);
-    return { sheetNames: sheetNamesOf(workbook) };
+  if (request.op === "open") {
+    // Re-opening a handle (reload after an external rewrite) replaces it.
+    const { handle: id, bytes } = request.payload;
+    sessions.set(id, { bytes, parsed: null });
+    try {
+      return { sheetNames: sheetNamesOf(await parsed(id)) };
+    } catch (err) {
+      sessions.delete(id);
+      throw err;
+    }
+  }
+  if (request.op === "close") {
+    sessions.delete(request.payload.handle);
+    return null;
+  }
+  if (request.op === "commit") {
+    // The rendered bytes are now on disk: they become the committed state.
+    const current = session(request.payload.handle);
+    current.bytes = request.payload.bytes;
+    current.parsed = null;
+    return null;
   }
   if (request.op === "extract") {
-    const workbook = await loadWorkbook(request.payload.bytes);
+    const workbook = await parsed(request.payload.handle);
     const sheet = workbook.getWorksheet(request.payload.sheetName);
     if (!sheet) throw new Error(`worksheet not found: ${request.payload.sheetName}`);
     return { snapshot: snapshotSheet(sheet, sheet.name) };
   }
   if (request.op === "renameGroups") {
-    const workbook = await loadWorkbook(request.payload.bytes);
+    const workbook = await takeForRender(request.payload.handle);
     const sheet = workbook.getWorksheet(request.payload.sheetName);
     if (!sheet) throw new Error(`worksheet not found: ${request.payload.sheetName}`);
     const mapping = workbook.getWorksheet(GROUP_MAPPING_SHEET)
@@ -246,7 +321,7 @@ async function handle(
     const written = await workbook.xlsx.writeBuffer();
     return { bytes: toArrayBuffer(written), sheetNames: sheetNamesOf(workbook) };
   }
-  const workbook = await loadWorkbook(request.payload.bytes);
+  const workbook = await takeForRender(request.payload.handle);
   applyPatch(workbook, request.payload.patch);
   const written = await workbook.xlsx.writeBuffer();
   return {
@@ -260,7 +335,9 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   try {
     const result = await handle(request);
     const response: WorkerResponse = { id: request.id, ok: true, result };
-    (self as unknown as Worker).postMessage(response);
+    // Rendered bytes are handed over, not copied.
+    const transfer = result && "bytes" in result ? [result.bytes] : [];
+    (self as unknown as Worker).postMessage(response, transfer);
   } catch (err) {
     const response: WorkerResponse = {
       id: request.id,

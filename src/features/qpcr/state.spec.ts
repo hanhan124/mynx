@@ -41,9 +41,12 @@ const mocks = vi.hoisted(() => ({
   readFileBytes: vi.fn(),
   workerApplyPatch: vi.fn(),
   workerExtractSheet: vi.fn(),
-  workerLoadWorkbook: vi.fn(),
+  workerOpenWorkbook: vi.fn(),
+  workerReloadWorkbook: vi.fn(),
+  workerCommitWorkbook: vi.fn(),
+  workerCloseWorkbook: vi.fn(),
   workerRenameGroups: vi.fn(),
-  writeFileBytes: vi.fn(),
+  replaceFileBytes: vi.fn(),
 }));
 
 vi.mock("../../app/tauri.js", () => ({
@@ -67,9 +70,12 @@ vi.mock("./client.js", () => ({
   readFileBytes: mocks.readFileBytes,
   workerApplyPatch: mocks.workerApplyPatch,
   workerExtractSheet: mocks.workerExtractSheet,
-  workerLoadWorkbook: mocks.workerLoadWorkbook,
+  workerOpenWorkbook: mocks.workerOpenWorkbook,
+  workerReloadWorkbook: mocks.workerReloadWorkbook,
+  workerCommitWorkbook: mocks.workerCommitWorkbook,
+  workerCloseWorkbook: mocks.workerCloseWorkbook,
   workerRenameGroups: mocks.workerRenameGroups,
-  writeFileBytes: mocks.writeFileBytes,
+  replaceFileBytes: mocks.replaceFileBytes,
 }));
 
 function resetState(): void {
@@ -77,7 +83,7 @@ function resetState(): void {
   qpcr.loadMessage = "";
   qpcr.filePath = "";
   qpcr.fileName = "";
-  qpcr.workbookBytes = null;
+  qpcr.workbookHandle = null;
   qpcr.sheetNames = [];
   qpcr.selectedSheet = "";
   qpcr.transformPhase = "idle";
@@ -357,9 +363,8 @@ describe("path helpers", () => {
 
 describe("loadWorkbook", () => {
   it("reads bytes, lists sheets and pre-detects Transformed Data", async () => {
-    const bytes = new ArrayBuffer(8);
-    mocks.readFileBytes.mockResolvedValue(bytes);
-    mocks.workerLoadWorkbook.mockResolvedValue({
+    mocks.workerOpenWorkbook.mockResolvedValue({
+      handle: 5,
       sheetNames: ["Sheet1", "Transformed Data"],
     });
     const snapshot: SheetSnapshot = {
@@ -393,7 +398,9 @@ describe("loadWorkbook", () => {
     expect(qpcr.loadPhase).toBe("success");
     expect(qpcr.filePath).toBe("D:/data/run file.xlsx");
     expect(qpcr.fileName).toBe("run file.xlsx");
-    expect(qpcr.workbookBytes).toBe(bytes);
+    expect(mocks.workerOpenWorkbook).toHaveBeenCalledWith("D:/data/run file.xlsx");
+    expect(mocks.workerExtractSheet).toHaveBeenCalledWith(5, "Transformed Data");
+    expect(qpcr.workbookHandle).toBe(5);
     expect(qpcr.selectedSheet).toBe("Sheet1");
     expect(qpcr.geneNames).toEqual(["Gapdh"]);
     expect(qpcr.groups).toEqual(["Control"]);
@@ -404,22 +411,21 @@ describe("loadWorkbook", () => {
 
   it("clearWorkbook resets the page state", () => {
     qpcr.filePath = "f.xlsx";
-    qpcr.workbookBytes = new ArrayBuffer(4);
+    qpcr.workbookHandle = 3;
     qpcr.sheetNames = ["Sheet1"];
     clearWorkbook();
-    expect(qpcr.workbookBytes).toBeNull();
+    expect(mocks.workerCloseWorkbook).toHaveBeenCalledWith(3);
+    expect(qpcr.workbookHandle).toBeNull();
     expect(qpcr.sheetNames).toEqual([]);
     expect(qpcr.loadPhase).toBe("idle");
   });
 });
 
 describe("runTransform", () => {
-  it("extracts → transforms → applies the patch → saves → re-reads", async () => {
+  it("extracts → transforms → renders the patch → saves → commits", async () => {
     qpcr.filePath = "D:/data/run.xlsx";
-    const original = new ArrayBuffer(8);
     const patched = new ArrayBuffer(16);
-    const saved = new ArrayBuffer(24);
-    qpcr.workbookBytes = original;
+    qpcr.workbookHandle = 1;
     qpcr.selectedSheet = "Sheet1";
     qpcr.sheetNames = ["Sheet1"];
     mocks.workerExtractSheet.mockResolvedValue({ snapshot: { name: "Sheet1" } });
@@ -433,13 +439,16 @@ describe("runTransform", () => {
       bytes: patched,
       sheetNames: ["Sheet1", "Transformed Data"],
     });
-    mocks.readFileBytes.mockResolvedValue(saved);
+    const revision = qpcr.workbookRevision;
 
     await runTransform();
     await flush();
 
-    expect(mocks.writeFileBytes).toHaveBeenCalledWith("D:/data/run.xlsx", patched);
-    expect(qpcr.workbookBytes).toBe(saved);
+    expect(mocks.workerExtractSheet).toHaveBeenCalledWith(1, "Sheet1");
+    expect(mocks.workerApplyPatch).toHaveBeenCalledWith(1, { v: 1, removeSheets: [], upsertSheets: [] });
+    expect(mocks.replaceFileBytes).toHaveBeenCalledWith("D:/data/run.xlsx", patched);
+    expect(mocks.workerCommitWorkbook).toHaveBeenCalledWith(1, patched);
+    expect(qpcr.workbookRevision).toBe(revision + 1);
     expect(qpcr.sheetNames).toEqual(["Sheet1", "Transformed Data"]);
     expect(qpcr.geneNames).toEqual(["Gapdh"]);
     expect(qpcr.groups).toEqual(["Control"]);
@@ -447,10 +456,36 @@ describe("runTransform", () => {
     expect(qpcr.plotSheetName).toBe("Sheet1");
   });
 
+  it("keeps the committed workbook when saving fails (file open in Excel)", async () => {
+    qpcr.filePath = "D:/data/run.xlsx";
+    qpcr.workbookHandle = 1;
+    qpcr.selectedSheet = "Sheet1";
+    qpcr.sheetNames = ["Sheet1"];
+    mocks.workerExtractSheet.mockResolvedValue({ snapshot: { name: "Sheet1" } });
+    mocks.qpcrTransform.mockResolvedValue({
+      v: 1,
+      patch: { v: 1, removeSheets: [], upsertSheets: [] },
+      geneNames: ["Gapdh"],
+      groups: ["Control"],
+    });
+    mocks.workerApplyPatch.mockResolvedValue({ bytes: new ArrayBuffer(4), sheetNames: ["Sheet1", "Transformed Data"] });
+    mocks.replaceFileBytes.mockRejectedValue(new Error("locked"));
+    const revision = qpcr.workbookRevision;
+
+    await runTransform();
+    await flush();
+
+    expect(mocks.workerCommitWorkbook).not.toHaveBeenCalled();
+    expect(qpcr.workbookRevision).toBe(revision);
+    expect(qpcr.sheetNames).toEqual(["Sheet1"]);
+    expect(qpcr.transformPhase).toBe("error");
+    mocks.replaceFileBytes.mockReset();
+  });
+
   it("reports Rust validation errors in the step banner", async () => {
     setLanguage("en");
     qpcr.filePath = "f.xlsx";
-    qpcr.workbookBytes = new ArrayBuffer(4);
+    qpcr.workbookHandle = 1;
     qpcr.selectedSheet = "Sheet1";
     mocks.workerExtractSheet.mockResolvedValue({ snapshot: {} });
     mocks.qpcrTransform.mockRejectedValue(
@@ -492,7 +527,7 @@ describe("runCalculate", () => {
 
   function primeTransformed(): void {
     qpcr.filePath = "D:/data/run.xlsx";
-    qpcr.workbookBytes = new ArrayBuffer(8);
+    qpcr.workbookHandle = 1;
     qpcr.sheetNames = ["Sheet1", "Transformed Data"];
     qpcr.geneNames = ["Gapdh"];
     qpcr.groups = ["Control", "Treatment"];
@@ -529,7 +564,6 @@ describe("runCalculate", () => {
   it("runs → applies → saves → injects charts with the settings color", async () => {
     primeTransformed();
     const patched = new ArrayBuffer(16);
-    const saved = new ArrayBuffer(24);
     mocks.workerExtractSheet.mockResolvedValue({
       snapshot: { name: "Transformed Data", columnCount: 0, rowCount: 0, rows: [] },
     });
@@ -538,8 +572,8 @@ describe("runCalculate", () => {
       bytes: patched,
       sheetNames: ["Transformed Data", "Summary_All_Genes", "Gapdh"],
     });
-    mocks.readFileBytes.mockResolvedValue(saved);
     mocks.qpcrInjectCharts.mockResolvedValue(true);
+    mocks.workerReloadWorkbook.mockResolvedValue({ sheetNames: [] });
     qpcr.chartColor = "#2F6FED";
 
     await runCalculate();
@@ -559,8 +593,10 @@ describe("runCalculate", () => {
         withChartsSheet: true,
       }),
     );
-    expect(mocks.writeFileBytes).toHaveBeenCalledWith("D:/data/run.xlsx", patched);
-    expect(qpcr.workbookBytes).toBe(saved);
+    expect(mocks.replaceFileBytes).toHaveBeenCalledWith("D:/data/run.xlsx", patched);
+    expect(mocks.workerCommitWorkbook).toHaveBeenCalledWith(1, patched);
+    // The chart injection rewrote the file in Rust: the worker re-reads it.
+    expect(mocks.workerReloadWorkbook).toHaveBeenCalledWith(1);
     expect(qpcr.calcPhase).toBe("success");
     expect(qpcr.geneSheetNames).toEqual(["Summary_All_Genes", "Gapdh"]);
     expect(qpcr.chartInjectPhase).toBe("success");
@@ -593,7 +629,6 @@ describe("runCalculate", () => {
       bytes: new ArrayBuffer(4),
       sheetNames: qpcr.sheetNames,
     });
-    mocks.readFileBytes.mockResolvedValue(new ArrayBuffer(4));
 
     await runCalculate();
     await flush();
@@ -619,7 +654,6 @@ describe("runCalculate", () => {
     qpcr.groups = ["G1", "G2"];
     qpcr.groupRenames = { G1: "Condition A", G2: "Condition A" };
     const renamedWorkbook = new ArrayBuffer(9);
-    const savedWorkbook = new ArrayBuffer(10);
     const snapshot: SheetSnapshot = {
       name: "Transformed Data",
       columnCount: 3,
@@ -634,16 +668,15 @@ describe("runCalculate", () => {
       bytes: renamedWorkbook,
       sheetNames: ["Transformed Data"],
     });
-    mocks.writeFileBytes.mockResolvedValue(undefined);
-    mocks.readFileBytes.mockResolvedValue(savedWorkbook);
+    mocks.replaceFileBytes.mockResolvedValue(undefined);
 
     await applyGroupRenamesToWorkbook();
 
     expect(mocks.workerRenameGroups).toHaveBeenCalledWith(
-      expect.any(ArrayBuffer), "Transformed Data", { G1: "Condition A", G2: "Condition A" },
+      1, "Transformed Data", { G1: "Condition A", G2: "Condition A" },
     );
-    expect(mocks.writeFileBytes).toHaveBeenCalledWith("D:/data/run.xlsx", renamedWorkbook);
-    expect(qpcr.workbookBytes).toBe(savedWorkbook);
+    expect(mocks.replaceFileBytes).toHaveBeenCalledWith("D:/data/run.xlsx", renamedWorkbook);
+    expect(mocks.workerCommitWorkbook).toHaveBeenCalledWith(1, renamedWorkbook);
     expect(qpcr.groups).toEqual(["Condition A"]);
     expect(qpcr.groupRenames).toEqual({});
     expect(qpcr.groupRenamePhase).toBe("success");
@@ -697,7 +730,7 @@ describe("runCalculate", () => {
 
   it("reports a missing Transformed Data sheet", async () => {
     qpcr.filePath = "f.xlsx";
-    qpcr.workbookBytes = new ArrayBuffer(4);
+    qpcr.workbookHandle = 1;
     qpcr.sheetNames = ["Sheet1"];
     qpcr.geneNames = ["Gapdh"];
     qpcr.refGene = "Gapdh";
@@ -714,7 +747,7 @@ describe("runPlot + cancelPlot", () => {
   function primeFile(): void {
     qpcr.filePath = "D:/data/run.xlsx";
     qpcr.fileName = "run.xlsx";
-    qpcr.workbookBytes = new ArrayBuffer(8);
+    qpcr.workbookHandle = 1;
     qpcr.sheetNames = ["Summary_All_Genes"];
     qpcr.plotSheetName = "Summary_All_Genes";
     qpcr.plotOutputDir = "D:/data";

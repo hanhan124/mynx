@@ -1,5 +1,4 @@
 import { mount } from "svelte";
-import "katex/dist/katex.min.css";
 import "./styles/app.css";
 import App from "./components/App.svelte";
 import { applyWindowMaterial } from "./app/window-material";

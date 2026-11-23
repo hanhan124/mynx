@@ -11,8 +11,9 @@ use std::path::{Path, PathBuf};
 use mynx_contracts::charts::ChartTemplateManifest;
 use mynx_contracts::task::MynxError;
 
-/// Directory names rejected as template ids / install targets.
-pub(crate) fn is_safe_id(id: &str) -> bool {
+/// Directory names rejected as template ids / install targets. Public so the
+/// run command can refuse a crafted id before any path is built from it.
+pub fn is_safe_id(id: &str) -> bool {
     !id.is_empty()
         && id != "."
         && id != ".."

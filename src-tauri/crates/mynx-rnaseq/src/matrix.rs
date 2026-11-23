@@ -469,7 +469,8 @@ fn parse_count(cell: &str) -> f64 {
     if trimmed.is_empty() || trimmed == "NA" {
         return 0.0;
     }
-    trimmed.parse::<f64>().unwrap_or(0.0)
+    // NaN / Infinity text counts like a missing value, never as a number.
+    trimmed.parse::<f64>().ok().filter(|number| number.is_finite()).unwrap_or(0.0)
 }
 
 /// Whole numbers render without decimals (JS String(number) for the integer
@@ -725,6 +726,23 @@ pub fn import_counts(request: ImportRequest) -> Result<ImportData, MynxError> {
         normalize_count_matrix(&rows, applied, request.drop_empty_gene, request.gene_col)?;
     if headers.len() < 2 {
         return Err(MynxError::validation("至少需要 1 列基因 ID + 1 列样本计数"));
+    }
+    // Sample columns are keyed by name downstream; a repeated name would
+    // silently drop one of the samples.
+    {
+        let mut seen = std::collections::HashSet::new();
+        let duplicates: Vec<&str> = headers
+            .iter()
+            .skip(1)
+            .filter(|header| !seen.insert(header.as_str()))
+            .map(String::as_str)
+            .collect();
+        if !duplicates.is_empty() {
+            return Err(MynxError::validation(format!(
+                "样本列名重复：{}。请在原文件中改成不同的名字后再导入。",
+                duplicates.join("、")
+            )));
+        }
     }
     let (body, transformed) = apply_input_options(
         body,

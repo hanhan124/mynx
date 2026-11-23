@@ -548,26 +548,32 @@ function appendLog(line: LogLine): void {
   }
 }
 
+/** Whether the run name asks for a fresh timestamped folder per run. */
+function isAutoRunName(name: string): boolean {
+  const trimmed = name.trim();
+  return trimmed === "" || trimmed.toLowerCase() === "auto";
+}
+
+/** `run_YYYYMMDD_HHMMSS` in local time (one folder per run). */
+// A one-off timestamp read, never rendered or mutated: no SvelteDate needed.
+// eslint-disable-next-line svelte/prefer-svelte-reactivity
+export function autoRunName(now: Date = new Date()): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return (
+    `run_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_` +
+    `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+  );
+}
+
 /**
- * Resolves the actual run directory after a successful run: the engine
- * generates the timestamped folder for auto names, so ask the history
- * listing for the newest entry under the output base.
+ * Loads the folder this run actually wrote (as reported by the runner, never
+ * "the newest folder", which could belong to another run). An `auto` name
+ * stays `auto` so the next run gets its own folder again.
  */
-async function finishSuccessfulRun(result: RunResult, outputBase: string): Promise<void> {
-  let dir = result.outputDir;
-  let name = result.runName;
-  try {
-    const runs = await rnaseqListRuns(outputBase);
-    if (runs.length > 0) {
-      dir = runs[0].path;
-      name = runs[0].name;
-    }
-  } catch {
-    // Keep the runner-reported dir when history cannot be listed.
-  }
+async function finishSuccessfulRun(result: RunResult, outputBase: string, keepAuto: boolean): Promise<void> {
   rnaseq.config.output_dir = outputBase;
-  if (name) rnaseq.config.run_name = name;
-  await readResultData(dir);
+  if (!keepAuto && result.runName) rnaseq.config.run_name = result.runName;
+  await readResultData(result.outputDir);
 }
 
 /**
@@ -584,14 +590,19 @@ export async function startRun(steps: string[]): Promise<void> {
   rnaseq.logs = [];
   rnaseq.status = "running";
   rnaseq.jobId = null;
-  const runCfg: RnaSeqConfig = { ...$state.snapshot(rnaseq.config), steps };
+  const auto = isAutoRunName(rnaseq.config.run_name);
+  const runCfg: RnaSeqConfig = {
+    ...$state.snapshot(rnaseq.config),
+    run_name: auto ? autoRunName() : rnaseq.config.run_name.trim(),
+    steps,
+  };
   try {
     const result = await rnaseqRun(runCfg, steps, appendLog);
     rnaseq.status =
       result.status === "done" ? "done" : result.status === "cancelled" ? "cancelled" : "failed";
     if (result.status === "done") {
       const outputBase = runCfg.output_dir.trim() || (await defaultOutputBase());
-      await finishSuccessfulRun(result, outputBase);
+      await finishSuccessfulRun(result, outputBase, auto);
       pushToast("success", t("rnaseq.runDoneToast"));
     } else if (result.status === "cancelled") {
       pushToast("info", t("rnaseq.runCancelledToast"));

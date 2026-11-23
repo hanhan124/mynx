@@ -16,12 +16,14 @@ import {
   qpcrInjectCharts,
   qpcrPlotRun,
   qpcrTransform,
-  readFileBytes,
+  replaceFileBytes,
   workerApplyPatch,
+  workerCloseWorkbook,
+  workerCommitWorkbook,
   workerExtractSheet,
-  workerLoadWorkbook,
+  workerOpenWorkbook,
+  workerReloadWorkbook,
   workerRenameGroups,
-  writeFileBytes,
 } from "./client.js";
 import {
   buildPlotConfig,
@@ -132,7 +134,10 @@ export interface QpcrState {
   loadMessage: string;
   filePath: string;
   fileName: string;
-  workbookBytes: ArrayBuffer | null;
+  /** Handle of the workbook held by the Excel worker (null = none open). */
+  workbookHandle: number | null;
+  /** Bumped whenever the workbook content changes (previews re-read it). */
+  workbookRevision: number;
   sheetNames: string[];
   selectedSheet: string;
   // Step 2: transform
@@ -176,7 +181,8 @@ export const qpcr = $state<QpcrState>({
   loadMessage: "",
   filePath: "",
   fileName: "",
-  workbookBytes: null,
+  workbookHandle: null,
+  workbookRevision: 0,
   sheetNames: [],
   selectedSheet: "",
   transformPhase: "idle",
@@ -383,20 +389,40 @@ function resetPipelineResults(): void {
  * bytes, lists sheets via the worker and pre-detects an existing
  * Transformed Data sheet so the page can offer direct calculation.
  */
+/** Bumped by every load/clear so a slow, superseded load cannot write back. */
+let workbookGeneration = 0;
+
 export async function loadWorkbook(path: string): Promise<void> {
   if (qpcr.loadPhase === "running") return;
+  const generation = ++workbookGeneration;
+  const current = () => generation === workbookGeneration;
   qpcr.loadPhase = "running";
   qpcr.loadMessage = t("qpcr.loadingFile");
+  let handle: number | null = null;
   try {
-    const bytes = await readFileBytes(path);
-    const { sheetNames } = await workerLoadWorkbook(bytes);
+    const opened = await workerOpenWorkbook(path);
+    handle = opened.handle;
+    if (!current()) {
+      workerCloseWorkbook(handle);
+      return;
+    }
+    const { sheetNames } = opened;
+    let snapshot: Awaited<ReturnType<typeof workerExtractSheet>>["snapshot"] | null = null;
+    if (sheetNames.includes(TRANSFORMED_SHEET_NAME)) {
+      snapshot = (await workerExtractSheet(handle, TRANSFORMED_SHEET_NAME)).snapshot;
+      if (!current()) {
+        workerCloseWorkbook(handle);
+        return;
+      }
+    }
+    if (qpcr.workbookHandle !== null) workerCloseWorkbook(qpcr.workbookHandle);
     qpcr.filePath = path;
     qpcr.fileName = baseName(path);
-    qpcr.workbookBytes = bytes;
+    qpcr.workbookHandle = handle;
+    qpcr.workbookRevision += 1;
     qpcr.sheetNames = sheetNames;
     qpcr.selectedSheet = sheetNames[0] ?? "";
-    if (sheetNames.includes(TRANSFORMED_SHEET_NAME)) {
-      const { snapshot } = await workerExtractSheet(bytes, TRANSFORMED_SHEET_NAME);
+    if (snapshot) {
       qpcr.geneNames = detectTransformedGenes(snapshot);
       qpcr.groups = detectTransformedGroups(snapshot);
     } else {
@@ -410,6 +436,8 @@ export async function loadWorkbook(path: string): Promise<void> {
     qpcr.loadPhase = "success";
     qpcr.loadMessage = "";
   } catch (err) {
+    if (handle !== null && qpcr.workbookHandle !== handle) workerCloseWorkbook(handle);
+    if (!current()) return;
     qpcr.loadPhase = "error";
     qpcr.loadMessage = localizedError(err);
     pushToast("error", t("qpcr.importFailed", { detail: detailOf(err) }));
@@ -417,11 +445,14 @@ export async function loadWorkbook(path: string): Promise<void> {
 }
 
 export function clearWorkbook(): void {
+  workbookGeneration += 1;
   qpcr.loadPhase = "idle";
   qpcr.loadMessage = "";
   qpcr.filePath = "";
   qpcr.fileName = "";
-  qpcr.workbookBytes = null;
+  if (qpcr.workbookHandle !== null) workerCloseWorkbook(qpcr.workbookHandle);
+  qpcr.workbookHandle = null;
+  qpcr.workbookRevision += 1;
   qpcr.sheetNames = [];
   qpcr.selectedSheet = "";
   qpcr.geneNames = [];
@@ -438,11 +469,18 @@ export function clearWorkbook(): void {
  * Workbook saving (shared by transform/calculate)
  * ------------------------------------------------------------------------- */
 
-/** Writes the rendered bytes back to the original path, then re-reads them. */
-async function saveWorkbookToSource(bytes: ArrayBuffer): Promise<void> {
-  await writeFileBytes(qpcr.filePath, bytes);
-  // Re-read from disk so subsequent steps operate on the saved workbook.
-  qpcr.workbookBytes = await readFileBytes(qpcr.filePath);
+/**
+ * Writes the rendered bytes back to the original path (crash-safe replace),
+ * then makes them the worker's committed workbook. If the save fails the
+ * worker keeps the previous state, matching what is on disk.
+ */
+async function saveWorkbookToSource(handle: number, bytes: ArrayBuffer): Promise<void> {
+  // Another workbook was opened (or this one closed) while rendering: never
+  // write these bytes over a different file.
+  if (qpcr.workbookHandle !== handle) throw new Error(t("qpcr.workbookChanged"));
+  await replaceFileBytes(qpcr.filePath, bytes);
+  await workerCommitWorkbook(handle, bytes);
+  qpcr.workbookRevision += 1;
 }
 
 /* ---------------------------------------------------------------------------
@@ -451,7 +489,8 @@ async function saveWorkbookToSource(bytes: ArrayBuffer): Promise<void> {
 
 export async function runTransform(): Promise<void> {
   if (qpcr.transformPhase === "running" || qpcr.groupRenamePhase === "running") return;
-  if (!qpcr.workbookBytes) return;
+  const handle = qpcr.workbookHandle;
+  if (handle === null) return;
   if (!qpcr.selectedSheet) {
     qpcr.transformPhase = "error";
     qpcr.transformMessage = t("qpcr.errSheetRequired");
@@ -460,13 +499,12 @@ export async function runTransform(): Promise<void> {
   qpcr.transformPhase = "running";
   qpcr.transformMessage = t("qpcr.transforming");
   try {
-    const { snapshot } = await workerExtractSheet(
-      qpcr.workbookBytes,
-      qpcr.selectedSheet,
-    );
+    const { snapshot } = await workerExtractSheet(handle, qpcr.selectedSheet);
     const result = await qpcrTransform(snapshot);
-    const applied = await workerApplyPatch(qpcr.workbookBytes, result.patch);
-    await saveWorkbookToSource(applied.bytes);
+    const applied = await workerApplyPatch(handle, result.patch);
+    const sheetNames = applied.sheetNames;
+    await saveWorkbookToSource(handle, applied.bytes);
+    qpcr.sheetNames = sheetNames;
     qpcr.sheetNames = applied.sheetNames;
     qpcr.geneNames = result.geneNames;
     qpcr.groups = result.groups;
@@ -490,7 +528,8 @@ export async function applyGroupRenamesToWorkbook(): Promise<void> {
     qpcr.transformPhase === "running" ||
     qpcr.calcPhase === "running"
   ) return;
-  if (!qpcr.workbookBytes || !qpcr.filePath || !hasTransformedData()) return;
+  const handle = qpcr.workbookHandle;
+  if (handle === null || !qpcr.filePath || !hasTransformedData()) return;
   const renames = pendingGroupRenameMap();
   if (Object.keys(renames).length === 0) return;
 
@@ -498,13 +537,10 @@ export async function applyGroupRenamesToWorkbook(): Promise<void> {
   qpcr.groupRenamePhase = "running";
   qpcr.groupRenameMessage = t("qpcr.applyingGroupNames");
   try {
-    const updated = await workerRenameGroups(
-      qpcr.workbookBytes,
-      TRANSFORMED_SHEET_NAME,
-      renames,
-    );
-    await saveWorkbookToSource(updated.bytes);
-    qpcr.sheetNames = updated.sheetNames;
+    const updated = await workerRenameGroups(handle, TRANSFORMED_SHEET_NAME, renames);
+    const sheetNames = updated.sheetNames;
+    await saveWorkbookToSource(handle, updated.bytes);
+    qpcr.sheetNames = sheetNames;
     qpcr.groups = renamedGroupNames(qpcr.groups, renames);
     qpcr.groupRenames = {};
     qpcr.controlGroup = renames[previousControlGroup] ?? previousControlGroup;
@@ -561,9 +597,11 @@ async function injectNativeCharts(result: CalcResult): Promise<void> {
       "success",
       t("qpcr.chartComplete", { count: result.chartSeries.length, detail: "" }),
     );
-    if (qpcr.workbookBytes) {
+    const handle = qpcr.workbookHandle;
+    if (handle !== null) {
       // The Rust command rewrites the file in place (chart XML only).
-      qpcr.workbookBytes = await readFileBytes(qpcr.filePath);
+      await workerReloadWorkbook(handle);
+      qpcr.workbookRevision += 1;
     }
   } catch (err) {
     qpcr.chartInjectPhase = "error";
@@ -587,7 +625,8 @@ export async function runCalculate(): Promise<void> {
     qpcr.calcMessage = t(failure.key, failure.values);
     return;
   }
-  if (!qpcr.workbookBytes) return;
+  const handle = qpcr.workbookHandle;
+  if (handle === null) return;
   if (!hasTransformedData()) {
     qpcr.calcPhase = "error";
     qpcr.calcMessage = t("qpcr.transformFirst");
@@ -596,10 +635,7 @@ export async function runCalculate(): Promise<void> {
   qpcr.calcPhase = "running";
   qpcr.calcMessage = t("qpcr.calculating");
   try {
-    const { snapshot } = await workerExtractSheet(
-      qpcr.workbookBytes,
-      TRANSFORMED_SHEET_NAME,
-    );
+    const { snapshot } = await workerExtractSheet(handle, TRANSFORMED_SHEET_NAME);
     const request: CalcRequest = {
       v: 1,
       source: snapshot,
@@ -615,9 +651,10 @@ export async function runCalculate(): Promise<void> {
       withChartsSheet: true,
     };
     const result = await qpcrCalculate(request);
-    const applied = await workerApplyPatch(qpcr.workbookBytes, result.patch);
-    await saveWorkbookToSource(applied.bytes);
-    qpcr.sheetNames = applied.sheetNames;
+    const applied = await workerApplyPatch(handle, result.patch);
+    const sheetNames = applied.sheetNames;
+    await saveWorkbookToSource(handle, applied.bytes);
+    qpcr.sheetNames = sheetNames;
     qpcr.geneSheetNames = result.geneSheetNames;
     qpcr.chartSeries = result.chartSeries;
     ensurePlotSheet();
@@ -663,7 +700,7 @@ async function expandBatchTargets(): Promise<Array<{ path: string; output: strin
 
 export async function runPlot(): Promise<void> {
   if (qpcr.plotPhase === "running") return;
-  if (!qpcr.filePath || !qpcr.workbookBytes) return;
+  if (!qpcr.filePath || qpcr.workbookHandle === null) return;
   if (!qpcr.plotOutputDir) {
     qpcr.plotPhase = "error";
     qpcr.plotMessage = t("qpcr.errOutputRequired");

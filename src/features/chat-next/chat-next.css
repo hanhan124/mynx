@@ -1096,6 +1096,39 @@
   padding-block: 0.15em;
 }
 
+/* Tailwind preflight strips list markers; answers need them back. */
+.mynx-cn-markdown ul {
+  list-style-type: disc;
+}
+
+.mynx-cn-markdown ul ul {
+  list-style-type: circle;
+}
+
+.mynx-cn-markdown ol {
+  list-style-type: decimal;
+}
+
+.mynx-cn-markdown li::marker {
+  color: var(--color-text-secondary);
+}
+
+/* Display formulas: centred, scroll sideways instead of overflowing. */
+.mynx-cn-markdown [data-streamdown-block-math] {
+  margin-block: 0.6em;
+}
+
+.mynx-cn-markdown .katex-display {
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 2px;
+}
+
+.mynx-cn-markdown .katex {
+  font-size: 1.08em;
+}
+
 .mynx-cn-markdown a {
   color: var(--color-accent);
   text-decoration: underline;

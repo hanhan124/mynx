@@ -7,8 +7,8 @@
  * - Browser preview / tests: one localStorage snapshot, keys in memory.
  *
  * Chat-next owns its providers and settings. The legacy chat config is read
- * only to seed them on first open (and as a key fallback while the legacy
- * page still exists); it is never modified.
+ * only to seed them on first open. Once its API keys are safely in the OS
+ * keychain they are removed from that localStorage entry.
  */
 import { invoke } from "@tauri-apps/api/core";
 import {
@@ -260,7 +260,36 @@ export async function openSnapshot(repository: ChatRepository = isTauri() ? sqli
     }
     if (ok) write(KEYS_MIGRATED_MARKER, "1");
   }
+  if (isTauri() && read(KEYS_MIGRATED_MARKER) === "1") scrubLegacySecrets();
   return { snapshot, secrets, imported, repository };
+}
+
+/**
+ * Remove API keys from the legacy chat config in localStorage. Only called
+ * after every key was copied into the keychain; the rest of the config
+ * (providers, models, prompts) stays readable for the one-time import.
+ */
+export function scrubLegacySecrets(): void {
+  const json = read(LEGACY_CONFIG_KEY);
+  if (!json) return;
+  try {
+    const config: unknown = JSON.parse(json);
+    if (!config || typeof config !== "object") return;
+    let changed = false;
+    const strip = (entry: unknown): void => {
+      if (entry && typeof entry === "object" && "apiKey" in entry) {
+        delete (entry as Record<string, unknown>).apiKey;
+        changed = true;
+      }
+    };
+    const record = config as Record<string, unknown>;
+    strip(record);
+    if (Array.isArray(record.providers)) record.providers.forEach(strip);
+    strip(record.webSearch);
+    if (changed) write(LEGACY_CONFIG_KEY, JSON.stringify(record));
+  } catch {
+    /* unreadable legacy config: leave it untouched */
+  }
 }
 
 /* ------------------------------------------------------------------ */

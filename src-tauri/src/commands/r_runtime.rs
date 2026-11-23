@@ -42,12 +42,7 @@ pub async fn r_install_runtime(
     });
 
     let result = mynx_core::r::RRuntime::install_runtime(log).await;
-    match result.ok {
-        true => job.succeed(),
-        false if result.cancelled => job.mark_cancelled(),
-        false => job.fail(result.error.clone().unwrap_or_default()),
-    }
-    Ok(job.id)
+    finish_install(&job, result.ok, result.cancelled, result.error, "R 安装失败")
 }
 
 /// Install required R packages (CRAN + Bioconductor). Streams progress on
@@ -69,12 +64,29 @@ pub async fn r_install_packages(
     });
 
     let result = state.r.install_packages(&packages, log, &token).await;
-    match result.ok {
-        true => job.succeed(),
-        false if result.cancelled => job.mark_cancelled(),
-        false => job.fail(result.error.clone().unwrap_or_default()),
+    finish_install(&job, result.ok, result.cancelled, result.error, "R 依赖安装失败")
+}
+
+/// Settle the install job and tell the caller how it ended: a failed or
+/// cancelled install rejects, so the page never reports success for it.
+fn finish_install(
+    job: &mynx_jobs::JobHandle<'_>,
+    ok: bool,
+    cancelled: bool,
+    error: Option<String>,
+    fallback: &str,
+) -> Result<u64, MynxError> {
+    if ok {
+        job.succeed();
+        return Ok(job.id);
     }
-    Ok(job.id)
+    if cancelled {
+        job.mark_cancelled();
+        return Err(MynxError::cancelled());
+    }
+    let message = error.filter(|text| !text.trim().is_empty()).unwrap_or_else(|| fallback.to_string());
+    job.fail(message.clone());
+    Err(MynxError::process(message))
 }
 
 fn now_ms() -> i64 {

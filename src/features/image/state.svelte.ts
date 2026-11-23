@@ -474,7 +474,10 @@ export function handleConvertEvent(event: ConvertEvent): void {
   }
   if (event.kind === "item") {
     totals.done += 1;
-    imageState.results.push(event);
+    // Workers finish out of order; keep the list in the user's file order.
+    const at = imageState.results.findIndex((item) => item.index > event.index);
+    if (at < 0) imageState.results.push(event);
+    else imageState.results.splice(at, 0, event);
     const { total, done } = totals;
     imageState.progress = total > 0 ? Math.round((done / total) * 100) : 0;
     imageState.progressText = `${t("imgconv.converting")} (${done}/${total})…`;

@@ -119,6 +119,12 @@ pub async fn charts_run(
     if config.output_dir.trim().is_empty() {
         return Err(MynxError::validation("请先选择输出文件夹。"));
     }
+    // The template id becomes a path segment (template dir, output file name)
+    // and the template's render.R is evaluated by R, so it must be one plain
+    // folder name — never `..`, a separator or a drive prefix.
+    if !mynx_charts::manifest::is_safe_id(&config.template) {
+        return Err(MynxError::validation(format!("模板标识不合法: {}", config.template)));
+    }
     let app_state = state.inner().clone();
     let rscript = app_state.r.find_rscript();
     if rscript.is_empty() {
@@ -146,7 +152,9 @@ pub async fn charts_run(
     // Params travel via a temp file (legacy mynx_chart_<ts>.json); verified
     // template runs get outputPath + templateDir injected like the legacy
     // payload so the R side renders into the expected file.
-    let params_path = std::env::temp_dir().join(format!("mynx_chart_{}.json", now_ms()));
+    // Job id + timestamp: two runs started in the same millisecond must not
+    // share (and overwrite) one params file.
+    let params_path = std::env::temp_dir().join(format!("mynx_chart_{}_{}.json", job.id, now_ms()));
     let mut params = serde_json::to_value(&config)
         .map_err(|e| MynxError::internal(e.to_string()))?;
     if config.verified == Some(true) {

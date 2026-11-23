@@ -49,17 +49,28 @@
 
   onMount(() => {
     let unlisten: (() => void) | null = null;
+    let disposed = false;
     void (async () => {
       try {
         windowMaximized = await client.isMaximized();
       } catch {
         /* headless/test environment */
       }
-      unlisten = await client.onWindowResized(() => {
-        void client.isMaximized().then((value) => (windowMaximized = value)).catch(() => {});
-      });
+      try {
+        const stop = await client.onWindowResized(() => {
+          void client.isMaximized().then((value) => (windowMaximized = value)).catch(() => {});
+        });
+        // Unmounted while registering: remove the listener right away.
+        if (disposed) stop();
+        else unlisten = stop;
+      } catch {
+        /* headless/test environment */
+      }
     })();
-    return () => unlisten?.();
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
   });
 
   $effect(() => {

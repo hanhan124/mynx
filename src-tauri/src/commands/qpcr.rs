@@ -13,6 +13,27 @@ use tauri::{Manager, State};
 
 use crate::state::SharedState;
 
+/// Save the processed workbook back over the user's source file atomically
+/// (temp file + rename), so an interrupted save never corrupts the original.
+/// The bytes travel as the raw IPC body; the path as a URI-encoded header.
+#[tauri::command]
+pub async fn qpcr_save_workbook(request: tauri::ipc::Request<'_>) -> Result<(), MynxError> {
+    let path = request
+        .headers()
+        .get("x-mynx-path")
+        .and_then(|value| value.to_str().ok())
+        .and_then(mynx_core::atomic_file::percent_decode)
+        .ok_or_else(|| MynxError::validation("缺少工作簿路径"))?;
+    let bytes = match request.body() {
+        tauri::ipc::InvokeBody::Raw(bytes) => bytes.clone(),
+        _ => return Err(MynxError::validation("工作簿内容格式不正确")),
+    };
+    let join = tauri::async_runtime::spawn_blocking(move || {
+        mynx_core::atomic_file::replace_workbook(&path, &bytes)
+    });
+    join.await.map_err(|e| MynxError::internal(e.to_string()))?
+}
+
 /// Read-only worksheet preflight and QC summary.
 #[tauri::command]
 pub async fn qpcr_audit(request: QpcrAuditRequest) -> Result<QpcrAuditResult, MynxError> {

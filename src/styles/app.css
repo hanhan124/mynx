@@ -119,7 +119,6 @@
   --mynx-shadow-drawer: 0 -1px 2px rgb(16 24 34 / 0.08), 0 -8px 24px rgb(16 24 34 / 0.16);
 }
 
-
 /* Legacy fallback: no data-ui-style set (pre-theme installs). */
 [data-theme="graphite"] {
   --color-bg: #151c26;
@@ -836,7 +835,6 @@ html[data-theme="graphite"] {
     background: var(--mynx-traffic-inactive);
     box-shadow: none;
   }
-
 
   /* Page hierarchy -------------------------------------------------------- */
 
@@ -1848,166 +1846,10 @@ html[data-theme="graphite"] {
   /* Message stream: smooth follow for discrete events, contained overscroll,
      and a stable gutter so bubbles never shift horizontally. Smooth scrolling
      is opt-out under prefers-reduced-motion. */
-  .mynx-chat-scroll {
-    overscroll-behavior: contain;
-    scrollbar-gutter: stable;
-    position: relative;
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .mynx-chat-scroll {
-      scroll-behavior: smooth;
-    }
-  }
-
-  .mynx-chat-text .mynx-chat-heading {
-    margin: 0.35em 0 0.15em;
-    font-size: 13.5px;
-    font-weight: 650;
-  }
-
-  .mynx-chat-text .mynx-chat-list {
-    margin: 0.25em 0;
-    padding-inline-start: 1.2em;
-    list-style: disc;
-  }
-
-  .mynx-chat-text .mynx-chat-olist {
-    margin: 0.25em 0;
-    padding-inline-start: 1.4em;
-    list-style: decimal;
-  }
-
-  .mynx-chat-text .mynx-chat-quote {
-    margin: 0.4em 0;
-    border-inline-start: 3px solid var(--color-border);
-    padding: 0.15em 0.8em;
-    color: var(--color-text-secondary);
-  }
-
-  .mynx-chat-text .mynx-chat-hr {
-    border: none;
-    border-top: 1px solid var(--color-separator);
-    margin: 0.8em 0;
-  }
-
-  .mynx-chat-tablewrap {
-    margin: 0.5em 0;
-    overflow-x: auto;
-    border: var(--mynx-border-width) solid var(--color-border);
-    border-radius: var(--mynx-radius-control);
-  }
-
-  .mynx-chat-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-
-  .mynx-chat-table th {
-    background: var(--color-surface-2);
-    text-align: left;
-    font-weight: 600;
-  }
-
-  .mynx-chat-table th,
-  .mynx-chat-table td {
-    padding: 0.4em 0.65em;
-    border-bottom: 1px solid var(--color-separator);
-  }
-
-  .mynx-chat-table tr:last-child td {
-    border-bottom: none;
-  }
-
-  .mynx-chat-text .mynx-chat-p {
-    margin: 0.15em 0;
-  }
-
-  .mynx-chat-text code {
-    border-radius: 4px;
-    background: var(--color-surface-2);
-    padding: 0.08em 0.35em;
-    font-family: var(--font-mono);
-    font-size: 12px;
-  }
-
-  .mynx-chat-codebox {
-    width: 100%;
-    border: var(--mynx-border-width) solid var(--color-border);
-    border-radius: var(--mynx-radius-control);
-    background: var(--color-surface-2);
-  }
-
-  .mynx-chat-codebox pre {
-    margin: 0;
-    color: var(--color-text);
-    white-space: pre;
-  }
 
   /* highlight.js token palette mapped to theme tokens (no static themes). */
-  .mynx-chat-codebox .hljs-keyword,
-  .mynx-chat-codebox .hljs-selector-tag,
-  .mynx-chat-codebox .hljs-built_in,
-  .mynx-chat-codebox .hljs-type {
-    color: var(--color-accent);
-  }
-
-  .mynx-chat-codebox .hljs-string,
-  .mynx-chat-codebox .hljs-attr,
-  .mynx-chat-codebox .hljs-template-string {
-    color: var(--color-success);
-  }
-
-  .mynx-chat-codebox .hljs-comment,
-  .mynx-chat-codebox .hljs-quote {
-    color: var(--color-text-tertiary);
-    font-style: italic;
-  }
-
-  .mynx-chat-codebox .hljs-number,
-  .mynx-chat-codebox .hljs-literal {
-    color: var(--color-warning);
-  }
-
-  .mynx-chat-codebox .hljs-title,
-  .mynx-chat-codebox .hljs-name,
-  .mynx-chat-codebox .hljs-function {
-    color: var(--mynx-accent-2);
-  }
-
-  .mynx-chat-codebox .hljs-meta,
-  .mynx-chat-codebox .hljs-symbol {
-    color: var(--color-text-secondary);
-  }
 
   /* DeepSeek-reasoner chain-of-thought (collapsible, muted). */
-  .mynx-chat-reasoning {
-    border-inline-start: 2px solid var(--color-border);
-    border-radius: var(--mynx-radius-control);
-    background: var(--color-surface-2);
-    padding: 0.35rem 0.6rem;
-    font-size: 12px;
-    color: var(--color-text-secondary);
-  }
-
-  .mynx-chat-reasoning summary {
-    cursor: pointer;
-    font-weight: 550;
-    user-select: none;
-  }
-
-  .mynx-chat-reasoning-body {
-    margin-block-start: 0.4rem;
-    white-space: pre-wrap;
-    line-height: 1.55;
-  }
-
-  .mynx-chat-text .katex-display {
-    margin: 0.5em 0;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
 
   /* "Thinking" dots (assistant placeholder before the first delta). */
   .mynx-chat-thinking {
@@ -2046,21 +1888,6 @@ html[data-theme="graphite"] {
   }
 
   /* Blinking caret at the streaming edge. */
-  .mynx-chat-caret {
-    display: inline-block;
-    inline-size: 2px;
-    block-size: 1em;
-    margin-inline-start: 2px;
-    vertical-align: text-bottom;
-    background: var(--color-accent);
-    animation: mynx-chat-caret 1s steps(2, start) infinite;
-  }
-
-  @keyframes mynx-chat-caret {
-    50% {
-      opacity: 0;
-    }
-  }
 
   /* FLIP ghost frame used by the home → chat handoff (plan A). */
   .mynx-chat-ghost,
@@ -2072,8 +1899,7 @@ html[data-theme="graphite"] {
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .mynx-chat-thinking i,
-    .mynx-chat-caret {
+    .mynx-chat-thinking i {
       animation: none;
     }
   }
@@ -2803,15 +2629,6 @@ html[data-theme="graphite"] {
   }
 
   /* Chat code tokens: comments stay readable. */
-  html[data-ui-style] .mynx-chat-codebox :is(.hljs-comment, .hljs-quote) {
-    color: var(--color-text-secondary);
-  }
-
-  html[data-ui-style] .mynx-chat-codebox,
-  html[data-ui-style] .mynx-chat-tablewrap {
-    border-color: var(--color-separator);
-    border-radius: 10px;
-  }
 
   /* Unified Tabler stroke weight (SF Symbols-like regular weight). */
   html[data-ui-style] svg.tabler-icon {
@@ -2829,7 +2646,6 @@ html[data-theme="graphite"] {
     }
   }
 }
-
 
 /* ==========================================================================
  * macOS 27 utility remaps (unlayered so they win over Tailwind utilities).
@@ -2893,7 +2709,6 @@ html[data-ui-style] .rounded-md {
 html[data-ui-style] .rounded {
   border-radius: 6px;
 }
-
 
 /* Shell and floating-layer glass (must beat their own bg/padding utilities). */
 html[data-ui-style] .mynx-update-banner {
@@ -3098,7 +2913,6 @@ html[data-ui-style] .mynx-task-drawer > div:first-child {
 html[data-ui-style] .mynx-task-drawer ul {
   border-color: var(--color-separator);
 }
-
 
 /* ==========================================================================
  * macOS 27 page refinements (phase 2). Hooks: .mynx-page-header,
@@ -3379,34 +3193,6 @@ html[data-ui-style] input[type="color"]::-webkit-color-swatch { border: 0; borde
 html[data-ui-style] input[type="color"]::-moz-color-swatch { border: 0; border-radius: 4px; }
 
 /* --- Chat ------------------------------------------------------------- */
-html[data-ui-style] .mynx-chat-sidebar {
-  border-right-color: transparent;
-}
-
-html[data-ui-style] .mynx-chat-sessions > div {
-  min-height: 30px;
-  border-radius: 8px;
-}
-
-html[data-ui-style] .mynx-chat-sessions > div.bg-selected {
-  background: var(--color-nav-active);
-}
-
-html[data-ui-style] .mynx-chat-header {
-  border-bottom-color: transparent;
-}
-
-html[data-ui-style] .mynx-chat-bubble-user {
-  border-radius: 18px;
-  background: var(--color-fill-strong);
-  padding: 8px 14px;
-}
-
-html[data-ui-style] .mynx-chat-empty-title {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
 
 html[data-ui-style] .mynx-chat-composer {
   border: 0;
@@ -3817,18 +3603,6 @@ html[data-ui-style] .mynx-column-resizer.mynx-column-resizer--edge-start:is(:hov
 
 /* Chat sessions sidebar: the drag track IS the boundary — one hairline that
    turns accent on hover/focus. The aside draws no border of its own. */
-html[data-ui-style] .mynx-chat-page > aside.mynx-chat-sidebar.border-r {
-  border-right-color: transparent;
-}
-
-html[data-ui-style] .mynx-chat-page > .mynx-column-resizer.mynx-column-resizer--edge-start::before {
-  inset-block: 8px;
-  background: var(--color-separator);
-}
-
-html[data-ui-style] .mynx-chat-page > .mynx-column-resizer.mynx-column-resizer--edge-start:is(:hover, :focus-visible)::before {
-  background: color-mix(in srgb, var(--color-accent) 60%, transparent);
-}
 
 /* Cards sit inside scroll/overflow containers, so far-reaching shadows got
    clipped into hard edges. Content cards use an inset rim (never clipped)
@@ -3861,6 +3635,40 @@ html[data-ui-style] .mynx-settings label.mynx-card.border-accent {
 
 html[data-ui-style] .border-accent.bg-accent\/10 {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+
+/* --- Fixes from visual review (2026-11-23): one boundary, not three ---- */
+
+/* Step rails (qPCR / RNA-seq) are a plain source list on the window: the
+   card rim drawn by the rule above made a second outline around them. */
+html[data-ui-style] .mynx-card.mynx-step-rail {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Column drag tracks draw nothing at rest: the gutter between panels is the
+   boundary. The line appears only while hovering, focusing or dragging. */
+html[data-ui-style] .mynx-column-resizer::before {
+  background: transparent;
+}
+
+html[data-ui-style] .mynx-column-resizer:is(:hover, :focus-visible, :active)::before {
+  background: color-mix(in srgb, var(--color-accent) 60%, transparent);
+}
+
+/* qPCR batch rename bar: follows the group table while scrolling. */
+html[data-ui-style] .mynx-qpcr-batchbar {
+  position: sticky;
+  inset-block-end: 8px;
+  z-index: 3;
+  border-radius: 12px;
+  background: var(--mynx-glass-thick);
+  box-shadow: var(--mynx-glass-shadow), inset 0 0 0 0.5px var(--mynx-glass-rim);
+  backdrop-filter: var(--mynx-glass-blur-strong);
+  -webkit-backdrop-filter: var(--mynx-glass-blur-strong);
 }
 
 /* Accessibility: reduce transparency / increase contrast. */

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import Switch from "../../components/Switch.svelte";
   import { convertFileSrc } from "@tauri-apps/api/core";
   import { getCurrentWebview } from "@tauri-apps/api/webview";
@@ -125,6 +126,7 @@
   let showAllPlotPreviews = $state(false);
   let selectedRenameGroups = $state<string[]>([]);
   let batchGroupName = $state("");
+  let batchInput = $state<HTMLInputElement | null>(null);
   let groupSelectionAnchor = -1;
   let groupSelectionActive = false;
   let groupSelectionBase: string[] = [];
@@ -143,7 +145,7 @@
   let plotPreviewFiles = $state<string[]>([]);
   let plotPreviewStatus = $state<"idle" | "loading" | "ready" | "error">("idle");
 
-  const hasFile = $derived(qpcr.workbookBytes !== null);
+  const hasFile = $derived(qpcr.workbookHandle !== null);
   const transformed = $derived(hasTransformedData());
   const calcFailure = $derived(calcValidationFailure());
   const plotDraft = $derived(activePlotDraft());
@@ -218,6 +220,17 @@
     groupSelectionActive = false;
     groupSelectionAdditive = false;
     groupSelectionBase = [];
+    // A finished mouse selection goes straight to typing the new name in the
+    // bar that follows the table (no scrolling back up).
+    if (selectedRenameGroups.length > 0) void focusBatchInput();
+  }
+
+  async function focusBatchInput(): Promise<void> {
+    await tick();
+    // A sticky bar still sits in flow until the table scrolls past it, so
+    // bring it into view before focusing.
+    batchInput?.scrollIntoView({ block: "nearest" });
+    batchInput?.focus({ preventScroll: true });
   }
 
   function continueGroupSelection(index: number, event: PointerEvent): void {
@@ -248,9 +261,12 @@
 
   function applyBatchGroupName(): void {
     if (groupRenameBusy || selectedRenameGroups.length === 0 || !batchGroupName.trim()) return;
+    // Keep the keyboard in the table: focus returns to the last renamed row.
+    const last = qpcr.groups.indexOf(selectedRenameGroups[selectedRenameGroups.length - 1]);
     applyGroupRenameToSelected(selectedRenameGroups, batchGroupName);
     clearGroupSelection();
     batchGroupName = "";
+    if (last >= 0) groupSelectButtons[last]?.focus({ preventScroll: true });
   }
 
   function handleGroupSelectionKeydown(index: number, event: KeyboardEvent): void {
@@ -271,14 +287,19 @@
     }
     if (event.key === "Escape") {
       event.preventDefault();
-      selectedRenameGroups = [];
-      groupSelectionAnchor = -1;
+      clearGroupSelection();
+      batchGroupName = "";
       return;
     }
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") {
       event.preventDefault();
       selectedRenameGroups = [...qpcr.groups];
       groupSelectionAnchor = 0;
+      return;
+    }
+    if (event.key === "F2" && selectedRenameGroups.length > 0) {
+      event.preventDefault();
+      void focusBatchInput();
       return;
     }
     if (event.key !== "Enter" && event.key !== " ") return;
@@ -310,9 +331,10 @@
 
   /* Read compact source/transformed worksheet snapshots in the Excel worker. */
   $effect(() => {
-    const bytes = qpcr.workbookBytes;
+    const handle = qpcr.workbookHandle;
+    void qpcr.workbookRevision;
     const sheetName = qpcr.selectedSheet;
-    if (!bytes || !sheetName) {
+    if (handle === null || !sheetName) {
       sourceSheetPreview = null;
       sourceAudit = null;
       sourceAuditFailed = false;
@@ -321,15 +343,20 @@
     }
     let current = true;
     sourcePreviewStatus = "loading";
-    void workerExtractSheet(bytes, sheetName)
+    void workerExtractSheet(handle, sheetName)
       .then(async ({ snapshot }) => {
         if (!current) return;
         sourceSheetPreview = snapshot;
         sourceAuditFailed = false;
-        sourceAudit = await qpcrAudit(snapshot).catch(() => {
-          sourceAuditFailed = true;
+        let failed = false;
+        const audit = await qpcrAudit(snapshot).catch(() => {
+          failed = true;
           return null;
         });
+        // A newer workbook revision may have started meanwhile.
+        if (!current) return;
+        sourceAudit = audit;
+        sourceAuditFailed = failed;
         sourcePreviewStatus = "ready";
       })
       .catch(() => {
@@ -387,20 +414,23 @@
   });
 
   $effect(() => {
-    const bytes = qpcr.workbookBytes;
+    const handle = qpcr.workbookHandle;
+    void qpcr.workbookRevision;
     const hasTransformedSheet = transformed;
-    if (!bytes || !hasTransformedSheet) {
+    if (handle === null || !hasTransformedSheet) {
       transformedSheetPreview = null;
       transformedPreviewStatus = "idle";
       return;
     }
     let current = true;
     transformedPreviewStatus = "loading";
-    void workerExtractSheet(bytes, "Transformed Data")
+    void workerExtractSheet(handle, "Transformed Data")
       .then(async ({ snapshot }) => {
         if (!current) return;
         transformedSheetPreview = snapshot;
-        transformedAudit = await qpcrAudit(snapshot, true).catch(() => null);
+        const audit = await qpcrAudit(snapshot, true).catch(() => null);
+        if (!current) return;
+        transformedAudit = audit;
         transformedPreviewStatus = "ready";
       })
       .catch(() => {
@@ -535,34 +565,7 @@
       <p class="mt-1 text-footnote text-text-secondary">{t("qpcr.renameGroupsHint")}</p>
     </div>
     {#if qpcr.groups.length > 0}
-      <div class="flex flex-col gap-2 sm:flex-row">
-        <input
-          class="mynx-input min-w-0 flex-1"
-          bind:value={batchGroupName}
-          disabled={groupRenameBusy}
-          placeholder={t("qpcr.batchGroupPlaceholder")}
-          aria-label={t("qpcr.batchGroupPlaceholder")}
-          onkeydown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              applyBatchGroupName();
-            }
-          }}
-        />
-        <button
-          type="button"
-          class="mynx-btn"
-          disabled={groupRenameBusy || selectedRenameGroups.length === 0 || !batchGroupName.trim()}
-          onclick={applyBatchGroupName}
-        >{t("qpcr.applyBatchRename", { count: selectedRenameGroups.length })}</button>
-        <button
-          type="button"
-          class="mynx-btn"
-          disabled={groupRenameBusy || selectedRenameGroups.length === 0}
-          onclick={clearGroupSelection}
-        >{t("qpcr.clearGroupSelection")}</button>
-      </div>
-      <div class="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+      <div class="flex flex-wrap items-center gap-2">
         <button
           type="button"
           class="mynx-btn mynx-btn-primary"
@@ -624,6 +627,44 @@
           </tbody>
         </table>
       </div>
+      {#if selectedRenameGroups.length > 0}
+        <!-- Batch rename: sticks to the bottom of the view while the table scrolls. -->
+        <div class="mynx-qpcr-batchbar flex flex-wrap items-center gap-2 p-2" role="group" aria-label={t("qpcr.batchGroupPlaceholder")}>
+          <span class="shrink-0 px-1 text-callout font-medium" aria-live="polite">
+            {t("qpcr.selectedGroups", { count: selectedRenameGroups.length })}
+          </span>
+          <input
+            class="mynx-input min-w-[160px] flex-1"
+            bind:this={batchInput}
+            bind:value={batchGroupName}
+            disabled={groupRenameBusy}
+            placeholder={t("qpcr.batchGroupPlaceholder")}
+            aria-label={t("qpcr.batchGroupPlaceholder")}
+            onkeydown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                applyBatchGroupName();
+              } else if (event.key === "Escape") {
+                event.preventDefault();
+                clearGroupSelection();
+                batchGroupName = "";
+              }
+            }}
+          />
+          <button
+            type="button"
+            class="mynx-btn mynx-btn-primary"
+            disabled={groupRenameBusy || !batchGroupName.trim()}
+            onclick={applyBatchGroupName}
+          >{t("qpcr.applyBatchRename", { count: selectedRenameGroups.length })}</button>
+          <button
+            type="button"
+            class="mynx-btn"
+            disabled={groupRenameBusy}
+            onclick={clearGroupSelection}
+          >{t("qpcr.clearGroupSelection")}</button>
+        </div>
+      {/if}
       {#if effectiveGroups.length < qpcr.groups.length}
         <p class="text-footnote text-text-secondary">{t("qpcr.mergedGroupNames", { count: effectiveGroups.length })}</p>
       {/if}

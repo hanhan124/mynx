@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { Channel, invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { TaskRecord } from "../lib/contracts/generated/task/TaskRecord.js";
@@ -103,7 +103,10 @@ export function rInstallRuntime(): Promise<number> {
 
 /** Returns a task id; progress logs stream on `mynx://r-install-log`. */
 export function rInstallPackages(packages: string[]): Promise<number> {
-  return call("r_install_packages", { packages });
+  // The command requires a progress channel; the page reads the same lines
+  // from the mynx://r-install-log event, so this one is only drained.
+  const onProgress = new Channel<unknown>();
+  return call("r_install_packages", { packages, onProgress });
 }
 
 /** Open a path (e.g. a task output dir) in the system file manager. */

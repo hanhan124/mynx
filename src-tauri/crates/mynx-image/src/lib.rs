@@ -159,7 +159,18 @@ fn run(
         .build();
     let pool = match pool {
         Ok(pool) => pool,
-        Err(_) => return,
+        Err(_) => {
+            // Always end with a terminal event, or the UI waits forever.
+            emitter.emit(ConvertEvent::Finished {
+                status: "failed".into(),
+                ok: 0,
+                failed: total,
+                total_input: 0,
+                total_output: 0,
+                watermark_applied,
+            });
+            return;
+        }
     };
 
     pool.install(|| {

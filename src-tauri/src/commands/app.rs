@@ -40,22 +40,23 @@ pub async fn cleanup_update_bak() -> Result<(), CommandError> {
 /// Finder). Used for output directories and result files.
 #[tauri::command]
 pub async fn open_path(path: String) -> Result<bool, CommandError> {
-    if cfg!(target_os = "windows") {
-        let _ = std::process::Command::new("explorer")
-            .arg(&path)
-            .spawn();
-        Ok(true)
-    } else if cfg!(target_os = "macos") {
-        let _ = std::process::Command::new("open")
-            .arg(&path)
-            .spawn();
-        Ok(true)
-    } else {
-        let _ = std::process::Command::new("xdg-open")
-            .arg(&path)
-            .spawn();
-        Ok(true)
+    // Explorer silently opens "Documents" for a missing path; say so instead.
+    if path.trim().is_empty() || !std::path::Path::new(&path).exists() {
+        return Err(CommandError::not_found(format!("路径不存在: {path}")));
     }
+    let (program, target) = if cfg!(target_os = "windows") {
+        // Explorer only understands backslash separators.
+        ("explorer", path.replace('/', "\\"))
+    } else if cfg!(target_os = "macos") {
+        ("open", path.clone())
+    } else {
+        ("xdg-open", path.clone())
+    };
+    std::process::Command::new(program)
+        .arg(&target)
+        .spawn()
+        .map_err(|e| CommandError::process(format!("无法打开 {path}: {e}")))?;
+    Ok(true)
 }
 
 /// Resolve a resource path (`resourceDir()/r/...`) for the R scripts.

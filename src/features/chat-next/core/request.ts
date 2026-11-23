@@ -76,6 +76,15 @@ function userContent(node: MessageNode, options: PromptOptions): ModelMessage {
 /**
  * `path` is root → last message to answer (the new assistant node excluded).
  */
+/**
+ * Output format the chat renders well. Without it some models write LaTeX in
+ * code spans or with no delimiters at all, which shows as raw source.
+ */
+export const FORMAT_INSTRUCTIONS =
+  "Format answers in Markdown. Write every mathematical formula in LaTeX with math delimiters: " +
+  "$...$ for inline formulas and $$...$$ on their own lines for display formulas. " +
+  "Never put formulas in code spans or code blocks; use code only for program code.";
+
 export function buildPrompt(path: readonly MessageNode[], options: PromptOptions = {}): BuiltPrompt {
   const limit = Math.max(1, options.maxMessages ?? DEFAULT_MAX_MESSAGES);
   let summary = options.summary?.trim();

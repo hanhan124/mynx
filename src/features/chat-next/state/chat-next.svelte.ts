@@ -22,7 +22,7 @@ import {
 import { setChatReadyHint } from "../handoff.js";
 import { createLanguageModel, MissingApiKeyError } from "../core/providers.js";
 import { fetchModelIds, mergeModels, runWebSearch, searchInstructions } from "../core/remote.js";
-import { buildPrompt } from "../core/request.js";
+import { buildPrompt, FORMAT_INSTRUCTIONS } from "../core/request.js";
 import { consumeStream, errorMessage, type StreamPart } from "../core/stream.js";
 import { appendNode, forkPath, latestLeaf, pathTo, removeSubtree, switchSibling } from "../core/tree.js";
 import {
@@ -109,6 +109,8 @@ const dirtyConversations = new Set<string>();
 const deletedConversations = new Set<string>();
 let metaDirty = false;
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
+/** Consecutive failed saves (drives the retry back-off and the one-time toast). */
+let saveFailures = 0;
 let fetchPromise: Promise<typeof fetch> | null = null;
 
 export function uid(prefix: string): string {
@@ -136,11 +138,21 @@ function flushSave(): void {
   dirtyConversations.clear();
   deletedConversations.clear();
   metaDirty = false;
-  void repository.save($state.snapshot(chatNext.snapshot), changes).catch(() => {
-    for (const id of changes.conversations) dirtyConversations.add(id);
-    for (const id of changes.deleted) deletedConversations.add(id);
-    metaDirty ||= changes.meta;
-  });
+  void repository.save($state.snapshot(chatNext.snapshot), changes).then(
+    () => {
+      if (saveFailures > 0) pushToast("success", t("chatNext.saveRecovered"));
+      saveFailures = 0;
+    },
+    (error: unknown) => {
+      for (const id of changes.conversations) dirtyConversations.add(id);
+      for (const id of changes.deleted) deletedConversations.add(id);
+      metaDirty ||= changes.meta;
+      saveFailures += 1;
+      // Tell the user once, then keep retrying with back-off (1 s … 30 s).
+      if (saveFailures === 1) pushToast("error", t("chatNext.saveFailed", { detail: errorMessage(error) }));
+      if (!saveTimer) saveTimer = setTimeout(flushSave, Math.min(30_000, 1000 * 2 ** (saveFailures - 1)));
+    },
+  );
 }
 
 /** Tauri HTTP plugin fetch in the desktop app; window.fetch in previews. */
@@ -828,6 +840,7 @@ async function generate(
       summaryUntil: conversation.summaryUntil,
       vision: caps?.vision ?? false,
       extra: [
+        FORMAT_INSTRUCTIONS,
         settings.memoryEnabled === false ? undefined : memoryInstructions(chatNext.snapshot.memories),
         searchInstructions(sources),
       ],

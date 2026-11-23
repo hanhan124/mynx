@@ -21,6 +21,12 @@ use zip::{CompressionMethod, ZipArchive, ZipWriter};
 
 use crate::manifest;
 
+/// Template package limits: a template is a manifest, an R script and a few
+/// assets, so anything far beyond this is a broken or hostile archive.
+const MAX_PACKAGE_ENTRIES: usize = 2_000;
+const MAX_PACKAGE_FILE_BYTES: u64 = 50 * 1024 * 1024;
+const MAX_PACKAGE_TOTAL_BYTES: u64 = 200 * 1024 * 1024;
+
 /// Template resources copied under `template/` (legacy exportResultPackage).
 const TEMPLATE_PACKAGE_FILES: [&str; 3] = ["manifest.json", "render.R", "README.zh-CN.md"];
 
@@ -148,17 +154,33 @@ pub fn install_template_package(
     let mut archive = ZipArchive::new(file)
         .map_err(|error| MynxError::io(format!("无法解析模板压缩包 {}: {}", zip_path, error)))?;
 
-    // Pass 1: reject unsafe names before extracting anything.
+    // Pass 1: reject unsafe names and oversized archives before extracting
+    // anything (declared sizes; pass 2 re-checks the real byte counts).
+    if archive.len() > MAX_PACKAGE_ENTRIES {
+        return Err(MynxError::validation(format!(
+            "模板压缩包文件过多（{} 个，上限 {MAX_PACKAGE_ENTRIES} 个）",
+            archive.len()
+        )));
+    }
+    let mut total_bytes: u64 = 0;
     for index in 0..archive.len() {
-        let name = archive
+        let entry = archive
             .by_index(index)
-            .map_err(|error| MynxError::io(format!("无法读取压缩包条目: {error}")))?
-            .name()
-            .to_string();
+            .map_err(|error| MynxError::io(format!("无法读取压缩包条目: {error}")))?;
+        let name = entry.name().to_string();
         if !entry_name_is_safe(&name) {
             return Err(MynxError::validation(format!(
                 "压缩包包含不安全的路径: {name}"
             )));
+        }
+        if entry.size() > MAX_PACKAGE_FILE_BYTES {
+            return Err(MynxError::validation(format!(
+                "模板压缩包中的文件过大: {name}"
+            )));
+        }
+        total_bytes = total_bytes.saturating_add(entry.size());
+        if total_bytes > MAX_PACKAGE_TOTAL_BYTES {
+            return Err(MynxError::validation("模板压缩包解压后超过 200 MB，已拒绝安装"));
         }
     }
 
@@ -201,10 +223,15 @@ fn extract_archive<R: Read + std::io::Seek>(
                 MynxError::io(format!("无法创建目录 {}: {error}", parent.to_string_lossy()))
             })?;
         }
-        let mut bytes = Vec::with_capacity(entry.size() as usize);
-        entry
+        // Never trust the declared size: cap the real read as well.
+        let mut bytes = Vec::new();
+        (&mut entry)
+            .take(MAX_PACKAGE_FILE_BYTES + 1)
             .read_to_end(&mut bytes)
             .map_err(|error| MynxError::io(format!("无法解压压缩包条目 {name}: {error}")))?;
+        if bytes.len() as u64 > MAX_PACKAGE_FILE_BYTES {
+            return Err(MynxError::validation(format!("模板压缩包中的文件过大: {name}")));
+        }
         fs::write(&target, bytes).map_err(|error| {
             MynxError::io(format!("无法写入文件 {}: {error}", target.to_string_lossy()))
         })?;

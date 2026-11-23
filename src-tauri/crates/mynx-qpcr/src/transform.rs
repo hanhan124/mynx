@@ -90,10 +90,11 @@ pub fn transform(request: TransformRequest) -> Result<TransformResult, MynxError
         }
         let (ct_value, _) = source.cell(r, ct_col_index);
         let ct: CtObservation = match ct_value {
-            CellValue::Num(n) => Some(*n),
+            // Only finite Ct values are observations; Infinity is as invalid as NaN.
+            CellValue::Num(n) => n.is_finite().then_some(*n),
             CellValue::Text(text) => {
                 let parsed = js_parse_float(text);
-                if parsed.is_nan() {
+                if !parsed.is_finite() {
                     None
                 } else {
                     Some(parsed)

@@ -50,6 +50,7 @@ pub fn run() {
             commands::qpcr::qpcr_calculate,
             commands::qpcr::qpcr_plot_run,
             commands::qpcr::qpcr_inject_charts,
+            commands::qpcr::qpcr_save_workbook,
             commands::rnaseq::rnaseq_default_config,
             commands::rnaseq::rnaseq_merge_config,
             commands::rnaseq::rnaseq_import_counts,
